@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+
+# Environment variables (contém credenciais sensíveis)
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Runtime data
+pids/
+*.pid
+*.seed
+
+# Sync and cache files
+sync-history.json
+logs.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Output files
+*.output.json
+resultado.json
