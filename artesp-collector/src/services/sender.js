@@ -1,9 +1,16 @@
 /**
  * Serviço de Envio para Lovable
  * Responsável por enviar os dados extraídos para o endpoint da Lovable
+ *
+ * Inclui:
+ * - Metadata adicional nos payloads
+ * - Logging detalhado
+ * - Retry com exponential backoff
  */
 
 const axios = require('axios');
+const logger = require('./logger');
+const { getDelay } = require('./scraper');
 
 /**
  * Função auxiliar para aguardar um tempo
@@ -18,21 +25,44 @@ const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
  * @returns {Promise<Object>} Resultado do envio
  */
 async function sendToLovable(pdf, endpoint) {
+    const startTime = Date.now();
     console.log(`[Sender] Enviando para Lovable: ${pdf.nomeArquivo}`);
 
     if (!endpoint) {
-        throw new Error('Endpoint da Lovable não configurado');
+        const erro = new Error('Endpoint da Lovable não configurado');
+        await logger.logError(logger.OPERATION_TYPES.SEND, erro, {
+            arquivo: pdf.nomeArquivo
+        });
+        throw erro;
     }
 
     if (!pdf.texto) {
-        throw new Error('PDF não possui texto extraído');
+        const erro = new Error('PDF não possui texto extraído');
+        await logger.logError(logger.OPERATION_TYPES.SEND, erro, {
+            arquivo: pdf.nomeArquivo
+        });
+        throw erro;
     }
 
-    // Monta payload no formato esperado pela Lovable
+    // Monta payload no formato esperado pela Lovable com metadata adicional
     const payload = {
         agencia: 'ARTESP',
         nome_arquivo: pdf.nomeArquivo,
-        texto_pdf: pdf.texto
+        texto_pdf: pdf.texto,
+        metadata: {
+            data_coleta: pdf.extractedAt || new Date().toISOString(),
+            eh_novo: pdf.ehNovo === true,
+            url_original: pdf.url,
+            data_documento: pdf.data || null,
+            ano: pdf.ano || null,
+            reuniao: pdf.reuniao || null,
+            num_paginas: pdf.numPaginas || 0,
+            num_caracteres: pdf.numCaracteres || 0,
+            num_palavras: pdf.numPalavras || 0,
+            tamanho_arquivo: pdf.tamanhoFormatado || '0 B',
+            eh_escaneado: pdf.ehEscaneado || false,
+            hash: pdf.hash || null
+        }
     };
 
     try {
@@ -40,23 +70,44 @@ async function sendToLovable(pdf, endpoint) {
             timeout: 60000, // 60 segundos
             headers: {
                 'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            }
+                'Accept': 'application/json',
+                'X-Source': 'artesp-collector',
+                'X-Timestamp': new Date().toISOString()
+            },
+            maxContentLength: 50 * 1024 * 1024, // 50MB
+            maxBodyLength: 50 * 1024 * 1024
         });
 
-        console.log(`[Sender] Envio bem-sucedido: ${pdf.nomeArquivo} (Status: ${response.status})`);
+        const duracao = ((Date.now() - startTime) / 1000).toFixed(2);
+
+        console.log(`[Sender] Envio bem-sucedido: ${pdf.nomeArquivo} (Status: ${response.status}) em ${duracao}s`);
+
+        await logger.logSuccess(logger.OPERATION_TYPES.SEND, {
+            arquivo: pdf.nomeArquivo,
+            statusCode: response.status,
+            duracao: `${duracao}s`,
+            ehNovo: pdf.ehNovo
+        });
 
         return {
             nomeArquivo: pdf.nomeArquivo,
             status: 'sucesso',
             statusCode: response.status,
             resposta: response.data,
-            erro: null
+            erro: null,
+            duracao: `${duracao}s`
         };
 
     } catch (error) {
+        const duracao = ((Date.now() - startTime) / 1000).toFixed(2);
         const statusCode = error.response?.status || null;
         const mensagemErro = error.response?.data?.message || error.message;
+
+        await logger.logError(logger.OPERATION_TYPES.SEND, error, {
+            arquivo: pdf.nomeArquivo,
+            statusCode,
+            duracao: `${duracao}s`
+        });
 
         console.error(`[Sender] Erro ao enviar ${pdf.nomeArquivo}:`, mensagemErro);
 
@@ -65,7 +116,8 @@ async function sendToLovable(pdf, endpoint) {
             status: 'erro',
             statusCode: statusCode,
             resposta: null,
-            erro: mensagemErro
+            erro: mensagemErro,
+            duracao: `${duracao}s`
         };
     }
 }
@@ -97,12 +149,31 @@ async function sendWithRetry(pdf, endpoint, maxRetries = 3) {
 
         if (!shouldRetry) {
             console.warn(`[Sender] Erro não recuperável para ${pdf.nomeArquivo}: ${result.erro}`);
+
+            await logger.logWarning(logger.OPERATION_TYPES.SEND,
+                `Erro não recuperável: ${result.erro}`, {
+                arquivo: pdf.nomeArquivo,
+                statusCode: result.statusCode
+            });
+
             return result;
         }
 
         if (attempt < maxRetries) {
-            const delay = Math.pow(2, attempt) * 1000; // Exponential backoff
-            console.log(`[Sender] Aguardando ${delay}ms antes da próxima tentativa...`);
+            // Exponential backoff com jitter
+            const baseDelay = Math.pow(2, attempt) * 1000;
+            const jitter = Math.random() * 1000;
+            const delay = baseDelay + jitter;
+
+            console.log(`[Sender] Aguardando ${Math.round(delay)}ms antes da próxima tentativa...`);
+
+            await logger.logWarning(logger.OPERATION_TYPES.SEND,
+                `Tentativa ${attempt} falhou, aguardando retry`, {
+                arquivo: pdf.nomeArquivo,
+                tentativa: attempt,
+                proximaTentativaEm: `${Math.round(delay)}ms`
+            });
+
             await sleep(delay);
         }
     }
@@ -114,12 +185,17 @@ async function sendWithRetry(pdf, endpoint, maxRetries = 3) {
  * Envia múltiplos PDFs para a Lovable
  * @param {Array} pdfs - Array de objetos com dados dos PDFs
  * @param {string} endpoint - URL do endpoint da Lovable
- * @param {number} delayMs - Delay entre envios em ms
+ * @param {Function} onProgress - Callback de progresso (opcional)
  * @returns {Promise<Object>} Resultado geral do envio
  */
-async function sendMultipleToLovable(pdfs, endpoint, delayMs = 1000) {
+async function sendMultipleToLovable(pdfs, endpoint, onProgress = null) {
     console.log(`[Sender] Iniciando envio de ${pdfs.length} PDFs para Lovable...`);
     console.log(`[Sender] Endpoint: ${endpoint}`);
+
+    await logger.logStart(logger.OPERATION_TYPES.SEND, {
+        totalPdfs: pdfs.length,
+        endpoint: endpoint.substring(0, 50)
+    });
 
     if (!endpoint) {
         throw new Error('Endpoint da Lovable não configurado');
@@ -130,6 +206,12 @@ async function sendMultipleToLovable(pdfs, endpoint, delayMs = 1000) {
 
     if (pdfsComTexto.length === 0) {
         console.warn('[Sender] Nenhum PDF com texto disponível para envio');
+
+        await logger.logWarning(logger.OPERATION_TYPES.SEND,
+            'Nenhum PDF com texto disponível', {
+            totalRecebido: pdfs.length
+        });
+
         return {
             total: pdfs.length,
             enviados: 0,
@@ -143,29 +225,50 @@ async function sendMultipleToLovable(pdfs, endpoint, delayMs = 1000) {
     console.log(`[Sender] ${pdfsComTexto.length} PDFs com texto serão enviados`);
 
     const resultados = [];
+    const startTime = Date.now();
 
     for (let i = 0; i < pdfsComTexto.length; i++) {
         const pdf = pdfsComTexto[i];
         console.log(`[Sender] Enviando ${i + 1}/${pdfsComTexto.length}: ${pdf.nomeArquivo}`);
 
+        // Callback de progresso
+        if (onProgress) {
+            onProgress({
+                atual: i + 1,
+                total: pdfsComTexto.length,
+                arquivo: pdf.nomeArquivo,
+                percentual: Math.round(((i + 1) / pdfsComTexto.length) * 100)
+            });
+        }
+
         const resultado = await sendWithRetry(pdf, endpoint);
         resultados.push(resultado);
 
-        // Aguarda delay entre envios (exceto no último)
+        // Aguarda delay aleatório entre envios (exceto no último)
         if (i < pdfsComTexto.length - 1) {
-            console.log(`[Sender] Aguardando ${delayMs}ms antes do próximo envio...`);
-            await sleep(delayMs);
+            const delay = getDelay();
+            console.log(`[Sender] Aguardando ${delay}ms antes do próximo envio...`);
+            await sleep(delay);
         }
     }
 
+    const duracao = ((Date.now() - startTime) / 1000).toFixed(2);
     const sucessos = resultados.filter(r => r.status === 'sucesso').length;
     const erros = resultados.filter(r => r.status === 'erro').length;
     const pulados = pdfs.length - pdfsComTexto.length;
 
-    console.log(`[Sender] Envio concluído:`);
+    console.log(`[Sender] Envio concluído em ${duracao}s:`);
     console.log(`[Sender] - Sucessos: ${sucessos}`);
     console.log(`[Sender] - Erros: ${erros}`);
     console.log(`[Sender] - Pulados (sem texto): ${pulados}`);
+
+    await logger.logSuccess(logger.OPERATION_TYPES.SEND, {
+        mensagem: `${sucessos} PDFs enviados com sucesso`,
+        sucessos,
+        erros,
+        pulados,
+        duracao: `${duracao}s`
+    });
 
     return {
         total: pdfs.length,
@@ -173,7 +276,8 @@ async function sendMultipleToLovable(pdfs, endpoint, delayMs = 1000) {
         sucessos,
         erros,
         pulados,
-        resultados
+        resultados,
+        duracao: `${duracao}s`
     };
 }
 
@@ -217,6 +321,12 @@ async function testConnection(endpoint) {
 
         console.log(`[Sender] Conexão testada: Status ${response.status}`);
 
+        await logger.log(logger.OPERATION_TYPES.SEND, logger.STATUS.INFO, {
+            mensagem: 'Teste de conexão realizado',
+            endpoint: endpoint.substring(0, 50),
+            statusCode: response.status
+        });
+
         return {
             success: true,
             statusCode: response.status,
@@ -225,6 +335,11 @@ async function testConnection(endpoint) {
 
     } catch (error) {
         console.error(`[Sender] Falha no teste de conexão:`, error.message);
+
+        await logger.logError(logger.OPERATION_TYPES.SEND, error, {
+            mensagem: 'Falha no teste de conexão',
+            endpoint: endpoint.substring(0, 50)
+        });
 
         return {
             success: false,

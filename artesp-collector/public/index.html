@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ARTESP PDF Collector</title>
+    <title>ARTESP PDF Collector - Sincronizacao Inteligente</title>
     <style>
-        /* Reset e variáveis */
         * {
             margin: 0;
             padding: 0;
@@ -18,6 +17,7 @@
             --success-color: #10b981;
             --error-color: #ef4444;
             --warning-color: #f59e0b;
+            --info-color: #3b82f6;
             --bg-color: #0f172a;
             --card-bg: #1e293b;
             --card-border: #334155;
@@ -34,56 +34,84 @@
             line-height: 1.6;
         }
 
-        /* Header */
         .header {
             background: var(--primary-gradient);
-            padding: 2rem;
+            padding: 1.5rem 2rem;
             text-align: center;
             box-shadow: var(--shadow);
         }
 
         .header h1 {
-            font-size: 2rem;
-            margin-bottom: 0.5rem;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+            font-size: 1.75rem;
+            margin-bottom: 0.25rem;
         }
 
         .header p {
             opacity: 0.9;
-            font-size: 1rem;
+            font-size: 0.9rem;
         }
 
-        /* Container principal */
         .container {
             max-width: 1400px;
             margin: 0 auto;
-            padding: 2rem;
+            padding: 1.5rem;
         }
 
-        /* Cards de estatísticas */
+        /* Sync Status Card */
+        .sync-status-card {
+            background: linear-gradient(135deg, #1e3a5f 0%, #1e293b 100%);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+        }
+
+        .sync-item {
+            text-align: center;
+        }
+
+        .sync-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .sync-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-top: 0.25rem;
+        }
+
+        .sync-value.new {
+            color: var(--success-color);
+        }
+
+        .sync-value.existing {
+            color: var(--info-color);
+        }
+
+        /* Stats Grid */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
         }
 
         .stat-card {
             background: var(--card-bg);
             border: 1px solid var(--card-border);
-            border-radius: 12px;
-            padding: 1.5rem;
+            border-radius: 10px;
+            padding: 1rem;
             text-align: center;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
         }
 
         .stat-value {
-            font-size: 2rem;
+            font-size: 1.5rem;
             font-weight: bold;
             background: var(--primary-gradient);
             -webkit-background-clip: text;
@@ -93,48 +121,48 @@
 
         .stat-label {
             color: var(--text-secondary);
-            font-size: 0.875rem;
-            margin-top: 0.5rem;
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
         }
 
-        /* Seções */
+        /* Sections */
         .section {
             background: var(--card-bg);
             border: 1px solid var(--card-border);
             border-radius: 12px;
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
             overflow: hidden;
         }
 
         .section-header {
             background: rgba(102, 126, 234, 0.1);
-            padding: 1rem 1.5rem;
+            padding: 0.875rem 1.25rem;
             border-bottom: 1px solid var(--card-border);
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 1rem;
+            gap: 0.75rem;
         }
 
         .section-title {
-            font-size: 1.25rem;
+            font-size: 1rem;
             font-weight: 600;
         }
 
         .section-content {
-            padding: 1.5rem;
+            padding: 1.25rem;
         }
 
-        /* Botões */
+        /* Buttons */
         .btn {
             display: inline-flex;
             align-items: center;
-            gap: 0.5rem;
-            padding: 0.75rem 1.5rem;
+            gap: 0.4rem;
+            padding: 0.6rem 1.2rem;
             border: none;
-            border-radius: 8px;
-            font-size: 1rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
             font-weight: 500;
             cursor: pointer;
             transition: all 0.2s;
@@ -146,19 +174,9 @@
             color: white;
         }
 
-        .btn-primary:hover {
-            opacity: 0.9;
-            transform: translateY(-1px);
-        }
-
         .btn-secondary {
             background: var(--secondary-gradient);
             color: white;
-        }
-
-        .btn-secondary:hover {
-            opacity: 0.9;
-            transform: translateY(-1px);
         }
 
         .btn-success {
@@ -166,9 +184,25 @@
             color: white;
         }
 
+        .btn-warning {
+            background: var(--warning-color);
+            color: white;
+        }
+
         .btn-danger {
             background: var(--error-color);
             color: white;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--card-border);
+            color: var(--text-primary);
+        }
+
+        .btn:hover:not(:disabled) {
+            opacity: 0.9;
+            transform: translateY(-1px);
         }
 
         .btn:disabled {
@@ -179,21 +213,62 @@
 
         .btn-group {
             display: flex;
-            gap: 0.75rem;
+            gap: 0.5rem;
             flex-wrap: wrap;
         }
 
-        /* Lista de PDFs */
+        .btn-sm {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.75rem;
+        }
+
+        /* Filter Tabs */
+        .filter-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .filter-tab {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--card-border);
+            border-radius: 6px;
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+
+        .filter-tab:hover {
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .filter-tab.active {
+            background: var(--primary-gradient);
+            color: white;
+            border-color: transparent;
+        }
+
+        .filter-tab .count {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.1rem 0.4rem;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            margin-left: 0.3rem;
+        }
+
+        /* PDF List */
         .pdf-list {
-            max-height: 400px;
+            max-height: 350px;
             overflow-y: auto;
         }
 
         .pdf-item {
             display: flex;
             align-items: center;
-            gap: 1rem;
-            padding: 1rem;
+            gap: 0.75rem;
+            padding: 0.75rem;
             border-bottom: 1px solid var(--card-border);
             cursor: pointer;
             transition: background 0.2s;
@@ -213,15 +288,30 @@
         }
 
         .pdf-icon {
-            width: 40px;
-            height: 40px;
+            width: 36px;
+            height: 36px;
             background: var(--primary-gradient);
-            border-radius: 8px;
+            border-radius: 6px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.25rem;
+            font-size: 1rem;
             flex-shrink: 0;
+            position: relative;
+        }
+
+        .pdf-icon .badge-new {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            width: 14px;
+            height: 14px;
+            background: var(--success-color);
+            border-radius: 50%;
+            font-size: 0.6rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .pdf-info {
@@ -231,29 +321,35 @@
 
         .pdf-name {
             font-weight: 500;
+            font-size: 0.875rem;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
         .pdf-meta {
-            font-size: 0.875rem;
+            font-size: 0.75rem;
             color: var(--text-secondary);
             display: flex;
-            gap: 1rem;
+            gap: 0.75rem;
             flex-wrap: wrap;
         }
 
         .pdf-status {
-            padding: 0.25rem 0.5rem;
+            padding: 0.2rem 0.4rem;
             border-radius: 4px;
-            font-size: 0.75rem;
+            font-size: 0.65rem;
             font-weight: 500;
         }
 
-        .status-success {
+        .status-new {
             background: rgba(16, 185, 129, 0.2);
             color: var(--success-color);
+        }
+
+        .status-existing {
+            background: rgba(59, 130, 246, 0.2);
+            color: var(--info-color);
         }
 
         .status-error {
@@ -261,18 +357,18 @@
             color: var(--error-color);
         }
 
-        /* Visualizador de texto */
+        /* Text Viewer */
         .text-viewer {
             background: #0f172a;
             border: 1px solid var(--card-border);
             border-radius: 8px;
-            padding: 1.5rem;
-            min-height: 300px;
-            max-height: 500px;
+            padding: 1rem;
+            min-height: 250px;
+            max-height: 400px;
             overflow-y: auto;
             font-family: 'Courier New', monospace;
-            font-size: 0.875rem;
-            line-height: 1.8;
+            font-size: 0.8rem;
+            line-height: 1.7;
             white-space: pre-wrap;
             word-wrap: break-word;
         }
@@ -285,35 +381,57 @@
             font-family: inherit;
         }
 
-        /* Configuração Lovable */
+        /* Search in text */
+        .text-search {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .text-search input {
+            flex: 1;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--card-border);
+            border-radius: 6px;
+            background: #0f172a;
+            color: var(--text-primary);
+            font-size: 0.8rem;
+        }
+
+        .text-search input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        /* Config Form */
         .config-form {
             display: flex;
-            gap: 1rem;
+            gap: 0.75rem;
             flex-wrap: wrap;
             align-items: flex-end;
         }
 
         .form-group {
             flex: 1;
-            min-width: 250px;
+            min-width: 200px;
         }
 
         .form-group label {
             display: block;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.4rem;
             font-weight: 500;
+            font-size: 0.8rem;
             color: var(--text-secondary);
         }
 
         .form-group input {
             width: 100%;
-            padding: 0.75rem 1rem;
+            padding: 0.6rem 0.75rem;
             border: 1px solid var(--card-border);
-            border-radius: 8px;
+            border-radius: 6px;
             background: #0f172a;
             color: var(--text-primary);
-            font-size: 1rem;
-            transition: border-color 0.2s;
+            font-size: 0.875rem;
         }
 
         .form-group input:focus {
@@ -321,21 +439,21 @@
             border-color: #667eea;
         }
 
-        /* Status bar */
+        /* Status Bar */
         .status-bar {
             background: var(--card-bg);
             border: 1px solid var(--card-border);
             border-radius: 8px;
-            padding: 1rem 1.5rem;
-            margin-bottom: 2rem;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1.5rem;
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: 0.75rem;
         }
 
         .status-indicator {
-            width: 12px;
-            height: 12px;
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
             background: var(--success-color);
             animation: pulse 2s infinite;
@@ -357,16 +475,17 @@
 
         .status-text {
             flex: 1;
+            font-size: 0.875rem;
         }
 
-        /* Progress bar */
+        /* Progress */
         .progress-container {
             width: 100%;
             height: 4px;
             background: var(--card-border);
             border-radius: 2px;
             overflow: hidden;
-            margin-top: 0.5rem;
+            margin-top: 0.4rem;
         }
 
         .progress-bar {
@@ -397,44 +516,49 @@
             background: var(--card-bg);
             border: 1px solid var(--card-border);
             border-radius: 12px;
-            padding: 2rem;
-            max-width: 500px;
+            padding: 1.5rem;
+            max-width: 450px;
             width: 90%;
             text-align: center;
         }
 
         .modal h3 {
-            margin-bottom: 1rem;
+            margin-bottom: 0.75rem;
+            font-size: 1.1rem;
         }
 
         .modal p {
             color: var(--text-secondary);
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
         }
 
-        /* Resultado do envio */
+        /* Results */
         .send-results {
             margin-top: 1rem;
+            max-height: 200px;
+            overflow-y: auto;
         }
 
         .result-item {
             display: flex;
             align-items: center;
-            gap: 0.75rem;
-            padding: 0.75rem;
+            gap: 0.5rem;
+            padding: 0.5rem;
             background: #0f172a;
             border-radius: 6px;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.4rem;
+            font-size: 0.8rem;
         }
 
         .result-icon {
-            width: 24px;
-            height: 24px;
+            width: 20px;
+            height: 20px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.875rem;
+            font-size: 0.7rem;
         }
 
         .result-icon.success {
@@ -447,10 +571,53 @@
             color: var(--error-color);
         }
 
-        /* Responsividade */
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-state-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.75rem;
+            opacity: 0.5;
+        }
+
+        /* Spinner */
+        .spinner {
+            width: 18px;
+            height: 18px;
+            border: 2px solid transparent;
+            border-top-color: currentColor;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--card-border);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 3px;
+        }
+
+        /* Responsive */
         @media (max-width: 768px) {
             .header h1 {
-                font-size: 1.5rem;
+                font-size: 1.25rem;
             }
 
             .container {
@@ -466,73 +633,47 @@
                 justify-content: center;
             }
 
-            .config-form {
-                flex-direction: column;
-            }
-
-            .form-group {
-                min-width: 100%;
+            .filter-tabs {
+                flex-wrap: wrap;
             }
         }
 
-        /* Loading spinner */
-        .spinner {
-            width: 20px;
-            height: 20px;
-            border: 2px solid transparent;
-            border-top-color: currentColor;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* Empty state */
-        .empty-state {
-            text-align: center;
-            padding: 3rem;
-            color: var(--text-secondary);
-        }
-
-        .empty-state-icon {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            opacity: 0.5;
-        }
-
-        /* Scrollbar personalizada */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: var(--card-border);
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #667eea;
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #764ba2;
+        /* Highlight for search */
+        .highlight {
+            background: rgba(245, 158, 11, 0.4);
+            padding: 0.1rem 0.2rem;
+            border-radius: 2px;
         }
     </style>
 </head>
 <body>
-    <!-- Header -->
     <header class="header">
         <h1>ARTESP PDF Collector</h1>
-        <p>Sistema de coleta e extração de deliberações</p>
+        <p>Sistema de Sincronizacao Inteligente</p>
     </header>
 
-    <!-- Container principal -->
     <div class="container">
-        <!-- Status bar -->
+        <!-- Sync Status -->
+        <div class="sync-status-card">
+            <div class="sync-item">
+                <div class="sync-label">Ultima Sincronizacao</div>
+                <div class="sync-value" id="lastSync">-</div>
+            </div>
+            <div class="sync-item">
+                <div class="sync-label">Modo</div>
+                <div class="sync-value" id="syncMode">-</div>
+            </div>
+            <div class="sync-item">
+                <div class="sync-label">PDFs no Historico</div>
+                <div class="sync-value existing" id="historyTotal">0</div>
+            </div>
+            <div class="sync-item">
+                <div class="sync-label">Novos nesta Execucao</div>
+                <div class="sync-value new" id="newCount">0</div>
+            </div>
+        </div>
+
+        <!-- Status Bar -->
         <div class="status-bar">
             <div class="status-indicator" id="statusIndicator"></div>
             <div class="status-text">
@@ -543,40 +684,63 @@
             </div>
         </div>
 
-        <!-- Cards de estatísticas -->
+        <!-- Stats Grid -->
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-value" id="statPdfs">0</div>
                 <div class="stat-label">PDFs Coletados</div>
             </div>
             <div class="stat-card">
+                <div class="stat-value" id="statNovos">0</div>
+                <div class="stat-label">Novos</div>
+            </div>
+            <div class="stat-card">
                 <div class="stat-value" id="statPaginas">0</div>
-                <div class="stat-label">Total de Páginas</div>
+                <div class="stat-label">Paginas</div>
             </div>
             <div class="stat-card">
                 <div class="stat-value" id="statCaracteres">0</div>
-                <div class="stat-label">Caracteres Extraídos</div>
+                <div class="stat-label">Caracteres</div>
             </div>
             <div class="stat-card">
                 <div class="stat-value" id="statPalavras">0</div>
-                <div class="stat-label">Total de Palavras</div>
+                <div class="stat-label">Palavras</div>
             </div>
         </div>
 
-        <!-- Seção de coleta -->
+        <!-- PDF Collection Section -->
         <div class="section">
             <div class="section-header">
                 <h2 class="section-title">Coleta de PDFs</h2>
                 <div class="btn-group">
-                    <button class="btn btn-primary" id="btnScrape" onclick="scrapeAndExtract()">
-                        <span>Scrape & Extract</span>
+                    <button class="btn btn-primary" id="btnScrape" onclick="scrapeAndExtract(false)">
+                        Scrape & Extract
                     </button>
-                    <button class="btn btn-danger" id="btnClear" onclick="clearPdfs()" disabled>
+                    <button class="btn btn-warning" id="btnForce" onclick="scrapeAndExtract(true)">
+                        Forcar Coleta Completa
+                    </button>
+                    <button class="btn btn-outline btn-sm" id="btnReset" onclick="resetHistory()">
+                        Resetar Historico
+                    </button>
+                    <button class="btn btn-danger btn-sm" id="btnClear" onclick="clearPdfs()" disabled>
                         Limpar
                     </button>
                 </div>
             </div>
             <div class="section-content">
+                <!-- Filter Tabs -->
+                <div class="filter-tabs">
+                    <button class="filter-tab active" data-filter="todos" onclick="setFilter('todos')">
+                        Todos <span class="count" id="countTodos">0</span>
+                    </button>
+                    <button class="filter-tab" data-filter="novos" onclick="setFilter('novos')">
+                        Novos <span class="count" id="countNovos">0</span>
+                    </button>
+                    <button class="filter-tab" data-filter="jaColetados" onclick="setFilter('jaColetados')">
+                        Ja Coletados <span class="count" id="countJaColetados">0</span>
+                    </button>
+                </div>
+
                 <div class="pdf-list" id="pdfList">
                     <div class="empty-state">
                         <div class="empty-state-icon">📄</div>
@@ -587,20 +751,24 @@
             </div>
         </div>
 
-        <!-- Seção de visualização -->
+        <!-- Text Viewer Section -->
         <div class="section">
             <div class="section-header">
-                <h2 class="section-title">Texto Extraído</h2>
-                <span id="textInfo" style="color: var(--text-secondary);"></span>
+                <h2 class="section-title">Texto Extraido</h2>
+                <span id="textInfo" style="color: var(--text-secondary); font-size: 0.8rem;"></span>
             </div>
             <div class="section-content">
+                <div class="text-search">
+                    <input type="text" id="searchText" placeholder="Buscar no texto..." onkeyup="searchInText()">
+                    <button class="btn btn-outline btn-sm" onclick="clearSearch()">Limpar</button>
+                </div>
                 <div class="text-viewer empty" id="textViewer">
-                    Selecione um PDF da lista acima para visualizar o texto extraído
+                    Selecione um PDF da lista acima para visualizar o texto extraido
                 </div>
             </div>
         </div>
 
-        <!-- Seção de configuração Lovable -->
+        <!-- Lovable Config Section -->
         <div class="section">
             <div class="section-header">
                 <h2 class="section-title">Enviar para Lovable</h2>
@@ -615,11 +783,14 @@
                             placeholder="https://seu-endpoint-lovable.com/api/..."
                         >
                     </div>
-                    <button class="btn btn-success" id="btnTest" onclick="testConnection()">
+                    <button class="btn btn-outline" id="btnTest" onclick="testConnection()">
                         Testar
                     </button>
-                    <button class="btn btn-secondary" id="btnSend" onclick="sendToLovable()" disabled>
-                        Enviar PDFs
+                    <button class="btn btn-success" id="btnSendNew" onclick="sendToLovable(true)" disabled>
+                        Enviar Novos
+                    </button>
+                    <button class="btn btn-secondary" id="btnSendAll" onclick="sendToLovable(false)" disabled>
+                        Enviar Todos
                     </button>
                 </div>
                 <div class="send-results" id="sendResults"></div>
@@ -627,7 +798,7 @@
         </div>
     </div>
 
-    <!-- Modal de loading -->
+    <!-- Loading Modal -->
     <div class="modal-overlay" id="loadingModal">
         <div class="modal">
             <div class="spinner" style="margin: 0 auto 1rem;"></div>
@@ -637,11 +808,13 @@
     </div>
 
     <script>
-        // Estado da aplicação
+        // State
         let pdfs = [];
         let selectedPdfIndex = null;
+        let currentFilter = 'todos';
+        let originalText = '';
 
-        // Elementos DOM
+        // DOM Elements
         const statusIndicator = document.getElementById('statusIndicator');
         const statusText = document.getElementById('statusText');
         const progressContainer = document.getElementById('progressContainer');
@@ -654,118 +827,165 @@
         const loadingTitle = document.getElementById('loadingTitle');
         const loadingText = document.getElementById('loadingText');
 
-        // Elementos de estatísticas
+        // Stats elements
         const statPdfs = document.getElementById('statPdfs');
+        const statNovos = document.getElementById('statNovos');
         const statPaginas = document.getElementById('statPaginas');
         const statCaracteres = document.getElementById('statCaracteres');
         const statPalavras = document.getElementById('statPalavras');
 
-        // Botões
+        // Sync elements
+        const lastSync = document.getElementById('lastSync');
+        const syncMode = document.getElementById('syncMode');
+        const historyTotal = document.getElementById('historyTotal');
+        const newCount = document.getElementById('newCount');
+
+        // Buttons
         const btnScrape = document.getElementById('btnScrape');
+        const btnForce = document.getElementById('btnForce');
         const btnClear = document.getElementById('btnClear');
         const btnTest = document.getElementById('btnTest');
-        const btnSend = document.getElementById('btnSend');
+        const btnSendNew = document.getElementById('btnSendNew');
+        const btnSendAll = document.getElementById('btnSendAll');
 
-        /**
-         * Atualiza o status na interface
-         */
+        // Utility functions
         function updateStatus(text, type = 'normal') {
             statusText.textContent = text;
             statusIndicator.className = 'status-indicator';
-            if (type === 'loading') {
-                statusIndicator.classList.add('loading');
-            } else if (type === 'error') {
-                statusIndicator.classList.add('error');
-            }
+            if (type === 'loading') statusIndicator.classList.add('loading');
+            else if (type === 'error') statusIndicator.classList.add('error');
         }
 
-        /**
-         * Mostra/oculta barra de progresso
-         */
         function showProgress(show, percent = 0) {
             progressContainer.style.display = show ? 'block' : 'none';
             progressBar.style.width = `${percent}%`;
         }
 
-        /**
-         * Mostra/oculta modal de loading
-         */
         function showLoading(show, title = 'Processando...', text = '') {
             loadingModal.classList.toggle('active', show);
             loadingTitle.textContent = title;
             loadingText.textContent = text;
         }
 
-        /**
-         * Atualiza estatísticas na interface
-         */
-        function updateStats(stats) {
-            statPdfs.textContent = stats.pdfsSucesso || 0;
-            statPaginas.textContent = stats.totalPaginas || 0;
-            statCaracteres.textContent = formatNumber(stats.totalCaracteres || 0);
-            statPalavras.textContent = formatNumber(stats.totalPalavras || 0);
-        }
-
-        /**
-         * Formata números grandes
-         */
         function formatNumber(num) {
-            if (num >= 1000000) {
-                return (num / 1000000).toFixed(1) + 'M';
-            } else if (num >= 1000) {
-                return (num / 1000).toFixed(1) + 'K';
-            }
+            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+            if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
             return num.toString();
         }
 
-        /**
-         * Renderiza lista de PDFs
-         */
+        function formatDate(dateStr) {
+            if (!dateStr) return '-';
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('pt-BR') + ' ' + date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        // Update sync status
+        async function loadSyncStatus() {
+            try {
+                const response = await fetch('/api/sync-status');
+                const result = await response.json();
+
+                if (result.success) {
+                    lastSync.textContent = formatDate(result.status.ultimaSync);
+                    syncMode.textContent = result.status.primeiraExecucao ? 'COMPLETO' : 'INCREMENTAL';
+                    historyTotal.textContent = result.resumo.totalPdfs || 0;
+                }
+            } catch (error) {
+                console.error('Erro ao carregar status:', error);
+            }
+        }
+
+        // Update stats
+        function updateStats(stats) {
+            statPdfs.textContent = stats.pdfsSucesso || 0;
+            statNovos.textContent = stats.pdfsNovos || 0;
+            statPaginas.textContent = stats.totalPaginas || 0;
+            statCaracteres.textContent = formatNumber(stats.totalCaracteres || 0);
+            statPalavras.textContent = formatNumber(stats.totalPalavras || 0);
+
+            newCount.textContent = stats.pdfsNovos || 0;
+
+            // Update filter counts
+            document.getElementById('countTodos').textContent = pdfs.length;
+            document.getElementById('countNovos').textContent = pdfs.filter(p => p.ehNovo).length;
+            document.getElementById('countJaColetados').textContent = pdfs.filter(p => !p.ehNovo).length;
+        }
+
+        // Set filter
+        function setFilter(filter) {
+            currentFilter = filter;
+            document.querySelectorAll('.filter-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.filter === filter);
+            });
+            renderPdfList();
+        }
+
+        // Render PDF list
         function renderPdfList() {
-            if (pdfs.length === 0) {
+            let filteredPdfs = pdfs;
+
+            if (currentFilter === 'novos') {
+                filteredPdfs = pdfs.filter(p => p.ehNovo === true);
+            } else if (currentFilter === 'jaColetados') {
+                filteredPdfs = pdfs.filter(p => p.ehNovo === false);
+            }
+
+            if (filteredPdfs.length === 0) {
                 pdfList.innerHTML = `
                     <div class="empty-state">
                         <div class="empty-state-icon">📄</div>
-                        <p>Nenhum PDF coletado ainda.</p>
-                        <p>Clique em "Scrape & Extract" para iniciar.</p>
+                        <p>${pdfs.length === 0 ? 'Nenhum PDF coletado ainda.' : 'Nenhum PDF neste filtro.'}</p>
+                        ${pdfs.length === 0 ? '<p>Clique em "Scrape & Extract" para iniciar.</p>' : ''}
                     </div>
                 `;
-                btnClear.disabled = true;
-                btnSend.disabled = true;
+                btnClear.disabled = pdfs.length === 0;
+                updateSendButtons();
                 return;
             }
 
             btnClear.disabled = false;
-            btnSend.disabled = !document.getElementById('lovableEndpoint').value;
+            updateSendButtons();
 
-            pdfList.innerHTML = pdfs.map((pdf, index) => `
-                <div class="pdf-item ${selectedPdfIndex === index ? 'active' : ''}"
-                     onclick="selectPdf(${index})">
-                    <div class="pdf-icon">📄</div>
-                    <div class="pdf-info">
-                        <div class="pdf-name">${pdf.nomeArquivo}</div>
-                        <div class="pdf-meta">
-                            <span>${pdf.data || 'Data não identificada'}</span>
-                            <span>${pdf.numPaginas || 0} págs</span>
-                            <span>${formatNumber(pdf.numCaracteres || 0)} chars</span>
-                            <span>${pdf.tamanhoFormatado || '0 B'}</span>
+            pdfList.innerHTML = filteredPdfs.map((pdf, idx) => {
+                const originalIndex = pdfs.indexOf(pdf);
+                return `
+                    <div class="pdf-item ${selectedPdfIndex === originalIndex ? 'active' : ''}"
+                         onclick="selectPdf(${originalIndex})">
+                        <div class="pdf-icon">
+                            📄
+                            ${pdf.ehNovo ? '<span class="badge-new">N</span>' : ''}
                         </div>
+                        <div class="pdf-info">
+                            <div class="pdf-name">${pdf.nomeArquivo}</div>
+                            <div class="pdf-meta">
+                                <span>${pdf.data || '-'}</span>
+                                <span>${pdf.numPaginas || 0} pags</span>
+                                <span>${formatNumber(pdf.numCaracteres || 0)} chars</span>
+                            </div>
+                        </div>
+                        <span class="pdf-status ${pdf.ehNovo ? 'status-new' : 'status-existing'}">
+                            ${pdf.ehNovo ? 'NOVO' : 'JA COLETADO'}
+                        </span>
                     </div>
-                    <span class="pdf-status ${pdf.statusExtracao === 'sucesso' ? 'status-success' : 'status-error'}">
-                        ${pdf.statusExtracao === 'sucesso' ? 'OK' : 'ERRO'}
-                    </span>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
-        /**
-         * Seleciona um PDF para visualização
-         */
+        function updateSendButtons() {
+            const hasEndpoint = document.getElementById('lovableEndpoint').value;
+            const hasNewPdfs = pdfs.some(p => p.ehNovo && p.statusExtracao === 'sucesso');
+            const hasAnyPdfs = pdfs.some(p => p.statusExtracao === 'sucesso');
+
+            btnSendNew.disabled = !hasEndpoint || !hasNewPdfs;
+            btnSendAll.disabled = !hasEndpoint || !hasAnyPdfs;
+        }
+
+        // Select PDF
         async function selectPdf(index) {
             selectedPdfIndex = index;
             renderPdfList();
 
-            updateStatus('Carregando texto do PDF...', 'loading');
+            updateStatus('Carregando texto...', 'loading');
 
             try {
                 const response = await fetch(`/api/pdfs/${index}`);
@@ -773,34 +993,59 @@
 
                 if (result.success && result.data.texto) {
                     textViewer.classList.remove('empty');
-                    textViewer.textContent = result.data.texto;
-                    textInfo.textContent = `${result.data.nomeArquivo} - ${result.data.numCaracteres} caracteres`;
+                    originalText = result.data.texto;
+                    textViewer.textContent = originalText;
+                    textInfo.textContent = `${result.data.nomeArquivo} - ${formatNumber(result.data.numCaracteres)} caracteres`;
                 } else {
                     textViewer.classList.add('empty');
-                    textViewer.textContent = 'Não foi possível extrair texto deste PDF.';
+                    originalText = '';
+                    textViewer.textContent = result.data.statusExtracao === 'ja_coletado'
+                        ? 'Este PDF ja foi coletado anteriormente. Execute com "Forcar Coleta Completa" para re-extrair.'
+                        : 'Nao foi possivel extrair texto deste PDF.';
                     textInfo.textContent = '';
                 }
 
                 updateStatus('PDF carregado');
             } catch (error) {
                 textViewer.classList.add('empty');
-                textViewer.textContent = 'Erro ao carregar texto do PDF.';
-                updateStatus('Erro ao carregar PDF', 'error');
+                textViewer.textContent = 'Erro ao carregar texto.';
+                updateStatus('Erro', 'error');
             }
         }
 
-        /**
-         * Executa scraping e extração
-         */
-        async function scrapeAndExtract() {
+        // Search in text
+        function searchInText() {
+            const query = document.getElementById('searchText').value.toLowerCase();
+
+            if (!query || !originalText) {
+                textViewer.textContent = originalText;
+                return;
+            }
+
+            const regex = new RegExp(`(${query})`, 'gi');
+            const highlighted = originalText.replace(regex, '<span class="highlight">$1</span>');
+            textViewer.innerHTML = highlighted;
+        }
+
+        function clearSearch() {
+            document.getElementById('searchText').value = '';
+            textViewer.textContent = originalText;
+        }
+
+        // Scrape and Extract
+        async function scrapeAndExtract(force = false) {
             btnScrape.disabled = true;
-            showLoading(true, 'Coletando PDFs...', 'Acessando site da ARTESP e extraindo texto dos PDFs.');
-            updateStatus('Coletando PDFs da ARTESP...', 'loading');
+            btnForce.disabled = true;
+
+            const modeText = force ? 'COMPLETA (ignorando historico)' : 'INCREMENTAL';
+            showLoading(true, `Coleta ${modeText}...`, 'Acessando site da ARTESP e extraindo texto dos PDFs.');
+            updateStatus(`Coletando PDFs (${modeText})...`, 'loading');
             showProgress(true, 10);
 
             try {
                 showProgress(true, 30);
-                const response = await fetch('/api/scrape-and-extract', {
+                const url = force ? '/api/scrape-and-extract?force=true' : '/api/scrape-and-extract';
+                const response = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' }
                 });
@@ -811,69 +1056,97 @@
                 if (result.success) {
                     pdfs = result.data;
                     updateStats(result.estatisticas);
+
+                    if (result.sincronizacao) {
+                        historyTotal.textContent = result.sincronizacao.totalNoHistorico || 0;
+                        lastSync.textContent = formatDate(result.sincronizacao.ultimaSync);
+                    }
+
+                    syncMode.textContent = result.modo || 'INCREMENTAL';
+
                     renderPdfList();
                     showProgress(true, 100);
-                    updateStatus(`${result.estatisticas.pdfsSucesso} PDF(s) coletado(s) com sucesso!`);
+                    updateStatus(result.message);
 
-                    // Seleciona primeiro PDF automaticamente
-                    if (pdfs.length > 0) {
-                        selectPdf(0);
+                    if (pdfs.length > 0 && pdfs.some(p => p.statusExtracao === 'sucesso')) {
+                        selectPdf(pdfs.findIndex(p => p.statusExtracao === 'sucesso'));
                     }
                 } else {
                     throw new Error(result.error || 'Erro desconhecido');
                 }
             } catch (error) {
                 updateStatus(`Erro: ${error.message}`, 'error');
-                console.error('Erro no scraping:', error);
+                console.error('Erro:', error);
             } finally {
                 btnScrape.disabled = false;
+                btnForce.disabled = false;
                 showLoading(false);
                 setTimeout(() => showProgress(false), 1000);
             }
         }
 
-        /**
-         * Limpa PDFs da memória
-         */
-        async function clearPdfs() {
-            if (!confirm('Tem certeza que deseja limpar todos os PDFs?')) {
+        // Reset history
+        async function resetHistory() {
+            if (!confirm('Tem certeza que deseja resetar o historico? A proxima coleta sera COMPLETA.')) {
                 return;
             }
 
             try {
-                const response = await fetch('/api/pdfs', { method: 'DELETE' });
+                const response = await fetch('/api/sync-reset', { method: 'POST' });
                 const result = await response.json();
 
-                pdfs = [];
-                selectedPdfIndex = null;
-                updateStats({ pdfsSucesso: 0, totalPaginas: 0, totalCaracteres: 0, totalPalavras: 0 });
-                renderPdfList();
+                if (result.success) {
+                    pdfs = [];
+                    selectedPdfIndex = null;
+                    updateStats({ pdfsSucesso: 0, pdfsNovos: 0, totalPaginas: 0, totalCaracteres: 0, totalPalavras: 0 });
+                    renderPdfList();
+                    await loadSyncStatus();
 
-                textViewer.classList.add('empty');
-                textViewer.textContent = 'Selecione um PDF da lista acima para visualizar o texto extraído';
-                textInfo.textContent = '';
-                sendResults.innerHTML = '';
+                    textViewer.classList.add('empty');
+                    textViewer.textContent = 'Selecione um PDF da lista acima para visualizar o texto extraido';
+                    textInfo.textContent = '';
 
-                updateStatus('PDFs removidos da memória');
+                    updateStatus('Historico resetado. Proxima coleta sera completa.');
+                }
             } catch (error) {
                 updateStatus(`Erro: ${error.message}`, 'error');
             }
         }
 
-        /**
-         * Testa conexão com endpoint da Lovable
-         */
+        // Clear PDFs
+        async function clearPdfs() {
+            if (!confirm('Limpar PDFs da memoria?')) return;
+
+            try {
+                await fetch('/api/pdfs', { method: 'DELETE' });
+
+                pdfs = [];
+                selectedPdfIndex = null;
+                updateStats({ pdfsSucesso: 0, pdfsNovos: 0, totalPaginas: 0, totalCaracteres: 0, totalPalavras: 0 });
+                renderPdfList();
+
+                textViewer.classList.add('empty');
+                textViewer.textContent = 'Selecione um PDF da lista acima para visualizar o texto extraido';
+                textInfo.textContent = '';
+                sendResults.innerHTML = '';
+
+                updateStatus('PDFs removidos da memoria');
+            } catch (error) {
+                updateStatus(`Erro: ${error.message}`, 'error');
+            }
+        }
+
+        // Test connection
         async function testConnection() {
             const endpoint = document.getElementById('lovableEndpoint').value;
-
             if (!endpoint) {
-                alert('Por favor, insira o endpoint da Lovable.');
+                alert('Insira o endpoint da Lovable.');
                 return;
             }
 
             btnTest.disabled = true;
             btnTest.innerHTML = '<span class="spinner"></span>';
-            updateStatus('Testando conexão...', 'loading');
+            updateStatus('Testando conexao...', 'loading');
 
             try {
                 const response = await fetch('/api/test-connection', {
@@ -885,8 +1158,8 @@
                 const result = await response.json();
 
                 if (result.success) {
-                    updateStatus('Conexão OK! Endpoint válido.');
-                    btnSend.disabled = pdfs.length === 0;
+                    updateStatus('Conexao OK!');
+                    updateSendButtons();
                 } else {
                     updateStatus(`Falha: ${result.message}`, 'error');
                 }
@@ -898,39 +1171,42 @@
             }
         }
 
-        /**
-         * Envia PDFs para a Lovable
-         */
-        async function sendToLovable() {
+        // Send to Lovable
+        async function sendToLovable(onlyNew = false) {
             const endpoint = document.getElementById('lovableEndpoint').value;
-
             if (!endpoint) {
-                alert('Por favor, configure o endpoint da Lovable.');
+                alert('Configure o endpoint da Lovable.');
                 return;
             }
 
-            if (pdfs.length === 0) {
-                alert('Nenhum PDF disponível para envio. Execute o scraping primeiro.');
+            const pdfsToSend = onlyNew ? pdfs.filter(p => p.ehNovo) : pdfs;
+            if (pdfsToSend.length === 0) {
+                alert('Nenhum PDF para enviar.');
                 return;
             }
 
-            btnSend.disabled = true;
-            showLoading(true, 'Enviando para Lovable...', `Enviando ${pdfs.length} PDF(s) para processamento.`);
-            updateStatus('Enviando PDFs para Lovable...', 'loading');
+            btnSendNew.disabled = true;
+            btnSendAll.disabled = true;
+
+            const modeText = onlyNew ? 'novos' : 'todos os';
+            showLoading(true, `Enviando ${modeText} PDFs...`, `Enviando ${pdfsToSend.length} PDF(s) para Lovable.`);
+            updateStatus(`Enviando ${pdfsToSend.length} PDFs...`, 'loading');
 
             try {
                 const response = await fetch('/api/send-to-lovable', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ endpoint })
+                    body: JSON.stringify({
+                        endpoint,
+                        apenasNovos: onlyNew
+                    })
                 });
 
                 const result = await response.json();
 
-                // Renderiza resultados
                 sendResults.innerHTML = `
-                    <h4 style="margin: 1rem 0;">Resultado do Envio</h4>
-                    <p style="margin-bottom: 1rem; color: var(--text-secondary);">
+                    <h4 style="margin: 0.75rem 0 0.5rem; font-size: 0.9rem;">Resultado do Envio</h4>
+                    <p style="margin-bottom: 0.75rem; color: var(--text-secondary); font-size: 0.8rem;">
                         Sucessos: ${result.resultado.sucessos} | Erros: ${result.resultado.erros} | Pulados: ${result.resultado.pulados}
                     </p>
                     ${result.resultado.resultados.map(r => `
@@ -938,42 +1214,34 @@
                             <div class="result-icon ${r.status === 'sucesso' ? 'success' : 'error'}">
                                 ${r.status === 'sucesso' ? '✓' : '✗'}
                             </div>
-                            <div>
-                                <div>${r.nomeArquivo}</div>
-                                <div style="font-size: 0.75rem; color: var(--text-secondary);">
-                                    ${r.status === 'sucesso' ? 'Enviado com sucesso' : r.erro}
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${r.nomeArquivo}</div>
+                                <div style="font-size: 0.7rem; color: var(--text-secondary);">
+                                    ${r.status === 'sucesso' ? 'Enviado' : r.erro}
                                 </div>
                             </div>
                         </div>
                     `).join('')}
                 `;
 
-                if (result.success) {
-                    updateStatus(`${result.resultado.sucessos} PDF(s) enviado(s) com sucesso!`);
-                } else {
-                    updateStatus('Alguns PDFs não puderam ser enviados', 'error');
-                }
+                updateStatus(result.success ? `${result.resultado.sucessos} PDF(s) enviado(s)!` : 'Alguns PDFs falharam', result.success ? 'normal' : 'error');
             } catch (error) {
                 updateStatus(`Erro: ${error.message}`, 'error');
-                sendResults.innerHTML = `
-                    <div class="result-item">
-                        <div class="result-icon error">✗</div>
-                        <div>Erro ao enviar: ${error.message}</div>
-                    </div>
-                `;
             } finally {
-                btnSend.disabled = false;
+                btnSendNew.disabled = false;
+                btnSendAll.disabled = false;
                 showLoading(false);
+                updateSendButtons();
             }
         }
 
         // Event listeners
-        document.getElementById('lovableEndpoint').addEventListener('input', (e) => {
-            btnSend.disabled = !e.target.value || pdfs.length === 0;
-        });
+        document.getElementById('lovableEndpoint').addEventListener('input', updateSendButtons);
 
-        // Carrega PDFs existentes ao iniciar
-        async function loadExistingPdfs() {
+        // Load existing data on start
+        async function init() {
+            await loadSyncStatus();
+
             try {
                 const response = await fetch('/api/pdfs');
                 const result = await response.json();
@@ -982,15 +1250,14 @@
                     pdfs = result.data;
                     updateStats(result.estatisticas);
                     renderPdfList();
-                    updateStatus(`${result.data.length} PDF(s) em memória`);
+                    updateStatus(`${result.data.length} PDF(s) em memoria`);
                 }
             } catch (error) {
                 console.error('Erro ao carregar PDFs:', error);
             }
         }
 
-        // Inicializa
-        loadExistingPdfs();
+        init();
     </script>
 </body>
 </html>

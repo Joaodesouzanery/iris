@@ -1,9 +1,15 @@
 /**
  * Serviço de Extração de Texto de PDFs
  * Responsável por extrair texto de buffers de PDF usando pdf-parse
+ *
+ * Inclui:
+ * - Tratamento robusto de erros
+ * - Logging detalhado
+ * - Preservação de metadados
  */
 
 const pdfParse = require('pdf-parse');
+const logger = require('./logger');
 
 /**
  * Extrai texto de um buffer de PDF
@@ -12,10 +18,15 @@ const pdfParse = require('pdf-parse');
  * @returns {Promise<Object>} Objeto com texto extraído e metadados
  */
 async function extractText(pdfBuffer, nomeArquivo = 'arquivo.pdf') {
+    const startTime = Date.now();
     console.log(`[Extractor] Iniciando extração de texto: ${nomeArquivo}`);
 
     if (!pdfBuffer || pdfBuffer.length === 0) {
-        throw new Error('Buffer do PDF está vazio');
+        const erro = new Error('Buffer do PDF está vazio');
+        await logger.logError(logger.OPERATION_TYPES.EXTRACT, erro, {
+            arquivo: nomeArquivo
+        });
+        throw erro;
     }
 
     try {
@@ -32,11 +43,17 @@ async function extractText(pdfBuffer, nomeArquivo = 'arquivo.pdf') {
         // Limpa e formata o texto
         const textoLimpo = limparTexto(data.text);
 
+        // Detecta se o PDF tem texto selecionável ou é escaneado
+        const ehEscaneado = detectarPDFEscaneado(textoLimpo, data.numpages);
+
+        const duracao = ((Date.now() - startTime) / 1000).toFixed(2);
+
         const resultado = {
             texto: textoLimpo,
             numPaginas: data.numpages,
             numCaracteres: textoLimpo.length,
             numPalavras: contarPalavras(textoLimpo),
+            ehEscaneado: ehEscaneado,
             info: {
                 titulo: data.info?.Title || null,
                 autor: data.info?.Author || null,
@@ -45,20 +62,57 @@ async function extractText(pdfBuffer, nomeArquivo = 'arquivo.pdf') {
                 produtor: data.info?.Producer || null,
                 dataCriacao: data.info?.CreationDate || null,
                 dataModificacao: data.info?.ModDate || null
-            }
+            },
+            duracao: `${duracao}s`
         };
 
         console.log(`[Extractor] Extração concluída: ${nomeArquivo}`);
         console.log(`[Extractor] - Páginas: ${resultado.numPaginas}`);
         console.log(`[Extractor] - Caracteres: ${resultado.numCaracteres}`);
         console.log(`[Extractor] - Palavras: ${resultado.numPalavras}`);
+        console.log(`[Extractor] - PDF escaneado: ${ehEscaneado ? 'Sim (pode ter pouco texto)' : 'Não'}`);
+        console.log(`[Extractor] - Duração: ${duracao}s`);
+
+        await logger.logSuccess(logger.OPERATION_TYPES.EXTRACT, {
+            arquivo: nomeArquivo,
+            paginas: resultado.numPaginas,
+            caracteres: resultado.numCaracteres,
+            palavras: resultado.numPalavras,
+            ehEscaneado,
+            duracao: `${duracao}s`
+        });
 
         return resultado;
 
     } catch (error) {
+        const duracao = ((Date.now() - startTime) / 1000).toFixed(2);
+
+        await logger.logError(logger.OPERATION_TYPES.EXTRACT, error, {
+            arquivo: nomeArquivo,
+            tamanhoBuffer: pdfBuffer.length,
+            duracao: `${duracao}s`
+        });
+
         console.error(`[Extractor] Erro ao extrair texto de ${nomeArquivo}:`, error.message);
         throw new Error(`Falha na extração de texto de ${nomeArquivo}: ${error.message}`);
     }
+}
+
+/**
+ * Detecta se um PDF é provavelmente escaneado (imagem)
+ * @param {string} texto - Texto extraído
+ * @param {number} numPaginas - Número de páginas
+ * @returns {boolean} true se parecer ser escaneado
+ */
+function detectarPDFEscaneado(texto, numPaginas) {
+    if (!texto || numPaginas === 0) return true;
+
+    // Média de caracteres por página
+    const mediaCaracteresPorPagina = texto.length / numPaginas;
+
+    // PDFs escaneados geralmente têm muito pouco texto
+    // Uma página típica com texto tem pelo menos 500-1000 caracteres
+    return mediaCaracteresPorPagina < 100;
 }
 
 /**
@@ -70,8 +124,11 @@ function limparTexto(texto) {
     if (!texto) return '';
 
     return texto
-        // Remove caracteres de controle exceto quebras de linha
-        .replace(/[\x00-\x09\x0B\x0C\x0E-\x1F\x7F]/g, '')
+        // Remove caracteres de controle exceto quebras de linha e tabs
+        .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
+        // Normaliza diferentes tipos de quebra de linha
+        .replace(/\r\n/g, '\n')
+        .replace(/\r/g, '\n')
         // Normaliza múltiplas quebras de linha para no máximo duas
         .replace(/\n{3,}/g, '\n\n')
         // Remove espaços em excesso no início/fim de cada linha
@@ -97,19 +154,42 @@ function contarPalavras(texto) {
 /**
  * Extrai texto de múltiplos PDFs
  * @param {Array} pdfsComBuffer - Array de objetos com buffer e metadados
+ * @param {Function} onProgress - Callback de progresso (opcional)
  * @returns {Promise<Array>} Array de objetos com texto extraído
  */
-async function extractFromMultiple(pdfsComBuffer) {
+async function extractFromMultiple(pdfsComBuffer, onProgress = null) {
     console.log(`[Extractor] Iniciando extração de ${pdfsComBuffer.length} PDFs...`);
+
+    await logger.logStart(logger.OPERATION_TYPES.EXTRACT, {
+        totalPdfs: pdfsComBuffer.length
+    });
+
     const resultados = [];
+    const startTime = Date.now();
 
     for (let i = 0; i < pdfsComBuffer.length; i++) {
         const pdf = pdfsComBuffer[i];
         console.log(`[Extractor] Processando ${i + 1}/${pdfsComBuffer.length}: ${pdf.nomeArquivo}`);
 
+        // Callback de progresso
+        if (onProgress) {
+            onProgress({
+                atual: i + 1,
+                total: pdfsComBuffer.length,
+                arquivo: pdf.nomeArquivo,
+                percentual: Math.round(((i + 1) / pdfsComBuffer.length) * 100)
+            });
+        }
+
         // Se o PDF teve erro no download, pula
         if (pdf.status === 'erro' || !pdf.buffer) {
             console.warn(`[Extractor] Pulando ${pdf.nomeArquivo} - PDF com erro no download`);
+
+            await logger.log(logger.OPERATION_TYPES.EXTRACT, logger.STATUS.SKIPPED, {
+                arquivo: pdf.nomeArquivo,
+                motivo: 'PDF com erro no download'
+            });
+
             resultados.push({
                 ...pdf,
                 texto: null,
@@ -137,14 +217,19 @@ async function extractFromMultiple(pdfsComBuffer) {
                 tamanhoFormatado: pdf.tamanhoFormatado,
                 status: pdf.status,
                 erro: pdf.erro,
+                ehNovo: pdf.ehNovo,
+                hash: pdf.hash,
+                downloadedAt: pdf.downloadedAt,
                 // Dados da extração
                 texto: extracao.texto,
                 numPaginas: extracao.numPaginas,
                 numCaracteres: extracao.numCaracteres,
                 numPalavras: extracao.numPalavras,
+                ehEscaneado: extracao.ehEscaneado,
                 info: extracao.info,
                 statusExtracao: 'sucesso',
-                erroExtracao: null
+                erroExtracao: null,
+                extractedAt: new Date().toISOString()
             });
         } catch (error) {
             console.error(`[Extractor] Falha ao extrair ${pdf.nomeArquivo}:`, error.message);
@@ -160,21 +245,40 @@ async function extractFromMultiple(pdfsComBuffer) {
                 tamanhoFormatado: pdf.tamanhoFormatado,
                 status: pdf.status,
                 erro: pdf.erro,
+                ehNovo: pdf.ehNovo,
+                hash: pdf.hash,
+                downloadedAt: pdf.downloadedAt,
                 // Dados da extração (erro)
                 texto: null,
                 numPaginas: 0,
                 numCaracteres: 0,
                 numPalavras: 0,
+                ehEscaneado: false,
                 info: null,
                 statusExtracao: 'erro',
-                erroExtracao: error.message
+                erroExtracao: error.message,
+                extractedAt: null
             });
         }
     }
 
+    const duracao = ((Date.now() - startTime) / 1000).toFixed(2);
     const sucessos = resultados.filter(r => r.statusExtracao === 'sucesso').length;
     const erros = resultados.filter(r => r.statusExtracao === 'erro').length;
-    console.log(`[Extractor] Extração concluída: ${sucessos} sucesso(s), ${erros} erro(s)`);
+    const totalCaracteres = resultados.reduce((sum, r) => sum + (r.numCaracteres || 0), 0);
+
+    console.log(`[Extractor] Extração concluída em ${duracao}s:`);
+    console.log(`[Extractor] - Sucessos: ${sucessos}`);
+    console.log(`[Extractor] - Erros: ${erros}`);
+    console.log(`[Extractor] - Total de caracteres: ${totalCaracteres}`);
+
+    await logger.logSuccess(logger.OPERATION_TYPES.EXTRACT, {
+        mensagem: `${sucessos} PDFs extraídos com sucesso`,
+        sucessos,
+        erros,
+        totalCaracteres,
+        duracao: `${duracao}s`
+    });
 
     return resultados;
 }
@@ -188,6 +292,8 @@ function gerarEstatisticas(pdfsProcessados) {
     const totalPDFs = pdfsProcessados.length;
     const pdfsSucesso = pdfsProcessados.filter(p => p.statusExtracao === 'sucesso');
     const pdfsErro = pdfsProcessados.filter(p => p.statusExtracao === 'erro');
+    const pdfsNovos = pdfsProcessados.filter(p => p.ehNovo === true);
+    const pdfsJaColetados = pdfsProcessados.filter(p => p.ehNovo === false);
 
     const totalPaginas = pdfsSucesso.reduce((sum, p) => sum + (p.numPaginas || 0), 0);
     const totalCaracteres = pdfsSucesso.reduce((sum, p) => sum + (p.numCaracteres || 0), 0);
@@ -198,6 +304,8 @@ function gerarEstatisticas(pdfsProcessados) {
         totalPDFs,
         pdfsSucesso: pdfsSucesso.length,
         pdfsErro: pdfsErro.length,
+        pdfsNovos: pdfsNovos.length,
+        pdfsJaColetados: pdfsJaColetados.length,
         totalPaginas,
         totalCaracteres,
         totalPalavras,
@@ -219,5 +327,6 @@ module.exports = {
     extractFromMultiple,
     limparTexto,
     contarPalavras,
-    gerarEstatisticas
+    gerarEstatisticas,
+    detectarPDFEscaneado
 };
