@@ -573,7 +573,7 @@ app.get('/', (req, res) => {
 });
 
 // Inicia servidor
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
     console.log('='.repeat(60));
     console.log('  ARTESP PDF Collector - Servidor Iniciado');
     console.log('  Sistema de Sincronização Inteligente');
@@ -601,6 +601,31 @@ app.listen(PORT, () => {
     console.log('    Força coleta completa ignorando histórico');
     console.log('='.repeat(60));
 });
+
+// Graceful shutdown
+const gracefulShutdown = async (signal) => {
+    console.log(`\n[Server] Recebido ${signal}. Iniciando shutdown graceful...`);
+
+    await logger.log(logger.OPERATION_TYPES.SYSTEM, logger.STATUS.INFO, {
+        mensagem: `Shutdown iniciado (${signal})`,
+        pdfsEmMemoria: pdfsProcessados.length
+    });
+
+    server.close(async () => {
+        console.log('[Server] Servidor HTTP fechado.');
+        console.log(`[Server] ${pdfsProcessados.length} PDF(s) em memória serão descartados.`);
+        process.exit(0);
+    });
+
+    // Força saída após 10 segundos
+    setTimeout(() => {
+        console.error('[Server] Timeout no shutdown. Forçando saída...');
+        process.exit(1);
+    }, 10000);
+};
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 // Tratamento de erros não capturados
 process.on('uncaughtException', async (error) => {

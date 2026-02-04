@@ -1013,7 +1013,7 @@
             }
         }
 
-        // Search in text
+        // Search in text (with XSS protection)
         function searchInText() {
             const query = document.getElementById('searchText').value.toLowerCase();
 
@@ -1022,9 +1022,25 @@
                 return;
             }
 
-            const regex = new RegExp(`(${query})`, 'gi');
-            const highlighted = originalText.replace(regex, '<span class="highlight">$1</span>');
-            textViewer.innerHTML = highlighted;
+            // Escape special regex characters to prevent ReDoS
+            const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+            // Split text by matches and rebuild with highlights (safe approach)
+            const regex = new RegExp(`(${escapedQuery})`, 'gi');
+            const parts = originalText.split(regex);
+
+            // Clear viewer and rebuild with safe DOM manipulation
+            textViewer.innerHTML = '';
+            parts.forEach(part => {
+                if (part.toLowerCase() === query.toLowerCase()) {
+                    const span = document.createElement('span');
+                    span.className = 'highlight';
+                    span.textContent = part;
+                    textViewer.appendChild(span);
+                } else {
+                    textViewer.appendChild(document.createTextNode(part));
+                }
+            });
         }
 
         function clearSearch() {

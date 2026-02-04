@@ -5,7 +5,14 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "node --watch server.js",
+    "cli": "node cli.js",
+    "cli:force": "node cli.js --force",
+    "cli:status": "node cli.js --status",
+    "cli:help": "node cli.js --help"
+  },
+  "bin": {
+    "artesp-collector": "./cli.js"
   },
   "keywords": [
     "artesp",
