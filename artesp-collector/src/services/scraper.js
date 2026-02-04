@@ -76,8 +76,11 @@ function isValidUrl(url) {
         new URL(url);
         return true;
     } catch {
-        // Pode ser URL relativa
-        return url.startsWith('/') || url.includes('artesp');
+        // Pode ser URL relativa ou de domínios conhecidos
+        return url.startsWith('/') ||
+               url.includes('artesp') ||
+               url.includes('cms.sp.gov.br') ||
+               url.includes('binary=true');
     }
 }
 
@@ -89,9 +92,14 @@ function isValidUrl(url) {
 function normalizeUrl(href) {
     if (!href) return null;
 
-    // Já é URL absoluta
+    // Já é URL absoluta (http ou https)
     if (href.startsWith('http://') || href.startsWith('https://')) {
         return href;
+    }
+
+    // URL relativa começando com //
+    if (href.startsWith('//')) {
+        return `https:${href}`;
     }
 
     // URL relativa
