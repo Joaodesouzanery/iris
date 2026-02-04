@@ -9,7 +9,10 @@
     "cli": "node cli.js",
     "cli:force": "node cli.js --force",
     "cli:status": "node cli.js --status",
-    "cli:help": "node cli.js --help"
+    "cli:help": "node cli.js --help",
+    "supabase": "node cli-supabase.js",
+    "supabase:force": "node cli-supabase.js --force",
+    "supabase:dry-run": "node cli-supabase.js --dry-run"
   },
   "bin": {
     "artesp-collector": "./cli.js"
