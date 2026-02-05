@@ -12,14 +12,30 @@ const axios = require('axios');
 const { getRandomUserAgent, getDelay } = require('./scraper');
 const logger = require('./logger');
 
-// Timeout para download
-const DOWNLOAD_TIMEOUT = parseInt(process.env.REQUEST_TIMEOUT) || 30000;
+// Timeout para download (aumentado para 60s)
+const DOWNLOAD_TIMEOUT = parseInt(process.env.REQUEST_TIMEOUT) || 60000;
 
 // Magic number do PDF (primeiros bytes)
 const PDF_MAGIC_NUMBER = Buffer.from([0x25, 0x50, 0x44, 0x46]); // %PDF
 
 // Tamanho máximo de PDF (50MB)
 const MAX_PDF_SIZE = 50 * 1024 * 1024;
+
+// Configuração anti-bloqueio
+const MIN_DOWNLOAD_DELAY = parseInt(process.env.MIN_DOWNLOAD_DELAY) || 5000;  // 5 segundos
+const MAX_DOWNLOAD_DELAY = parseInt(process.env.MAX_DOWNLOAD_DELAY) || 10000; // 10 segundos
+const BATCH_SIZE = 5;  // A cada 5 downloads, pausa maior
+const BATCH_DELAY = 30000;  // 30 segundos entre batches
+
+// URL base da ARTESP para Referer
+const ARTESP_BASE_URL = 'https://www.artesp.sp.gov.br/reunioes-da-diretoria-colegiada/';
+
+/**
+ * Retorna delay aleatório para download
+ */
+function getDownloadDelay() {
+    return MIN_DOWNLOAD_DELAY + Math.random() * (MAX_DOWNLOAD_DELAY - MIN_DOWNLOAD_DELAY);
+}
 
 /**
  * Função auxiliar para aguardar um tempo
@@ -67,11 +83,14 @@ function validatePDF(buffer) {
     if (!header.equals(PDF_MAGIC_NUMBER)) {
         // Verifica se é HTML (página de erro ou login)
         if (primeiros100.toLowerCase().includes('<!doctype') || primeiros100.toLowerCase().includes('<html')) {
-            resultado.motivo = 'Servidor retornou HTML ao invés de PDF (possível página de login ou erro)';
+            resultado.motivo = 'Servidor retornou HTML ao invés de PDF (CMS pode requerer sessão ou cookies)';
+            resultado.tipoErro = 'html';
         } else if (primeiros100.includes('PK')) {
             resultado.motivo = 'Arquivo parece ser um ZIP, não um PDF';
+            resultado.tipoErro = 'zip';
         } else {
             resultado.motivo = `Cabeçalho inválido: esperado "%PDF", recebido "${headerStr}"`;
+            resultado.tipoErro = 'invalid_header';
         }
         return resultado;
     }
@@ -105,25 +124,58 @@ async function downloadPDF(url, nomeArquivo = 'arquivo.pdf') {
     const userAgent = getRandomUserAgent();
 
     console.log(`[Downloader] Iniciando download: ${nomeArquivo}`);
-    console.log(`[Downloader] URL: ${url.substring(0, 80)}...`);
+    console.log(`[Downloader] URL: ${url.substring(0, 100)}...`);
 
     try {
-        const response = await axios.get(url, {
+        // Primeiro, tenta fazer uma requisição HEAD para obter a URL final após redirects
+        let finalUrl = url;
+        try {
+            const headResponse = await axios.head(url, {
+                timeout: 10000,
+                maxRedirects: 10,
+                headers: {
+                    'User-Agent': userAgent,
+                    'Referer': ARTESP_BASE_URL
+                },
+                validateStatus: () => true
+            });
+
+            // Se houve redirect, usa a URL final
+            if (headResponse.request && headResponse.request.res && headResponse.request.res.responseUrl) {
+                finalUrl = headResponse.request.res.responseUrl;
+                if (finalUrl !== url) {
+                    console.log(`[Downloader] Redirect detectado: ${finalUrl.substring(0, 80)}...`);
+                }
+            }
+        } catch (headError) {
+            console.log(`[Downloader] HEAD request falhou, usando URL original`);
+        }
+
+        // Aguarda um pequeno delay antes do download efetivo
+        await sleep(1000 + Math.random() * 2000);
+
+        const response = await axios.get(finalUrl, {
             responseType: 'arraybuffer',
             timeout: DOWNLOAD_TIMEOUT,
             maxContentLength: MAX_PDF_SIZE,
             maxBodyLength: MAX_PDF_SIZE,
             headers: {
                 'User-Agent': userAgent,
-                'Accept': 'application/pdf,application/octet-stream,*/*',
+                'Accept': 'application/pdf,application/octet-stream,*/*;q=0.8',
                 'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
                 'Accept-Encoding': 'gzip, deflate, br',
                 'Connection': 'keep-alive',
+                'Referer': ARTESP_BASE_URL,
                 'Sec-Fetch-Dest': 'document',
-                'Sec-Fetch-Mode': 'navigate'
+                'Sec-Fetch-Mode': 'navigate',
+                'Sec-Fetch-Site': 'cross-site',
+                'Sec-Fetch-User': '?1',
+                'Upgrade-Insecure-Requests': '1',
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache'
             },
             // Segue redirects
-            maxRedirects: 5,
+            maxRedirects: 10,
             // Valida status
             validateStatus: (status) => status >= 200 && status < 400
         });
@@ -164,6 +216,40 @@ async function downloadPDF(url, nomeArquivo = 'arquivo.pdf') {
 }
 
 /**
+ * Gera variações de URL para tentar download
+ * @param {string} url - URL original
+ * @returns {Array<string>} Array de URLs para tentar
+ */
+function generateUrlVariations(url) {
+    const variations = [url];
+
+    try {
+        const parsed = new URL(url);
+
+        // Se tem binary=true, já é formato correto
+        if (!parsed.searchParams.has('binary')) {
+            // Adiciona binary=true
+            parsed.searchParams.set('binary', 'true');
+            variations.push(parsed.toString());
+        }
+
+        // Tenta adicionar download=true
+        parsed.searchParams.set('download', 'true');
+        variations.push(parsed.toString());
+
+        // Tenta forçar formato PDF
+        parsed.searchParams.set('format', 'pdf');
+        variations.push(parsed.toString());
+
+    } catch (e) {
+        // URL inválida, retorna apenas original
+    }
+
+    // Remove duplicatas
+    return [...new Set(variations)];
+}
+
+/**
  * Baixa um PDF com retry em caso de falha
  * @param {string} url - URL do PDF
  * @param {string} nomeArquivo - Nome do arquivo
@@ -173,10 +259,20 @@ async function downloadPDF(url, nomeArquivo = 'arquivo.pdf') {
 async function downloadWithRetry(url, nomeArquivo = 'arquivo.pdf', maxRetries = 3) {
     let lastError;
 
+    // Gera variações da URL para tentar
+    const urlVariations = generateUrlVariations(url);
+
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        // Usa URL diferente a cada tentativa (se disponível)
+        const currentUrl = urlVariations[Math.min(attempt - 1, urlVariations.length - 1)];
+
         try {
             console.log(`[Downloader] Tentativa ${attempt} de ${maxRetries} para ${nomeArquivo}`);
-            const buffer = await downloadPDF(url, nomeArquivo);
+            if (currentUrl !== url) {
+                console.log(`[Downloader] Tentando URL alternativa: ${currentUrl.substring(0, 80)}...`);
+            }
+
+            const buffer = await downloadPDF(currentUrl, nomeArquivo);
             return buffer;
         } catch (error) {
             lastError = error;
@@ -190,12 +286,12 @@ async function downloadWithRetry(url, nomeArquivo = 'arquivo.pdf', maxRetries = 
             });
 
             if (attempt < maxRetries) {
-                // Exponential backoff com jitter
-                const baseDelay = Math.pow(2, attempt) * 1000;
-                const jitter = Math.random() * 1000;
+                // Exponential backoff com jitter aumentado
+                const baseDelay = Math.pow(2, attempt) * 2000;  // 4s, 8s, 16s
+                const jitter = Math.random() * 3000;
                 const delay = baseDelay + jitter;
 
-                console.log(`[Downloader] Aguardando ${Math.round(delay)}ms antes da próxima tentativa...`);
+                console.log(`[Downloader] Aguardando ${Math.round(delay/1000)}s antes da próxima tentativa...`);
                 await sleep(delay);
             }
         }
@@ -260,9 +356,15 @@ async function downloadMultiplePDFs(pdfList, onProgress = null) {
 
         // Aguarda delay aleatório entre downloads (exceto no último)
         if (i < pdfList.length - 1) {
-            const delay = getDelay();
-            console.log(`[Downloader] Aguardando ${delay}ms antes do próximo download...`);
-            await sleep(delay);
+            // A cada BATCH_SIZE downloads, aguarda mais tempo para evitar bloqueio
+            if ((i + 1) % BATCH_SIZE === 0) {
+                console.log(`[Downloader] Batch de ${BATCH_SIZE} concluído. Aguardando ${BATCH_DELAY/1000}s para evitar bloqueio...`);
+                await sleep(BATCH_DELAY);
+            } else {
+                const delay = getDownloadDelay();
+                console.log(`[Downloader] Aguardando ${Math.round(delay/1000)}s antes do próximo download...`);
+                await sleep(delay);
+            }
         }
     }
 

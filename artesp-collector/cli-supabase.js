@@ -80,7 +80,6 @@ ${colors.bright}Exemplos:${colors.reset}
   node cli-supabase.js --dry-run
 
 ${colors.bright}Tabelas afetadas no Supabase:${colors.reset}
-  - reunioes_monitoradas (cria registro da reuniao)
   - deliberacoes_extraidas (armazena texto extraido)
 `);
 }
@@ -167,6 +166,7 @@ function parseFilename(filename) {
 
 /**
  * Processa e envia um PDF para o Supabase
+ * NOTA: Envia apenas para deliberacoes_extraidas (reunioes_monitoradas não é usada)
  */
 async function processPDFToSupabase(pdf, options) {
     const parsed = parseFilename(pdf.nomeArquivo);
@@ -175,7 +175,7 @@ async function processPDFToSupabase(pdf, options) {
     try {
         const existing = await querySupabase(
             'deliberacoes_extraidas',
-            `?raw_data->>hash=eq.${pdf.hash}&select=id`
+            `?link_pdf=eq.${encodeURIComponent(pdf.url)}&select=id`
         );
 
         if (existing && existing.length > 0) {
@@ -189,43 +189,17 @@ async function processPDFToSupabase(pdf, options) {
         // Continua se não encontrar
     }
 
-    // 2. Criar ou buscar reunião monitorada
-    let reuniaoId = null;
-
-    if (pdf.url) {
-        try {
-            // Verificar se já existe
-            const existingReuniao = await querySupabase(
-                'reunioes_monitoradas',
-                `?url_origem=eq.${encodeURIComponent(pdf.url)}&select=id`
-            );
-
-            if (existingReuniao && existingReuniao.length > 0) {
-                reuniaoId = existingReuniao[0].id;
-            } else {
-                // Criar nova reunião
-                const novaReuniao = await sendToSupabase('reunioes_monitoradas', {
-                    url_origem: pdf.url,
-                    link_pdf: pdf.url,
-                    numero_reuniao: parsed.numeroReuniao || pdf.reuniao,
-                    data_reuniao: parsed.dataReuniao || pdf.data,
-                    tipo: 'DELIBERACAO_PADRAO',
-                    status: 'processado',
-                    progresso: 100
-                });
-
-                if (novaReuniao && novaReuniao.length > 0) {
-                    reuniaoId = novaReuniao[0].id;
-                }
-            }
-        } catch (e) {
-            console.warn(`  Aviso: Não foi possível criar reunião monitorada: ${e.message}`);
+    // 2. Preparar dados para inserção
+    // Extrai ano do contexto ou do nome do arquivo
+    let ano = pdf.ano;
+    if (!ano) {
+        const anoMatch = pdf.nomeArquivo.match(/20(2[0-9])/);
+        if (anoMatch) {
+            ano = `20${anoMatch[1]}`;
         }
     }
 
-    // 3. Inserir deliberação
     const deliberacao = {
-        reuniao_id: reuniaoId,
         agencia: 'ARTESP',
         numero_reuniao: parsed.numeroReuniao || pdf.reuniao,
         data_reuniao: parsed.dataReuniao || pdf.data,
@@ -246,7 +220,8 @@ async function processPDFToSupabase(pdf, options) {
             num_palavras: pdf.numPalavras,
             eh_escaneado: pdf.ehEscaneado,
             data_coleta: pdf.extractedAt || new Date().toISOString(),
-            eh_novo: pdf.ehNovo
+            eh_novo: pdf.ehNovo,
+            ano: ano
         }
     };
 
@@ -261,8 +236,7 @@ async function processPDFToSupabase(pdf, options) {
 
     return {
         status: 'inserted',
-        id: inserted[0]?.id,
-        reuniao_id: reuniaoId
+        id: inserted[0]?.id
     };
 }
 
@@ -468,11 +442,9 @@ async function showStatus() {
         try {
             log('\nSupabase:', colors.bright);
 
-            const reunioes = await querySupabase('reunioes_monitoradas', '?agencia_id=is.null&select=count');
             const deliberacoes = await querySupabase('deliberacoes_extraidas', '?agencia=eq.ARTESP&select=count');
 
             console.log(`  URL: ${SUPABASE_URL.substring(0, 40)}...`);
-            console.log(`  Reunioes monitoradas: ${reunioes[0]?.count || 'N/A'}`);
             console.log(`  Deliberacoes ARTESP: ${deliberacoes[0]?.count || 'N/A'}`);
         } catch (error) {
             log(`  Erro ao consultar Supabase: ${error.message}`, colors.red);
