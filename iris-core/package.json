@@ -1,0 +1,24 @@
+{
+  "name": "iris-core",
+  "version": "1.0.0",
+  "description": "Serviços centrais do IRIS - Processamento de deliberações de agências reguladoras",
+  "main": "processador.js",
+  "scripts": {
+    "test": "node test-cli.js",
+    "analyze": "node test-cli.js --analyze",
+    "process": "node test-cli.js --process"
+  },
+  "keywords": [
+    "iris",
+    "regulacao",
+    "artesp",
+    "deliberacoes",
+    "classificacao"
+  ],
+  "author": "IRIS Platform",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.6.0",
+    "dotenv": "^16.3.1"
+  }
+}
