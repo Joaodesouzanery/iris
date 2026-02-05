@@ -287,50 +287,58 @@ function extrairDataDoContexto($, element) {
     };
 
     try {
-        // Procura no elemento pai ou irmãos por informações de data
-        const $parent = $(element).parent();
-        const $row = $(element).closest('tr, div, li, article, section');
-        const $container = $(element).closest('.item, .document, .file, [class*="delibera"]');
+        const $element = $(element);
 
-        // Texto do contexto para análise (múltiplas fontes)
-        const contexto = [
-            $row.text(),
-            $parent.text(),
-            $container.text(),
-            $(element).attr('title') || '',
-            $(element).attr('data-date') || ''
-        ].join(' ');
+        // Busca em múltiplos níveis de ancestrais (até 10 níveis acima)
+        let $current = $element;
+        let contexto = '';
 
-        // Regex para encontrar datas no formato DD/MM/YYYY ou DD/MM/YY
-        const regexData = /(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})/;
-        const matchData = contexto.match(regexData);
+        for (let i = 0; i < 10; i++) {
+            $current = $current.parent();
+            if (!$current.length) break;
 
-        if (matchData) {
-            const dia = matchData[1].padStart(2, '0');
-            const mes = matchData[2].padStart(2, '0');
-            let ano = matchData[3];
+            // Pega texto do elemento atual
+            const texto = $current.clone().children().remove().end().text().trim();
+            if (texto) contexto += ' ' + texto;
 
-            // Converte ano de 2 dígitos para 4
-            if (ano.length === 2) {
-                ano = parseInt(ano) > 50 ? `19${ano}` : `20${ano}`;
-            }
+            // Também pega texto de headings dentro do container
+            const headingText = $current.find('h1, h2, h3, h4, h5, h6, strong, .titulo, .title').first().text();
+            if (headingText) contexto += ' ' + headingText;
+
+            // Pega todo o texto do container para garantir
+            contexto += ' ' + $current.text();
+        }
+
+        // Adiciona atributos do próprio link
+        contexto += ' ' + ($element.attr('title') || '');
+        contexto += ' ' + ($element.attr('data-date') || '');
+
+        // Regex para encontrar datas no formato DD/MM/YYYY
+        const regexData = /(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](202[56])/g;
+        const matches = [...contexto.matchAll(regexData)];
+
+        if (matches.length > 0) {
+            // Pega a primeira data de 2025 ou 2026
+            const match = matches[0];
+            const dia = match[1].padStart(2, '0');
+            const mes = match[2].padStart(2, '0');
+            const ano = match[3];
 
             resultado.dataCompleta = `${dia}/${mes}/${ano}`;
             resultado.ano = ano;
         }
 
-        // Regex para encontrar número da reunião (múltiplos formatos)
-        const regexReuniao = /(\d+)[ªº]?\s*reuni[aã]o|reuni[aã]o\s*(?:n[°º.]?\s*)?(\d+)|RD\s*(\d+)|(\d+)[ªº]\s*RD/i;
+        // Regex para encontrar número da reunião
+        const regexReuniao = /(\d{3,4})[ªº]?\s*(?:reuni[aã]o|extraordin[aá]ria)/i;
         const matchReuniao = contexto.match(regexReuniao);
 
         if (matchReuniao) {
-            const numReuniao = matchReuniao[1] || matchReuniao[2] || matchReuniao[3] || matchReuniao[4];
-            resultado.reuniao = `Reunião ${numReuniao}`;
+            resultado.reuniao = `Reunião ${matchReuniao[1]}`;
         }
 
-        // Se não encontrou ano no formato de data, procura ano isolado
+        // Se não encontrou ano na data, procura ano isolado
         if (!resultado.ano) {
-            const regexAno = /(2025|2026)/;
+            const regexAno = /\b(202[56])\b/;
             const matchAno = contexto.match(regexAno);
             if (matchAno) {
                 resultado.ano = matchAno[1];
