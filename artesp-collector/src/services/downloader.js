@@ -58,8 +58,21 @@ function validatePDF(buffer) {
 
     // Verifica se começa com %PDF
     const header = buffer.slice(0, 4);
+    const headerStr = header.toString('utf8');
+
+    // DEBUG: Mostra primeiros bytes do arquivo
+    const primeiros100 = buffer.slice(0, 100).toString('utf8').replace(/[^\x20-\x7E]/g, '.');
+    console.log(`[Downloader] [DEBUG] Primeiros 100 bytes: "${primeiros100}"`);
+
     if (!header.equals(PDF_MAGIC_NUMBER)) {
-        resultado.motivo = 'Cabeçalho inválido - não é um PDF';
+        // Verifica se é HTML (página de erro ou login)
+        if (primeiros100.toLowerCase().includes('<!doctype') || primeiros100.toLowerCase().includes('<html')) {
+            resultado.motivo = 'Servidor retornou HTML ao invés de PDF (possível página de login ou erro)';
+        } else if (primeiros100.includes('PK')) {
+            resultado.motivo = 'Arquivo parece ser um ZIP, não um PDF';
+        } else {
+            resultado.motivo = `Cabeçalho inválido: esperado "%PDF", recebido "${headerStr}"`;
+        }
         return resultado;
     }
 
