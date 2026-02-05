@@ -157,6 +157,10 @@ async function scrapePDFLinks() {
         let linksAnalisados = 0;
         let linksIgnorados = 0;
 
+        // Contador de links com binary=true para debug
+        let linksBinaryTotal = 0;
+        let linksDeliberacaoTotal = 0;
+
         // Procura todos os links
         $('a').each((index, element) => {
             linksAnalisados++;
@@ -176,6 +180,17 @@ async function scrapePDFLinks() {
                 return;
             }
 
+            // Verifica se é um link de download (binary=true ou .pdf)
+            const isBinaryDownload = href.includes('binary=true') || href.toLowerCase().endsWith('.pdf');
+
+            if (isBinaryDownload) {
+                linksBinaryTotal++;
+                // DEBUG: Mostra primeiros 5 links PDF encontrados
+                if (linksBinaryTotal <= 5) {
+                    console.log(`[Scraper] [DEBUG] PDF Link #${linksBinaryTotal}: texto="${texto}", href=${href.substring(0, 60)}...`);
+                }
+            }
+
             // Verifica se o link atende aos critérios
             if (texto) {
                 const textoLower = texto.toLowerCase();
@@ -185,13 +200,12 @@ async function scrapePDFLinks() {
                                       textoLower.includes('deliberação') ||
                                       textoLower.includes('deliberacoes');
 
-                // Verifica se é um link de download (binary=true ou .pdf)
-                const isBinaryDownload = href.includes('binary=true') ||
-                                         href.toLowerCase().endsWith('.pdf');
-
                 if (isDeliberacao && isBinaryDownload) {
+                    linksDeliberacaoTotal++;
                     // Extrai informações adicionais do contexto
                     const dataInfo = extrairDataDoContexto($, element);
+
+                    console.log(`[Scraper] [DEBUG] Deliberação #${linksDeliberacaoTotal}: ano=${dataInfo.ano}, data=${dataInfo.dataCompleta}`);
 
                     // Filtra por anos permitidos
                     if (dataInfo.ano && ANOS_PERMITIDOS.includes(dataInfo.ano)) {
@@ -231,6 +245,8 @@ async function scrapePDFLinks() {
         console.log(`[Scraper] Análise concluída:`);
         console.log(`[Scraper] - Links analisados: ${linksAnalisados}`);
         console.log(`[Scraper] - Links ignorados: ${linksIgnorados}`);
+        console.log(`[Scraper] - Links com binary=true: ${linksBinaryTotal}`);
+        console.log(`[Scraper] - Links "Deliberações": ${linksDeliberacaoTotal}`);
         console.log(`[Scraper] - PDFs encontrados (2025-2026): ${pdfsUnicos.length}`);
         console.log(`[Scraper] - Duração: ${duracao}s`);
 
