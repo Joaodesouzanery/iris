@@ -4,8 +4,9 @@
   "description": "Sistema de coleta e extração de PDFs de deliberações da ARTESP",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node --watch server.js",
+    "start": "node server-unified.js",
+    "old": "node server.js",
+    "dev": "node --watch server-unified.js",
     "cli": "node cli.js",
     "cli:force": "node cli.js --force",
     "cli:status": "node cli.js --status",
