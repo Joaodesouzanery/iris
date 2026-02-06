@@ -1946,11 +1946,22 @@ app.get('/', (req, res) => {
 });
 
 // ============================================================================
-// PÁGINA DE MÉTRICAS
+// PÁGINA DE MÉTRICAS (serve arquivo estático)
 // ============================================================================
 
 app.get('/metricas', (req, res) => {
-    res.send(\`
+    res.sendFile(path.join(__dirname, 'public', 'metricas.html'));
+});
+
+// Código antigo da página de métricas removido - agora serve arquivo estático
+// ============================================================================
+
+/*
+Removido código inline da página de métricas.
+Agora serve: public/metricas.html
+*/
+
+/* CÓDIGO ANTIGO DESATIVADO:
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -2448,8 +2459,7 @@ app.get('/metricas', (req, res) => {
     </script>
 </body>
 </html>
-    \`);
-});
+FIM DO CÓDIGO ANTIGO DESATIVADO */
 
 // Inicia servidor
 app.listen(PORT, () => {
