@@ -585,6 +585,272 @@ app.post('/api/limpar-pdfs', (req, res) => {
 });
 
 // ============================================================================
+// API - MÉTRICAS
+// ============================================================================
+
+// Coleta todas as deliberações de todos os PDFs analisados
+function coletarTodasDeliberacoes() {
+    const todas = [];
+    for (const pdf of pdfsProcessados) {
+        if (pdf.analise && pdf.analise.deliberacoes) {
+            for (const d of pdf.analise.deliberacoes) {
+                todas.push({
+                    ...d,
+                    arquivoOrigem: pdf.nomeArquivo,
+                    dataArquivo: pdf.data
+                });
+            }
+        }
+    }
+    return todas;
+}
+
+// Métricas gerais (resumo do dashboard)
+app.get('/api/metricas/resumo', (req, res) => {
+    const deliberacoes = coletarTodasDeliberacoes();
+    const analisados = pdfsProcessados.filter(p => p.analise).length;
+
+    // Contagem por resultado
+    const deferidos = deliberacoes.filter(d => d.resultado === 'Deferido').length;
+    const indeferidos = deliberacoes.filter(d => d.resultado === 'Indeferido').length;
+
+    // Contagem por tipo (pauta interna vs externa)
+    const pautaInterna = deliberacoes.filter(d => d.classificacao === 'Pauta Interna da Agência' || d.interessado === 'ARTESP').length;
+    const pautaExterna = deliberacoes.length - pautaInterna;
+
+    // Microtemas únicos
+    const microtemas = [...new Set(deliberacoes.map(d => d.microtema).filter(m => m))];
+
+    // Diretores únicos
+    const diretoresSet = new Set();
+    deliberacoes.forEach(d => {
+        (d.votos_a_favor || []).forEach(v => diretoresSet.add(v));
+        (d.votos_contra || []).forEach(v => diretoresSet.add(v));
+    });
+
+    res.json({
+        totalPdfs: pdfsProcessados.length,
+        pdfsAnalisados: analisados,
+        percentualClassificado: pdfsProcessados.length > 0 ? Math.round((analisados / pdfsProcessados.length) * 100) : 0,
+        totalDeliberacoes: deliberacoes.length,
+        deferidos,
+        indeferidos,
+        taxaDeferimento: deliberacoes.length > 0 ? Math.round((deferidos / deliberacoes.length) * 100) : 0,
+        pautaInterna,
+        pautaExterna,
+        microtemasIdentificados: microtemas.length,
+        microtemas,
+        diretoresMapeados: diretoresSet.size,
+        diretores: [...diretoresSet],
+        ultimaAtualizacao: ultimaColeta
+    });
+});
+
+// Métricas por diretor
+app.get('/api/metricas/por-diretor', (req, res) => {
+    const deliberacoes = coletarTodasDeliberacoes();
+    const diretoresMap = {};
+
+    deliberacoes.forEach(d => {
+        const isPautaInterna = d.classificacao === 'Pauta Interna da Agência' || d.interessado === 'ARTESP';
+
+        // Votos a favor
+        (d.votos_a_favor || []).forEach(diretor => {
+            if (!diretoresMap[diretor]) {
+                diretoresMap[diretor] = {
+                    nome: diretor,
+                    totalVotos: 0,
+                    votosPleitoExterno: 0,
+                    votosPautaInterna: 0,
+                    votosDeferido: 0,
+                    votosIndeferido: 0,
+                    votosFavor: 0,
+                    votosContra: 0,
+                    temas: {}
+                };
+            }
+            diretoresMap[diretor].totalVotos++;
+            diretoresMap[diretor].votosFavor++;
+            if (isPautaInterna) {
+                diretoresMap[diretor].votosPautaInterna++;
+            } else {
+                diretoresMap[diretor].votosPleitoExterno++;
+            }
+            if (d.resultado === 'Deferido') diretoresMap[diretor].votosDeferido++;
+            if (d.resultado === 'Indeferido') diretoresMap[diretor].votosIndeferido++;
+            if (d.microtema) {
+                diretoresMap[diretor].temas[d.microtema] = (diretoresMap[diretor].temas[d.microtema] || 0) + 1;
+            }
+        });
+
+        // Votos contra
+        (d.votos_contra || []).forEach(diretor => {
+            if (!diretoresMap[diretor]) {
+                diretoresMap[diretor] = {
+                    nome: diretor,
+                    totalVotos: 0,
+                    votosPleitoExterno: 0,
+                    votosPautaInterna: 0,
+                    votosDeferido: 0,
+                    votosIndeferido: 0,
+                    votosFavor: 0,
+                    votosContra: 0,
+                    temas: {}
+                };
+            }
+            diretoresMap[diretor].totalVotos++;
+            diretoresMap[diretor].votosContra++;
+            if (isPautaInterna) {
+                diretoresMap[diretor].votosPautaInterna++;
+            } else {
+                diretoresMap[diretor].votosPleitoExterno++;
+            }
+            if (d.microtema) {
+                diretoresMap[diretor].temas[d.microtema] = (diretoresMap[diretor].temas[d.microtema] || 0) + 1;
+            }
+        });
+    });
+
+    // Calcula percentuais e ordena temas
+    const diretores = Object.values(diretoresMap).map(d => ({
+        ...d,
+        percentualPleitoExterno: d.totalVotos > 0 ? Math.round((d.votosPleitoExterno / d.totalVotos) * 100) : 0,
+        percentualPautaInterna: d.totalVotos > 0 ? Math.round((d.votosPautaInterna / d.totalVotos) * 100) : 0,
+        taxaDeferimento: d.totalVotos > 0 ? Math.round((d.votosDeferido / d.totalVotos) * 100) : 0,
+        temasOrdenados: Object.entries(d.temas)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 5)
+            .map(([tema, count]) => ({ tema, count }))
+    }));
+
+    res.json({ diretores });
+});
+
+// Métricas por tema
+app.get('/api/metricas/por-tema', (req, res) => {
+    const deliberacoes = coletarTodasDeliberacoes();
+    const temasMap = {};
+
+    deliberacoes.forEach(d => {
+        const tema = d.microtema || 'Não classificado';
+        if (!temasMap[tema]) {
+            temasMap[tema] = {
+                tema,
+                total: 0,
+                deferidos: 0,
+                indeferidos: 0,
+                porMes: {}
+            };
+        }
+        temasMap[tema].total++;
+        if (d.resultado === 'Deferido') temasMap[tema].deferidos++;
+        if (d.resultado === 'Indeferido') temasMap[tema].indeferidos++;
+
+        // Agrupa por mês (usando data do arquivo)
+        const mes = d.dataArquivo || 'Sem data';
+        temasMap[tema].porMes[mes] = (temasMap[tema].porMes[mes] || 0) + 1;
+    });
+
+    const temas = Object.values(temasMap).map(t => ({
+        ...t,
+        taxaDeferimento: t.total > 0 ? Math.round((t.deferidos / t.total) * 100) : 0,
+        taxaIndeferimento: t.total > 0 ? Math.round((t.indeferidos / t.total) * 100) : 0
+    })).sort((a, b) => b.total - a.total);
+
+    // Tema com mais deferimento
+    const temaMaisDeferido = [...temas].sort((a, b) => b.taxaDeferimento - a.taxaDeferimento)[0];
+    // Tema com mais indeferimento
+    const temaMaisIndeferido = [...temas].sort((a, b) => b.taxaIndeferimento - a.taxaIndeferimento)[0];
+
+    res.json({
+        temas,
+        temaMaisDeferido,
+        temaMaisIndeferido,
+        totalTemas: temas.length
+    });
+});
+
+// Métricas institucionais
+app.get('/api/metricas/institucional', (req, res) => {
+    const deliberacoes = coletarTodasDeliberacoes();
+
+    // Reuniões únicas
+    const reunioes = [...new Set(deliberacoes.map(d => d.reuniao_ordinaria).filter(r => r))];
+
+    // Pauta interna vs externa
+    const pautaInterna = deliberacoes.filter(d => d.classificacao === 'Pauta Interna da Agência' || d.interessado === 'ARTESP').length;
+    const pautaExterna = deliberacoes.length - pautaInterna;
+
+    res.json({
+        totalReunioes: reunioes.length,
+        reunioes: reunioes.sort((a, b) => parseInt(b) - parseInt(a)),
+        pautaInterna,
+        pautaExterna,
+        percentualPautaInterna: deliberacoes.length > 0 ? Math.round((pautaInterna / deliberacoes.length) * 100) : 0,
+        percentualPautaExterna: deliberacoes.length > 0 ? Math.round((pautaExterna / deliberacoes.length) * 100) : 0,
+        totalDeliberacoes: deliberacoes.length
+    });
+});
+
+// Métricas competitivas (análise avançada)
+app.get('/api/metricas/competitivo', (req, res) => {
+    const deliberacoes = coletarTodasDeliberacoes();
+
+    // Matriz tema x diretor x decisão
+    const matriz = {};
+    deliberacoes.forEach(d => {
+        const tema = d.microtema || 'Outros';
+        if (!matriz[tema]) matriz[tema] = {};
+
+        [...(d.votos_a_favor || []), ...(d.votos_contra || [])].forEach(diretor => {
+            if (!matriz[tema][diretor]) {
+                matriz[tema][diretor] = { deferidos: 0, indeferidos: 0, total: 0 };
+            }
+            matriz[tema][diretor].total++;
+            if (d.resultado === 'Deferido') matriz[tema][diretor].deferidos++;
+            if (d.resultado === 'Indeferido') matriz[tema][diretor].indeferidos++;
+        });
+    });
+
+    // Comparação entre diretores
+    const diretoresMap = {};
+    deliberacoes.forEach(d => {
+        [...(d.votos_a_favor || [])].forEach(diretor => {
+            if (!diretoresMap[diretor]) diretoresMap[diretor] = { favor: 0, contra: 0, total: 0 };
+            diretoresMap[diretor].favor++;
+            diretoresMap[diretor].total++;
+        });
+        [...(d.votos_contra || [])].forEach(diretor => {
+            if (!diretoresMap[diretor]) diretoresMap[diretor] = { favor: 0, contra: 0, total: 0 };
+            diretoresMap[diretor].contra++;
+            diretoresMap[diretor].total++;
+        });
+    });
+
+    const comparacaoDiretores = Object.entries(diretoresMap).map(([nome, dados]) => ({
+        nome,
+        ...dados,
+        taxaFavor: dados.total > 0 ? Math.round((dados.favor / dados.total) * 100) : 0
+    })).sort((a, b) => b.total - a.total);
+
+    res.json({
+        matrizTemaDiretor: matriz,
+        comparacaoDiretores,
+        totalDeliberacoes: deliberacoes.length
+    });
+});
+
+// Exportar todas as deliberações como JSON
+app.get('/api/metricas/exportar', (req, res) => {
+    const deliberacoes = coletarTodasDeliberacoes();
+    res.json({
+        exportadoEm: new Date().toISOString(),
+        total: deliberacoes.length,
+        deliberations: deliberacoes
+    });
+});
+
+// ============================================================================
 // INTERFACE WEB UNIFICADA
 // ============================================================================
 
@@ -1065,6 +1331,7 @@ app.get('/', (req, res) => {
             <span id="statusPdfs">0 PDFs</span>
             <span id="statusAnalisados">0 Analisados</span>
             <span id="statusMonitor" class="monitor-status" onclick="abrirPainelMonitor()">Monitor: OFF</span>
+            <a href="/metricas" style="background: linear-gradient(135deg, #c084fc, #a855f7); color: white; text-decoration: none; padding: 8px 15px; border-radius: 20px; font-weight: 600;">Metricas</a>
         </div>
     </div>
 
@@ -1676,6 +1943,512 @@ app.get('/', (req, res) => {
 </body>
 </html>
     `);
+});
+
+// ============================================================================
+// PÁGINA DE MÉTRICAS
+// ============================================================================
+
+app.get('/metricas', (req, res) => {
+    res.send(\`
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IRIS Platform - Metricas</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
+            min-height: 100vh;
+            color: #e4e4e4;
+        }
+        .header {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #333;
+        }
+        .header h1 {
+            font-size: 1.8em;
+            background: linear-gradient(90deg, #00d4ff, #00ff88);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .header nav a {
+            color: #00d4ff;
+            text-decoration: none;
+            margin-left: 20px;
+            padding: 8px 15px;
+            border-radius: 20px;
+            background: rgba(0,212,255,0.1);
+            transition: all 0.3s;
+        }
+        .header nav a:hover { background: rgba(0,212,255,0.2); }
+        .container {
+            padding: 30px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        .section-title {
+            color: #00d4ff;
+            font-size: 1.3em;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #333;
+        }
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        .metric-card {
+            background: #1a1a2e;
+            border-radius: 15px;
+            padding: 20px;
+            border-left: 4px solid #00d4ff;
+        }
+        .metric-card h3 {
+            font-size: 12px;
+            color: #888;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+        .metric-card .value {
+            font-size: 2.5em;
+            font-weight: 700;
+            color: #00d4ff;
+        }
+        .metric-card .value.green { color: #4ade80; }
+        .metric-card .value.red { color: #f87171; }
+        .metric-card .value.purple { color: #c084fc; }
+        .metric-card .subtitle {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        .chart-container {
+            background: #1a1a2e;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .chart-title {
+            color: #00d4ff;
+            font-size: 1em;
+            margin-bottom: 15px;
+        }
+        .bar-chart {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .bar-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .bar-label {
+            width: 120px;
+            font-size: 13px;
+            color: #888;
+        }
+        .bar-track {
+            flex: 1;
+            height: 24px;
+            background: #0d1117;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00d4ff, #4ade80);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 10px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .bar-fill.red { background: linear-gradient(90deg, #f87171, #fbbf24); }
+        .director-card {
+            background: #0d1117;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+        .director-name {
+            font-weight: 600;
+            color: #00d4ff;
+            margin-bottom: 10px;
+        }
+        .director-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+        .director-stat {
+            text-align: center;
+        }
+        .director-stat .label {
+            font-size: 10px;
+            color: #666;
+        }
+        .director-stat .value {
+            font-size: 1.2em;
+            font-weight: 600;
+        }
+        .pie-chart {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+        }
+        .pie-visual {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            position: relative;
+        }
+        .pie-legend {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+        }
+        .two-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 900px) {
+            .two-columns { grid-template-columns: 1fr; }
+        }
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 3px solid #333;
+            border-top-color: #00d4ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .table-container {
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #333;
+        }
+        th {
+            color: #888;
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+        td {
+            font-size: 13px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            background: #00d4ff;
+            color: #000;
+            font-weight: 600;
+        }
+        .btn:hover {
+            background: #00b8e6;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>IRIS Metricas</h1>
+        <nav>
+            <a href="/">Analise PDFs</a>
+            <a href="/metricas">Metricas</a>
+        </nav>
+    </div>
+
+    <div class="container">
+        <div id="content">
+            <div class="loading"></div>
+        </div>
+    </div>
+
+    <script>
+        async function carregarMetricas() {
+            try {
+                const [resumo, porDiretor, porTema, institucional] = await Promise.all([
+                    fetch('/api/metricas/resumo').then(r => r.json()),
+                    fetch('/api/metricas/por-diretor').then(r => r.json()),
+                    fetch('/api/metricas/por-tema').then(r => r.json()),
+                    fetch('/api/metricas/institucional').then(r => r.json())
+                ]);
+
+                renderMetricas(resumo, porDiretor, porTema, institucional);
+            } catch (e) {
+                document.getElementById('content').innerHTML =
+                    '<div class="empty-state"><p>Erro ao carregar metricas: ' + e.message + '</p></div>';
+            }
+        }
+
+        function renderMetricas(resumo, porDiretor, porTema, institucional) {
+            if (resumo.totalDeliberacoes === 0) {
+                document.getElementById('content').innerHTML = \\\`
+                    <div class="empty-state">
+                        <h2 style="color: #00d4ff; margin-bottom: 20px;">Nenhuma deliberacao analisada</h2>
+                        <p>Faca upload de PDFs e analise-os para ver as metricas.</p>
+                        <a href="/" class="btn" style="display: inline-block; margin-top: 20px; text-decoration: none;">Ir para Analise</a>
+                    </div>
+                \\\`;
+                return;
+            }
+
+            let html = '';
+
+            // SEÇÃO 1: MÉTRICAS DE VALOR REGULATÓRIO
+            html += '<h2 class="section-title">Metricas de Valor Regulatorio</h2>';
+            html += '<div class="cards-grid">';
+            html += \\\`
+                <div class="metric-card">
+                    <h3>Deliberacoes Processadas</h3>
+                    <div class="value">\\\${resumo.totalDeliberacoes}</div>
+                </div>
+                <div class="metric-card">
+                    <h3>PDFs Analisados</h3>
+                    <div class="value">\\\${resumo.pdfsAnalisados}</div>
+                    <div class="subtitle">de \\\${resumo.totalPdfs} carregados</div>
+                </div>
+                <div class="metric-card">
+                    <h3>% Classificadas</h3>
+                    <div class="value green">\\\${resumo.percentualClassificado}%</div>
+                </div>
+                <div class="metric-card">
+                    <h3>Microtemas</h3>
+                    <div class="value purple">\\\${resumo.microtemasIdentificados}</div>
+                </div>
+                <div class="metric-card">
+                    <h3>Deferidos</h3>
+                    <div class="value green">\\\${resumo.deferidos}</div>
+                    <div class="subtitle">\\\${resumo.taxaDeferimento}% do total</div>
+                </div>
+                <div class="metric-card">
+                    <h3>Indeferidos</h3>
+                    <div class="value red">\\\${resumo.indeferidos}</div>
+                </div>
+                <div class="metric-card">
+                    <h3>Diretores Mapeados</h3>
+                    <div class="value">\\\${resumo.diretoresMapeados}</div>
+                </div>
+                <div class="metric-card">
+                    <h3>Pauta Externa</h3>
+                    <div class="value">\\\${resumo.pautaExterna}</div>
+                    <div class="subtitle">pleitos de terceiros</div>
+                </div>
+            \\\`;
+            html += '</div>';
+
+            // SEÇÃO 2: DEFERIDO VS INDEFERIDO (gráfico)
+            html += '<div class="two-columns">';
+
+            // Gráfico de decisões
+            const totalDecisoes = resumo.deferidos + resumo.indeferidos;
+            const pctDeferido = totalDecisoes > 0 ? Math.round((resumo.deferidos / totalDecisoes) * 100) : 0;
+            html += \\\`
+                <div class="chart-container">
+                    <div class="chart-title">Resultado das Deliberacoes</div>
+                    <div class="bar-chart">
+                        <div class="bar-item">
+                            <span class="bar-label">Deferidos</span>
+                            <div class="bar-track">
+                                <div class="bar-fill" style="width: \\\${pctDeferido}%">\\\${resumo.deferidos}</div>
+                            </div>
+                        </div>
+                        <div class="bar-item">
+                            <span class="bar-label">Indeferidos</span>
+                            <div class="bar-track">
+                                <div class="bar-fill red" style="width: \\\${100 - pctDeferido}%">\\\${resumo.indeferidos}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            \\\`;
+
+            // Gráfico pauta interna vs externa
+            const totalPauta = institucional.pautaInterna + institucional.pautaExterna;
+            html += \\\`
+                <div class="chart-container">
+                    <div class="chart-title">Pauta Interna vs Externa</div>
+                    <div class="bar-chart">
+                        <div class="bar-item">
+                            <span class="bar-label">Pauta Externa</span>
+                            <div class="bar-track">
+                                <div class="bar-fill" style="width: \\\${institucional.percentualPautaExterna}%">\\\${institucional.pautaExterna}</div>
+                            </div>
+                        </div>
+                        <div class="bar-item">
+                            <span class="bar-label">Pauta Interna</span>
+                            <div class="bar-track">
+                                <div class="bar-fill" style="width: \\\${institucional.percentualPautaInterna}%; background: linear-gradient(90deg, #c084fc, #a855f7);">\\\${institucional.pautaInterna}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            \\\`;
+            html += '</div>';
+
+            // SEÇÃO 3: MÉTRICAS POR TEMA
+            html += '<h2 class="section-title">Metricas por Tema</h2>';
+            html += '<div class="chart-container">';
+            html += '<div class="chart-title">Temas Mais Recorrentes</div>';
+            html += '<div class="bar-chart">';
+            const maxTema = porTema.temas[0]?.total || 1;
+            porTema.temas.slice(0, 8).forEach(t => {
+                const pct = Math.round((t.total / maxTema) * 100);
+                html += \\\`
+                    <div class="bar-item">
+                        <span class="bar-label">\\\${t.tema}</span>
+                        <div class="bar-track">
+                            <div class="bar-fill" style="width: \\\${pct}%">\\\${t.total} (\\\${t.taxaDeferimento}% def)</div>
+                        </div>
+                    </div>
+                \\\`;
+            });
+            html += '</div></div>';
+
+            // Cards de tema destaque
+            if (porTema.temaMaisDeferido || porTema.temaMaisIndeferido) {
+                html += '<div class="cards-grid" style="grid-template-columns: repeat(2, 1fr);">';
+                if (porTema.temaMaisDeferido) {
+                    html += \\\`
+                        <div class="metric-card" style="border-left-color: #4ade80;">
+                            <h3>Tema com Mais Deferimento</h3>
+                            <div class="value green">\\\${porTema.temaMaisDeferido.tema}</div>
+                            <div class="subtitle">\\\${porTema.temaMaisDeferido.taxaDeferimento}% de deferimento</div>
+                        </div>
+                    \\\`;
+                }
+                if (porTema.temaMaisIndeferido) {
+                    html += \\\`
+                        <div class="metric-card" style="border-left-color: #f87171;">
+                            <h3>Tema com Mais Indeferimento</h3>
+                            <div class="value red">\\\${porTema.temaMaisIndeferido.tema}</div>
+                            <div class="subtitle">\\\${porTema.temaMaisIndeferido.taxaIndeferimento}% de indeferimento</div>
+                        </div>
+                    \\\`;
+                }
+                html += '</div>';
+            }
+
+            // SEÇÃO 4: MÉTRICAS POR DIRETOR
+            html += '<h2 class="section-title">Metricas por Diretor</h2>';
+            if (porDiretor.diretores.length === 0) {
+                html += '<div class="empty-state"><p>Nenhum diretor identificado nas deliberacoes</p></div>';
+            } else {
+                html += '<div class="table-container"><table>';
+                html += '<thead><tr><th>Diretor</th><th>Total Votos</th><th>A Favor</th><th>Contra</th><th>% Pleito Externo</th><th>Taxa Deferimento</th><th>Top Temas</th></tr></thead>';
+                html += '<tbody>';
+                porDiretor.diretores.forEach(d => {
+                    const topTemas = d.temasOrdenados.slice(0, 3).map(t => t.tema).join(', ');
+                    html += \\\`
+                        <tr>
+                            <td style="color: #00d4ff; font-weight: 600;">\\\${d.nome}</td>
+                            <td>\\\${d.totalVotos}</td>
+                            <td style="color: #4ade80;">\\\${d.votosFavor}</td>
+                            <td style="color: #f87171;">\\\${d.votosContra}</td>
+                            <td>\\\${d.percentualPleitoExterno}%</td>
+                            <td>\\\${d.taxaDeferimento}%</td>
+                            <td style="color: #888; font-size: 11px;">\\\${topTemas || '-'}</td>
+                        </tr>
+                    \\\`;
+                });
+                html += '</tbody></table></div>';
+            }
+
+            // SEÇÃO 5: MÉTRICAS INSTITUCIONAIS
+            html += '<h2 class="section-title">Metricas Institucionais</h2>';
+            html += '<div class="cards-grid" style="grid-template-columns: repeat(4, 1fr);">';
+            html += \\\`
+                <div class="metric-card">
+                    <h3>Total Reunioes</h3>
+                    <div class="value">\\\${institucional.totalReunioes}</div>
+                </div>
+                <div class="metric-card">
+                    <h3>Deliberacoes</h3>
+                    <div class="value">\\\${institucional.totalDeliberacoes}</div>
+                </div>
+                <div class="metric-card">
+                    <h3>% Pauta Externa</h3>
+                    <div class="value green">\\\${institucional.percentualPautaExterna}%</div>
+                </div>
+                <div class="metric-card">
+                    <h3>% Pauta Interna</h3>
+                    <div class="value purple">\\\${institucional.percentualPautaInterna}%</div>
+                </div>
+            \\\`;
+            html += '</div>';
+
+            // Botão de exportar
+            html += \\\`
+                <div style="text-align: center; margin-top: 40px;">
+                    <button class="btn" onclick="exportarDados()">Exportar Dados (JSON)</button>
+                </div>
+            \\\`;
+
+            document.getElementById('content').innerHTML = html;
+        }
+
+        async function exportarDados() {
+            const res = await fetch('/api/metricas/exportar');
+            const data = await res.json();
+            const json = JSON.stringify(data, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'iris_metricas_' + new Date().toISOString().split('T')[0] + '.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        carregarMetricas();
+    </script>
+</body>
+</html>
+    \`);
 });
 
 // Inicia servidor
