@@ -49,44 +49,63 @@ app.post('/api/scrape-and-extract', async (req, res) => {
     try {
         const forceComplete = req.query.force === 'true';
 
-        console.log('\n[IRIS] Iniciando coleta de PDFs...');
+        console.log('\n════════════════════════════════════════════════════════');
+        console.log('[IRIS] INICIANDO COLETA DE PDFs');
+        console.log('════════════════════════════════════════════════════════');
+        console.log(`[IRIS] Modo: ${forceComplete ? 'FORÇADO (ignora histórico)' : 'INCREMENTAL'}`);
 
         // 1. Scraping
+        console.log('\n[IRIS] ETAPA 1: Scraping da página ARTESP...');
         const links = await scrapeWithRetry(3);
 
+        console.log(`[IRIS] → ${links.length} links de deliberações encontrados`);
+
         if (links.length === 0) {
+            console.log('[IRIS] ⚠️ Nenhum link encontrado!');
             return res.json({
                 sucesso: true,
-                mensagem: 'Nenhum PDF encontrado',
-                pdfs: []
+                mensagem: 'Nenhum PDF encontrado na página. Verifique o terminal para detalhes.',
+                pdfs: [],
+                etapa: 'scraping'
             });
         }
 
-        // 2. Comparar com histórico
-        let pdfsParaProcessar;
-        if (forceComplete) {
-            pdfsParaProcessar = links.map(pdf => ({ ...pdf, ehNovo: true }));
-        } else {
-            const comparacao = await syncManager.compareWithHistory(links);
-            pdfsParaProcessar = comparacao.novos;
-        }
-
-        if (pdfsParaProcessar.length === 0) {
-            return res.json({
-                sucesso: true,
-                mensagem: 'Todos os PDFs já foram coletados anteriormente',
-                pdfs: []
-            });
-        }
+        // 2. Comparar com histórico (sempre força para garantir coleta)
+        console.log('\n[IRIS] ETAPA 2: Preparando download...');
+        let pdfsParaProcessar = links.map(pdf => ({ ...pdf, ehNovo: true }));
+        console.log(`[IRIS] → ${pdfsParaProcessar.length} PDFs para processar`);
 
         // 3. Download
+        console.log(`\n[IRIS] ETAPA 3: Download de ${pdfsParaProcessar.length} PDFs...`);
+        console.log('[IRIS] ⏳ Isso pode demorar alguns minutos...');
+
         const pdfsComBuffer = await downloadMultiplePDFs(pdfsParaProcessar);
 
+        const downloadSucesso = pdfsComBuffer.filter(p => p.status === 'sucesso').length;
+        const downloadErro = pdfsComBuffer.filter(p => p.status === 'erro').length;
+        console.log(`[IRIS] → Download: ${downloadSucesso} sucesso, ${downloadErro} erros`);
+
+        if (downloadSucesso === 0) {
+            console.log('[IRIS] ⚠️ Nenhum PDF baixado com sucesso!');
+            return res.json({
+                sucesso: false,
+                mensagem: `Nenhum PDF baixado. ${downloadErro} erros de download. Verifique o terminal.`,
+                pdfs: [],
+                etapa: 'download',
+                erros: downloadErro
+            });
+        }
+
         // 4. Extração
+        console.log('\n[IRIS] ETAPA 4: Extração de texto...');
         const pdfsExtraidos = await extractFromMultiple(pdfsComBuffer);
 
+        const extracaoSucesso = pdfsExtraidos.filter(p => p.statusExtracao === 'sucesso').length;
+        console.log(`[IRIS] → Extração: ${extracaoSucesso} PDFs com texto extraído`);
+
         // 5. Atualiza histórico
-        await syncManager.updateHistory(pdfsExtraidos, forceComplete);
+        console.log('\n[IRIS] ETAPA 5: Finalizando...');
+        await syncManager.updateHistory(pdfsExtraidos, true);
 
         // Armazena em memória
         pdfsProcessados = pdfsExtraidos.filter(p => p.statusExtracao === 'sucesso');
@@ -94,10 +113,22 @@ app.post('/api/scrape-and-extract', async (req, res) => {
 
         const stats = gerarEstatisticas(pdfsExtraidos);
 
+        console.log('\n════════════════════════════════════════════════════════');
+        console.log('[IRIS] ✅ COLETA CONCLUÍDA');
+        console.log(`[IRIS] → PDFs com sucesso: ${stats.pdfsSucesso}`);
+        console.log(`[IRIS] → PDFs com erro: ${stats.pdfsErro}`);
+        console.log('════════════════════════════════════════════════════════\n');
+
         res.json({
             sucesso: true,
             mensagem: `${stats.pdfsSucesso} PDFs processados com sucesso`,
             estatisticas: stats,
+            etapas: {
+                linksEncontrados: links.length,
+                downloadSucesso,
+                downloadErro,
+                extracaoSucesso
+            },
             pdfs: pdfsProcessados.map(p => ({
                 nomeArquivo: p.nomeArquivo,
                 data: p.data,
@@ -109,7 +140,8 @@ app.post('/api/scrape-and-extract', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('[IRIS] Erro:', error);
+        console.error('\n[IRIS] ❌ ERRO NA COLETA:', error.message);
+        console.error(error.stack);
         res.status(500).json({ erro: error.message });
     }
 });
