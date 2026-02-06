@@ -5,53 +5,77 @@
  * e retorna dados estruturados em formato JSON
  */
 
-// Padrões para identificar deliberações
+// Padrões para identificar deliberações (expandidos)
 const PADROES = {
-    // Número da deliberação: DEL-001-1234/2025, DELIBERAÇÃO Nº 001, etc.
+    // Número da deliberação - padrões expandidos
     numeroDeliberacao: [
         /DELIBERA[ÇC][ÃA]O\s*(?:N[ºo°]?\s*)?(\d+[-\/]\d+[-\/]?\d*)/gi,
         /DEL[-\s]?(\d+[-\/]\d+[-\/]?\d*)/gi,
-        /N[ºo°]\s*(\d+[-\/]\d+[-\/]?\d*)/gi
+        /N[ºo°]\s*(\d+[-\/]\d+[-\/]?\d*)/gi,
+        /DELIBERA[ÇC][ÃA]O\s*(\d+)/gi,
+        /ATA\s*(?:N[ºo°]?\s*)?(\d+)/gi,
+        /ITEM\s*(?:N[ºo°]?\s*)?(\d+)/gi,
+        /PAUTA\s*(?:N[ºo°]?\s*)?(\d+)/gi,
+        /(?:^|\s)(\d{3,}[-\/]\d{4})/gm
     ],
 
-    // Reunião ordinária
+    // Reunião ordinária - padrões expandidos
     reuniaoOrdinaria: [
         /(\d+)[ªº°]?\s*REUNI[ÃA]O\s*ORDIN[ÁA]RIA/gi,
         /REUNI[ÃA]O\s*ORDIN[ÁA]RIA\s*(?:N[ºo°]?\s*)?(\d+)/gi,
-        /R\.?O\.?\s*(?:N[ºo°]?\s*)?(\d+)/gi
+        /R\.?O\.?\s*(?:N[ºo°]?\s*)?(\d+)/gi,
+        /(\d+)[ªº°]?\s*R\.?O\.?/gi,
+        /REUNI[ÃA]O\s*(?:N[ºo°]?\s*)?(\d+)/gi,
+        /SESS[ÃA]O\s*(?:N[ºo°]?\s*)?(\d+)/gi
     ],
 
-    // Interessado/Requerente
+    // Interessado/Requerente - padrões expandidos
     interessado: [
         /INTERESSAD[OA]S?[\s:]+([^\n]+)/gi,
         /REQUERENTE[\s:]+([^\n]+)/gi,
         /SOLICITANTE[\s:]+([^\n]+)/gi,
         /EMPRESA[\s:]+([^\n]+)/gi,
-        /CONCESSION[ÁA]RIA[\s:]+([^\n]+)/gi
+        /CONCESSION[ÁA]RIA[\s:]+([^\n]+)/gi,
+        /PLEITEANTE[\s:]+([^\n]+)/gi,
+        /AUTOR[\s:]+([^\n]+)/gi,
+        /REQUERIDO[\s:]+([^\n]+)/gi,
+        /(?:CCR|ECORODOVIAS|ARTERIS|AB CONCESSÕES|ABERTIS|TRIUNFO|RODOVIAS DO TIETÊ|CART|AUTOBAN|VIAOESTE|ECOVIAS|TEBE|TRIÂNGULO DO SOL|CENTROVIAS|AUTOVIAS|INTERVIAS|RENOVIAS|SPVIAS|RODOANEL|ECOPISTAS|RODOVIAS DAS COLINAS|ENTREVIAS|TAMOIOS)/gi
     ],
 
-    // Processo
+    // Processo - padrões expandidos
     processo: [
         /PROCESSO[\s:]+([^\n,]+)/gi,
         /ARTESP[-\s]?PRC[-\s]?(\d+[-\/]\d+)/gi,
-        /SEI[\s:]+([^\n,]+)/gi
+        /SEI[\s:]+([^\n,]+)/gi,
+        /PROC\.?[\s:]+([^\n,]+)/gi,
+        /(?:^|\s)((?:ARTESP|SEI)[-\s]?\d+[\d\.\/-]+)/gm,
+        /N[ºo°]\s*DO\s*PROCESSO[\s:]+([^\n,]+)/gi
     ],
 
-    // Resultado/Decisão
+    // Resultado/Decisão - padrões expandidos
     resultado: {
         deferido: [
             /\bDEFERID[OA]\b/gi,
             /\bAPROVAD[OA]\b/gi,
             /\bHOMOLOGAD[OA]\b/gi,
             /\bAUTORIZAD[OA]\b/gi,
-            /\bCONCEDID[OA]\b/gi
+            /\bCONCEDID[OA]\b/gi,
+            /\bFAVOR[ÁA]VEL\b/gi,
+            /\bPROCEDENTE\b/gi,
+            /\bACOLHID[OA]\b/gi,
+            /\bDEFERIMENTO\b/gi,
+            /\bAPROVA[ÇC][ÃA]O\b/gi
         ],
         indeferido: [
             /\bINDEFERID[OA]\b/gi,
             /\bNEGAD[OA]\b/gi,
             /\bREJEITAD[OA]\b/gi,
             /\bARQUIVAD[OA]\b/gi,
-            /\bIMPROCEDENTE\b/gi
+            /\bIMPROCEDENTE\b/gi,
+            /\bDESFAVOR[ÁA]VEL\b/gi,
+            /\bNÃO\s+HOMOLOGAD[OA]\b/gi,
+            /\bINDEFERIMENTO\b/gi,
+            /\bNÃO\s+APROVAD[OA]\b/gi
         ]
     }
 };
@@ -81,10 +105,25 @@ const DIRETORES = [
 
 /**
  * Extrai todas as deliberações do texto
+ * IMPORTANTE: Cada PDF deve gerar pelo menos uma deliberação
  */
 function extrairDeliberacoes(texto) {
-    if (!texto || texto.length < 100) {
-        return { deliberations: [], erro: 'Texto muito curto' };
+    if (!texto || texto.length < 50) {
+        // Mesmo com texto curto, cria uma deliberação vazia para registrar
+        return {
+            deliberations: [{
+                numero_deliberacao: '',
+                reuniao_ordinaria: '',
+                interessado: '',
+                processo: '',
+                microtema: '',
+                resultado: '',
+                votos_a_favor: [],
+                votos_contra: [],
+                classificacao: '',
+                observacao: 'Texto muito curto para análise completa'
+            }]
+        };
     }
 
     const deliberacoes = [];
@@ -94,17 +133,20 @@ function extrairDeliberacoes(texto) {
 
     if (secoes.length === 0) {
         // Se não conseguiu dividir, trata como uma única deliberação
+        // SEMPRE adiciona, independente dos campos extraídos
         const delib = extrairDadosDeliberacao(texto);
-        if (delib.numero_deliberacao || delib.interessado) {
-            deliberacoes.push(delib);
-        }
+        deliberacoes.push(delib);
     } else {
         for (const secao of secoes) {
             const delib = extrairDadosDeliberacao(secao);
-            if (delib.numero_deliberacao || delib.interessado) {
-                deliberacoes.push(delib);
-            }
+            deliberacoes.push(delib);
         }
+    }
+
+    // GARANTIA: Se ainda não tem deliberações, cria uma com os dados disponíveis
+    if (deliberacoes.length === 0) {
+        const delib = extrairDadosDeliberacao(texto);
+        deliberacoes.push(delib);
     }
 
     return { deliberations: deliberacoes };
