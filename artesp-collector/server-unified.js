@@ -4,6 +4,12 @@
  * Combina coleta de PDFs (ARTESP) + Análise de Deliberações
  * Tudo em uma única interface
  *
+ * Funcionalidades:
+ * - Coleta automática de PDFs da ARTESP
+ * - Upload manual de PDFs
+ * - Análise de deliberações (classificação, votos, etc.)
+ * - Monitoramento de novos documentos
+ *
  * Acesse: http://localhost:3000
  */
 
@@ -11,6 +17,8 @@ require('dotenv').config();
 
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
+const pdfParse = require('pdf-parse');
 
 // Importa serviços do coletor
 const { scrapeWithRetry } = require('./src/services/scraper');
@@ -27,6 +35,13 @@ const PORT = process.env.PORT || 3000;
 // Armazena PDFs processados em memória
 let pdfsProcessados = [];
 let ultimaColeta = null;
+
+// Sistema de Monitoramento
+let monitoramentoAtivo = false;
+let linksConhecidos = new Set();
+let novosDocumentos = [];
+let ultimoMonitoramento = null;
+const INTERVALO_MONITORAMENTO = 30 * 60 * 1000; // 30 minutos
 
 // Middleware
 app.use(express.json({ limit: '50mb' }));
@@ -289,6 +304,260 @@ app.get('/api/estatisticas', (req, res) => {
     };
 
     res.json(stats);
+});
+
+// ============================================================================
+// API - UPLOAD DE PDFs
+// ============================================================================
+
+// Endpoint para upload de PDFs (aceita base64)
+app.post('/api/upload-pdf', async (req, res) => {
+    try {
+        const { arquivo, nomeArquivo } = req.body;
+
+        if (!arquivo) {
+            return res.status(400).json({ erro: 'Nenhum arquivo enviado' });
+        }
+
+        console.log(`\n[IRIS] Processando upload: ${nomeArquivo}`);
+
+        // Decodifica base64
+        const base64Data = arquivo.replace(/^data:application\/pdf;base64,/, '');
+        const buffer = Buffer.from(base64Data, 'base64');
+
+        // Extrai texto do PDF
+        const pdfData = await pdfParse(buffer);
+
+        const pdf = {
+            nomeArquivo: nomeArquivo || `upload_${Date.now()}.pdf`,
+            texto: pdfData.text,
+            numPaginas: pdfData.numpages,
+            numCaracteres: pdfData.text.length,
+            data: new Date().toLocaleDateString('pt-BR'),
+            origem: 'upload',
+            statusExtracao: 'sucesso'
+        };
+
+        pdfsProcessados.push(pdf);
+
+        console.log(`[IRIS] Upload processado: ${pdf.nomeArquivo} (${pdf.numPaginas} páginas)`);
+
+        res.json({
+            sucesso: true,
+            mensagem: `PDF "${pdf.nomeArquivo}" carregado com sucesso`,
+            index: pdfsProcessados.length - 1,
+            pdf: {
+                nomeArquivo: pdf.nomeArquivo,
+                numPaginas: pdf.numPaginas,
+                numCaracteres: pdf.numCaracteres
+            }
+        });
+
+    } catch (error) {
+        console.error('[IRIS] Erro no upload:', error.message);
+        res.status(500).json({ erro: 'Erro ao processar PDF: ' + error.message });
+    }
+});
+
+// Endpoint para upload múltiplo
+app.post('/api/upload-multiplo', async (req, res) => {
+    try {
+        const { arquivos } = req.body;
+
+        if (!arquivos || !Array.isArray(arquivos) || arquivos.length === 0) {
+            return res.status(400).json({ erro: 'Nenhum arquivo enviado' });
+        }
+
+        console.log(`\n[IRIS] Processando ${arquivos.length} PDFs em upload múltiplo`);
+
+        const resultados = [];
+        let sucesso = 0;
+        let erros = 0;
+
+        for (const arq of arquivos) {
+            try {
+                const base64Data = arq.arquivo.replace(/^data:application\/pdf;base64,/, '');
+                const buffer = Buffer.from(base64Data, 'base64');
+                const pdfData = await pdfParse(buffer);
+
+                const pdf = {
+                    nomeArquivo: arq.nomeArquivo || `upload_${Date.now()}.pdf`,
+                    texto: pdfData.text,
+                    numPaginas: pdfData.numpages,
+                    numCaracteres: pdfData.text.length,
+                    data: new Date().toLocaleDateString('pt-BR'),
+                    origem: 'upload',
+                    statusExtracao: 'sucesso'
+                };
+
+                pdfsProcessados.push(pdf);
+                resultados.push({ nome: pdf.nomeArquivo, status: 'sucesso' });
+                sucesso++;
+
+            } catch (err) {
+                resultados.push({ nome: arq.nomeArquivo, status: 'erro', erro: err.message });
+                erros++;
+            }
+        }
+
+        console.log(`[IRIS] Upload múltiplo: ${sucesso} sucesso, ${erros} erros`);
+
+        res.json({
+            sucesso: true,
+            mensagem: `${sucesso} PDFs carregados com sucesso`,
+            totalSucesso: sucesso,
+            totalErros: erros,
+            resultados
+        });
+
+    } catch (error) {
+        console.error('[IRIS] Erro no upload múltiplo:', error.message);
+        res.status(500).json({ erro: error.message });
+    }
+});
+
+// ============================================================================
+// API - MONITORAMENTO DE NOVOS DOCUMENTOS
+// ============================================================================
+
+let intervalMonitoramento = null;
+
+// Função para verificar novos documentos
+async function verificarNovosDocumentos() {
+    try {
+        console.log('\n[MONITOR] Verificando novos documentos na ARTESP...');
+        ultimoMonitoramento = new Date().toISOString();
+
+        const links = await scrapeWithRetry(2);
+
+        if (links.length === 0) {
+            console.log('[MONITOR] Nenhum link encontrado');
+            return { novos: 0, total: 0 };
+        }
+
+        // Primeira execução - apenas registra os links conhecidos
+        if (linksConhecidos.size === 0) {
+            links.forEach(l => linksConhecidos.add(l.url));
+            console.log(`[MONITOR] Primeira verificação: ${links.length} documentos registrados`);
+            return { novos: 0, total: links.length, primeiraExecucao: true };
+        }
+
+        // Verifica novos documentos
+        const novos = links.filter(l => !linksConhecidos.has(l.url));
+
+        if (novos.length > 0) {
+            console.log(`[MONITOR] NOVOS DOCUMENTOS ENCONTRADOS: ${novos.length}`);
+            novos.forEach(doc => {
+                linksConhecidos.add(doc.url);
+                novosDocumentos.push({
+                    ...doc,
+                    descobertoEm: new Date().toISOString(),
+                    lido: false
+                });
+                console.log(`  - ${doc.nomeArquivo}`);
+            });
+        } else {
+            console.log('[MONITOR] Nenhum documento novo encontrado');
+        }
+
+        return { novos: novos.length, total: links.length, documentos: novos };
+
+    } catch (error) {
+        console.error('[MONITOR] Erro na verificação:', error.message);
+        return { erro: error.message };
+    }
+}
+
+// Iniciar monitoramento
+app.post('/api/monitoramento/iniciar', (req, res) => {
+    if (monitoramentoAtivo) {
+        return res.json({ sucesso: false, mensagem: 'Monitoramento já está ativo' });
+    }
+
+    monitoramentoAtivo = true;
+
+    // Executa imediatamente
+    verificarNovosDocumentos();
+
+    // Configura intervalo (30 minutos)
+    intervalMonitoramento = setInterval(verificarNovosDocumentos, INTERVALO_MONITORAMENTO);
+
+    console.log('[MONITOR] Monitoramento INICIADO (intervalo: 30 min)');
+
+    res.json({
+        sucesso: true,
+        mensagem: 'Monitoramento iniciado',
+        intervalo: '30 minutos'
+    });
+});
+
+// Parar monitoramento
+app.post('/api/monitoramento/parar', (req, res) => {
+    if (!monitoramentoAtivo) {
+        return res.json({ sucesso: false, mensagem: 'Monitoramento não está ativo' });
+    }
+
+    monitoramentoAtivo = false;
+    if (intervalMonitoramento) {
+        clearInterval(intervalMonitoramento);
+        intervalMonitoramento = null;
+    }
+
+    console.log('[MONITOR] Monitoramento PARADO');
+
+    res.json({
+        sucesso: true,
+        mensagem: 'Monitoramento parado'
+    });
+});
+
+// Status do monitoramento
+app.get('/api/monitoramento/status', (req, res) => {
+    res.json({
+        ativo: monitoramentoAtivo,
+        ultimaVerificacao: ultimoMonitoramento,
+        documentosConhecidos: linksConhecidos.size,
+        novosDocumentos: novosDocumentos.filter(d => !d.lido).length,
+        intervalo: '30 minutos'
+    });
+});
+
+// Listar novos documentos encontrados
+app.get('/api/monitoramento/novos', (req, res) => {
+    res.json({
+        total: novosDocumentos.length,
+        naoLidos: novosDocumentos.filter(d => !d.lido).length,
+        documentos: novosDocumentos.slice(-50).reverse() // Últimos 50
+    });
+});
+
+// Marcar documentos como lidos
+app.post('/api/monitoramento/marcar-lidos', (req, res) => {
+    const naoLidos = novosDocumentos.filter(d => !d.lido).length;
+    novosDocumentos.forEach(d => d.lido = true);
+
+    res.json({
+        sucesso: true,
+        marcados: naoLidos
+    });
+});
+
+// Verificar agora (manual)
+app.post('/api/monitoramento/verificar-agora', async (req, res) => {
+    const resultado = await verificarNovosDocumentos();
+    res.json(resultado);
+});
+
+// Limpar PDFs da memória
+app.post('/api/limpar-pdfs', (req, res) => {
+    const total = pdfsProcessados.length;
+    pdfsProcessados = [];
+    ultimaColeta = null;
+
+    res.json({
+        sucesso: true,
+        mensagem: `${total} PDFs removidos da memória`
+    });
 });
 
 // ============================================================================
@@ -610,14 +879,191 @@ app.get('/', (req, res) => {
             font-size: 11px;
             color: #888;
         }
+
+        /* Upload styles */
+        .upload-section {
+            margin-bottom: 10px;
+        }
+
+        .upload-label {
+            display: block;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: #333;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00d4ff, #4ade80);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        /* Monitor status */
+        .monitor-status {
+            cursor: pointer;
+            position: relative;
+        }
+
+        .monitor-status.active {
+            background: rgba(74, 222, 128, 0.2) !important;
+            color: #4ade80 !important;
+        }
+
+        .monitor-status .badge-count {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #f87171;
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: #1a1a2e;
+            border-radius: 15px;
+            width: 500px;
+            max-height: 80vh;
+            overflow: hidden;
+            border: 1px solid #333;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid #333;
+        }
+
+        .modal-header h2 {
+            color: #00d4ff;
+            font-size: 1.2em;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .close-btn:hover {
+            color: #fff;
+        }
+
+        .modal-body {
+            padding: 20px;
+            overflow-y: auto;
+            max-height: 60vh;
+        }
+
+        .monitor-info {
+            background: #0d1117;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .monitor-info p {
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .monitor-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .monitor-actions .btn {
+            flex: 1;
+        }
+
+        .novos-docs-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .novo-doc-item {
+            background: rgba(74, 222, 128, 0.1);
+            border-left: 3px solid #4ade80;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 5px;
+        }
+
+        .novo-doc-item .nome {
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .novo-doc-item .data {
+            font-size: 11px;
+            color: #888;
+        }
+
+        .pdf-item.upload {
+            border-left-color: #c084fc;
+        }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>🔍 IRIS Platform</h1>
+        <h1>IRIS Platform</h1>
         <div class="status">
-            <span id="statusPdfs">📄 0 PDFs</span>
-            <span id="statusAnalisados">✅ 0 Analisados</span>
+            <span id="statusPdfs">0 PDFs</span>
+            <span id="statusAnalisados">0 Analisados</span>
+            <span id="statusMonitor" class="monitor-status" onclick="abrirPainelMonitor()">Monitor: OFF</span>
+        </div>
+    </div>
+
+    <!-- Modal de Monitoramento -->
+    <div id="monitorModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Monitoramento de Novos Documentos</h2>
+                <button onclick="fecharPainelMonitor()" class="close-btn">X</button>
+            </div>
+            <div class="modal-body">
+                <div class="monitor-info">
+                    <p><strong>Status:</strong> <span id="monitorStatusText">Inativo</span></p>
+                    <p><strong>Ultima verificacao:</strong> <span id="ultimaVerificacao">-</span></p>
+                    <p><strong>Docs conhecidos:</strong> <span id="docsConhecidos">0</span></p>
+                    <p><strong>Novos nao lidos:</strong> <span id="novosNaoLidos">0</span></p>
+                </div>
+                <div class="monitor-actions">
+                    <button class="btn btn-primary" id="btnMonitor" onclick="toggleMonitoramento()">Iniciar Monitoramento</button>
+                    <button class="btn btn-secondary" onclick="verificarAgora()">Verificar Agora</button>
+                </div>
+                <div id="listaNovosDocs" class="novos-docs-list" style="margin-top: 15px;"></div>
+            </div>
         </div>
     </div>
 
@@ -625,18 +1071,31 @@ app.get('/', (req, res) => {
         <!-- Sidebar - Lista de PDFs -->
         <div class="sidebar">
             <div class="sidebar-header">
-                <h2>📥 Coleta de PDFs</h2>
-                <button class="btn btn-primary" onclick="coletarPDFs()" id="btnColetar">
-                    🚀 Coletar PDFs da ARTESP
-                </button>
+                <h2>PDFs</h2>
+
+                <!-- Upload de PDFs -->
+                <div class="upload-section">
+                    <label for="fileInput" class="btn btn-primary upload-label">
+                        Upload PDFs
+                    </label>
+                    <input type="file" id="fileInput" accept=".pdf" multiple style="display: none;" onchange="uploadPDFs(this.files)">
+                    <div id="uploadProgress" style="display: none; margin-top: 10px;">
+                        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+                        <span id="uploadStatus" style="font-size: 11px; color: #888;"></span>
+                    </div>
+                </div>
+
                 <button class="btn btn-secondary" onclick="analisarTodos()" id="btnAnalisarTodos">
-                    🔍 Analisar Todos
+                    Analisar Todos
+                </button>
+                <button class="btn btn-secondary" onclick="limparPDFs()" style="background: #4a2a2a;">
+                    Limpar Lista
                 </button>
             </div>
             <div class="pdf-list" id="pdfList">
                 <div class="empty-state">
-                    <p>Nenhum PDF coletado</p>
-                    <p style="font-size: 12px">Clique em "Coletar PDFs" para iniciar</p>
+                    <p>Nenhum PDF carregado</p>
+                    <p style="font-size: 12px">Faca upload de PDFs ou ative o monitoramento</p>
                 </div>
             </div>
         </div>
@@ -671,9 +1130,11 @@ app.get('/', (req, res) => {
     <script>
         let pdfs = [];
         let selectedIndex = -1;
+        let monitorAtivo = false;
 
-        // Carrega PDFs ao iniciar
+        // Carrega PDFs e status do monitor ao iniciar
         carregarPDFs();
+        atualizarStatusMonitor();
 
         async function carregarPDFs() {
             try {
@@ -897,9 +1358,219 @@ app.get('/', (req, res) => {
 
         function atualizarStatus() {
             const analisados = pdfs.filter(p => p.analisado).length;
-            document.getElementById('statusPdfs').textContent = '📄 ' + pdfs.length + ' PDFs';
-            document.getElementById('statusAnalisados').textContent = '✅ ' + analisados + ' Analisados';
+            document.getElementById('statusPdfs').textContent = pdfs.length + ' PDFs';
+            document.getElementById('statusAnalisados').textContent = analisados + ' Analisados';
         }
+
+        // ==================== UPLOAD DE PDFs ====================
+
+        async function uploadPDFs(files) {
+            if (!files || files.length === 0) return;
+
+            const progressDiv = document.getElementById('uploadProgress');
+            const progressFill = document.getElementById('progressFill');
+            const statusText = document.getElementById('uploadStatus');
+
+            progressDiv.style.display = 'block';
+            progressFill.style.width = '0%';
+            statusText.textContent = 'Preparando upload...';
+
+            const arquivos = [];
+            let processados = 0;
+
+            for (const file of files) {
+                if (file.type !== 'application/pdf') {
+                    console.log('Arquivo ignorado (nao e PDF):', file.name);
+                    continue;
+                }
+
+                const reader = new FileReader();
+                reader.onload = async function(e) {
+                    arquivos.push({
+                        arquivo: e.target.result,
+                        nomeArquivo: file.name
+                    });
+
+                    processados++;
+                    progressFill.style.width = ((processados / files.length) * 50) + '%';
+                    statusText.textContent = 'Lendo ' + processados + '/' + files.length + '...';
+
+                    // Quando todos os arquivos forem lidos, envia para o servidor
+                    if (processados === files.length && arquivos.length > 0) {
+                        statusText.textContent = 'Enviando para processamento...';
+                        progressFill.style.width = '60%';
+
+                        try {
+                            const res = await fetch('/api/upload-multiplo', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ arquivos })
+                            });
+
+                            progressFill.style.width = '90%';
+
+                            const data = await res.json();
+
+                            if (data.sucesso) {
+                                progressFill.style.width = '100%';
+                                statusText.textContent = data.mensagem;
+                                await carregarPDFs();
+
+                                setTimeout(() => {
+                                    progressDiv.style.display = 'none';
+                                }, 2000);
+                            } else {
+                                statusText.textContent = 'Erro: ' + data.erro;
+                            }
+                        } catch (e) {
+                            statusText.textContent = 'Erro: ' + e.message;
+                        }
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        async function limparPDFs() {
+            if (!confirm('Remover todos os PDFs da memoria?')) return;
+
+            try {
+                const res = await fetch('/api/limpar-pdfs', { method: 'POST' });
+                const data = await res.json();
+                alert(data.mensagem);
+                await carregarPDFs();
+                document.getElementById('textoBox').innerHTML = '<div class="empty-state"><p>Selecione um PDF</p></div>';
+                document.getElementById('analysisContent').innerHTML = '<div class="empty-state"><p>Selecione um PDF e analise</p></div>';
+                document.getElementById('btnAnalisar').style.display = 'none';
+            } catch (e) {
+                alert('Erro: ' + e.message);
+            }
+        }
+
+        // ==================== MONITORAMENTO ====================
+
+        function abrirPainelMonitor() {
+            document.getElementById('monitorModal').style.display = 'flex';
+            atualizarStatusMonitor();
+            carregarNovosDocumentos();
+        }
+
+        function fecharPainelMonitor() {
+            document.getElementById('monitorModal').style.display = 'none';
+        }
+
+        async function atualizarStatusMonitor() {
+            try {
+                const res = await fetch('/api/monitoramento/status');
+                const data = await res.json();
+
+                monitorAtivo = data.ativo;
+
+                const statusEl = document.getElementById('statusMonitor');
+                const statusText = document.getElementById('monitorStatusText');
+                const btnMonitor = document.getElementById('btnMonitor');
+
+                if (data.ativo) {
+                    statusEl.textContent = 'Monitor: ON';
+                    statusEl.classList.add('active');
+                    if (statusText) statusText.textContent = 'Ativo';
+                    if (btnMonitor) btnMonitor.textContent = 'Parar Monitoramento';
+                } else {
+                    statusEl.textContent = 'Monitor: OFF';
+                    statusEl.classList.remove('active');
+                    if (statusText) statusText.textContent = 'Inativo';
+                    if (btnMonitor) btnMonitor.textContent = 'Iniciar Monitoramento';
+                }
+
+                // Atualiza badge de novos documentos
+                if (data.novosDocumentos > 0) {
+                    statusEl.innerHTML = (data.ativo ? 'Monitor: ON' : 'Monitor: OFF') +
+                        '<span class="badge-count">' + data.novosDocumentos + '</span>';
+                }
+
+                // Atualiza info no modal
+                if (document.getElementById('ultimaVerificacao')) {
+                    document.getElementById('ultimaVerificacao').textContent =
+                        data.ultimaVerificacao ? new Date(data.ultimaVerificacao).toLocaleString('pt-BR') : '-';
+                    document.getElementById('docsConhecidos').textContent = data.documentosConhecidos;
+                    document.getElementById('novosNaoLidos').textContent = data.novosDocumentos;
+                }
+
+            } catch (e) {
+                console.error('Erro ao atualizar status monitor:', e);
+            }
+        }
+
+        async function toggleMonitoramento() {
+            const endpoint = monitorAtivo ? '/api/monitoramento/parar' : '/api/monitoramento/iniciar';
+
+            try {
+                const res = await fetch(endpoint, { method: 'POST' });
+                const data = await res.json();
+                alert(data.mensagem);
+                await atualizarStatusMonitor();
+            } catch (e) {
+                alert('Erro: ' + e.message);
+            }
+        }
+
+        async function verificarAgora() {
+            const btn = event.target;
+            btn.disabled = true;
+            btn.textContent = 'Verificando...';
+
+            try {
+                const res = await fetch('/api/monitoramento/verificar-agora', { method: 'POST' });
+                const data = await res.json();
+
+                if (data.primeiraExecucao) {
+                    alert('Primeira verificacao: ' + data.total + ' documentos registrados como base');
+                } else if (data.novos > 0) {
+                    alert('NOVOS DOCUMENTOS: ' + data.novos + ' encontrados!');
+                } else {
+                    alert('Nenhum documento novo encontrado');
+                }
+
+                await atualizarStatusMonitor();
+                await carregarNovosDocumentos();
+
+            } catch (e) {
+                alert('Erro: ' + e.message);
+            }
+
+            btn.disabled = false;
+            btn.textContent = 'Verificar Agora';
+        }
+
+        async function carregarNovosDocumentos() {
+            try {
+                const res = await fetch('/api/monitoramento/novos');
+                const data = await res.json();
+
+                const lista = document.getElementById('listaNovosDocs');
+                if (!lista) return;
+
+                if (data.documentos.length === 0) {
+                    lista.innerHTML = '<p style="color: #666; text-align: center;">Nenhum documento novo detectado ainda</p>';
+                    return;
+                }
+
+                lista.innerHTML = '<h4 style="margin-bottom: 10px; color: #4ade80;">Novos Documentos Detectados:</h4>' +
+                    data.documentos.map(doc => \`
+                        <div class="novo-doc-item">
+                            <div class="nome">\${doc.nomeArquivo}</div>
+                            <div class="data">Detectado em: \${new Date(doc.descobertoEm).toLocaleString('pt-BR')}</div>
+                            <a href="\${doc.url}" target="_blank" style="font-size: 11px; color: #00d4ff;">Baixar PDF</a>
+                        </div>
+                    \`).join('');
+
+            } catch (e) {
+                console.error('Erro ao carregar novos documentos:', e);
+            }
+        }
+
+        // Atualiza status do monitor periodicamente
+        setInterval(atualizarStatusMonitor, 60000); // A cada 1 minuto
     </script>
 </body>
 </html>
