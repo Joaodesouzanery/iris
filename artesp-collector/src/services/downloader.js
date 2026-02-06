@@ -21,11 +21,11 @@ const PDF_MAGIC_NUMBER = Buffer.from([0x25, 0x50, 0x44, 0x46]); // %PDF
 // Tamanho máximo de PDF (50MB)
 const MAX_PDF_SIZE = 50 * 1024 * 1024;
 
-// Configuração anti-bloqueio
-const MIN_DOWNLOAD_DELAY = parseInt(process.env.MIN_DOWNLOAD_DELAY) || 5000;  // 5 segundos
-const MAX_DOWNLOAD_DELAY = parseInt(process.env.MAX_DOWNLOAD_DELAY) || 10000; // 10 segundos
-const BATCH_SIZE = 5;  // A cada 5 downloads, pausa maior
-const BATCH_DELAY = 30000;  // 30 segundos entre batches
+// Configuração anti-bloqueio - OTIMIZADA PARA VELOCIDADE
+const MIN_DOWNLOAD_DELAY = parseInt(process.env.MIN_DOWNLOAD_DELAY) || 1000;  // 1 segundo
+const MAX_DOWNLOAD_DELAY = parseInt(process.env.MAX_DOWNLOAD_DELAY) || 3000;  // 3 segundos
+const BATCH_SIZE = 10;  // A cada 10 downloads, pausa maior
+const BATCH_DELAY = 10000;  // 10 segundos entre batches
 
 // URL base da ARTESP para Referer
 const ARTESP_BASE_URL = 'https://www.artesp.sp.gov.br/reunioes-da-diretoria-colegiada/';
@@ -286,11 +286,8 @@ async function downloadWithRetry(url, nomeArquivo = 'arquivo.pdf', maxRetries = 
             });
 
             if (attempt < maxRetries) {
-                // Exponential backoff com jitter aumentado
-                const baseDelay = Math.pow(2, attempt) * 2000;  // 4s, 8s, 16s
-                const jitter = Math.random() * 3000;
-                const delay = baseDelay + jitter;
-
+                // Backoff rápido
+                const delay = 1000 + Math.random() * 2000;  // 1-3 segundos
                 console.log(`[Downloader] Aguardando ${Math.round(delay/1000)}s antes da próxima tentativa...`);
                 await sleep(delay);
             }
