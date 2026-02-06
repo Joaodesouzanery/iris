@@ -14,6 +14,7 @@ require('dotenv').config();
 const classificador = require('./services/classificador');
 const extratorVotos = require('./services/extrator-votos');
 const detectorDuplicidade = require('./services/detector-duplicidade');
+const extratorDeliberacoes = require('./services/extrator-deliberacoes');
 const persistencia = require('./services/persistencia');
 const logger = require('./utils/logger');
 
@@ -388,6 +389,47 @@ function analisarTexto(texto) {
 }
 
 // ============================================================================
+// EXTRAÇÃO ESTRUTURADA DE DELIBERAÇÕES
+// ============================================================================
+
+/**
+ * Extrai todas as deliberações do texto em formato JSON estruturado
+ * @param {string} texto - Texto do PDF
+ * @returns {Object} JSON com array de deliberações
+ */
+function extrairDeliberacoesEstruturadas(texto) {
+    logger.section('EXTRAÇÃO ESTRUTURADA - IRIS');
+
+    // Usa o novo extrator
+    const resultado = extratorDeliberacoes.analisarTexto(texto);
+
+    // Enriquece cada deliberação com análise adicional
+    for (const delib of resultado.deliberations) {
+        // Se não identificou microtema, tenta pelo classificador
+        if (!delib.microtema) {
+            const classif = classificador.classificarDeliberacao(texto.substring(0, 3000));
+            delib.microtema = classif.microtema || '';
+        }
+
+        // Normaliza resultado vazio
+        if (!delib.resultado) {
+            delib.resultado = '';
+        }
+
+        // Normaliza interessado ARTESP
+        if (delib.interessado && /ARTESP/i.test(delib.interessado)) {
+            delib.interessado = 'ARTESP';
+        }
+    }
+
+    logger.info('Extração', 'Deliberações extraídas', {
+        total: resultado.deliberations.length
+    });
+
+    return resultado;
+}
+
+// ============================================================================
 // EXPORTAÇÕES
 // ============================================================================
 
@@ -400,10 +442,14 @@ module.exports = {
     // Análise sem persistência
     analisarTexto,
 
+    // Extração estruturada (novo)
+    extrairDeliberacoesEstruturadas,
+
     // Re-exporta serviços individuais para uso direto
     classificador,
     extratorVotos,
     detectorDuplicidade,
+    extratorDeliberacoes,
     persistencia,
     logger
 };

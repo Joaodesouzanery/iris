@@ -231,7 +231,18 @@ app.post('/api/analisar-pdf/:index', (req, res) => {
             return res.status(400).json({ erro: 'PDF não possui texto extraído' });
         }
 
-        const analise = irisCore.analisarTexto(pdf.texto);
+        // Usa a nova extração estruturada
+        const extracao = irisCore.extrairDeliberacoesEstruturadas(pdf.texto);
+
+        // Também faz análise tradicional para manter compatibilidade
+        const analiseTradicional = irisCore.analisarTexto(pdf.texto);
+
+        // Combina os resultados
+        const analise = {
+            ...analiseTradicional,
+            deliberacoes: extracao.deliberations,
+            totalDeliberacoes: extracao.total
+        };
 
         // Salva análise no PDF
         pdfsProcessados[index].analise = analise;
@@ -254,13 +265,24 @@ app.post('/api/analisar-todos', async (req, res) => {
         }
 
         const resultados = [];
+        let totalDeliberacoes = 0;
 
         for (let i = 0; i < pdfsProcessados.length; i++) {
             const pdf = pdfsProcessados[i];
 
             if (pdf.texto) {
-                const analise = irisCore.analisarTexto(pdf.texto);
+                // Usa a nova extração estruturada
+                const extracao = irisCore.extrairDeliberacoesEstruturadas(pdf.texto);
+                const analiseTradicional = irisCore.analisarTexto(pdf.texto);
+
+                const analise = {
+                    ...analiseTradicional,
+                    deliberacoes: extracao.deliberations,
+                    totalDeliberacoes: extracao.total
+                };
+
                 pdfsProcessados[i].analise = analise;
+                totalDeliberacoes += extracao.total;
 
                 resultados.push({
                     index: i,
@@ -268,7 +290,8 @@ app.post('/api/analisar-todos', async (req, res) => {
                     tipo: analise.tipo,
                     decisao: analise.decisao,
                     microtema: analise.microtema,
-                    confianca: analise.confiancaGeral
+                    confianca: analise.confiancaGeral,
+                    deliberacoes: extracao.deliberations.length
                 });
             }
         }
@@ -276,6 +299,7 @@ app.post('/api/analisar-todos', async (req, res) => {
         res.json({
             sucesso: true,
             totalAnalisados: resultados.length,
+            totalDeliberacoes,
             resultados
         });
 
@@ -1274,86 +1298,163 @@ app.get('/', (req, res) => {
         }
 
         function renderAnalise(analise) {
-            const tipoClass = analise.tipo === 'Pleito Externo' ? 'externo' : 'interno';
-            const decisaoClass = analise.decisao === 'Deferido' ? 'deferido' :
-                                 analise.decisao === 'Indeferido' ? 'indeferido' : '';
-
             let html = '';
 
-            // Tipo
-            html += \`
-                <div class="analysis-card">
-                    <h3>Tipo</h3>
-                    <div class="analysis-value \${tipoClass}">\${analise.tipo}</div>
-                    <div class="confidence-bar">
-                        <div class="confidence-fill" style="width: \${analise.tipoConfianca}%"></div>
+            // Se tem deliberações estruturadas, mostra elas
+            if (analise.deliberacoes && analise.deliberacoes.length > 0) {
+                html += \`
+                    <div class="analysis-card" style="border-left-color: #4ade80;">
+                        <h3>DELIBERACOES ENCONTRADAS</h3>
+                        <div class="analysis-value" style="color: #4ade80">\${analise.deliberacoes.length}</div>
                     </div>
-                    <div class="justificativa">\${analise.tipoJustificativa}</div>
-                </div>
-            \`;
+                \`;
 
-            // Decisão
-            html += \`
-                <div class="analysis-card">
-                    <h3>Decisão</h3>
-                    <div class="analysis-value \${decisaoClass}">\${analise.decisao}</div>
-                    <div class="confidence-bar">
-                        <div class="confidence-fill" style="width: \${analise.decisaoConfianca}%"></div>
-                    </div>
-                    <div class="justificativa">\${analise.decisaoJustificativa}</div>
-                </div>
-            \`;
+                for (let i = 0; i < analise.deliberacoes.length; i++) {
+                    const d = analise.deliberacoes[i];
+                    const resultClass = d.resultado === 'Deferido' ? 'deferido' :
+                                       d.resultado === 'Indeferido' ? 'indeferido' : '';
 
-            // Microtema
-            html += \`
-                <div class="analysis-card">
-                    <h3>Microtema</h3>
-                    <div class="analysis-value">\${analise.microtema}</div>
-                    <div class="confidence-bar">
-                        <div class="confidence-fill" style="width: \${analise.microtemaConfianca}%"></div>
-                    </div>
-                </div>
-            \`;
-
-            // Confiança Geral
-            html += \`
-                <div class="analysis-card">
-                    <h3>Confiança Geral</h3>
-                    <div class="analysis-value" style="color: #00d4ff">\${analise.confiancaGeral}%</div>
-                </div>
-            \`;
-
-            // Votos
-            if (analise.votos && analise.votos.length > 0) {
-                html += '<div class="votos-section"><h3 style="color: #888; font-size: 12px; margin-bottom: 10px;">VOTOS</h3>';
-
-                for (const voto of analise.votos) {
-                    const votoClass = voto.voto === 'Favorável' ? 'favoravel' :
-                                     voto.voto === 'Contrário' ? 'contrario' : '';
                     html += \`
-                        <div class="voto-item">
-                            <div>
-                                <div class="nome">\${voto.diretor}</div>
-                                <div class="cargo">\${voto.cargo || ''}</div>
+                        <div class="delib-card" style="background: #0d1117; border-radius: 10px; padding: 15px; margin-bottom: 15px; border-left: 3px solid \${d.resultado === 'Deferido' ? '#4ade80' : d.resultado === 'Indeferido' ? '#f87171' : '#00d4ff'};">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <span style="font-weight: bold; color: #00d4ff;">Deliberacao \${i + 1}</span>
+                                <span class="badge \${resultClass ? 'badge-' + resultClass : ''}" style="padding: 4px 10px; border-radius: 12px; font-size: 11px; background: \${d.resultado === 'Deferido' ? 'rgba(74,222,128,0.2)' : d.resultado === 'Indeferido' ? 'rgba(248,113,113,0.2)' : 'rgba(0,212,255,0.2)'}; color: \${d.resultado === 'Deferido' ? '#4ade80' : d.resultado === 'Indeferido' ? '#f87171' : '#00d4ff'};">
+                                    \${d.resultado || 'N/A'}
+                                </span>
                             </div>
-                            <div class="voto \${votoClass}">\${voto.voto}</div>
+
+                            \${d.numero_deliberacao ? \`<div style="margin-bottom: 5px;"><span style="color: #888; font-size: 11px;">Numero:</span> <span style="font-family: monospace;">\${d.numero_deliberacao}</span></div>\` : ''}
+                            \${d.reuniao_ordinaria ? \`<div style="margin-bottom: 5px;"><span style="color: #888; font-size: 11px;">Reuniao:</span> \${d.reuniao_ordinaria}a R.O.</div>\` : ''}
+                            \${d.interessado ? \`<div style="margin-bottom: 5px;"><span style="color: #888; font-size: 11px;">Interessado:</span> \${d.interessado}</div>\` : ''}
+                            \${d.processo ? \`<div style="margin-bottom: 5px;"><span style="color: #888; font-size: 11px;">Processo:</span> <span style="font-family: monospace;">\${d.processo}</span></div>\` : ''}
+                            \${d.microtema ? \`<div style="margin-bottom: 5px;"><span style="color: #888; font-size: 11px;">Microtema:</span> <span style="color: #c084fc;">\${d.microtema}</span></div>\` : ''}
+                            \${d.classificacao ? \`<div style="margin-bottom: 5px;"><span style="color: #888; font-size: 11px;">Classificacao:</span> <span style="color: #fbbf24;">\${d.classificacao}</span></div>\` : ''}
+
+                            \${d.votos_a_favor && d.votos_a_favor.length > 0 ? \`
+                                <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #333;">
+                                    <span style="color: #4ade80; font-size: 11px;">A Favor (\${d.votos_a_favor.length}):</span>
+                                    <span style="font-size: 12px; color: #888;"> \${d.votos_a_favor.join(', ')}</span>
+                                </div>
+                            \` : ''}
+
+                            \${d.votos_contra && d.votos_contra.length > 0 ? \`
+                                <div style="margin-top: 5px;">
+                                    <span style="color: #f87171; font-size: 11px;">Contra (\${d.votos_contra.length}):</span>
+                                    <span style="font-size: 12px; color: #888;"> \${d.votos_contra.join(', ')}</span>
+                                </div>
+                            \` : ''}
                         </div>
                     \`;
                 }
 
-                html += '</div>';
-            }
+                // Botão para exportar JSON
+                html += \`
+                    <button onclick="exportarJSON()" class="btn btn-secondary" style="width: 100%; margin-top: 10px;">
+                        Exportar JSON
+                    </button>
+                \`;
 
-            // Processos
-            if (analise.processos && analise.processos.length > 0) {
-                html += '<div class="analysis-card"><h3>Processos</h3>';
-                html += analise.processos.map(p =>
-                    \`<div style="font-family: monospace; font-size: 12px; margin-top: 5px;">\${p}</div>\`
-                ).join('');
-                html += '</div>';
+            } else {
+                // Fallback para análise tradicional
+                const tipoClass = analise.tipo === 'Pleito Externo' ? 'externo' : 'interno';
+                const decisaoClass = analise.decisao === 'Deferido' ? 'deferido' :
+                                     analise.decisao === 'Indeferido' ? 'indeferido' : '';
+
+                // Tipo
+                html += \`
+                    <div class="analysis-card">
+                        <h3>Tipo</h3>
+                        <div class="analysis-value \${tipoClass}">\${analise.tipo}</div>
+                        <div class="confidence-bar">
+                            <div class="confidence-fill" style="width: \${analise.tipoConfianca}%"></div>
+                        </div>
+                        <div class="justificativa">\${analise.tipoJustificativa || ''}</div>
+                    </div>
+                \`;
+
+                // Decisão
+                html += \`
+                    <div class="analysis-card">
+                        <h3>Decisao</h3>
+                        <div class="analysis-value \${decisaoClass}">\${analise.decisao}</div>
+                        <div class="confidence-bar">
+                            <div class="confidence-fill" style="width: \${analise.decisaoConfianca}%"></div>
+                        </div>
+                        <div class="justificativa">\${analise.decisaoJustificativa || ''}</div>
+                    </div>
+                \`;
+
+                // Microtema
+                html += \`
+                    <div class="analysis-card">
+                        <h3>Microtema</h3>
+                        <div class="analysis-value">\${analise.microtema}</div>
+                        <div class="confidence-bar">
+                            <div class="confidence-fill" style="width: \${analise.microtemaConfianca}%"></div>
+                        </div>
+                    </div>
+                \`;
+
+                // Confiança Geral
+                html += \`
+                    <div class="analysis-card">
+                        <h3>Confianca Geral</h3>
+                        <div class="analysis-value" style="color: #00d4ff">\${analise.confiancaGeral}%</div>
+                    </div>
+                \`;
+
+                // Votos
+                if (analise.votos && analise.votos.length > 0) {
+                    html += '<div class="votos-section"><h3 style="color: #888; font-size: 12px; margin-bottom: 10px;">VOTOS</h3>';
+
+                    for (const voto of analise.votos) {
+                        const votoClass = voto.voto === 'Favorável' ? 'favoravel' :
+                                         voto.voto === 'Contrário' ? 'contrario' : '';
+                        html += \`
+                            <div class="voto-item">
+                                <div>
+                                    <div class="nome">\${voto.diretor}</div>
+                                    <div class="cargo">\${voto.cargo || ''}</div>
+                                </div>
+                                <div class="voto \${votoClass}">\${voto.voto}</div>
+                            </div>
+                        \`;
+                    }
+
+                    html += '</div>';
+                }
+
+                // Processos
+                if (analise.processos && analise.processos.length > 0) {
+                    html += '<div class="analysis-card"><h3>Processos</h3>';
+                    html += analise.processos.map(p =>
+                        \`<div style="font-family: monospace; font-size: 12px; margin-top: 5px;">\${p}</div>\`
+                    ).join('');
+                    html += '</div>';
+                }
             }
 
             document.getElementById('analysisContent').innerHTML = html;
+        }
+
+        // Exportar deliberações como JSON
+        function exportarJSON() {
+            if (selectedIndex < 0 || !pdfs[selectedIndex]) return;
+
+            fetch('/api/pdfs/' + selectedIndex)
+                .then(res => res.json())
+                .then(pdf => {
+                    if (pdf.analise && pdf.analise.deliberacoes) {
+                        const json = JSON.stringify({ deliberations: pdf.analise.deliberacoes }, null, 2);
+                        const blob = new Blob([json], { type: 'application/json' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = pdf.nomeArquivo.replace('.pdf', '_deliberacoes.json');
+                        a.click();
+                        URL.revokeObjectURL(url);
+                    }
+                });
         }
 
         function atualizarStatus() {
