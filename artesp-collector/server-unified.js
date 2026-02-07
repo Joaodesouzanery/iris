@@ -43,9 +43,16 @@ let novosDocumentos = [];
 let ultimoMonitoramento = null;
 const INTERVALO_MONITORAMENTO = 30 * 60 * 1000; // 30 minutos
 
-// Middleware
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true }));
+// Middleware - aumentado para suportar uploads grandes
+app.use(express.json({ limit: '500mb' }));
+app.use(express.urlencoded({ extended: true, limit: '500mb' }));
+
+// Timeout para requisições longas (10 minutos)
+app.use((req, res, next) => {
+    req.setTimeout(600000); // 10 minutos
+    res.setTimeout(600000);
+    next();
+});
 
 // ============================================================================
 // API - COLETA DE PDFs
@@ -392,39 +399,69 @@ app.post('/api/upload-multiplo', async (req, res) => {
             return res.status(400).json({ erro: 'Nenhum arquivo enviado' });
         }
 
-        console.log(`\n[IRIS] Processando ${arquivos.length} PDFs em upload múltiplo`);
+        const total = arquivos.length;
+        console.log(`\n[IRIS] ════════════════════════════════════════════════`);
+        console.log(`[IRIS] UPLOAD MÚLTIPLO: ${total} PDFs`);
+        console.log(`[IRIS] ════════════════════════════════════════════════`);
 
         const resultados = [];
         let sucesso = 0;
         let erros = 0;
 
-        for (const arq of arquivos) {
-            try {
-                const base64Data = arq.arquivo.replace(/^data:application\/pdf;base64,/, '');
-                const buffer = Buffer.from(base64Data, 'base64');
-                const pdfData = await pdfParse(buffer);
+        // Processa em lotes de 10 para não sobrecarregar memória
+        const TAMANHO_LOTE = 10;
+        const numLotes = Math.ceil(total / TAMANHO_LOTE);
 
-                const pdf = {
-                    nomeArquivo: arq.nomeArquivo || `upload_${Date.now()}.pdf`,
-                    texto: pdfData.text,
-                    numPaginas: pdfData.numpages,
-                    numCaracteres: pdfData.text.length,
-                    data: new Date().toLocaleDateString('pt-BR'),
-                    origem: 'upload',
-                    statusExtracao: 'sucesso'
-                };
+        for (let lote = 0; lote < numLotes; lote++) {
+            const inicio = lote * TAMANHO_LOTE;
+            const fim = Math.min(inicio + TAMANHO_LOTE, total);
+            const arquivosLote = arquivos.slice(inicio, fim);
 
-                pdfsProcessados.push(pdf);
-                resultados.push({ nome: pdf.nomeArquivo, status: 'sucesso' });
-                sucesso++;
+            console.log(`[IRIS] Processando lote ${lote + 1}/${numLotes} (PDFs ${inicio + 1}-${fim})`);
 
-            } catch (err) {
-                resultados.push({ nome: arq.nomeArquivo, status: 'erro', erro: err.message });
-                erros++;
+            // Processa cada arquivo do lote
+            for (const arq of arquivosLote) {
+                try {
+                    const base64Data = arq.arquivo.replace(/^data:application\/pdf;base64,/, '');
+                    const buffer = Buffer.from(base64Data, 'base64');
+
+                    // Libera memória do base64 original
+                    arq.arquivo = null;
+
+                    const pdfData = await pdfParse(buffer);
+
+                    const pdf = {
+                        nomeArquivo: arq.nomeArquivo || `upload_${Date.now()}.pdf`,
+                        texto: pdfData.text,
+                        numPaginas: pdfData.numpages,
+                        numCaracteres: pdfData.text.length,
+                        data: new Date().toLocaleDateString('pt-BR'),
+                        origem: 'upload',
+                        statusExtracao: 'sucesso'
+                    };
+
+                    pdfsProcessados.push(pdf);
+                    resultados.push({ nome: pdf.nomeArquivo, status: 'sucesso' });
+                    sucesso++;
+
+                } catch (err) {
+                    console.log(`[IRIS] ⚠️ Erro no PDF: ${arq.nomeArquivo} - ${err.message}`);
+                    resultados.push({ nome: arq.nomeArquivo, status: 'erro', erro: err.message });
+                    erros++;
+                }
             }
+
+            // Força garbage collection entre lotes (se disponível)
+            if (global.gc) {
+                global.gc();
+            }
+
+            console.log(`[IRIS] Lote ${lote + 1} concluído. Progresso: ${sucesso + erros}/${total}`);
         }
 
-        console.log(`[IRIS] Upload múltiplo: ${sucesso} sucesso, ${erros} erros`);
+        console.log(`[IRIS] ════════════════════════════════════════════════`);
+        console.log(`[IRIS] ✅ UPLOAD CONCLUÍDO: ${sucesso} sucesso, ${erros} erros`);
+        console.log(`[IRIS] ════════════════════════════════════════════════\n`);
 
         res.json({
             sucesso: true,
@@ -1741,62 +1778,88 @@ app.get('/', (req, res) => {
 
             progressDiv.style.display = 'block';
             progressFill.style.width = '0%';
-            statusText.textContent = 'Preparando upload...';
 
-            const arquivos = [];
-            let processados = 0;
+            // Filtra apenas PDFs
+            const pdfFiles = Array.from(files).filter(f => f.type === 'application/pdf');
+            const totalPDFs = pdfFiles.length;
 
-            for (const file of files) {
-                if (file.type !== 'application/pdf') {
-                    console.log('Arquivo ignorado (nao e PDF):', file.name);
-                    continue;
-                }
+            if (totalPDFs === 0) {
+                statusText.textContent = 'Nenhum PDF selecionado';
+                return;
+            }
 
-                const reader = new FileReader();
-                reader.onload = async function(e) {
+            statusText.textContent = 'Preparando ' + totalPDFs + ' PDFs...';
+
+            // PROCESSA EM LOTES DE 50 PARA NAO SOBRECARREGAR
+            const TAMANHO_LOTE = 50;
+            const numLotes = Math.ceil(totalPDFs / TAMANHO_LOTE);
+            let totalSucesso = 0;
+            let totalErros = 0;
+
+            for (let lote = 0; lote < numLotes; lote++) {
+                const inicio = lote * TAMANHO_LOTE;
+                const fim = Math.min(inicio + TAMANHO_LOTE, totalPDFs);
+                const arquivosLote = pdfFiles.slice(inicio, fim);
+
+                statusText.textContent = 'Lote ' + (lote + 1) + '/' + numLotes + ' - Lendo arquivos...';
+
+                // Le arquivos deste lote
+                const arquivos = [];
+                for (const file of arquivosLote) {
+                    const base64 = await lerArquivoBase64(file);
                     arquivos.push({
-                        arquivo: e.target.result,
+                        arquivo: base64,
                         nomeArquivo: file.name
                     });
+                }
 
-                    processados++;
-                    progressFill.style.width = ((processados / files.length) * 50) + '%';
-                    statusText.textContent = 'Lendo ' + processados + '/' + files.length + '...';
+                // Envia lote para o servidor
+                statusText.textContent = 'Lote ' + (lote + 1) + '/' + numLotes + ' - Enviando ' + arquivos.length + ' PDFs...';
+                progressFill.style.width = ((lote / numLotes) * 80 + 10) + '%';
 
-                    // Quando todos os arquivos forem lidos, envia para o servidor
-                    if (processados === files.length && arquivos.length > 0) {
-                        statusText.textContent = 'Enviando para processamento...';
-                        progressFill.style.width = '60%';
+                try {
+                    const res = await fetch('/api/upload-multiplo', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ arquivos })
+                    });
 
-                        try {
-                            const res = await fetch('/api/upload-multiplo', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ arquivos })
-                            });
+                    const data = await res.json();
 
-                            progressFill.style.width = '90%';
-
-                            const data = await res.json();
-
-                            if (data.sucesso) {
-                                progressFill.style.width = '100%';
-                                statusText.textContent = data.mensagem;
-                                await carregarPDFs();
-
-                                setTimeout(() => {
-                                    progressDiv.style.display = 'none';
-                                }, 2000);
-                            } else {
-                                statusText.textContent = 'Erro: ' + data.erro;
-                            }
-                        } catch (e) {
-                            statusText.textContent = 'Erro: ' + e.message;
-                        }
+                    if (data.sucesso) {
+                        totalSucesso += data.totalSucesso || 0;
+                        totalErros += data.totalErros || 0;
+                    } else {
+                        totalErros += arquivos.length;
+                        console.error('Erro no lote:', data.erro);
                     }
-                };
-                reader.readAsDataURL(file);
+                } catch (e) {
+                    totalErros += arquivos.length;
+                    console.error('Erro ao enviar lote:', e.message);
+                }
+
+                // Progresso visual
+                progressFill.style.width = (((lote + 1) / numLotes) * 90) + '%';
             }
+
+            // Finaliza
+            progressFill.style.width = '100%';
+            statusText.textContent = totalSucesso + ' PDFs carregados' + (totalErros > 0 ? ' (' + totalErros + ' erros)' : '');
+            await carregarPDFs();
+
+            setTimeout(() => {
+                progressDiv.style.display = 'none';
+            }, 3000);
+        }
+
+        // Funcao auxiliar para ler arquivo como Base64
+        function lerArquivoBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = () => reject(reader.error);
+                reader.readAsDataURL(file);
+            });
         }
 
         async function limparPDFs() {
