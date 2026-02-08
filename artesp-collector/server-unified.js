@@ -177,12 +177,16 @@ app.get('/api/pdfs', (req, res) => {
         ultimaColeta,
         pdfs: pdfsProcessados.map((p, i) => ({
             index: i,
+            nome: p.nomeArquivo,
             nomeArquivo: p.nomeArquivo,
             data: p.data,
             reuniao: p.reuniao,
             numPaginas: p.numPaginas,
             numCaracteres: p.numCaracteres,
-            analisado: p.analise ? true : false
+            size: p.numCaracteres || 0,
+            status: p.analise ? 'analisado' : 'pendente',
+            analisado: p.analise ? true : false,
+            deliberacoes_count: p.analise?.totalDeliberacoes || p.analise?.deliberacoes?.length || 0
         }))
     });
 });
@@ -476,6 +480,91 @@ app.post('/api/upload-multiplo', async (req, res) => {
 
     } catch (error) {
         console.error('[IRIS] Erro no upload múltiplo:', error.message);
+        res.status(500).json({ erro: error.message });
+    }
+});
+
+// Endpoint para upload via URL
+app.post('/api/upload-url', async (req, res) => {
+    try {
+        const { url } = req.body;
+
+        if (!url) {
+            return res.status(400).json({ erro: 'URL é obrigatória' });
+        }
+
+        console.log(`\n[IRIS] Baixando PDF de: ${url}`);
+
+        // Baixa o PDF
+        const axios = require('axios');
+        const response = await axios.get(url, {
+            responseType: 'arraybuffer',
+            timeout: 60000,
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+        });
+
+        const buffer = Buffer.from(response.data);
+
+        // Extrai o nome do arquivo da URL
+        const nomeArquivo = url.split('/').pop() || `download_${Date.now()}.pdf`;
+
+        // Extrai texto do PDF
+        const pdfData = await pdfParse(buffer);
+
+        const pdf = {
+            nomeArquivo,
+            texto: pdfData.text,
+            numPaginas: pdfData.numpages,
+            numCaracteres: pdfData.text.length,
+            data: new Date().toLocaleDateString('pt-BR'),
+            origem: 'url',
+            url: url,
+            statusExtracao: 'sucesso'
+        };
+
+        pdfsProcessados.push(pdf);
+
+        console.log(`[IRIS] PDF baixado: ${pdf.nomeArquivo} (${pdf.numPaginas} páginas)`);
+
+        res.json({
+            sucesso: true,
+            mensagem: `PDF "${pdf.nomeArquivo}" baixado com sucesso`,
+            index: pdfsProcessados.length - 1,
+            pdf: {
+                nomeArquivo: pdf.nomeArquivo,
+                numPaginas: pdf.numPaginas,
+                numCaracteres: pdf.numCaracteres
+            }
+        });
+
+    } catch (error) {
+        console.error('[IRIS] Erro ao baixar PDF:', error.message);
+        res.status(500).json({ erro: 'Erro ao baixar PDF: ' + error.message });
+    }
+});
+
+// Endpoint para excluir PDF
+app.delete('/api/pdf/:index', (req, res) => {
+    try {
+        const index = parseInt(req.params.index);
+
+        if (index < 0 || index >= pdfsProcessados.length) {
+            return res.status(404).json({ erro: 'PDF não encontrado' });
+        }
+
+        const pdf = pdfsProcessados[index];
+        pdfsProcessados.splice(index, 1);
+
+        console.log(`[IRIS] PDF removido: ${pdf.nomeArquivo}`);
+
+        res.json({
+            sucesso: true,
+            mensagem: `PDF "${pdf.nomeArquivo}" removido`
+        });
+
+    } catch (error) {
         res.status(500).json({ erro: error.message });
     }
 });
@@ -905,7 +994,7 @@ app.get('/', (req, res) => {
 // ============================================================================
 
 // SPA - Todas as rotas de navegação servem o mesmo arquivo
-const spaRoutes = ['/deliberacoes', '/monitor', '/diretores', '/jurimetria', '/governanca', '/metricas', '/boletim', '/auditoria', '/app'];
+const spaRoutes = ['/deliberacoes', '/monitor', '/diretores', '/jurimetria', '/governanca', '/metricas', '/boletim', '/auditoria', '/app', '/upload', '/analise'];
 
 spaRoutes.forEach(route => {
     app.get(route, (req, res) => {

@@ -769,19 +769,36 @@
 
             progressDiv.style.display = 'block';
 
+            // Helper function to convert file to base64
+            const fileToBase64 = (file) => {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(file);
+                });
+            };
+
             for (let i = 0; i < files.length; i++) {
                 const file = files[i];
-                const formData = new FormData();
-                formData.append('pdf', file);
 
                 progressText.textContent = `Enviando ${file.name}... (${i + 1}/${files.length})`;
                 progressPercent.textContent = Math.round((i / files.length) * 100) + '%';
                 progressBar.style.width = Math.round((i / files.length) * 100) + '%';
 
                 try {
+                    // Convert file to base64
+                    const base64 = await fileToBase64(file);
+
                     const response = await fetch('/api/upload-pdf', {
                         method: 'POST',
-                        body: formData
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            arquivo: base64,
+                            nomeArquivo: file.name
+                        })
                     });
                     const result = await response.json();
                     if (!result.sucesso) {
