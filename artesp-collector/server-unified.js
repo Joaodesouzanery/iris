@@ -2009,46 +2009,16 @@ app.get('/', (req, res) => {
 });
 
 // ============================================================================
-// PÁGINA DE MÉTRICAS (serve arquivo estático)
+// PLATAFORMA IRIS - Single Page Application (SPA)
 // ============================================================================
 
-app.get('/metricas', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'metricas.html'));
-});
+// SPA - Todas as rotas de navegação servem o mesmo arquivo
+const spaRoutes = ['/deliberacoes', '/monitor', '/diretores', '/jurimetria', '/governanca', '/metricas', '/boletim', '/auditoria', '/app'];
 
-// ============================================================================
-// PÁGINAS DA PLATAFORMA IRIS
-// ============================================================================
-
-// Decisões
-app.get('/deliberacoes', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'deliberacoes.html'));
-});
-
-app.get('/monitor', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'monitor.html'));
-});
-
-// Diretores
-app.get('/diretores', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'diretores.html'));
-});
-
-app.get('/jurimetria', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'jurimetria.html'));
-});
-
-app.get('/governanca', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'governanca.html'));
-});
-
-// Inteligência
-app.get('/boletim', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'boletim.html'));
-});
-
-app.get('/auditoria', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'auditoria.html'));
+spaRoutes.forEach(route => {
+    app.get(route, (req, res) => {
+        res.sendFile(path.join(__dirname, 'public', 'app.html'));
+    });
 });
 
 // ============================================================================
