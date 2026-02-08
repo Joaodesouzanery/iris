@@ -101,7 +101,9 @@
             <!-- Page Content -->
             <div class="page-content">
 
-                <!-- PAGE: Dashboard/Metricas -->
+                <!-- ============================================
+                     PAGE: Dashboard/Metricas
+                     ============================================ -->
                 <div id="page-metricas" class="page-view">
                     <div class="page-header">
                         <div class="page-title-section">
@@ -109,6 +111,12 @@
                             <p class="page-subtitle">Visao consolidada das deliberacoes regulatorias</p>
                         </div>
                         <div class="page-actions">
+                            <div class="filter-group">
+                                <select class="filter-select">
+                                    <option>Todas...</option>
+                                    <option>ARTESP</option>
+                                </select>
+                            </div>
                             <div class="filter-group">
                                 <select class="filter-select">
                                     <option>Todas Agencias</option>
@@ -122,14 +130,28 @@
                                     <option>2025</option>
                                 </select>
                             </div>
+                            <div class="filter-group">
+                                <select class="filter-select">
+                                    <option>Todos Microtemas</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <select class="filter-select">
+                                    <option>Todos Tipos</option>
+                                </select>
+                            </div>
                             <button class="btn btn-outline">
                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                                 Exportar PDF
                             </button>
+                            <button class="btn btn-outline">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+                                Personalizar
+                            </button>
                         </div>
                     </div>
 
-                    <!-- Stats Grid -->
+                    <!-- Stats Grid - 4 cards iguais ao Lovable -->
                     <div class="stats-grid">
                         <div class="stat-card">
                             <div class="stat-card-header">
@@ -138,9 +160,10 @@
                                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                                 </div>
                             </div>
-                            <div class="stat-card-value" id="dash-total">109</div>
+                            <div class="stat-card-value">109</div>
                             <div class="stat-card-subtitle">Em 5 reunioes</div>
                         </div>
+
                         <div class="stat-card">
                             <div class="stat-card-header">
                                 <span class="stat-card-title">Pleitos Externos</span>
@@ -148,9 +171,10 @@
                                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                                 </div>
                             </div>
-                            <div class="stat-card-value" id="dash-externos">69%</div>
-                            <div class="stat-card-subtitle">75 pleitos externos</div>
+                            <div class="stat-card-value">0%</div>
+                            <div class="stat-card-subtitle">0% atos internos</div>
                         </div>
+
                         <div class="stat-card">
                             <div class="stat-card-header">
                                 <span class="stat-card-title">Taxa de Deferimento</span>
@@ -158,9 +182,10 @@
                                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                 </div>
                             </div>
-                            <div class="stat-card-value success" id="dash-taxa">58%</div>
+                            <div class="stat-card-value success">58%</div>
                             <div class="stat-card-subtitle">42% indeferidos</div>
                         </div>
+
                         <div class="stat-card">
                             <div class="stat-card-header">
                                 <span class="stat-card-title">Total de Reunioes</span>
@@ -168,13 +193,14 @@
                                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                                 </div>
                             </div>
-                            <div class="stat-card-value" id="dash-reunioes">5</div>
+                            <div class="stat-card-value">5</div>
                             <div class="stat-card-subtitle">Reunioes ordinarias</div>
                         </div>
                     </div>
 
-                    <!-- Charts -->
-                    <div class="grid-2">
+                    <!-- Charts Row - Graficos lado a lado -->
+                    <div class="grid-2" style="margin-bottom: 24px;">
+                        <!-- Grafico de Barras - Deliberacoes por Microtema -->
                         <div class="card">
                             <div class="card-header">
                                 <div>
@@ -189,28 +215,49 @@
                                 <div class="bar-chart">
                                     <div class="bar-item">
                                         <span class="bar-label">Obras / Investimentos</span>
-                                        <div class="bar-track"><div class="bar-fill" style="width: 85%;">36</div></div>
+                                        <div class="bar-track"><div class="bar-fill" style="width: 90%;"></div></div>
+                                        <span class="bar-value">36</span>
                                     </div>
                                     <div class="bar-item">
                                         <span class="bar-label">Outros</span>
-                                        <div class="bar-track"><div class="bar-fill" style="width: 65%;">28</div></div>
+                                        <div class="bar-track"><div class="bar-fill" style="width: 70%;"></div></div>
+                                        <span class="bar-value">28</span>
                                     </div>
                                     <div class="bar-item">
-                                        <span class="bar-label">Reequilibrio Economico</span>
-                                        <div class="bar-track"><div class="bar-fill" style="width: 45%;">18</div></div>
+                                        <span class="bar-label">Reequilibrio Economico-Financeiro</span>
+                                        <div class="bar-track"><div class="bar-fill" style="width: 45%;"></div></div>
+                                        <span class="bar-value">18</span>
                                     </div>
                                     <div class="bar-item">
                                         <span class="bar-label">Contrato / Aditivo</span>
-                                        <div class="bar-track"><div class="bar-fill" style="width: 38%;">15</div></div>
+                                        <div class="bar-track"><div class="bar-fill" style="width: 38%;"></div></div>
+                                        <span class="bar-value">15</span>
                                     </div>
                                     <div class="bar-item">
                                         <span class="bar-label">Revisao Tarifaria</span>
-                                        <div class="bar-track"><div class="bar-fill" style="width: 28%;">12</div></div>
+                                        <div class="bar-track"><div class="bar-fill" style="width: 30%;"></div></div>
+                                        <span class="bar-value">12</span>
+                                    </div>
+                                    <div class="bar-item">
+                                        <span class="bar-label">Autorizacao</span>
+                                        <div class="bar-track"><div class="bar-fill" style="width: 22%;"></div></div>
+                                        <span class="bar-value">9</span>
+                                    </div>
+                                    <div class="bar-item">
+                                        <span class="bar-label">Concessao</span>
+                                        <div class="bar-track"><div class="bar-fill" style="width: 18%;"></div></div>
+                                        <span class="bar-value">7</span>
+                                    </div>
+                                    <div class="bar-item">
+                                        <span class="bar-label">Rodovias / Investimentos</span>
+                                        <div class="bar-track"><div class="bar-fill" style="width: 15%;"></div></div>
+                                        <span class="bar-value">6</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
+                        <!-- Grafico de Donut - Pauta Interna vs Externa -->
                         <div class="card">
                             <div class="card-header">
                                 <div>
@@ -218,28 +265,27 @@
                                     <p class="card-subtitle">Proporcao de assuntos</p>
                                 </div>
                             </div>
-                            <div class="card-body" style="display: flex; align-items: center; justify-content: center; min-height: 250px;">
-                                <div class="donut-chart">
-                                    <svg width="200" height="200" viewBox="0 0 200 200">
-                                        <circle class="donut-bg" cx="100" cy="100" r="70"/>
-                                        <circle class="donut-fill" cx="100" cy="100" r="70" stroke-dasharray="440" stroke-dashoffset="135"/>
-                                    </svg>
-                                    <div class="donut-center">
-                                        <div class="donut-value">69%</div>
-                                        <div class="donut-label">Externa</div>
-                                    </div>
-                                </div>
-                                <div style="margin-left: 40px;">
-                                    <div style="margin-bottom: 12px;">
-                                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-                                            <div style="width: 12px; height: 12px; background: var(--primary); border-radius: 2px;"></div>
-                                            <span style="font-size: 13px; color: var(--text-secondary);">Pauta Externa: 69%</span>
+                            <div class="card-body">
+                                <div style="display: flex; align-items: center; justify-content: center; min-height: 280px; gap: 40px;">
+                                    <div class="donut-chart">
+                                        <svg width="200" height="200" viewBox="0 0 200 200">
+                                            <circle class="donut-bg" cx="100" cy="100" r="70"/>
+                                            <circle class="donut-fill" cx="100" cy="100" r="70" stroke-dasharray="440" stroke-dashoffset="135"/>
+                                            <circle cx="100" cy="100" r="70" fill="none" stroke="#0f172a" stroke-width="30" stroke-dasharray="440" stroke-dashoffset="305" style="transform: rotate(-90deg); transform-origin: center;"/>
+                                        </svg>
+                                        <div class="donut-center">
+                                            <div class="donut-value">69%</div>
+                                            <div class="donut-label">Externa</div>
                                         </div>
                                     </div>
-                                    <div>
-                                        <div style="display: flex; align-items: center; gap: 8px;">
-                                            <div style="width: 12px; height: 12px; background: var(--text-primary); border-radius: 2px;"></div>
-                                            <span style="font-size: 13px; color: var(--text-secondary);">Pauta Interna: 31%</span>
+                                    <div class="chart-legend">
+                                        <div class="legend-item">
+                                            <div class="legend-color" style="background: var(--primary);"></div>
+                                            <span>Pauta Interna: 31%</span>
+                                        </div>
+                                        <div class="legend-item">
+                                            <div class="legend-color" style="background: var(--text-primary);"></div>
+                                            <span>Pauta Externa: 69%</span>
                                         </div>
                                     </div>
                                 </div>
@@ -247,7 +293,7 @@
                         </div>
                     </div>
 
-                    <!-- Directors Table -->
+                    <!-- Tabela de Votos por Diretor -->
                     <div class="card">
                         <div class="card-header">
                             <div>
@@ -264,7 +310,7 @@
                                     <tr>
                                         <th>Diretor</th>
                                         <th>Cargo</th>
-                                        <th>Votos</th>
+                                        <th>Total Votos</th>
                                         <th>Favoraveis</th>
                                         <th>Contrarios</th>
                                         <th>Taxa Aprovacao</th>
@@ -277,7 +323,7 @@
                                         <td>245</td>
                                         <td><span class="badge badge-success">192</span></td>
                                         <td><span class="badge badge-danger">38</span></td>
-                                        <td><span style="color: var(--success); font-weight: 600;">78.2%</span></td>
+                                        <td><strong style="color: var(--success);">78.2%</strong></td>
                                     </tr>
                                     <tr>
                                         <td><strong>Marcos Antonio Ribeiro</strong></td>
@@ -285,7 +331,7 @@
                                         <td>198</td>
                                         <td><span class="badge badge-success">130</span></td>
                                         <td><span class="badge badge-danger">56</span></td>
-                                        <td><span style="color: var(--success); font-weight: 600;">65.4%</span></td>
+                                        <td><strong style="color: var(--success);">65.4%</strong></td>
                                     </tr>
                                     <tr>
                                         <td><strong>Patricia Vanzolini</strong></td>
@@ -293,7 +339,7 @@
                                         <td>212</td>
                                         <td><span class="badge badge-success">174</span></td>
                                         <td><span class="badge badge-danger">26</span></td>
-                                        <td><span style="color: var(--success); font-weight: 600;">82.1%</span></td>
+                                        <td><strong style="color: var(--success);">82.1%</strong></td>
                                     </tr>
                                     <tr>
                                         <td><strong>Carlos Eduardo Silva</strong></td>
@@ -301,7 +347,7 @@
                                         <td>187</td>
                                         <td><span class="badge badge-success">133</span></td>
                                         <td><span class="badge badge-danger">42</span></td>
-                                        <td><span style="color: var(--success); font-weight: 600;">71.2%</span></td>
+                                        <td><strong style="color: var(--success);">71.2%</strong></td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -309,12 +355,14 @@
                     </div>
                 </div>
 
-                <!-- PAGE: Deliberacoes -->
+                <!-- ============================================
+                     PAGE: Deliberacoes
+                     ============================================ -->
                 <div id="page-deliberacoes" class="page-view">
                     <div class="page-header">
                         <div class="page-title-section">
                             <h1 class="page-title">Deliberacoes</h1>
-                            <p class="page-subtitle">Lista de todas as deliberacoes processadas</p>
+                            <p class="page-subtitle">Lista completa de todas as deliberacoes processadas da ARTESP</p>
                         </div>
                         <div class="page-actions">
                             <button class="btn btn-primary" onclick="App.PageDeliberacoes.exportCSV()">
@@ -344,54 +392,66 @@
                                 <option value="">Todos Microtemas</option>
                             </select>
                         </div>
-                        <input type="text" class="filter-input" id="filtro-busca" placeholder="Buscar processo, interessado..." oninput="App.PageDeliberacoes.filter()">
+                        <input type="text" class="filter-input" id="filtro-busca" placeholder="Buscar por processo ou interessado..." oninput="App.PageDeliberacoes.filter()">
                     </div>
 
                     <div class="stats-grid">
                         <div class="stat-card">
-                            <div class="stat-card-title">Total</div>
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Total de Deliberacoes</span>
+                            </div>
                             <div class="stat-card-value" id="stat-total-delibs">-</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-card-title">Deferidas</div>
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Deferidas</span>
+                            </div>
                             <div class="stat-card-value success" id="stat-deferidas">-</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-card-title">Indeferidas</div>
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Indeferidas</span>
+                            </div>
                             <div class="stat-card-value danger" id="stat-indeferidas">-</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-card-title">Taxa Aprovacao</div>
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Taxa de Aprovacao</span>
+                            </div>
                             <div class="stat-card-value primary" id="stat-taxa">-</div>
                         </div>
                     </div>
 
-                    <div class="table-container">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Processo</th>
-                                    <th>Interessado</th>
-                                    <th>Microtema</th>
-                                    <th>Decisao</th>
-                                    <th>Tipo</th>
-                                    <th>Reuniao</th>
-                                    <th>Data</th>
-                                </tr>
-                            </thead>
-                            <tbody id="deliberacoes-table-body">
-                                <tr><td colspan="7"><div class="loading"><div class="spinner"></div>Carregando...</div></td></tr>
-                            </tbody>
-                        </table>
+                    <div class="card">
+                        <div class="card-body" style="padding: 0;">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Processo</th>
+                                        <th>Interessado</th>
+                                        <th>Microtema</th>
+                                        <th>Decisao</th>
+                                        <th>Tipo</th>
+                                        <th>Reuniao</th>
+                                        <th>Data</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="deliberacoes-table-body">
+                                    <tr><td colspan="7"><div class="loading"><div class="spinner"></div><span>Carregando deliberacoes...</span></div></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 
-                <!-- PAGE: Monitor -->
+                <!-- ============================================
+                     PAGE: Monitor
+                     ============================================ -->
                 <div id="page-monitor" class="page-view">
                     <div class="page-header">
                         <div class="page-title-section">
                             <h1 class="page-title">Monitor de Reunioes</h1>
-                            <p class="page-subtitle">Acompanhe o processamento de documentos em tempo real</p>
+                            <p class="page-subtitle">Acompanhe o processamento de documentos da ARTESP em tempo real</p>
                         </div>
                         <div class="page-actions">
                             <button class="btn btn-secondary" onclick="App.PageMonitor.load()">
@@ -403,104 +463,263 @@
 
                     <div class="card" style="margin-bottom: 24px;">
                         <div class="card-header">
-                            <h2 class="card-title">Adicionar Documento</h2>
+                            <h2 class="card-title">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                                Adicionar Documento para Monitoramento
+                            </h2>
                         </div>
                         <div class="card-body">
                             <div class="form-row">
                                 <div class="form-group" style="flex: 3;">
-                                    <label class="form-label">URL do PDF ou Pagina</label>
+                                    <label class="form-label">URL do PDF ou Pagina da ARTESP</label>
                                     <input type="text" class="form-input" id="monitor-url" placeholder="https://www.artesp.sp.gov.br/...">
                                 </div>
                                 <div class="form-group" style="flex: 1;">
-                                    <label class="form-label">Tipo</label>
+                                    <label class="form-label">Tipo de Documento</label>
                                     <select class="form-select" id="monitor-tipo">
                                         <option value="deliberacao">Deliberacao</option>
                                         <option value="ata">Ata de Reuniao</option>
                                         <option value="retificacao">Retificacao</option>
                                     </select>
                                 </div>
-                                <button class="btn btn-primary" onclick="App.PageMonitor.adicionar()">Adicionar</button>
+                                <button class="btn btn-primary" onclick="App.PageMonitor.adicionar()" style="height: 42px; margin-top: auto;">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                    Adicionar
+                                </button>
                             </div>
                         </div>
                     </div>
 
                     <div class="stats-grid">
                         <div class="stat-card">
-                            <div class="stat-card-title">Total</div>
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Total de Documentos</span>
+                            </div>
                             <div class="stat-card-value" id="monitor-total">0</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-card-title">Pendentes</div>
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Pendentes</span>
+                            </div>
                             <div class="stat-card-value warning" id="monitor-pendentes">0</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-card-title">Processando</div>
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Processando</span>
+                            </div>
                             <div class="stat-card-value primary" id="monitor-processando">0</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-card-title">Concluidos</div>
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Concluidos</span>
+                            </div>
                             <div class="stat-card-value success" id="monitor-processados">0</div>
                         </div>
                     </div>
 
-                    <div class="meetings-list" id="monitor-list">
-                        <div class="empty-state">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                            <h3>Nenhuma reuniao monitorada</h3>
-                            <p>Adicione uma URL acima para comecar</p>
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Documentos Monitorados</h2>
+                        </div>
+                        <div class="card-body">
+                            <div class="meetings-list" id="monitor-list">
+                                <div class="empty-state">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                    <h3>Nenhuma reuniao monitorada</h3>
+                                    <p>Adicione uma URL de documento acima para comecar o monitoramento</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- PAGE: Diretores -->
+                <!-- ============================================
+                     PAGE: Diretores
+                     ============================================ -->
                 <div id="page-diretores" class="page-view">
                     <div class="page-header">
                         <div class="page-title-section">
                             <h1 class="page-title">Diretores e Mandatos</h1>
-                            <p class="page-subtitle">Composicao atual e historico do Conselho Diretor</p>
-                        </div>
-                    </div>
-
-                    <div class="director-grid" id="diretores-grid"></div>
-                </div>
-
-                <!-- PAGE: Jurimetria -->
-                <div id="page-jurimetria" class="page-view">
-                    <div class="page-header">
-                        <div class="page-title-section">
-                            <h1 class="page-title">Jurimetria de Diretores</h1>
-                            <p class="page-subtitle">Analise estatistica de votos e padroes de decisao</p>
-                        </div>
-                    </div>
-
-                    <div class="director-grid" id="jurimetria-grid"></div>
-                </div>
-
-                <!-- PAGE: Governanca -->
-                <div id="page-governanca" class="page-view">
-                    <div class="page-header">
-                        <div class="page-title-section">
-                            <h1 class="page-title">Governanca Regulatoria</h1>
-                            <p class="page-subtitle">Indicadores de qualidade institucional</p>
+                            <p class="page-subtitle">Composicao atual e historico do Conselho Diretor da ARTESP</p>
                         </div>
                     </div>
 
                     <div class="stats-grid">
                         <div class="stat-card">
-                            <div class="stat-card-title">Indice de Governanca</div>
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Diretores Ativos</span>
+                            </div>
+                            <div class="stat-card-value primary">4</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Total de Mandatos</span>
+                            </div>
+                            <div class="stat-card-value">5</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Media de Votos</span>
+                            </div>
+                            <div class="stat-card-value">210</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Taxa Media Aprovacao</span>
+                            </div>
+                            <div class="stat-card-value success">74.2%</div>
+                        </div>
+                    </div>
+
+                    <div class="director-grid" id="diretores-grid">
+                        <!-- Cards de diretores serao renderizados via JavaScript -->
+                    </div>
+                </div>
+
+                <!-- ============================================
+                     PAGE: Jurimetria
+                     ============================================ -->
+                <div id="page-jurimetria" class="page-view">
+                    <div class="page-header">
+                        <div class="page-title-section">
+                            <h1 class="page-title">Jurimetria de Diretores</h1>
+                            <p class="page-subtitle">Analise estatistica de votos e padroes de decisao dos diretores</p>
+                        </div>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Total de Votos Analisados</span>
+                            </div>
+                            <div class="stat-card-value">842</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Taxa Unanimidade</span>
+                            </div>
+                            <div class="stat-card-value success">87%</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Votos Divergentes</span>
+                            </div>
+                            <div class="stat-card-value warning">13%</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Pedidos de Vista</span>
+                            </div>
+                            <div class="stat-card-value">24</div>
+                        </div>
+                    </div>
+
+                    <div class="director-grid" id="jurimetria-grid">
+                        <!-- Cards serao renderizados via JavaScript -->
+                    </div>
+
+                    <div class="card" style="margin-top: 24px;">
+                        <div class="card-header">
+                            <h2 class="card-title">Matriz de Votacao - Ultimas 5 Reunioes</h2>
+                        </div>
+                        <div class="card-body" style="padding: 0; overflow-x: auto;">
+                            <table id="jurimetria-matrix">
+                                <thead>
+                                    <tr>
+                                        <th>Diretor</th>
+                                        <th>RO-245</th>
+                                        <th>RO-246</th>
+                                        <th>RO-247</th>
+                                        <th>RO-248</th>
+                                        <th>RO-249</th>
+                                        <th>% Favoravel</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Milton Persoli</strong></td>
+                                        <td><span class="badge badge-success">F</span></td>
+                                        <td><span class="badge badge-success">F</span></td>
+                                        <td><span class="badge badge-success">F</span></td>
+                                        <td><span class="badge badge-danger">C</span></td>
+                                        <td><span class="badge badge-success">F</span></td>
+                                        <td><strong style="color: var(--success);">78.2%</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Marcos Antonio Ribeiro</strong></td>
+                                        <td><span class="badge badge-success">F</span></td>
+                                        <td><span class="badge badge-danger">C</span></td>
+                                        <td><span class="badge badge-success">F</span></td>
+                                        <td><span class="badge badge-danger">C</span></td>
+                                        <td><span class="badge badge-danger">C</span></td>
+                                        <td><strong style="color: var(--warning);">65.4%</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Patricia Vanzolini</strong></td>
+                                        <td><span class="badge badge-success">F</span></td>
+                                        <td><span class="badge badge-success">F</span></td>
+                                        <td><span class="badge badge-success">F</span></td>
+                                        <td><span class="badge badge-success">F</span></td>
+                                        <td><span class="badge badge-info">V</span></td>
+                                        <td><strong style="color: var(--success);">82.1%</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Carlos Eduardo Silva</strong></td>
+                                        <td><span class="badge badge-success">F</span></td>
+                                        <td><span class="badge badge-success">F</span></td>
+                                        <td><span class="badge badge-danger">C</span></td>
+                                        <td><span class="badge badge-success">F</span></td>
+                                        <td><span class="badge badge-success">F</span></td>
+                                        <td><strong style="color: var(--success);">71.2%</strong></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="card-footer">
+                            <div style="display: flex; gap: 20px; font-size: 12px; color: var(--text-secondary);">
+                                <span><span class="badge badge-success">F</span> = Favoravel</span>
+                                <span><span class="badge badge-danger">C</span> = Contrario</span>
+                                <span><span class="badge badge-info">V</span> = Vista</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================
+                     PAGE: Governanca
+                     ============================================ -->
+                <div id="page-governanca" class="page-view">
+                    <div class="page-header">
+                        <div class="page-title-section">
+                            <h1 class="page-title">Governanca Regulatoria</h1>
+                            <p class="page-subtitle">Indicadores de qualidade institucional e conformidade da ARTESP</p>
+                        </div>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Indice de Governanca</span>
+                            </div>
                             <div class="stat-card-value primary">78</div>
                             <div class="stat-card-subtitle">de 100 pontos</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-card-title">Transparencia</div>
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Transparencia</span>
+                            </div>
                             <div class="stat-card-value success">92%</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-card-title">Previsibilidade</div>
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Previsibilidade</span>
+                            </div>
                             <div class="stat-card-value warning">75%</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-card-title">Tempestividade</div>
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Tempestividade</span>
+                            </div>
                             <div class="stat-card-value warning">68%</div>
                         </div>
                     </div>
@@ -508,21 +727,33 @@
                     <div class="grid-2">
                         <div class="card">
                             <div class="card-header">
-                                <h2 class="card-title">Indicadores-Chave</h2>
+                                <h2 class="card-title">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                                    Indicadores-Chave
+                                </h2>
                             </div>
                             <div class="card-body">
-                                <div style="display: flex; flex-direction: column; gap: 16px;">
-                                    <div style="display: flex; justify-content: space-between; padding: 12px; background: var(--background); border-radius: var(--radius);">
-                                        <span>Tempo Medio de Decisao</span>
-                                        <strong style="color: var(--primary);">45 dias</strong>
+                                <div style="display: flex; flex-direction: column; gap: 12px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--background); border-radius: var(--radius); border-left: 4px solid var(--primary);">
+                                        <div>
+                                            <div style="font-weight: 600; margin-bottom: 4px;">Tempo Medio de Decisao</div>
+                                            <div style="font-size: 12px; color: var(--text-muted);">Da entrada ao julgamento</div>
+                                        </div>
+                                        <div style="font-size: 24px; font-weight: 700; color: var(--primary);">45 dias</div>
                                     </div>
-                                    <div style="display: flex; justify-content: space-between; padding: 12px; background: var(--background); border-radius: var(--radius);">
-                                        <span>Taxa de Unanimidade</span>
-                                        <strong style="color: var(--success);">87%</strong>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--background); border-radius: var(--radius); border-left: 4px solid var(--success);">
+                                        <div>
+                                            <div style="font-weight: 600; margin-bottom: 4px;">Taxa de Unanimidade</div>
+                                            <div style="font-size: 12px; color: var(--text-muted);">Decisoes sem divergencia</div>
+                                        </div>
+                                        <div style="font-size: 24px; font-weight: 700; color: var(--success);">87%</div>
                                     </div>
-                                    <div style="display: flex; justify-content: space-between; padding: 12px; background: var(--background); border-radius: var(--radius);">
-                                        <span>Pedidos de Vista</span>
-                                        <strong style="color: var(--primary);">1.2 por reuniao</strong>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--background); border-radius: var(--radius); border-left: 4px solid var(--warning);">
+                                        <div>
+                                            <div style="font-weight: 600; margin-bottom: 4px;">Pedidos de Vista</div>
+                                            <div style="font-size: 12px; color: var(--text-muted);">Media por reuniao</div>
+                                        </div>
+                                        <div style="font-size: 24px; font-weight: 700; color: var(--warning);">1.2</div>
                                     </div>
                                 </div>
                             </div>
@@ -530,7 +761,10 @@
 
                         <div class="card">
                             <div class="card-header">
-                                <h2 class="card-title">Conformidade Regulatoria</h2>
+                                <h2 class="card-title">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    Conformidade Regulatoria
+                                </h2>
                             </div>
                             <div class="card-body" style="padding: 0;">
                                 <table>
@@ -538,24 +772,34 @@
                                         <tr>
                                             <th>Requisito</th>
                                             <th>Status</th>
+                                            <th>Ultima Verificacao</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <tr>
                                             <td>Publicacao de Atas em 48h</td>
                                             <td><span class="badge badge-success">Conforme</span></td>
+                                            <td>08/02/2026</td>
                                         </tr>
                                         <tr>
                                             <td>Fundamentacao de Decisoes</td>
                                             <td><span class="badge badge-success">Conforme</span></td>
+                                            <td>08/02/2026</td>
                                         </tr>
                                         <tr>
                                             <td>Quorum Minimo</td>
                                             <td><span class="badge badge-success">Conforme</span></td>
+                                            <td>08/02/2026</td>
                                         </tr>
                                         <tr>
                                             <td>Prazo de Resposta a Recursos</td>
                                             <td><span class="badge badge-warning">Atencao</span></td>
+                                            <td>05/02/2026</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Audiencias Publicas</td>
+                                            <td><span class="badge badge-success">Conforme</span></td>
+                                            <td>01/02/2026</td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -564,20 +808,27 @@
                     </div>
                 </div>
 
-                <!-- PAGE: Boletim -->
+                <!-- ============================================
+                     PAGE: Boletim
+                     ============================================ -->
                 <div id="page-boletim" class="page-view">
                     <div class="page-header">
                         <div class="page-title-section">
                             <h1 class="page-title">Boletim Mensal</h1>
-                            <p class="page-subtitle">Resumo executivo das atividades regulatorias</p>
+                            <p class="page-subtitle">Resumo executivo das atividades regulatorias da ARTESP</p>
                         </div>
                         <div class="page-actions">
                             <div class="filter-group">
                                 <select class="filter-select" id="boletim-mes">
                                     <option value="2026-02">Fevereiro 2026</option>
                                     <option value="2026-01">Janeiro 2026</option>
+                                    <option value="2025-12">Dezembro 2025</option>
                                 </select>
                             </div>
+                            <button class="btn btn-primary">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                Gerar PDF
+                            </button>
                             <button class="btn btn-secondary" onclick="window.print()">
                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
                                 Imprimir
@@ -587,77 +838,141 @@
 
                     <div class="stats-grid">
                         <div class="stat-card">
-                            <div class="stat-card-title">Reunioes</div>
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Reunioes Realizadas</span>
+                            </div>
                             <div class="stat-card-value">4</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-card-title">Deliberacoes</div>
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Total Deliberacoes</span>
+                            </div>
                             <div class="stat-card-value">87</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-card-title">Deferidas</div>
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Deferidas</span>
+                            </div>
                             <div class="stat-card-value success">68</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-card-title">Indeferidas</div>
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Indeferidas</span>
+                            </div>
                             <div class="stat-card-value danger">19</div>
                         </div>
                     </div>
 
-                    <div class="card">
-                        <div class="card-header">
-                            <h2 class="card-title">Destaques do Mes</h2>
+                    <div class="grid-2">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                                    Destaques do Mes
+                                </h2>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert-list">
+                                    <div class="alert-item info">
+                                        <div class="alert-title">Revisao Tarifaria Extraordinaria</div>
+                                        <div class="alert-body">Aprovada revisao de 4.2% para o Sistema Anchieta-Imigrantes devido a variacao do IPCA acumulado.</div>
+                                    </div>
+                                    <div class="alert-item info">
+                                        <div class="alert-title">Novos Investimentos Aprovados</div>
+                                        <div class="alert-body">Homologado pacote de R$ 234 milhoes em melhorias para rodovias do interior paulista.</div>
+                                    </div>
+                                    <div class="alert-item warning">
+                                        <div class="alert-title">Fiscalizacao Intensificada</div>
+                                        <div class="alert-body">12 autos de infracao lavrados contra concessionarias por irregularidades em sinalizacao.</div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="card-body">
-                            <div class="alert-list">
-                                <div class="alert-item info">
-                                    <div class="alert-title">Revisao Tarifaria Extraordinaria</div>
-                                    <div class="alert-body">Aprovada revisao de 4.2% para o Sistema Anchieta-Imigrantes devido a variacao do IPCA acumulado.</div>
-                                </div>
-                                <div class="alert-item info">
-                                    <div class="alert-title">Novos Investimentos</div>
-                                    <div class="alert-body">Homologado pacote de R$ 234 milhoes em melhorias para rodovias do interior paulista.</div>
-                                </div>
-                                <div class="alert-item warning">
-                                    <div class="alert-title">Fiscalizacao Intensificada</div>
-                                    <div class="alert-body">12 autos de infracao lavrados contra concessionarias por irregularidades em sinalizacao.</div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path></svg>
+                                    Temas Mais Frequentes
+                                </h2>
+                            </div>
+                            <div class="card-body">
+                                <div class="bar-chart">
+                                    <div class="bar-item">
+                                        <span class="bar-label">Revisao Tarifaria</span>
+                                        <div class="bar-track"><div class="bar-fill" style="width: 85%;"></div></div>
+                                        <span class="bar-value">23</span>
+                                    </div>
+                                    <div class="bar-item">
+                                        <span class="bar-label">Multas e Sancoes</span>
+                                        <div class="bar-track"><div class="bar-fill" style="width: 65%;"></div></div>
+                                        <span class="bar-value">18</span>
+                                    </div>
+                                    <div class="bar-item">
+                                        <span class="bar-label">Obras e Investimentos</span>
+                                        <div class="bar-track"><div class="bar-fill" style="width: 55%;"></div></div>
+                                        <span class="bar-value">15</span>
+                                    </div>
+                                    <div class="bar-item">
+                                        <span class="bar-label">Contratos</span>
+                                        <div class="bar-track"><div class="bar-fill" style="width: 45%;"></div></div>
+                                        <span class="bar-value">12</span>
+                                    </div>
+                                    <div class="bar-item">
+                                        <span class="bar-label">Licenciamento</span>
+                                        <div class="bar-track"><div class="bar-fill" style="width: 32%;"></div></div>
+                                        <span class="bar-value">9</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- PAGE: Auditoria -->
+                <!-- ============================================
+                     PAGE: Auditoria
+                     ============================================ -->
                 <div id="page-auditoria" class="page-view">
                     <div class="page-header">
                         <div class="page-title-section">
                             <h1 class="page-title">Auditoria Forense</h1>
-                            <p class="page-subtitle">Deteccao de anomalias e padroes suspeitos</p>
+                            <p class="page-subtitle">Deteccao de anomalias e padroes suspeitos nas deliberacoes</p>
                         </div>
                     </div>
 
                     <div class="stats-grid">
                         <div class="stat-card">
-                            <div class="stat-card-title">Alertas Criticos</div>
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Alertas Criticos</span>
+                            </div>
                             <div class="stat-card-value danger">3</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-card-title">Alertas Medios</div>
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Alertas Medios</span>
+                            </div>
                             <div class="stat-card-value warning">8</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-card-title">Deliberacoes Analisadas</div>
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Deliberacoes Analisadas</span>
+                            </div>
                             <div class="stat-card-value">156</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-card-title">Conformidade</div>
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Taxa de Conformidade</span>
+                            </div>
                             <div class="stat-card-value success">94.2%</div>
                         </div>
                     </div>
 
                     <div class="card">
                         <div class="card-header">
-                            <h2 class="card-title">Alertas Ativos</h2>
+                            <h2 class="card-title">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                Alertas Ativos
+                            </h2>
                             <span class="badge badge-danger">11 pendentes</span>
                         </div>
                         <div class="card-body">
@@ -667,9 +982,10 @@
                                         <div class="alert-title">Padrao de votacao incomum detectado</div>
                                         <span class="alert-severity severity-high">ALTA</span>
                                     </div>
-                                    <div class="alert-body">Diretor Marcos Ribeiro votou contrario em 8 de 10 deliberacoes consecutivas sobre o mesmo tema.</div>
+                                    <div class="alert-body">Diretor Marcos Ribeiro votou contrario em 8 de 10 deliberacoes consecutivas sobre o mesmo tema (Revisao Tarifaria), desviando significativamente do padrao historico de 23% de votos contrarios.</div>
                                     <div class="alert-meta">
                                         <span>Detectado: 07/02/2026</span>
+                                        <span>Reunioes: RO-248, RO-249</span>
                                         <span>Confianca: 87%</span>
                                     </div>
                                 </div>
@@ -678,9 +994,10 @@
                                         <div class="alert-title">Concentracao de relatorias</div>
                                         <span class="alert-severity severity-medium">MEDIA</span>
                                     </div>
-                                    <div class="alert-body">Um mesmo diretor foi designado relator em 12 casos consecutivos envolvendo a mesma empresa.</div>
+                                    <div class="alert-body">Um mesmo diretor (Patricia Vanzolini) foi designado relator em 12 casos consecutivos envolvendo a Concessionaria Ecovias, representando 100% das relatorias para esta empresa no periodo.</div>
                                     <div class="alert-meta">
                                         <span>Detectado: 05/02/2026</span>
+                                        <span>Periodo: Jan-Fev 2026</span>
                                         <span>Confianca: 72%</span>
                                     </div>
                                 </div>
@@ -689,12 +1006,84 @@
                                         <div class="alert-title">Tempo de processamento acima da media</div>
                                         <span class="alert-severity severity-low">BAIXA</span>
                                     </div>
-                                    <div class="alert-body">15 processos ultrapassaram o prazo medio de 45 dias para julgamento.</div>
+                                    <div class="alert-body">15 processos ultrapassaram o prazo medio de 45 dias para julgamento, com tempo medio de 78 dias. Pode indicar necessidade de revisao de procedimentos.</div>
                                     <div class="alert-meta">
                                         <span>Detectado: 03/02/2026</span>
+                                        <span>Processos afetados: 15</span>
                                         <span>Confianca: 95%</span>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid-2" style="margin-top: 24px;">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">Analise de Padroes</h2>
+                            </div>
+                            <div class="card-body">
+                                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+                                    <div style="padding: 16px; background: var(--background); border-radius: var(--radius);">
+                                        <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">Indice de Consistencia</div>
+                                        <div style="font-size: 28px; font-weight: 700; color: var(--primary);">87%</div>
+                                        <div style="font-size: 12px; color: var(--success);">-2.3% vs mes anterior</div>
+                                    </div>
+                                    <div style="padding: 16px; background: var(--background); border-radius: var(--radius);">
+                                        <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">Votos Divergentes</div>
+                                        <div style="font-size: 28px; font-weight: 700; color: var(--warning);">12%</div>
+                                        <div style="font-size: 12px; color: var(--danger);">+4.1% vs mes anterior</div>
+                                    </div>
+                                    <div style="padding: 16px; background: var(--background); border-radius: var(--radius);">
+                                        <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">Concentracao Relatorias</div>
+                                        <div style="font-size: 28px; font-weight: 700; color: var(--text-primary);">0.34</div>
+                                        <div style="font-size: 12px; color: var(--text-muted);">Indice Herfindahl</div>
+                                    </div>
+                                    <div style="padding: 16px; background: var(--background); border-radius: var(--radius);">
+                                        <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">Tempo Medio Decisao</div>
+                                        <div style="font-size: 28px; font-weight: 700; color: var(--success);">45d</div>
+                                        <div style="font-size: 12px; color: var(--success);">-3 dias vs media</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">Historico de Auditorias</h2>
+                            </div>
+                            <div class="card-body" style="padding: 0;">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Data</th>
+                                            <th>Evento</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>08/02/2026</td>
+                                            <td>Alerta de padrao de votacao</td>
+                                            <td><span class="badge badge-danger">Alerta</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>05/02/2026</td>
+                                            <td>Revisao de relatorias</td>
+                                            <td><span class="badge badge-warning">Analise</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>01/02/2026</td>
+                                            <td>Auditoria mensal concluida</td>
+                                            <td><span class="badge badge-success">OK</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>25/01/2026</td>
+                                            <td>Atualizacao de algoritmos</td>
+                                            <td><span class="badge badge-success">OK</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
