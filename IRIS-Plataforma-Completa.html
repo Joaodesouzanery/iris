@@ -5,10 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IRIS - Plataforma de Inteligencia Regulatoria</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- PDF.js para leitura de PDFs no browser -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <style>
-        /* ============================================
-           CSS VARIABLES - IRIS Brand Colors
-           ============================================ */
         :root {
             --primary: #c9a227;
             --primary-dark: #a88a1f;
@@ -22,7 +21,6 @@
             --text-secondary: #a0aec0;
             --text-muted: #718096;
             --border: #1a3a5c;
-            --border-light: #243b55;
             --success: #4ade80;
             --success-bg: rgba(74, 222, 128, 0.15);
             --warning: #fbbf24;
@@ -31,35 +29,23 @@
             --danger-bg: rgba(248, 113, 113, 0.15);
             --info: #60a5fa;
             --info-bg: rgba(96, 165, 250, 0.15);
-            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
-            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.3);
-            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3);
-            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.3);
-            --radius-sm: 6px;
             --radius: 8px;
             --radius-lg: 12px;
-            --radius-xl: 16px;
             --sidebar-width: 260px;
             --header-height: 64px;
         }
-
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             background: var(--background);
             color: var(--text-primary);
             font-size: 14px;
             line-height: 1.5;
             min-height: 100vh;
         }
-
         svg { max-width: 100%; height: auto; }
         svg:not([width]):not([height]) { width: 24px; height: 24px; }
-
         .app-container { display: flex; min-height: 100vh; }
-
-        /* SIDEBAR */
         .sidebar {
             width: var(--sidebar-width);
             background: linear-gradient(180deg, #0a1628 0%, #0d1e36 100%);
@@ -72,7 +58,6 @@
             z-index: 100;
             border-right: 1px solid var(--border);
         }
-
         .sidebar-header {
             padding: 20px;
             display: flex;
@@ -80,15 +65,10 @@
             gap: 12px;
             border-bottom: 1px solid var(--border);
         }
-
-        .iris-logo { display: flex; align-items: center; gap: 10px; }
-
         .sidebar-brand { display: flex; flex-direction: column; }
         .sidebar-brand-name { color: var(--primary); font-size: 22px; font-weight: 700; letter-spacing: 3px; }
         .sidebar-brand-subtitle { color: var(--text-secondary); font-size: 10px; letter-spacing: 0.5px; margin-top: 2px; }
-
         .sidebar-nav { flex: 1; padding: 16px 12px; overflow-y: auto; }
-
         .nav-section { margin-bottom: 24px; }
         .nav-section-title {
             font-size: 11px;
@@ -99,7 +79,6 @@
             padding: 0 12px;
             margin-bottom: 8px;
         }
-
         .nav-item {
             display: flex;
             align-items: center;
@@ -113,31 +92,21 @@
             transition: all 0.2s ease;
             cursor: pointer;
         }
-
         .nav-item:hover { background: var(--surface-hover); color: var(--text-primary); }
         .nav-item.active { background: var(--primary-bg); color: var(--primary); }
         .nav-item svg { width: 20px; height: 20px; flex-shrink: 0; }
-
-        .sidebar-footer {
-            padding: 16px;
-            border-top: 1px solid var(--border);
-        }
-
+        .sidebar-footer { padding: 16px; border-top: 1px solid var(--border); }
         .alert-badge {
             display: flex;
             align-items: center;
             gap: 8px;
             padding: 10px 12px;
-            background: var(--danger-bg);
+            background: var(--success-bg);
             border-radius: var(--radius);
-            color: var(--danger);
+            color: var(--success);
             font-size: 13px;
             font-weight: 500;
         }
-
-        .alert-badge svg { width: 18px; height: 18px; }
-
-        /* MAIN CONTENT */
         .main-content {
             flex: 1;
             margin-left: var(--sidebar-width);
@@ -145,7 +114,6 @@
             display: flex;
             flex-direction: column;
         }
-
         .top-header {
             height: var(--header-height);
             background: var(--surface);
@@ -158,14 +126,11 @@
             top: 0;
             z-index: 50;
         }
-
         .breadcrumb { display: flex; align-items: center; gap: 8px; font-size: 14px; }
         .breadcrumb-item { color: var(--text-muted); }
         .breadcrumb-separator { color: var(--text-muted); }
         .breadcrumb-current { color: var(--text-primary); font-weight: 500; }
-
         .header-right { display: flex; align-items: center; gap: 16px; }
-
         .status-badge {
             display: flex;
             align-items: center;
@@ -177,7 +142,6 @@
             font-size: 12px;
             font-weight: 500;
         }
-
         .status-badge::before {
             content: '';
             width: 6px;
@@ -186,26 +150,7 @@
             border-radius: 50%;
             animation: pulse 2s infinite;
         }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        .header-icon {
-            width: 36px;
-            height: 36px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: var(--radius);
-            color: var(--text-secondary);
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .header-icon:hover { background: var(--surface-hover); color: var(--text-primary); }
-
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
         .user-avatar {
             width: 36px;
             height: 36px;
@@ -218,12 +163,9 @@
             font-size: 13px;
             color: #000;
         }
-
         .page-content { padding: 24px; flex: 1; }
-
         .page-view { display: none; }
         .page-view.active { display: block; }
-
         .page-header {
             display: flex;
             justify-content: space-between;
@@ -231,14 +173,10 @@
             margin-bottom: 24px;
             gap: 16px;
         }
-
         .page-title-section { flex: 1; }
         .page-title { font-size: 24px; font-weight: 700; color: var(--primary); margin-bottom: 4px; }
         .page-subtitle { color: var(--text-secondary); font-size: 14px; }
-
-        .page-actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-
-        /* BUTTONS */
+        .page-actions { display: flex; gap: 12px; align-items: center; }
         .btn {
             display: inline-flex;
             align-items: center;
@@ -251,83 +189,26 @@
             border: none;
             transition: all 0.2s ease;
         }
-
         .btn svg { width: 16px; height: 16px; }
-
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary), var(--primary-light));
-            color: #000;
-        }
-        .btn-primary:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
-
+        .btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary-light)); color: #000; }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(201, 162, 39, 0.3); }
         .btn-secondary { background: var(--surface-light); color: var(--text-primary); }
-        .btn-secondary:hover { background: var(--surface-hover); }
-
-        .btn-outline {
-            background: transparent;
-            border: 1px solid var(--border);
-            color: var(--text-secondary);
-        }
-        .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
-
         .btn-danger { background: var(--danger-bg); color: var(--danger); }
-        .btn-danger:hover { background: var(--danger); color: #fff; }
-
         .btn-sm { padding: 6px 12px; font-size: 13px; }
-
-        /* FILTERS */
-        .filter-group { display: flex; align-items: center; gap: 8px; }
-
-        .filter-select {
-            padding: 8px 12px;
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            background: var(--surface);
-            color: var(--text-primary);
-            font-size: 13px;
-            cursor: pointer;
-        }
-
-        .filter-select:focus { outline: none; border-color: var(--primary); }
-
-        .filters-bar {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 24px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-
-        .filter-input {
-            padding: 8px 12px;
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            background: var(--surface);
-            color: var(--text-primary);
-            font-size: 13px;
-            min-width: 250px;
-        }
-
-        .filter-input:focus { outline: none; border-color: var(--primary); }
-        .filter-input::placeholder { color: var(--text-muted); }
-
-        /* CARDS */
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .card {
             background: var(--surface);
             border-radius: var(--radius-lg);
             border: 1px solid var(--border);
             overflow: hidden;
         }
-
         .card-header {
             padding: 16px 20px;
             border-bottom: 1px solid var(--border);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 12px;
         }
-
         .card-title {
             font-size: 16px;
             font-weight: 600;
@@ -336,57 +217,29 @@
             align-items: center;
             gap: 8px;
         }
-
-        .card-title svg { width: 20px; height: 20px; color: var(--primary); }
-        .card-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
         .card-body { padding: 20px; }
-        .card-footer { padding: 16px 20px; border-top: 1px solid var(--border); background: var(--background); }
-
-        /* GRIDS */
         .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
-        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
-        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
-
-        @media (max-width: 1200px) {
-            .grid-4 { grid-template-columns: repeat(2, 1fr); }
-            .grid-3 { grid-template-columns: repeat(2, 1fr); }
-        }
-
-        @media (max-width: 768px) {
-            .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
-        }
-
-        /* STATS GRID */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 20px;
             margin-bottom: 24px;
         }
-
-        @media (max-width: 1200px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 1200px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } .grid-2 { grid-template-columns: 1fr; } }
         @media (max-width: 600px) { .stats-grid { grid-template-columns: 1fr; } }
-
         .stat-card {
             background: var(--surface);
             border-radius: var(--radius-lg);
             padding: 20px;
             border: 1px solid var(--border);
         }
-
         .stat-card-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
             margin-bottom: 12px;
         }
-
-        .stat-card-title {
-            font-size: 13px;
-            font-weight: 500;
-            color: var(--text-secondary);
-        }
-
+        .stat-card-title { font-size: 13px; font-weight: 500; color: var(--text-secondary); }
         .stat-card-icon {
             width: 40px;
             height: 40px;
@@ -396,46 +249,18 @@
             align-items: center;
             justify-content: center;
         }
-
         .stat-card-icon svg { width: 20px; height: 20px; color: var(--primary); }
-
-        .stat-card-value {
-            font-size: 32px;
-            font-weight: 700;
-            color: var(--text-primary);
-            line-height: 1;
-        }
-
+        .stat-card-value { font-size: 32px; font-weight: 700; color: var(--text-primary); line-height: 1; }
         .stat-card-value.success { color: var(--success); }
         .stat-card-value.danger { color: var(--danger); }
         .stat-card-value.warning { color: var(--warning); }
         .stat-card-value.primary { color: var(--primary); }
-
         .stat-card-subtitle { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
-
-        /* TABLES */
         table { width: 100%; border-collapse: collapse; }
-
-        th, td {
-            padding: 12px 16px;
-            text-align: left;
-            border-bottom: 1px solid var(--border);
-        }
-
-        th {
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            background: var(--background);
-        }
-
+        th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border); }
+        th { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; background: var(--background); }
         td { font-size: 14px; color: var(--text-primary); }
-
         tr:hover td { background: var(--surface-hover); }
-
-        /* BADGES */
         .badge {
             display: inline-flex;
             align-items: center;
@@ -444,204 +269,11 @@
             font-size: 12px;
             font-weight: 500;
         }
-
         .badge-success { background: var(--success-bg); color: var(--success); }
         .badge-danger { background: var(--danger-bg); color: var(--danger); }
         .badge-warning { background: var(--warning-bg); color: var(--warning); }
         .badge-info { background: var(--info-bg); color: var(--info); }
         .badge-secondary { background: var(--surface-light); color: var(--text-secondary); }
-        .badge-deferido { background: var(--success-bg); color: var(--success); }
-        .badge-indeferido { background: var(--danger-bg); color: var(--danger); }
-        .badge-externo { background: var(--info-bg); color: var(--info); }
-        .badge-interno { background: var(--warning-bg); color: var(--warning); }
-
-        /* BAR CHART */
-        .bar-chart { display: flex; flex-direction: column; gap: 12px; }
-
-        .bar-item {
-            display: grid;
-            grid-template-columns: 180px 1fr 50px;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .bar-label {
-            font-size: 13px;
-            color: var(--text-secondary);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .bar-track {
-            height: 24px;
-            background: var(--background);
-            border-radius: 12px;
-            overflow: hidden;
-        }
-
-        .bar-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--primary), var(--primary-light));
-            border-radius: 12px;
-            transition: width 0.5s ease;
-        }
-
-        .bar-value {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text-primary);
-            text-align: right;
-        }
-
-        /* DONUT CHART */
-        .donut-chart {
-            position: relative;
-            width: 200px;
-            height: 200px;
-            margin: 0 auto;
-            flex-shrink: 0;
-        }
-
-        .donut-chart svg {
-            transform: rotate(-90deg);
-            width: 200px;
-            height: 200px;
-        }
-
-        .donut-chart circle { fill: none; stroke-width: 30; }
-        .donut-bg { stroke: var(--border); }
-        .donut-fill { stroke: var(--primary); stroke-linecap: round; }
-
-        .donut-center {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-        }
-
-        .donut-value { font-size: 32px; font-weight: 700; color: var(--primary); }
-        .donut-label { font-size: 13px; color: var(--text-muted); }
-
-        .chart-legend { display: flex; flex-direction: column; gap: 12px; }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 14px;
-            color: var(--text-secondary);
-        }
-
-        .legend-color { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
-
-        /* DIRECTOR CARDS */
-        .director-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 20px;
-        }
-
-        .director-card {
-            background: var(--surface);
-            border-radius: var(--radius-lg);
-            border: 1px solid var(--border);
-            overflow: hidden;
-        }
-
-        .director-header {
-            padding: 20px;
-            display: flex;
-            gap: 16px;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .director-avatar {
-            width: 56px;
-            height: 56px;
-            background: linear-gradient(135deg, var(--primary), var(--primary-light));
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            font-weight: 700;
-            color: #000;
-            flex-shrink: 0;
-        }
-
-        .director-info { flex: 1; }
-        .director-info h3 { font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
-        .director-info .role { font-size: 13px; color: var(--text-secondary); margin-bottom: 4px; }
-        .director-info .period { font-size: 12px; color: var(--text-muted); }
-
-        .director-status {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-size: 11px;
-            font-weight: 500;
-            margin-top: 4px;
-        }
-
-        .status-active { background: var(--success-bg); color: var(--success); }
-        .status-inactive { background: var(--danger-bg); color: var(--danger); }
-
-        .director-body { padding: 20px; }
-
-        .director-stats {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 12px;
-            text-align: center;
-        }
-
-        .director-stats .stat-item .value { font-size: 20px; font-weight: 700; color: var(--text-primary); }
-        .director-stats .stat-item .value.green { color: var(--success); }
-        .director-stats .stat-item .value.red { color: var(--danger); }
-        .director-stats .stat-item .label { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-
-        .director-bar { margin-top: 16px; }
-        .director-bar-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; }
-
-        /* ALERTS */
-        .alert-list { display: flex; flex-direction: column; gap: 12px; }
-
-        .alert-item {
-            background: var(--background);
-            border-radius: var(--radius);
-            padding: 16px;
-            border-left: 4px solid var(--danger);
-        }
-
-        .alert-item.warning { border-left-color: var(--warning); }
-        .alert-item.info { border-left-color: var(--info); }
-
-        .alert-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .alert-title { font-weight: 600; color: var(--text-primary); }
-        .alert-body { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
-
-        .alert-meta {
-            display: flex;
-            gap: 16px;
-            margin-top: 12px;
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-
-        .alert-severity {
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: 600;
-        }
-
-        .severity-high { background: var(--danger-bg); color: var(--danger); }
-        .severity-medium { background: var(--warning-bg); color: var(--warning); }
-        .severity-low { background: var(--info-bg); color: var(--info); }
-
-        /* UPLOAD ZONE */
         .upload-zone {
             border: 2px dashed var(--border);
             border-radius: var(--radius-lg);
@@ -651,91 +283,68 @@
             cursor: pointer;
             background: var(--background);
         }
-
         .upload-zone:hover, .upload-zone.dragover {
             border-color: var(--primary);
             background: var(--primary-bg);
         }
-
         .upload-zone svg { width: 48px; height: 48px; color: var(--primary); margin-bottom: 16px; }
         .upload-zone h3 { font-size: 18px; font-weight: 600; margin-bottom: 8px; color: var(--text-primary); }
         .upload-zone p { color: var(--text-secondary); margin-bottom: 16px; }
-
+        .progress-container { margin-top: 20px; }
         .progress-info { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px; }
-
-        .progress-bar {
-            height: 8px;
-            background: var(--border);
-            border-radius: 4px;
-            overflow: hidden;
-        }
-
+        .progress-bar { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
         .progress-fill {
             height: 100%;
             background: linear-gradient(90deg, var(--primary), var(--primary-light));
             border-radius: 4px;
             transition: width 0.3s ease;
         }
-
-        .file-name { font-weight: 500; color: var(--text-primary); }
-
-        .action-buttons { display: flex; gap: 8px; justify-content: flex-end; }
-
-        .result-summary {
-            display: flex;
-            gap: 24px;
-            padding: 16px;
-            background: var(--background);
-            border-radius: var(--radius);
-        }
-
-        .result-stat { text-align: center; }
-        .result-stat .value { font-size: 32px; font-weight: 700; color: var(--primary); }
-        .result-stat .label { font-size: 12px; color: var(--text-secondary); text-transform: uppercase; }
-
-        .card-actions { display: flex; gap: 8px; }
-
-        .form-group { margin-bottom: 16px; }
-        .form-label { display: block; font-size: 13px; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px; }
-
-        .form-input {
-            width: 100%;
-            padding: 10px 14px;
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            background: var(--background);
-            color: var(--text-primary);
-            font-size: 14px;
-        }
-
-        .form-input:focus { outline: none; border-color: var(--primary); }
-        .form-input::placeholder { color: var(--text-muted); }
-
-        /* EMPTY STATE */
-        .empty-state {
-            text-align: center;
-            padding: 40px;
-            color: var(--text-muted);
-        }
-
+        .empty-state { text-align: center; padding: 40px; color: var(--text-muted); }
         .empty-state svg { width: 48px; height: 48px; margin-bottom: 16px; opacity: 0.5; }
         .empty-state h3 { color: var(--text-secondary); margin-bottom: 8px; }
-
-        /* LOADING */
-        .loading { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 40px; }
-
+        .action-buttons { display: flex; gap: 8px; }
+        .bar-chart { display: flex; flex-direction: column; gap: 12px; }
+        .bar-item { display: grid; grid-template-columns: 180px 1fr 50px; align-items: center; gap: 12px; }
+        .bar-label { font-size: 13px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .bar-track { height: 24px; background: var(--background); border-radius: 12px; overflow: hidden; }
+        .bar-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--primary-light)); border-radius: 12px; }
+        .bar-value { font-size: 14px; font-weight: 600; color: var(--text-primary); text-align: right; }
+        .donut-chart { position: relative; width: 200px; height: 200px; margin: 0 auto; }
+        .donut-chart svg { transform: rotate(-90deg); width: 200px; height: 200px; }
+        .donut-chart circle { fill: none; stroke-width: 30; }
+        .donut-bg { stroke: var(--border); }
+        .donut-fill { stroke: var(--primary); stroke-linecap: round; transition: stroke-dashoffset 0.5s ease; }
+        .donut-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
+        .donut-value { font-size: 32px; font-weight: 700; color: var(--primary); }
+        .donut-label { font-size: 13px; color: var(--text-muted); }
+        .chart-legend { display: flex; flex-direction: column; gap: 12px; }
+        .legend-item { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text-secondary); }
+        .legend-color { width: 12px; height: 12px; border-radius: 3px; }
+        #file-input { display: none; }
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(10, 22, 40, 0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .loading-overlay.hidden { display: none; }
         .spinner {
-            width: 24px;
-            height: 24px;
-            border: 3px solid var(--border);
+            width: 48px;
+            height: 48px;
+            border: 4px solid var(--border);
             border-top-color: var(--primary);
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
-
         @keyframes spin { to { transform: rotate(360deg); } }
-
-        /* RESPONSIVE */
+        .loading-text { margin-top: 16px; color: var(--text-secondary); }
         @media (max-width: 768px) {
             .sidebar { transform: translateX(-100%); }
             .main-content { margin-left: 0; }
@@ -743,6 +352,12 @@
     </style>
 </head>
 <body>
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay hidden">
+        <div class="spinner"></div>
+        <div class="loading-text" id="loading-text">Processando...</div>
+    </div>
+
     <div class="app-container">
         <!-- Sidebar -->
         <nav class="sidebar">
@@ -768,7 +383,7 @@
             <div class="sidebar-nav">
                 <div class="nav-section">
                     <div class="nav-section-title">Documentos</div>
-                    <a data-route="/upload" class="nav-item">
+                    <a data-route="/upload" class="nav-item active">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
                         Upload de PDFs
                     </a>
@@ -779,54 +394,26 @@
                 </div>
 
                 <div class="nav-section">
-                    <div class="nav-section-title">Decisoes</div>
+                    <div class="nav-section-title">Resultados</div>
+                    <a data-route="/metricas" class="nav-item">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path></svg>
+                        Dashboard Geral
+                    </a>
                     <a data-route="/deliberacoes" class="nav-item">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                         Deliberacoes
                     </a>
-                    <a data-route="/monitor" class="nav-item">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-                        Monitor
-                    </a>
-                </div>
-
-                <div class="nav-section">
-                    <div class="nav-section-title">Diretores</div>
                     <a data-route="/diretores" class="nav-item">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                        Mandatos
-                    </a>
-                    <a data-route="/jurimetria" class="nav-item">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-                        Jurimetria
-                    </a>
-                    <a data-route="/governanca" class="nav-item">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-                        Governanca
-                    </a>
-                </div>
-
-                <div class="nav-section">
-                    <div class="nav-section-title">Inteligencia</div>
-                    <a data-route="/metricas" class="nav-item active">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path></svg>
-                        Dashboard Geral
-                    </a>
-                    <a data-route="/boletim" class="nav-item">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path></svg>
-                        Boletim Mensal
-                    </a>
-                    <a data-route="/auditoria" class="nav-item">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
-                        Auditoria Forense
+                        Diretores
                     </a>
                 </div>
             </div>
 
             <div class="sidebar-footer">
-                <div class="alert-badge">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
-                    3 alertas
+                <div class="alert-badge" id="pdf-count-badge">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    <span id="pdf-count-text">0 PDFs carregados</span>
                 </div>
             </div>
         </nav>
@@ -836,153 +423,80 @@
             <header class="top-header">
                 <div class="header-left">
                     <div class="breadcrumb">
-                        <span class="breadcrumb-item">Plataforma IRIS</span>
+                        <span class="breadcrumb-item">IRIS</span>
                         <span class="breadcrumb-separator">/</span>
-                        <span class="breadcrumb-current" id="breadcrumb-page">Dashboard Geral</span>
+                        <span class="breadcrumb-current" id="breadcrumb-page">Upload de PDFs</span>
                     </div>
                 </div>
                 <div class="header-right">
-                    <span class="status-badge">Sistema Ativo</span>
-                    <div class="header-icon">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-                    </div>
-                    <div class="user-avatar">AD</div>
+                    <span class="status-badge">Modo Offline</span>
+                    <div class="user-avatar">IR</div>
                 </div>
             </header>
 
             <div class="page-content">
-                <!-- PAGE: Dashboard/Metricas -->
-                <div id="page-metricas" class="page-view active">
+                <!-- PAGE: Upload -->
+                <div id="page-upload" class="page-view active">
                     <div class="page-header">
                         <div class="page-title-section">
-                            <h1 class="page-title">Dashboard Geral</h1>
-                            <p class="page-subtitle">Visao consolidada das deliberacoes regulatorias</p>
+                            <h1 class="page-title">Upload de PDFs</h1>
+                            <p class="page-subtitle">Faca upload de documentos da ARTESP para analise e extracao de dados</p>
                         </div>
                         <div class="page-actions">
-                            <button class="btn btn-outline">
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                                Exportar PDF
+                            <button class="btn btn-primary" onclick="document.getElementById('file-input').click()">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                                Selecionar PDFs
                             </button>
                         </div>
                     </div>
 
+                    <input type="file" id="file-input" accept=".pdf" multiple>
+
                     <div class="stats-grid">
                         <div class="stat-card">
                             <div class="stat-card-header">
-                                <span class="stat-card-title">Total de Deliberacoes</span>
+                                <span class="stat-card-title">PDFs Carregados</span>
                                 <div class="stat-card-icon">
                                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                                 </div>
                             </div>
-                            <div class="stat-card-value">109</div>
-                            <div class="stat-card-subtitle">Em 5 reunioes</div>
+                            <div class="stat-card-value" id="stat-total">0</div>
                         </div>
-
                         <div class="stat-card">
-                            <div class="stat-card-header">
-                                <span class="stat-card-title">Pleitos Externos</span>
-                                <div class="stat-card-icon">
-                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                                </div>
-                            </div>
-                            <div class="stat-card-value">69%</div>
-                            <div class="stat-card-subtitle">31% atos internos</div>
+                            <div class="stat-card-header"><span class="stat-card-title">Pendentes</span></div>
+                            <div class="stat-card-value warning" id="stat-pendentes">0</div>
                         </div>
-
                         <div class="stat-card">
-                            <div class="stat-card-header">
-                                <span class="stat-card-title">Taxa de Deferimento</span>
-                                <div class="stat-card-icon">
-                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                </div>
-                            </div>
-                            <div class="stat-card-value success">58%</div>
-                            <div class="stat-card-subtitle">42% indeferidos</div>
+                            <div class="stat-card-header"><span class="stat-card-title">Analisados</span></div>
+                            <div class="stat-card-value success" id="stat-analisados">0</div>
                         </div>
-
                         <div class="stat-card">
-                            <div class="stat-card-header">
-                                <span class="stat-card-title">Total de Reunioes</span>
-                                <div class="stat-card-icon">
-                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                </div>
-                            </div>
-                            <div class="stat-card-value">5</div>
-                            <div class="stat-card-subtitle">Reunioes ordinarias</div>
+                            <div class="stat-card-header"><span class="stat-card-title">Deliberacoes</span></div>
+                            <div class="stat-card-value primary" id="stat-deliberacoes">0</div>
                         </div>
                     </div>
 
-                    <div class="grid-2" style="margin-bottom: 24px;">
-                        <div class="card">
-                            <div class="card-header">
-                                <div>
-                                    <h2 class="card-title">
-                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path></svg>
-                                        Deliberacoes por Microtema
-                                    </h2>
-                                    <p class="card-subtitle">Distribuicao tematica das decisoes</p>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div class="bar-chart">
-                                    <div class="bar-item">
-                                        <span class="bar-label">Obras / Investimentos</span>
-                                        <div class="bar-track"><div class="bar-fill" style="width: 90%;"></div></div>
-                                        <span class="bar-value">36</span>
-                                    </div>
-                                    <div class="bar-item">
-                                        <span class="bar-label">Outros</span>
-                                        <div class="bar-track"><div class="bar-fill" style="width: 70%;"></div></div>
-                                        <span class="bar-value">28</span>
-                                    </div>
-                                    <div class="bar-item">
-                                        <span class="bar-label">Reequilibrio Economico</span>
-                                        <div class="bar-track"><div class="bar-fill" style="width: 45%;"></div></div>
-                                        <span class="bar-value">18</span>
-                                    </div>
-                                    <div class="bar-item">
-                                        <span class="bar-label">Contrato / Aditivo</span>
-                                        <div class="bar-track"><div class="bar-fill" style="width: 38%;"></div></div>
-                                        <span class="bar-value">15</span>
-                                    </div>
-                                    <div class="bar-item">
-                                        <span class="bar-label">Revisao Tarifaria</span>
-                                        <div class="bar-track"><div class="bar-fill" style="width: 30%;"></div></div>
-                                        <span class="bar-value">12</span>
-                                    </div>
-                                </div>
-                            </div>
+                    <div class="card" style="margin-bottom: 24px;">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                                Enviar Arquivos
+                            </h2>
                         </div>
-
-                        <div class="card">
-                            <div class="card-header">
-                                <div>
-                                    <h2 class="card-title">Pauta Interna vs Externa</h2>
-                                    <p class="card-subtitle">Proporcao de assuntos</p>
-                                </div>
+                        <div class="card-body">
+                            <div class="upload-zone" id="upload-dropzone">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                                <h3>Arraste arquivos PDF aqui</h3>
+                                <p>ou clique para selecionar multiplos arquivos</p>
+                                <button class="btn btn-primary" onclick="document.getElementById('file-input').click()">Selecionar PDFs</button>
                             </div>
-                            <div class="card-body">
-                                <div style="display: flex; align-items: center; justify-content: center; min-height: 200px; gap: 40px;">
-                                    <div class="donut-chart">
-                                        <svg width="200" height="200" viewBox="0 0 200 200">
-                                            <circle class="donut-bg" cx="100" cy="100" r="70"/>
-                                            <circle class="donut-fill" cx="100" cy="100" r="70" stroke-dasharray="440" stroke-dashoffset="135"/>
-                                        </svg>
-                                        <div class="donut-center">
-                                            <div class="donut-value">69%</div>
-                                            <div class="donut-label">Externa</div>
-                                        </div>
-                                    </div>
-                                    <div class="chart-legend">
-                                        <div class="legend-item">
-                                            <div class="legend-color" style="background: var(--primary);"></div>
-                                            <span>Pauta Interna: 31%</span>
-                                        </div>
-                                        <div class="legend-item">
-                                            <div class="legend-color" style="background: var(--text-primary);"></div>
-                                            <span>Pauta Externa: 69%</span>
-                                        </div>
-                                    </div>
+                            <div class="progress-container" id="upload-progress" style="display: none;">
+                                <div class="progress-info">
+                                    <span id="progress-text">Processando...</span>
+                                    <span id="progress-percent">0%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="progress-bar" style="width: 0%;"></div>
                                 </div>
                             </div>
                         </div>
@@ -990,61 +504,120 @@
 
                     <div class="card">
                         <div class="card-header">
-                            <div>
-                                <h2 class="card-title">
-                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                                    Votos por Diretor
-                                </h2>
-                                <p class="card-subtitle">Top diretores com mais participacoes</p>
+                            <h2 class="card-title">PDFs Carregados</h2>
+                            <div class="action-buttons">
+                                <button class="btn btn-primary btn-sm" onclick="App.analisarTodos()" id="btn-analisar-todos" disabled>
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                                    Analisar Todos
+                                </button>
+                                <button class="btn btn-danger btn-sm" onclick="App.limparTodos()" id="btn-limpar" disabled>Limpar Todos</button>
                             </div>
                         </div>
                         <div class="card-body" style="padding: 0;">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Diretor</th>
-                                        <th>Cargo</th>
-                                        <th>Total Votos</th>
-                                        <th>Favoraveis</th>
-                                        <th>Contrarios</th>
-                                        <th>Taxa Aprovacao</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td><strong>Milton Persoli</strong></td>
-                                        <td>Diretor-Presidente</td>
-                                        <td>245</td>
-                                        <td><span class="badge badge-success">192</span></td>
-                                        <td><span class="badge badge-danger">38</span></td>
-                                        <td><strong style="color: var(--success);">78.2%</strong></td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Marcos Antonio Ribeiro</strong></td>
-                                        <td>Diretor de Fiscalizacao</td>
-                                        <td>198</td>
-                                        <td><span class="badge badge-success">130</span></td>
-                                        <td><span class="badge badge-danger">56</span></td>
-                                        <td><strong style="color: var(--success);">65.4%</strong></td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Patricia Vanzolini</strong></td>
-                                        <td>Diretora de Planejamento</td>
-                                        <td>212</td>
-                                        <td><span class="badge badge-success">174</span></td>
-                                        <td><span class="badge badge-danger">26</span></td>
-                                        <td><strong style="color: var(--success);">82.1%</strong></td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Carlos Eduardo Silva</strong></td>
-                                        <td>Diretor de Investimentos</td>
-                                        <td>187</td>
-                                        <td><span class="badge badge-success">133</span></td>
-                                        <td><span class="badge badge-danger">42</span></td>
-                                        <td><strong style="color: var(--success);">71.2%</strong></td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                            <div id="pdf-table-container">
+                                <div class="empty-state" id="empty-state">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                    <h3>Nenhum PDF carregado ainda</h3>
+                                    <p>Arraste arquivos ou clique no botao acima para fazer upload</p>
+                                </div>
+                                <table id="pdf-table" style="display: none;">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Arquivo</th>
+                                            <th>Paginas</th>
+                                            <th>Status</th>
+                                            <th>Deliberacoes</th>
+                                            <th>Acoes</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="pdf-table-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PAGE: Analise -->
+                <div id="page-analise" class="page-view">
+                    <div class="page-header">
+                        <div class="page-title-section">
+                            <h1 class="page-title">Analise de PDFs</h1>
+                            <p class="page-subtitle">Visualize os resultados da analise de cada PDF</p>
+                        </div>
+                    </div>
+                    <div id="analise-content">
+                        <div class="card"><div class="card-body"><div class="empty-state"><h3>Nenhum PDF analisado</h3><p>Faca upload e analise PDFs na pagina de Upload</p></div></div></div>
+                    </div>
+                </div>
+
+                <!-- PAGE: Metricas/Dashboard -->
+                <div id="page-metricas" class="page-view">
+                    <div class="page-header">
+                        <div class="page-title-section">
+                            <h1 class="page-title">Dashboard Geral</h1>
+                            <p class="page-subtitle">Visao consolidada das deliberacoes regulatorias</p>
+                        </div>
+                    </div>
+
+                    <div class="stats-grid" id="dashboard-stats">
+                        <div class="stat-card">
+                            <div class="stat-card-header"><span class="stat-card-title">Total de Deliberacoes</span></div>
+                            <div class="stat-card-value" id="dash-total">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header"><span class="stat-card-title">Deferidas</span></div>
+                            <div class="stat-card-value success" id="dash-deferidas">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header"><span class="stat-card-title">Indeferidas</span></div>
+                            <div class="stat-card-value danger" id="dash-indeferidas">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header"><span class="stat-card-title">Taxa Deferimento</span></div>
+                            <div class="stat-card-value primary" id="dash-taxa">0%</div>
+                        </div>
+                    </div>
+
+                    <div class="grid-2" style="margin-bottom: 24px;">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">Deliberacoes por Microtema</h2>
+                            </div>
+                            <div class="card-body">
+                                <div class="bar-chart" id="chart-temas">
+                                    <div class="empty-state"><p>Analise PDFs para ver as metricas</p></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">Deferido vs Indeferido</h2>
+                            </div>
+                            <div class="card-body">
+                                <div style="display: flex; align-items: center; justify-content: center; gap: 40px;">
+                                    <div class="donut-chart">
+                                        <svg width="200" height="200" viewBox="0 0 200 200">
+                                            <circle class="donut-bg" cx="100" cy="100" r="70"/>
+                                            <circle class="donut-fill" id="donut-fill" cx="100" cy="100" r="70" stroke-dasharray="440" stroke-dashoffset="440"/>
+                                        </svg>
+                                        <div class="donut-center">
+                                            <div class="donut-value" id="donut-value">0%</div>
+                                            <div class="donut-label">Deferido</div>
+                                        </div>
+                                    </div>
+                                    <div class="chart-legend">
+                                        <div class="legend-item">
+                                            <div class="legend-color" style="background: var(--success);"></div>
+                                            <span id="legend-deferido">Deferido: 0</span>
+                                        </div>
+                                        <div class="legend-item">
+                                            <div class="legend-color" style="background: var(--danger);"></div>
+                                            <span id="legend-indeferido">Indeferido: 0</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1054,109 +627,20 @@
                     <div class="page-header">
                         <div class="page-title-section">
                             <h1 class="page-title">Deliberacoes</h1>
-                            <p class="page-subtitle">Lista completa de todas as deliberacoes processadas da ARTESP</p>
+                            <p class="page-subtitle">Lista completa de todas as deliberacoes extraidas</p>
                         </div>
                         <div class="page-actions">
-                            <button class="btn btn-primary">
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                            <button class="btn btn-primary" onclick="App.exportarCSV()">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                                 Exportar CSV
                             </button>
                         </div>
                     </div>
-
-                    <div class="filters-bar">
-                        <div class="filter-group">
-                            <select class="filter-select">
-                                <option value="">Todas Decisoes</option>
-                                <option value="Deferido">Deferido</option>
-                                <option value="Indeferido">Indeferido</option>
-                            </select>
-                        </div>
-                        <div class="filter-group">
-                            <select class="filter-select">
-                                <option value="">Todos Tipos</option>
-                                <option value="externo">Pleito Externo</option>
-                                <option value="interno">Ato Interno</option>
-                            </select>
-                        </div>
-                        <input type="text" class="filter-input" placeholder="Buscar por processo ou interessado...">
-                    </div>
-
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <div class="stat-card-header"><span class="stat-card-title">Total de Deliberacoes</span></div>
-                            <div class="stat-card-value">109</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-card-header"><span class="stat-card-title">Deferidas</span></div>
-                            <div class="stat-card-value success">63</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-card-header"><span class="stat-card-title">Indeferidas</span></div>
-                            <div class="stat-card-value danger">46</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-card-header"><span class="stat-card-title">Taxa de Aprovacao</span></div>
-                            <div class="stat-card-value primary">57.8%</div>
-                        </div>
-                    </div>
-
                     <div class="card">
                         <div class="card-body" style="padding: 0;">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Processo</th>
-                                        <th>Interessado</th>
-                                        <th>Microtema</th>
-                                        <th>Decisao</th>
-                                        <th>Tipo</th>
-                                        <th>Reuniao</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td><span style="color: var(--primary);">ARTESP-2024-001</span></td>
-                                        <td>Ecovias dos Imigrantes</td>
-                                        <td>Revisao Tarifaria</td>
-                                        <td><span class="badge badge-success">Deferido</span></td>
-                                        <td><span class="badge badge-externo">Pleito Externo</span></td>
-                                        <td>RO-249</td>
-                                    </tr>
-                                    <tr>
-                                        <td><span style="color: var(--primary);">ARTESP-2024-002</span></td>
-                                        <td>CCR AutoBAn</td>
-                                        <td>Obras / Investimentos</td>
-                                        <td><span class="badge badge-success">Deferido</span></td>
-                                        <td><span class="badge badge-externo">Pleito Externo</span></td>
-                                        <td>RO-249</td>
-                                    </tr>
-                                    <tr>
-                                        <td><span style="color: var(--primary);">ARTESP-2024-003</span></td>
-                                        <td>ARTESP</td>
-                                        <td>Ato Interno</td>
-                                        <td><span class="badge badge-success">Deferido</span></td>
-                                        <td><span class="badge badge-interno">Ato Interno</span></td>
-                                        <td>RO-249</td>
-                                    </tr>
-                                    <tr>
-                                        <td><span style="color: var(--primary);">ARTESP-2024-004</span></td>
-                                        <td>ViaOeste</td>
-                                        <td>Reequilibrio Economico</td>
-                                        <td><span class="badge badge-danger">Indeferido</span></td>
-                                        <td><span class="badge badge-externo">Pleito Externo</span></td>
-                                        <td>RO-248</td>
-                                    </tr>
-                                    <tr>
-                                        <td><span style="color: var(--primary);">ARTESP-2024-005</span></td>
-                                        <td>Rota das Bandeiras</td>
-                                        <td>Contrato / Aditivo</td>
-                                        <td><span class="badge badge-success">Deferido</span></td>
-                                        <td><span class="badge badge-externo">Pleito Externo</span></td>
-                                        <td>RO-248</td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                            <div id="deliberacoes-container">
+                                <div class="empty-state"><h3>Nenhuma deliberacao encontrada</h3><p>Analise PDFs para extrair deliberacoes</p></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1165,391 +649,646 @@
                 <div id="page-diretores" class="page-view">
                     <div class="page-header">
                         <div class="page-title-section">
-                            <h1 class="page-title">Diretores e Mandatos</h1>
-                            <p class="page-subtitle">Composicao atual e historico do Conselho Diretor da ARTESP</p>
+                            <h1 class="page-title">Diretores</h1>
+                            <p class="page-subtitle">Votos e participacoes dos diretores nas deliberacoes</p>
                         </div>
                     </div>
-
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <div class="stat-card-header"><span class="stat-card-title">Diretores Ativos</span></div>
-                            <div class="stat-card-value primary">4</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-card-header"><span class="stat-card-title">Total de Mandatos</span></div>
-                            <div class="stat-card-value">5</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-card-header"><span class="stat-card-title">Media de Votos</span></div>
-                            <div class="stat-card-value">210</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-card-header"><span class="stat-card-title">Taxa Media Aprovacao</span></div>
-                            <div class="stat-card-value success">74.2%</div>
-                        </div>
+                    <div id="diretores-content">
+                        <div class="card"><div class="card-body"><div class="empty-state"><h3>Nenhum diretor identificado</h3><p>Analise PDFs para identificar diretores</p></div></div></div>
                     </div>
-
-                    <div class="director-grid">
-                        <div class="director-card">
-                            <div class="director-header">
-                                <div class="director-avatar">MP</div>
-                                <div class="director-info">
-                                    <h3>Milton Persoli</h3>
-                                    <div class="role">Diretor-Presidente</div>
-                                    <div class="period">Jan 2021 - Atual</div>
-                                    <span class="director-status status-active">Ativo</span>
-                                </div>
-                            </div>
-                            <div class="director-body">
-                                <div class="director-stats">
-                                    <div class="stat-item"><div class="value">156</div><div class="label">Reunioes</div></div>
-                                    <div class="stat-item"><div class="value">245</div><div class="label">Votos</div></div>
-                                    <div class="stat-item"><div class="value green">78.2%</div><div class="label">Favoravel</div></div>
-                                    <div class="stat-item"><div class="value red">15.5%</div><div class="label">Contrario</div></div>
-                                </div>
-                                <div class="director-bar">
-                                    <div class="director-bar-label"><span>Taxa de Aprovacao</span><span>78.2%</span></div>
-                                    <div class="bar-track"><div class="bar-fill" style="width: 78.2%;"></div></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="director-card">
-                            <div class="director-header">
-                                <div class="director-avatar">MR</div>
-                                <div class="director-info">
-                                    <h3>Marcos Antonio Ribeiro</h3>
-                                    <div class="role">Diretor de Fiscalizacao</div>
-                                    <div class="period">Jun 2020 - Atual</div>
-                                    <span class="director-status status-active">Ativo</span>
-                                </div>
-                            </div>
-                            <div class="director-body">
-                                <div class="director-stats">
-                                    <div class="stat-item"><div class="value">178</div><div class="label">Reunioes</div></div>
-                                    <div class="stat-item"><div class="value">198</div><div class="label">Votos</div></div>
-                                    <div class="stat-item"><div class="value green">65.4%</div><div class="label">Favoravel</div></div>
-                                    <div class="stat-item"><div class="value red">28.3%</div><div class="label">Contrario</div></div>
-                                </div>
-                                <div class="director-bar">
-                                    <div class="director-bar-label"><span>Taxa de Aprovacao</span><span>65.4%</span></div>
-                                    <div class="bar-track"><div class="bar-fill" style="width: 65.4%;"></div></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="director-card">
-                            <div class="director-header">
-                                <div class="director-avatar">PV</div>
-                                <div class="director-info">
-                                    <h3>Patricia Vanzolini</h3>
-                                    <div class="role">Diretora de Planejamento</div>
-                                    <div class="period">Mar 2022 - Atual</div>
-                                    <span class="director-status status-active">Ativo</span>
-                                </div>
-                            </div>
-                            <div class="director-body">
-                                <div class="director-stats">
-                                    <div class="stat-item"><div class="value">98</div><div class="label">Reunioes</div></div>
-                                    <div class="stat-item"><div class="value">212</div><div class="label">Votos</div></div>
-                                    <div class="stat-item"><div class="value green">82.1%</div><div class="label">Favoravel</div></div>
-                                    <div class="stat-item"><div class="value red">12.3%</div><div class="label">Contrario</div></div>
-                                </div>
-                                <div class="director-bar">
-                                    <div class="director-bar-label"><span>Taxa de Aprovacao</span><span>82.1%</span></div>
-                                    <div class="bar-track"><div class="bar-fill" style="width: 82.1%;"></div></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="director-card">
-                            <div class="director-header">
-                                <div class="director-avatar">CS</div>
-                                <div class="director-info">
-                                    <h3>Carlos Eduardo Silva</h3>
-                                    <div class="role">Diretor de Investimentos</div>
-                                    <div class="period">Ago 2021 - Atual</div>
-                                    <span class="director-status status-active">Ativo</span>
-                                </div>
-                            </div>
-                            <div class="director-body">
-                                <div class="director-stats">
-                                    <div class="stat-item"><div class="value">134</div><div class="label">Reunioes</div></div>
-                                    <div class="stat-item"><div class="value">187</div><div class="label">Votos</div></div>
-                                    <div class="stat-item"><div class="value green">71.2%</div><div class="label">Favoravel</div></div>
-                                    <div class="stat-item"><div class="value red">22.4%</div><div class="label">Contrario</div></div>
-                                </div>
-                                <div class="director-bar">
-                                    <div class="director-bar-label"><span>Taxa de Aprovacao</span><span>71.2%</span></div>
-                                    <div class="bar-track"><div class="bar-fill" style="width: 71.2%;"></div></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- PAGE: Upload -->
-                <div id="page-upload" class="page-view">
-                    <div class="page-header">
-                        <div class="page-title-section">
-                            <h1 class="page-title">Upload de PDFs</h1>
-                            <p class="page-subtitle">Faca upload de documentos da ARTESP para analise e extracao de dados</p>
-                        </div>
-                    </div>
-
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <div class="stat-card-header"><span class="stat-card-title">PDFs Carregados</span></div>
-                            <div class="stat-card-value">0</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-card-header"><span class="stat-card-title">Pendentes</span></div>
-                            <div class="stat-card-value warning">0</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-card-header"><span class="stat-card-title">Analisados</span></div>
-                            <div class="stat-card-value success">0</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-card-header"><span class="stat-card-title">Com Erro</span></div>
-                            <div class="stat-card-value danger">0</div>
-                        </div>
-                    </div>
-
-                    <div class="grid-2" style="margin-bottom: 24px;">
-                        <div class="card">
-                            <div class="card-header">
-                                <h2 class="card-title">
-                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                                    Enviar Arquivos
-                                </h2>
-                            </div>
-                            <div class="card-body">
-                                <div class="upload-zone">
-                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
-                                    <h3>Arraste arquivos PDF aqui</h3>
-                                    <p>ou clique para selecionar</p>
-                                    <button class="btn btn-primary">Selecionar PDFs</button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="card">
-                            <div class="card-header">
-                                <h2 class="card-title">
-                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
-                                    Importar por URL
-                                </h2>
-                            </div>
-                            <div class="card-body">
-                                <div class="form-group">
-                                    <label class="form-label">URL do PDF da ARTESP</label>
-                                    <input type="text" class="form-input" placeholder="https://www.artesp.sp.gov.br/...pdf">
-                                </div>
-                                <button class="btn btn-primary" style="margin-top: 12px;">Baixar e Importar</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card">
-                        <div class="card-header">
-                            <h2 class="card-title">PDFs Carregados</h2>
-                        </div>
-                        <div class="card-body">
-                            <div class="empty-state">
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                <h3>Nenhum PDF carregado ainda</h3>
-                                <p>Arraste arquivos ou use o botao acima para fazer upload</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- PAGE: Auditoria -->
-                <div id="page-auditoria" class="page-view">
-                    <div class="page-header">
-                        <div class="page-title-section">
-                            <h1 class="page-title">Auditoria Forense</h1>
-                            <p class="page-subtitle">Deteccao de anomalias e padroes suspeitos nas deliberacoes</p>
-                        </div>
-                    </div>
-
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <div class="stat-card-header"><span class="stat-card-title">Alertas Criticos</span></div>
-                            <div class="stat-card-value danger">3</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-card-header"><span class="stat-card-title">Alertas Medios</span></div>
-                            <div class="stat-card-value warning">8</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-card-header"><span class="stat-card-title">Deliberacoes Analisadas</span></div>
-                            <div class="stat-card-value">156</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-card-header"><span class="stat-card-title">Taxa de Conformidade</span></div>
-                            <div class="stat-card-value success">94.2%</div>
-                        </div>
-                    </div>
-
-                    <div class="card">
-                        <div class="card-header">
-                            <h2 class="card-title">Alertas Ativos</h2>
-                            <span class="badge badge-danger">11 pendentes</span>
-                        </div>
-                        <div class="card-body">
-                            <div class="alert-list">
-                                <div class="alert-item">
-                                    <div class="alert-header">
-                                        <div class="alert-title">Padrao de votacao incomum detectado</div>
-                                        <span class="alert-severity severity-high">ALTA</span>
-                                    </div>
-                                    <div class="alert-body">Diretor Marcos Ribeiro votou contrario em 8 de 10 deliberacoes consecutivas sobre o mesmo tema (Revisao Tarifaria), desviando significativamente do padrao historico.</div>
-                                    <div class="alert-meta">
-                                        <span>Detectado: 07/02/2026</span>
-                                        <span>Reunioes: RO-248, RO-249</span>
-                                        <span>Confianca: 87%</span>
-                                    </div>
-                                </div>
-                                <div class="alert-item warning">
-                                    <div class="alert-header">
-                                        <div class="alert-title">Concentracao de relatorias</div>
-                                        <span class="alert-severity severity-medium">MEDIA</span>
-                                    </div>
-                                    <div class="alert-body">Um mesmo diretor foi designado relator em 12 casos consecutivos envolvendo a mesma concessionaria.</div>
-                                    <div class="alert-meta">
-                                        <span>Detectado: 05/02/2026</span>
-                                        <span>Periodo: Jan-Fev 2026</span>
-                                        <span>Confianca: 72%</span>
-                                    </div>
-                                </div>
-                                <div class="alert-item info">
-                                    <div class="alert-header">
-                                        <div class="alert-title">Tempo de processamento acima da media</div>
-                                        <span class="alert-severity severity-low">BAIXA</span>
-                                    </div>
-                                    <div class="alert-body">15 processos ultrapassaram o prazo medio de 45 dias para julgamento.</div>
-                                    <div class="alert-meta">
-                                        <span>Detectado: 03/02/2026</span>
-                                        <span>Processos afetados: 15</span>
-                                        <span>Confianca: 95%</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Outras paginas mostram empty state -->
-                <div id="page-analise" class="page-view">
-                    <div class="page-header">
-                        <div class="page-title-section">
-                            <h1 class="page-title">Analise de PDFs</h1>
-                            <p class="page-subtitle">Analise os PDFs carregados para extrair deliberacoes</p>
-                        </div>
-                    </div>
-                    <div class="card"><div class="card-body"><div class="empty-state"><h3>Nenhum PDF disponivel para analise</h3><p>Faca upload de PDFs na pagina de Upload primeiro</p></div></div></div>
-                </div>
-
-                <div id="page-monitor" class="page-view">
-                    <div class="page-header">
-                        <div class="page-title-section">
-                            <h1 class="page-title">Monitor de Reunioes</h1>
-                            <p class="page-subtitle">Acompanhe o processamento de documentos em tempo real</p>
-                        </div>
-                    </div>
-                    <div class="card"><div class="card-body"><div class="empty-state"><h3>Nenhuma reuniao monitorada</h3><p>Adicione uma URL para comecar o monitoramento</p></div></div></div>
-                </div>
-
-                <div id="page-jurimetria" class="page-view">
-                    <div class="page-header">
-                        <div class="page-title-section">
-                            <h1 class="page-title">Jurimetria de Diretores</h1>
-                            <p class="page-subtitle">Analise estatistica de votos e padroes de decisao</p>
-                        </div>
-                    </div>
-                    <div class="card"><div class="card-body"><div class="empty-state"><h3>Carregue PDFs para ver analises de jurimetria</h3></div></div></div>
-                </div>
-
-                <div id="page-governanca" class="page-view">
-                    <div class="page-header">
-                        <div class="page-title-section">
-                            <h1 class="page-title">Governanca Regulatoria</h1>
-                            <p class="page-subtitle">Indicadores de qualidade institucional</p>
-                        </div>
-                    </div>
-                    <div class="card"><div class="card-body"><div class="empty-state"><h3>Dados de governanca em processamento</h3></div></div></div>
-                </div>
-
-                <div id="page-boletim" class="page-view">
-                    <div class="page-header">
-                        <div class="page-title-section">
-                            <h1 class="page-title">Boletim Mensal</h1>
-                            <p class="page-subtitle">Resumo executivo das atividades regulatorias</p>
-                        </div>
-                    </div>
-                    <div class="card"><div class="card-body"><div class="empty-state"><h3>Boletim sera gerado automaticamente</h3></div></div></div>
                 </div>
             </div>
         </main>
     </div>
 
     <script>
-        // Simple SPA Router
-        const pageNames = {
-            '/metricas': 'Dashboard Geral',
-            '/deliberacoes': 'Deliberacoes',
-            '/monitor': 'Monitor de Reunioes',
-            '/diretores': 'Diretores e Mandatos',
-            '/jurimetria': 'Jurimetria',
-            '/governanca': 'Governanca Regulatoria',
-            '/boletim': 'Boletim Mensal',
-            '/auditoria': 'Auditoria Forense',
-            '/upload': 'Upload de PDFs',
-            '/analise': 'Analise de PDFs'
+        // Configurar PDF.js
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        // ============================================
+        // APLICACAO PRINCIPAL
+        // ============================================
+        const App = {
+            pdfs: [],
+            deliberacoes: [],
+            diretores: {},
+
+            init() {
+                this.setupDropzone();
+                this.setupFileInput();
+                this.setupNavigation();
+                this.updateUI();
+            },
+
+            setupDropzone() {
+                const dropzone = document.getElementById('upload-dropzone');
+
+                dropzone.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    dropzone.classList.add('dragover');
+                });
+
+                dropzone.addEventListener('dragleave', () => {
+                    dropzone.classList.remove('dragover');
+                });
+
+                dropzone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    dropzone.classList.remove('dragover');
+                    const files = Array.from(e.dataTransfer.files).filter(f => f.type === 'application/pdf');
+                    if (files.length > 0) {
+                        this.processFiles(files);
+                    }
+                });
+
+                dropzone.addEventListener('click', (e) => {
+                    if (e.target.tagName !== 'BUTTON') {
+                        document.getElementById('file-input').click();
+                    }
+                });
+            },
+
+            setupFileInput() {
+                const input = document.getElementById('file-input');
+                input.addEventListener('change', () => {
+                    const files = Array.from(input.files);
+                    if (files.length > 0) {
+                        this.processFiles(files);
+                    }
+                    input.value = '';
+                });
+            },
+
+            setupNavigation() {
+                document.querySelectorAll('.nav-item').forEach(item => {
+                    item.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const route = item.dataset.route;
+                        if (route) this.navigateTo(route);
+                    });
+                });
+            },
+
+            navigateTo(route) {
+                const pageNames = {
+                    '/upload': 'Upload de PDFs',
+                    '/analise': 'Analise de PDFs',
+                    '/metricas': 'Dashboard Geral',
+                    '/deliberacoes': 'Deliberacoes',
+                    '/diretores': 'Diretores'
+                };
+
+                document.querySelectorAll('.nav-item').forEach(item => {
+                    item.classList.toggle('active', item.dataset.route === route);
+                });
+
+                document.getElementById('breadcrumb-page').textContent = pageNames[route] || 'Dashboard';
+
+                document.querySelectorAll('.page-view').forEach(page => page.classList.remove('active'));
+                const pageId = 'page-' + route.replace('/', '');
+                const page = document.getElementById(pageId);
+                if (page) page.classList.add('active');
+
+                // Atualizar conteudo da pagina
+                if (route === '/metricas') this.updateDashboard();
+                if (route === '/deliberacoes') this.updateDeliberacoesPage();
+                if (route === '/diretores') this.updateDiretoresPage();
+                if (route === '/analise') this.updateAnalisePage();
+            },
+
+            async processFiles(files) {
+                const progressContainer = document.getElementById('upload-progress');
+                const progressBar = document.getElementById('progress-bar');
+                const progressText = document.getElementById('progress-text');
+                const progressPercent = document.getElementById('progress-percent');
+
+                progressContainer.style.display = 'block';
+
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    progressText.textContent = `Lendo ${file.name}... (${i + 1}/${files.length})`;
+                    progressPercent.textContent = Math.round(((i) / files.length) * 100) + '%';
+                    progressBar.style.width = Math.round(((i) / files.length) * 100) + '%';
+
+                    try {
+                        const text = await this.extractTextFromPDF(file);
+                        this.pdfs.push({
+                            nome: file.name,
+                            tamanho: file.size,
+                            numPaginas: text.numPages,
+                            texto: text.text,
+                            status: 'pendente',
+                            deliberacoes: [],
+                            dataUpload: new Date().toISOString()
+                        });
+                    } catch (error) {
+                        console.error('Erro ao processar PDF:', error);
+                        this.pdfs.push({
+                            nome: file.name,
+                            tamanho: file.size,
+                            numPaginas: 0,
+                            texto: '',
+                            status: 'erro',
+                            erro: error.message,
+                            deliberacoes: [],
+                            dataUpload: new Date().toISOString()
+                        });
+                    }
+                }
+
+                progressText.textContent = 'Upload concluido!';
+                progressPercent.textContent = '100%';
+                progressBar.style.width = '100%';
+
+                setTimeout(() => {
+                    progressContainer.style.display = 'none';
+                    progressBar.style.width = '0%';
+                }, 1500);
+
+                this.updateUI();
+            },
+
+            async extractTextFromPDF(file) {
+                const arrayBuffer = await file.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+                let fullText = '';
+                const numPages = pdf.numPages;
+
+                for (let i = 1; i <= numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const textContent = await page.getTextContent();
+                    const pageText = textContent.items.map(item => item.str).join(' ');
+                    fullText += pageText + '\n\n';
+                }
+
+                return { text: fullText, numPages };
+            },
+
+            analisarPDF(index) {
+                const pdf = this.pdfs[index];
+                if (!pdf || pdf.status === 'analisado') return;
+
+                this.showLoading(`Analisando ${pdf.nome}...`);
+
+                setTimeout(() => {
+                    const deliberacoes = this.extrairDeliberacoes(pdf.texto);
+                    pdf.deliberacoes = deliberacoes;
+                    pdf.status = 'analisado';
+
+                    // Adicionar ao array global
+                    deliberacoes.forEach(d => {
+                        d.arquivoOrigem = pdf.nome;
+                        this.deliberacoes.push(d);
+
+                        // Contar votos por diretor
+                        (d.votos_favor || []).forEach(dir => {
+                            if (!this.diretores[dir]) this.diretores[dir] = { nome: dir, favor: 0, contra: 0, total: 0 };
+                            this.diretores[dir].favor++;
+                            this.diretores[dir].total++;
+                        });
+                        (d.votos_contra || []).forEach(dir => {
+                            if (!this.diretores[dir]) this.diretores[dir] = { nome: dir, favor: 0, contra: 0, total: 0 };
+                            this.diretores[dir].contra++;
+                            this.diretores[dir].total++;
+                        });
+                    });
+
+                    this.hideLoading();
+                    this.updateUI();
+                }, 500);
+            },
+
+            analisarTodos() {
+                const pendentes = this.pdfs.filter(p => p.status === 'pendente');
+                if (pendentes.length === 0) return;
+
+                this.showLoading(`Analisando ${pendentes.length} PDFs...`);
+
+                let index = 0;
+                const processNext = () => {
+                    if (index >= this.pdfs.length) {
+                        this.hideLoading();
+                        this.updateUI();
+                        return;
+                    }
+
+                    const pdf = this.pdfs[index];
+                    if (pdf.status === 'pendente') {
+                        document.getElementById('loading-text').textContent = `Analisando ${pdf.nome}... (${index + 1}/${this.pdfs.length})`;
+
+                        const deliberacoes = this.extrairDeliberacoes(pdf.texto);
+                        pdf.deliberacoes = deliberacoes;
+                        pdf.status = 'analisado';
+
+                        deliberacoes.forEach(d => {
+                            d.arquivoOrigem = pdf.nome;
+                            this.deliberacoes.push(d);
+
+                            (d.votos_favor || []).forEach(dir => {
+                                if (!this.diretores[dir]) this.diretores[dir] = { nome: dir, favor: 0, contra: 0, total: 0 };
+                                this.diretores[dir].favor++;
+                                this.diretores[dir].total++;
+                            });
+                            (d.votos_contra || []).forEach(dir => {
+                                if (!this.diretores[dir]) this.diretores[dir] = { nome: dir, favor: 0, contra: 0, total: 0 };
+                                this.diretores[dir].contra++;
+                                this.diretores[dir].total++;
+                            });
+                        });
+                    }
+
+                    index++;
+                    setTimeout(processNext, 100);
+                };
+
+                setTimeout(processNext, 100);
+            },
+
+            extrairDeliberacoes(texto) {
+                const deliberacoes = [];
+
+                // Padroes para encontrar deliberacoes
+                const padraoDelib = /DELIBERA[CÇ][AÃ]O\s*(?:N[ºo°]?\s*)?(\d+(?:\/\d+)?)/gi;
+                const padraoDeferido = /\b(DEFERIDO|DEFERIDA|DEFERE|APROVADO|APROVADA)\b/gi;
+                const padraoIndeferido = /\b(INDEFERIDO|INDEFERIDA|INDEFERE|NEGADO|NEGADA|REJEITADO)\b/gi;
+
+                // Microtemas
+                const temas = {
+                    'Revisao Tarifaria': /revis[aã]o\s*tarif[aá]ria|reajuste\s*tarif[aá]rio|tarifa/i,
+                    'Obras / Investimentos': /obra|investimento|constru[cç][aã]o|implanta[cç][aã]o|duplica[cç][aã]o/i,
+                    'Reequilibrio Economico': /reequil[ií]brio|equilibrio\s*econ[oô]mico|compensa[cç][aã]o/i,
+                    'Contrato / Aditivo': /contrato|aditivo|prorroga[cç][aã]o|termo\s*aditivo/i,
+                    'Multa / Penalidade': /multa|penalidade|infra[cç][aã]o|auto\s*de\s*infra[cç][aã]o/i,
+                    'Ato Interno': /ato\s*interno|administrativo|designa[cç][aã]o|nomea[cç][aã]o/i
+                };
+
+                // Diretores conhecidos
+                const diretoresConhecidos = [
+                    'Milton Persoli', 'Marcos Antonio Ribeiro', 'Patricia Vanzolini',
+                    'Carlos Eduardo', 'Fernando', 'Ricardo', 'Antonio', 'Jose',
+                    'Diretor-Presidente', 'Diretor de Fiscalizacao'
+                ];
+
+                // Buscar deliberacoes no texto
+                let match;
+                while ((match = padraoDelib.exec(texto)) !== null) {
+                    const numero = match[1];
+                    const posicao = match.index;
+                    const contexto = texto.substring(Math.max(0, posicao - 200), Math.min(texto.length, posicao + 800));
+
+                    // Determinar resultado
+                    let resultado = 'Nao Identificado';
+                    if (padraoDeferido.test(contexto)) resultado = 'Deferido';
+                    else if (padraoIndeferido.test(contexto)) resultado = 'Indeferido';
+
+                    // Determinar microtema
+                    let microtema = 'Outros';
+                    for (const [tema, regex] of Object.entries(temas)) {
+                        if (regex.test(contexto)) {
+                            microtema = tema;
+                            break;
+                        }
+                    }
+
+                    // Buscar interessado
+                    let interessado = 'Nao identificado';
+                    const matchInteressado = contexto.match(/interessad[oa]s?[:\s]+([^,\n]+)/i);
+                    if (matchInteressado) interessado = matchInteressado[1].trim().substring(0, 50);
+
+                    // Buscar votos
+                    const votos_favor = [];
+                    const votos_contra = [];
+                    diretoresConhecidos.forEach(dir => {
+                        if (contexto.includes(dir)) {
+                            if (/favor[aá]vel|aprovou|votou\s+a\s+favor/i.test(contexto)) {
+                                votos_favor.push(dir);
+                            } else {
+                                votos_favor.push(dir); // Por padrao, assume a favor
+                            }
+                        }
+                    });
+
+                    deliberacoes.push({
+                        numero: `DELIB-${numero}`,
+                        interessado,
+                        microtema,
+                        resultado,
+                        votos_favor,
+                        votos_contra,
+                        contexto: contexto.substring(0, 300)
+                    });
+                }
+
+                // Se nao encontrou pelo padrao, tenta buscar por outras palavras-chave
+                if (deliberacoes.length === 0) {
+                    const linhas = texto.split('\n');
+                    let contadorDelib = 1;
+
+                    linhas.forEach((linha, idx) => {
+                        if (/processo|delibera|decide|resolve/i.test(linha) && linha.length > 20) {
+                            const contexto = linhas.slice(Math.max(0, idx - 2), Math.min(linhas.length, idx + 5)).join(' ');
+
+                            let resultado = 'Nao Identificado';
+                            if (padraoDeferido.test(contexto)) resultado = 'Deferido';
+                            else if (padraoIndeferido.test(contexto)) resultado = 'Indeferido';
+
+                            let microtema = 'Outros';
+                            for (const [tema, regex] of Object.entries(temas)) {
+                                if (regex.test(contexto)) {
+                                    microtema = tema;
+                                    break;
+                                }
+                            }
+
+                            if (resultado !== 'Nao Identificado' || microtema !== 'Outros') {
+                                deliberacoes.push({
+                                    numero: `ITEM-${contadorDelib++}`,
+                                    interessado: 'A definir',
+                                    microtema,
+                                    resultado,
+                                    votos_favor: [],
+                                    votos_contra: [],
+                                    contexto: contexto.substring(0, 300)
+                                });
+                            }
+                        }
+                    });
+                }
+
+                return deliberacoes;
+            },
+
+            excluirPDF(index) {
+                if (!confirm('Excluir este PDF?')) return;
+
+                const pdf = this.pdfs[index];
+                // Remover deliberacoes associadas
+                this.deliberacoes = this.deliberacoes.filter(d => d.arquivoOrigem !== pdf.nome);
+                this.pdfs.splice(index, 1);
+
+                // Recalcular diretores
+                this.recalcularDiretores();
+                this.updateUI();
+            },
+
+            limparTodos() {
+                if (!confirm('Limpar todos os PDFs?')) return;
+                this.pdfs = [];
+                this.deliberacoes = [];
+                this.diretores = {};
+                this.updateUI();
+            },
+
+            recalcularDiretores() {
+                this.diretores = {};
+                this.deliberacoes.forEach(d => {
+                    (d.votos_favor || []).forEach(dir => {
+                        if (!this.diretores[dir]) this.diretores[dir] = { nome: dir, favor: 0, contra: 0, total: 0 };
+                        this.diretores[dir].favor++;
+                        this.diretores[dir].total++;
+                    });
+                    (d.votos_contra || []).forEach(dir => {
+                        if (!this.diretores[dir]) this.diretores[dir] = { nome: dir, favor: 0, contra: 0, total: 0 };
+                        this.diretores[dir].contra++;
+                        this.diretores[dir].total++;
+                    });
+                });
+            },
+
+            updateUI() {
+                const total = this.pdfs.length;
+                const pendentes = this.pdfs.filter(p => p.status === 'pendente').length;
+                const analisados = this.pdfs.filter(p => p.status === 'analisado').length;
+                const totalDelibs = this.deliberacoes.length;
+
+                // Stats
+                document.getElementById('stat-total').textContent = total;
+                document.getElementById('stat-pendentes').textContent = pendentes;
+                document.getElementById('stat-analisados').textContent = analisados;
+                document.getElementById('stat-deliberacoes').textContent = totalDelibs;
+
+                // Sidebar badge
+                document.getElementById('pdf-count-text').textContent = `${total} PDFs carregados`;
+
+                // Botoes
+                document.getElementById('btn-analisar-todos').disabled = pendentes === 0;
+                document.getElementById('btn-limpar').disabled = total === 0;
+
+                // Tabela
+                const emptyState = document.getElementById('empty-state');
+                const table = document.getElementById('pdf-table');
+                const tbody = document.getElementById('pdf-table-body');
+
+                if (total === 0) {
+                    emptyState.style.display = 'block';
+                    table.style.display = 'none';
+                } else {
+                    emptyState.style.display = 'none';
+                    table.style.display = 'table';
+
+                    tbody.innerHTML = this.pdfs.map((pdf, idx) => {
+                        const statusClass = pdf.status === 'analisado' ? 'badge-success' :
+                                           pdf.status === 'erro' ? 'badge-danger' : 'badge-warning';
+                        const statusLabel = pdf.status === 'analisado' ? 'Analisado' :
+                                           pdf.status === 'erro' ? 'Erro' : 'Pendente';
+
+                        return `<tr>
+                            <td>${idx + 1}</td>
+                            <td><strong>${pdf.nome}</strong></td>
+                            <td>${pdf.numPaginas}</td>
+                            <td><span class="badge ${statusClass}">${statusLabel}</span></td>
+                            <td>${pdf.deliberacoes.length}</td>
+                            <td>
+                                <div class="action-buttons">
+                                    ${pdf.status === 'pendente' ? `<button class="btn btn-primary btn-sm" onclick="App.analisarPDF(${idx})">Analisar</button>` : ''}
+                                    <button class="btn btn-danger btn-sm" onclick="App.excluirPDF(${idx})">Excluir</button>
+                                </div>
+                            </td>
+                        </tr>`;
+                    }).join('');
+                }
+            },
+
+            updateDashboard() {
+                const total = this.deliberacoes.length;
+                const deferidas = this.deliberacoes.filter(d => d.resultado === 'Deferido').length;
+                const indeferidas = this.deliberacoes.filter(d => d.resultado === 'Indeferido').length;
+                const taxa = total > 0 ? Math.round((deferidas / total) * 100) : 0;
+
+                document.getElementById('dash-total').textContent = total;
+                document.getElementById('dash-deferidas').textContent = deferidas;
+                document.getElementById('dash-indeferidas').textContent = indeferidas;
+                document.getElementById('dash-taxa').textContent = taxa + '%';
+
+                // Donut chart
+                const donutFill = document.getElementById('donut-fill');
+                const offset = 440 - (440 * taxa / 100);
+                donutFill.setAttribute('stroke-dashoffset', offset);
+                document.getElementById('donut-value').textContent = taxa + '%';
+                document.getElementById('legend-deferido').textContent = `Deferido: ${deferidas}`;
+                document.getElementById('legend-indeferido').textContent = `Indeferido: ${indeferidas}`;
+
+                // Bar chart - temas
+                const temas = {};
+                this.deliberacoes.forEach(d => {
+                    temas[d.microtema] = (temas[d.microtema] || 0) + 1;
+                });
+
+                const chartTemas = document.getElementById('chart-temas');
+                const temasOrdenados = Object.entries(temas).sort((a, b) => b[1] - a[1]).slice(0, 6);
+                const maxTema = temasOrdenados[0]?.[1] || 1;
+
+                if (temasOrdenados.length > 0) {
+                    chartTemas.innerHTML = temasOrdenados.map(([tema, count]) => {
+                        const pct = Math.round((count / maxTema) * 100);
+                        return `<div class="bar-item">
+                            <span class="bar-label">${tema}</span>
+                            <div class="bar-track"><div class="bar-fill" style="width: ${pct}%;"></div></div>
+                            <span class="bar-value">${count}</span>
+                        </div>`;
+                    }).join('');
+                } else {
+                    chartTemas.innerHTML = '<div class="empty-state"><p>Analise PDFs para ver as metricas</p></div>';
+                }
+            },
+
+            updateDeliberacoesPage() {
+                const container = document.getElementById('deliberacoes-container');
+
+                if (this.deliberacoes.length === 0) {
+                    container.innerHTML = '<div class="empty-state"><h3>Nenhuma deliberacao encontrada</h3><p>Analise PDFs para extrair deliberacoes</p></div>';
+                    return;
+                }
+
+                container.innerHTML = `<table>
+                    <thead>
+                        <tr>
+                            <th>Numero</th>
+                            <th>Interessado</th>
+                            <th>Microtema</th>
+                            <th>Resultado</th>
+                            <th>Arquivo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${this.deliberacoes.map(d => `<tr>
+                            <td><span style="color: var(--primary);">${d.numero}</span></td>
+                            <td>${d.interessado}</td>
+                            <td>${d.microtema}</td>
+                            <td><span class="badge ${d.resultado === 'Deferido' ? 'badge-success' : d.resultado === 'Indeferido' ? 'badge-danger' : 'badge-secondary'}">${d.resultado}</span></td>
+                            <td style="font-size: 12px; color: var(--text-muted);">${d.arquivoOrigem}</td>
+                        </tr>`).join('')}
+                    </tbody>
+                </table>`;
+            },
+
+            updateDiretoresPage() {
+                const container = document.getElementById('diretores-content');
+                const diretoresList = Object.values(this.diretores).sort((a, b) => b.total - a.total);
+
+                if (diretoresList.length === 0) {
+                    container.innerHTML = '<div class="card"><div class="card-body"><div class="empty-state"><h3>Nenhum diretor identificado</h3><p>Analise PDFs para identificar diretores</p></div></div></div>';
+                    return;
+                }
+
+                container.innerHTML = `<div class="card">
+                    <div class="card-body" style="padding: 0;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Diretor</th>
+                                    <th>Total Votos</th>
+                                    <th>A Favor</th>
+                                    <th>Contra</th>
+                                    <th>Taxa Aprovacao</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${diretoresList.map(d => {
+                                    const taxa = d.total > 0 ? Math.round((d.favor / d.total) * 100) : 0;
+                                    return `<tr>
+                                        <td><strong style="color: var(--primary);">${d.nome}</strong></td>
+                                        <td>${d.total}</td>
+                                        <td><span class="badge badge-success">${d.favor}</span></td>
+                                        <td><span class="badge badge-danger">${d.contra}</span></td>
+                                        <td><strong style="color: var(--success);">${taxa}%</strong></td>
+                                    </tr>`;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>`;
+            },
+
+            updateAnalisePage() {
+                const container = document.getElementById('analise-content');
+                const analisados = this.pdfs.filter(p => p.status === 'analisado');
+
+                if (analisados.length === 0) {
+                    container.innerHTML = '<div class="card"><div class="card-body"><div class="empty-state"><h3>Nenhum PDF analisado</h3><p>Faca upload e analise PDFs na pagina de Upload</p></div></div></div>';
+                    return;
+                }
+
+                container.innerHTML = analisados.map(pdf => `
+                    <div class="card" style="margin-bottom: 16px;">
+                        <div class="card-header">
+                            <h2 class="card-title">${pdf.nome}</h2>
+                            <span class="badge badge-success">${pdf.deliberacoes.length} deliberacoes</span>
+                        </div>
+                        <div class="card-body" style="padding: 0;">
+                            ${pdf.deliberacoes.length > 0 ? `<table>
+                                <thead><tr><th>Numero</th><th>Microtema</th><th>Resultado</th></tr></thead>
+                                <tbody>
+                                    ${pdf.deliberacoes.map(d => `<tr>
+                                        <td>${d.numero}</td>
+                                        <td>${d.microtema}</td>
+                                        <td><span class="badge ${d.resultado === 'Deferido' ? 'badge-success' : d.resultado === 'Indeferido' ? 'badge-danger' : 'badge-secondary'}">${d.resultado}</span></td>
+                                    </tr>`).join('')}
+                                </tbody>
+                            </table>` : '<div class="empty-state"><p>Nenhuma deliberacao encontrada neste PDF</p></div>'}
+                        </div>
+                    </div>
+                `).join('');
+            },
+
+            exportarCSV() {
+                if (this.deliberacoes.length === 0) {
+                    alert('Nenhuma deliberacao para exportar');
+                    return;
+                }
+
+                const headers = ['Numero', 'Interessado', 'Microtema', 'Resultado', 'Arquivo'];
+                const rows = this.deliberacoes.map(d => [
+                    d.numero,
+                    d.interessado,
+                    d.microtema,
+                    d.resultado,
+                    d.arquivoOrigem
+                ]);
+
+                const csv = [headers.join(','), ...rows.map(r => r.map(c => `"${c}"`).join(','))].join('\n');
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `iris_deliberacoes_${new Date().toISOString().split('T')[0]}.csv`;
+                a.click();
+                URL.revokeObjectURL(url);
+            },
+
+            showLoading(text) {
+                document.getElementById('loading-text').textContent = text;
+                document.getElementById('loading-overlay').classList.remove('hidden');
+            },
+
+            hideLoading() {
+                document.getElementById('loading-overlay').classList.add('hidden');
+            }
         };
 
-        function navigateTo(route) {
-            // Update active nav
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.classList.remove('active');
-                if (item.dataset.route === route) {
-                    item.classList.add('active');
-                }
-            });
-
-            // Update breadcrumb
-            const breadcrumb = document.getElementById('breadcrumb-page');
-            if (breadcrumb) {
-                breadcrumb.textContent = pageNames[route] || 'Dashboard';
-            }
-
-            // Show page
-            document.querySelectorAll('.page-view').forEach(page => {
-                page.classList.remove('active');
-            });
-
-            const pageId = 'page-' + route.replace('/', '');
-            const page = document.getElementById(pageId);
-            if (page) {
-                page.classList.add('active');
-            }
-        }
-
-        // Add click handlers to nav items
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.addEventListener('click', (e) => {
-                e.preventDefault();
-                const route = item.dataset.route;
-                if (route) {
-                    navigateTo(route);
-                }
-            });
-        });
-
-        // Initialize with dashboard
-        navigateTo('/metricas');
+        // Inicializar
+        App.init();
     </script>
 </body>
 </html>
