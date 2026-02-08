@@ -58,7 +58,9 @@
                 '/jurimetria': 'Jurimetria',
                 '/governanca': 'Governanca Regulatoria',
                 '/boletim': 'Boletim Mensal',
-                '/auditoria': 'Auditoria Forense'
+                '/auditoria': 'Auditoria Forense',
+                '/upload': 'Upload de PDFs',
+                '/analise': 'Analise de PDFs'
             };
             const breadcrumb = document.getElementById('breadcrumb-page');
             if (breadcrumb) {
@@ -654,6 +656,395 @@
     };
 
     // ============================================
+    // PAGE: Upload de PDFs
+    // ============================================
+    const PageUpload = {
+        pdfs: [],
+
+        async init() {
+            const page = document.getElementById('page-upload');
+            page.classList.add('active');
+
+            this.setupDropzone();
+            await this.load();
+        },
+
+        setupDropzone() {
+            const dropzone = document.getElementById('upload-dropzone');
+            const input = document.getElementById('upload-input');
+
+            if (!dropzone || !input) return;
+
+            // Drag and drop handlers
+            dropzone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropzone.classList.add('dragover');
+            });
+
+            dropzone.addEventListener('dragleave', () => {
+                dropzone.classList.remove('dragover');
+            });
+
+            dropzone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropzone.classList.remove('dragover');
+                const files = Array.from(e.dataTransfer.files).filter(f => f.type === 'application/pdf');
+                if (files.length > 0) {
+                    this.uploadFiles(files);
+                }
+            });
+
+            // Click to select
+            dropzone.addEventListener('click', (e) => {
+                if (e.target.tagName !== 'BUTTON') {
+                    input.click();
+                }
+            });
+
+            input.addEventListener('change', () => {
+                const files = Array.from(input.files);
+                if (files.length > 0) {
+                    this.uploadFiles(files);
+                }
+            });
+        },
+
+        async load() {
+            const response = await API.get('/api/pdfs');
+            this.pdfs = response?.pdfs || [];
+            this.updateStats();
+            this.render();
+        },
+
+        updateStats() {
+            const total = this.pdfs.length;
+            const pendentes = this.pdfs.filter(p => p.status === 'pendente').length;
+            const analisados = this.pdfs.filter(p => p.status === 'analisado').length;
+            const erros = this.pdfs.filter(p => p.status === 'erro').length;
+
+            document.getElementById('upload-total').textContent = total;
+            document.getElementById('upload-pendentes').textContent = pendentes;
+            document.getElementById('upload-analisados').textContent = analisados;
+            document.getElementById('upload-erros').textContent = erros;
+        },
+
+        render() {
+            const tbody = document.getElementById('upload-table-body');
+
+            if (this.pdfs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state">Nenhum PDF carregado ainda</div></td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = this.pdfs.map((pdf, index) => {
+                const statusClass = pdf.status === 'analisado' ? 'badge-success' :
+                                   pdf.status === 'erro' ? 'badge-danger' :
+                                   pdf.status === 'analisando' ? 'badge-warning' : 'badge-secondary';
+                const statusLabel = pdf.status === 'analisado' ? 'Analisado' :
+                                   pdf.status === 'erro' ? 'Erro' :
+                                   pdf.status === 'analisando' ? 'Analisando...' : 'Pendente';
+                const tamanho = pdf.size ? (pdf.size / 1024 / 1024).toFixed(2) + ' MB' : '-';
+
+                return `<tr>
+                    <td>${index + 1}</td>
+                    <td><span class="file-name">${pdf.nome || pdf.filename || 'Arquivo ' + (index + 1)}</span></td>
+                    <td>${tamanho}</td>
+                    <td><span class="badge ${statusClass}">${statusLabel}</span></td>
+                    <td>${pdf.deliberacoes_count || 0}</td>
+                    <td>
+                        <div class="action-buttons">
+                            ${pdf.status === 'pendente' ? `<button class="btn btn-primary btn-sm" onclick="App.PageUpload.analisar(${index})">Analisar</button>` : ''}
+                            <button class="btn btn-danger btn-sm" onclick="App.PageUpload.excluir(${index})">Excluir</button>
+                        </div>
+                    </td>
+                </tr>`;
+            }).join('');
+        },
+
+        async uploadFiles(files) {
+            const progressDiv = document.getElementById('upload-progress');
+            const progressBar = document.getElementById('upload-progress-bar');
+            const progressText = document.getElementById('upload-progress-text');
+            const progressPercent = document.getElementById('upload-progress-percent');
+
+            progressDiv.style.display = 'block';
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const formData = new FormData();
+                formData.append('pdf', file);
+
+                progressText.textContent = `Enviando ${file.name}... (${i + 1}/${files.length})`;
+                progressPercent.textContent = Math.round((i / files.length) * 100) + '%';
+                progressBar.style.width = Math.round((i / files.length) * 100) + '%';
+
+                try {
+                    const response = await fetch('/api/upload-pdf', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const result = await response.json();
+                    if (!result.sucesso) {
+                        console.error('Erro no upload:', result.erro);
+                    }
+                } catch (error) {
+                    console.error('Erro no upload:', error);
+                }
+            }
+
+            progressText.textContent = 'Upload concluido!';
+            progressPercent.textContent = '100%';
+            progressBar.style.width = '100%';
+
+            setTimeout(() => {
+                progressDiv.style.display = 'none';
+                progressBar.style.width = '0%';
+            }, 2000);
+
+            await this.load();
+        },
+
+        async uploadFromUrl() {
+            const urlInput = document.getElementById('upload-url');
+            const url = urlInput?.value?.trim();
+
+            if (!url) {
+                alert('Digite uma URL valida');
+                return;
+            }
+
+            try {
+                const response = await API.post('/api/upload-url', { url });
+                if (response?.sucesso) {
+                    urlInput.value = '';
+                    await this.load();
+                    alert('PDF baixado com sucesso!');
+                } else {
+                    alert('Erro: ' + (response?.erro || 'Erro desconhecido'));
+                }
+            } catch (error) {
+                alert('Erro ao baixar PDF: ' + error.message);
+            }
+        },
+
+        async analisar(index) {
+            try {
+                const response = await API.post(`/api/analisar-pdf/${index}`);
+                if (response?.sucesso) {
+                    await this.load();
+                } else {
+                    alert('Erro: ' + (response?.erro || 'Erro na analise'));
+                }
+            } catch (error) {
+                alert('Erro ao analisar: ' + error.message);
+            }
+        },
+
+        async excluir(index) {
+            if (!confirm('Excluir este PDF?')) return;
+
+            try {
+                await API.delete(`/api/pdf/${index}`);
+                await this.load();
+            } catch (error) {
+                alert('Erro ao excluir: ' + error.message);
+            }
+        }
+    };
+
+    // ============================================
+    // PAGE: Analise de PDFs
+    // ============================================
+    const PageAnalise = {
+        pdfs: [],
+        analisando: false,
+
+        async init() {
+            const page = document.getElementById('page-analise');
+            page.classList.add('active');
+            await this.load();
+        },
+
+        async load() {
+            const response = await API.get('/api/pdfs');
+            this.pdfs = response?.pdfs || [];
+            this.updateStats();
+            this.render();
+        },
+
+        updateStats() {
+            const total = this.pdfs.length;
+            const pendentes = this.pdfs.filter(p => p.status === 'pendente').length;
+            const concluidos = this.pdfs.filter(p => p.status === 'analisado').length;
+            const deliberacoes = this.pdfs.reduce((sum, p) => sum + (p.deliberacoes_count || 0), 0);
+
+            document.getElementById('analise-total').textContent = total;
+            document.getElementById('analise-pendentes').textContent = pendentes;
+            document.getElementById('analise-concluidos').textContent = concluidos;
+            document.getElementById('analise-deliberacoes').textContent = deliberacoes;
+        },
+
+        render() {
+            const tbody = document.getElementById('analise-table-body');
+
+            if (this.pdfs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state">Nenhum PDF disponivel. Faca upload na pagina de Upload.</div></td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = this.pdfs.map((pdf, index) => {
+                const statusClass = pdf.status === 'analisado' ? 'badge-success' :
+                                   pdf.status === 'erro' ? 'badge-danger' :
+                                   pdf.status === 'analisando' ? 'badge-warning' : 'badge-secondary';
+                const statusLabel = pdf.status === 'analisado' ? 'Analisado' :
+                                   pdf.status === 'erro' ? 'Erro' :
+                                   pdf.status === 'analisando' ? 'Analisando...' : 'Pendente';
+
+                return `<tr>
+                    <td>${index + 1}</td>
+                    <td><span class="file-name">${pdf.nome || pdf.filename || 'Arquivo ' + (index + 1)}</span></td>
+                    <td><span class="badge ${statusClass}">${statusLabel}</span></td>
+                    <td>${pdf.deliberacoes_count || 0}</td>
+                    <td>${pdf.ultima_analise || '-'}</td>
+                    <td>
+                        <div class="action-buttons">
+                            ${pdf.status !== 'analisando' ? `<button class="btn btn-primary btn-sm" onclick="App.PageAnalise.analisar(${index})">Analisar</button>` : '<span class="badge badge-warning">Em andamento</span>'}
+                            ${pdf.status === 'analisado' ? `<button class="btn btn-secondary btn-sm" onclick="App.PageAnalise.verResultado(${index})">Ver Resultado</button>` : ''}
+                        </div>
+                    </td>
+                </tr>`;
+            }).join('');
+        },
+
+        async analisar(index) {
+            const statusCard = document.getElementById('analise-status-card');
+            const statusText = document.getElementById('analise-status-text');
+            const statusPercent = document.getElementById('analise-status-percent');
+            const progressBar = document.getElementById('analise-progress-bar');
+
+            statusCard.style.display = 'block';
+            statusText.textContent = 'Analisando PDF ' + (index + 1) + '...';
+            statusPercent.textContent = '0%';
+            progressBar.style.width = '0%';
+
+            try {
+                // Simular progresso
+                let progress = 0;
+                const progressInterval = setInterval(() => {
+                    if (progress < 90) {
+                        progress += Math.random() * 10;
+                        statusPercent.textContent = Math.min(90, Math.round(progress)) + '%';
+                        progressBar.style.width = Math.min(90, Math.round(progress)) + '%';
+                    }
+                }, 500);
+
+                const response = await API.post(`/api/analisar-pdf/${index}`);
+
+                clearInterval(progressInterval);
+
+                if (response?.sucesso) {
+                    statusText.textContent = 'Analise concluida!';
+                    statusPercent.textContent = '100%';
+                    progressBar.style.width = '100%';
+
+                    if (response.deliberacoes) {
+                        this.mostrarResultado(response);
+                    }
+
+                    setTimeout(() => {
+                        statusCard.style.display = 'none';
+                    }, 2000);
+
+                    await this.load();
+                } else {
+                    statusText.textContent = 'Erro: ' + (response?.erro || 'Erro desconhecido');
+                    progressBar.style.width = '0%';
+                }
+            } catch (error) {
+                statusText.textContent = 'Erro: ' + error.message;
+            }
+        },
+
+        async analisarTodos() {
+            const pendentes = this.pdfs.filter(p => p.status === 'pendente');
+
+            if (pendentes.length === 0) {
+                alert('Nenhum PDF pendente para analisar');
+                return;
+            }
+
+            const statusCard = document.getElementById('analise-status-card');
+            const statusText = document.getElementById('analise-status-text');
+            const statusPercent = document.getElementById('analise-status-percent');
+            const progressBar = document.getElementById('analise-progress-bar');
+
+            statusCard.style.display = 'block';
+            this.analisando = true;
+
+            try {
+                const response = await API.post('/api/analisar-todos');
+
+                if (response?.sucesso) {
+                    statusText.textContent = `Analise concluida! ${response.total_deliberacoes || 0} deliberacoes extraidas.`;
+                    statusPercent.textContent = '100%';
+                    progressBar.style.width = '100%';
+
+                    setTimeout(() => {
+                        statusCard.style.display = 'none';
+                    }, 3000);
+
+                    await this.load();
+                } else {
+                    statusText.textContent = 'Erro: ' + (response?.erro || 'Erro desconhecido');
+                }
+            } catch (error) {
+                statusText.textContent = 'Erro: ' + error.message;
+            }
+
+            this.analisando = false;
+        },
+
+        mostrarResultado(response) {
+            const card = document.getElementById('analise-resultados-card');
+            const content = document.getElementById('analise-resultados-content');
+
+            card.style.display = 'block';
+
+            const deliberacoes = response.deliberacoes || [];
+
+            content.innerHTML = `
+                <div class="result-summary">
+                    <div class="result-stat">
+                        <div class="value">${deliberacoes.length}</div>
+                        <div class="label">Deliberacoes Extraidas</div>
+                    </div>
+                </div>
+                ${deliberacoes.length > 0 ? `
+                <div class="result-list" style="margin-top: 16px; max-height: 400px; overflow-y: auto;">
+                    ${deliberacoes.slice(0, 10).map((d, i) => `
+                        <div class="result-item" style="padding: 12px; background: var(--background); border-radius: var(--radius); margin-bottom: 8px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                <strong>${d.processo || 'Processo ' + (i + 1)}</strong>
+                                <span class="badge ${d.decisao === 'Deferido' ? 'badge-success' : 'badge-danger'}">${d.decisao || '-'}</span>
+                            </div>
+                            <div style="font-size: 13px; color: var(--text-secondary);">${d.interessado || '-'}</div>
+                            <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">${d.microtema || '-'}</div>
+                        </div>
+                    `).join('')}
+                    ${deliberacoes.length > 10 ? `<div style="text-align: center; padding: 12px; color: var(--text-secondary);">... e mais ${deliberacoes.length - 10} deliberacoes</div>` : ''}
+                </div>` : ''}
+            `;
+        },
+
+        verResultado(index) {
+            const pdf = this.pdfs[index];
+            if (pdf && pdf.deliberacoes) {
+                this.mostrarResultado({ deliberacoes: pdf.deliberacoes });
+            }
+        }
+    };
+
+    // ============================================
     // APP INITIALIZATION
     // ============================================
     const App = {
@@ -669,6 +1060,8 @@
         PageMetricas,
         PageBoletim,
         PageAuditoria,
+        PageUpload,
+        PageAnalise,
 
         init() {
             // Register routes
@@ -700,6 +1093,14 @@
             Router.register('/auditoria', () => {
                 PageMonitor.destroy();
                 PageAuditoria.init();
+            });
+            Router.register('/upload', () => {
+                PageMonitor.destroy();
+                PageUpload.init();
+            });
+            Router.register('/analise', () => {
+                PageMonitor.destroy();
+                PageAnalise.init();
             });
             Router.register('/', () => {
                 PageMonitor.destroy();

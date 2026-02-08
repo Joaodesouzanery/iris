@@ -64,6 +64,18 @@
                 </div>
 
                 <div class="nav-section">
+                    <div class="nav-section-title">Documentos</div>
+                    <a data-route="/upload" class="nav-item">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                        Upload de PDFs
+                    </a>
+                    <a data-route="/analise" class="nav-item">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                        Analise de PDFs
+                    </a>
+                </div>
+
+                <div class="nav-section">
                     <div class="nav-section-title">Inteligencia</div>
                     <a data-route="/metricas" class="nav-item">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path></svg>
@@ -941,6 +953,254 @@
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================
+                     PAGE: Upload de PDFs
+                     ============================================ -->
+                <div id="page-upload" class="page-view">
+                    <div class="page-header">
+                        <div class="page-title-section">
+                            <h1 class="page-title">Upload de PDFs</h1>
+                            <p class="page-subtitle">Faca upload de documentos da ARTESP para analise e extracao de dados</p>
+                        </div>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">PDFs Carregados</span>
+                                <div class="stat-card-icon">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                </div>
+                            </div>
+                            <div class="stat-card-value" id="upload-total">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Pendentes</span>
+                                <div class="stat-card-icon">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                </div>
+                            </div>
+                            <div class="stat-card-value warning" id="upload-pendentes">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Analisados</span>
+                                <div class="stat-card-icon">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                </div>
+                            </div>
+                            <div class="stat-card-value success" id="upload-analisados">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Com Erro</span>
+                                <div class="stat-card-icon">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                </div>
+                            </div>
+                            <div class="stat-card-value danger" id="upload-erros">0</div>
+                        </div>
+                    </div>
+
+                    <div class="grid-2" style="margin-bottom: 24px;">
+                        <!-- Upload Zone -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                                    Enviar Arquivos
+                                </h2>
+                            </div>
+                            <div class="card-body">
+                                <div class="upload-zone" id="upload-dropzone">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="48" height="48"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                                    <h3>Arraste arquivos PDF aqui</h3>
+                                    <p>ou clique para selecionar</p>
+                                    <input type="file" id="upload-input" accept=".pdf" multiple style="display: none;">
+                                    <button class="btn btn-primary" onclick="document.getElementById('upload-input').click()">
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                                        Selecionar PDFs
+                                    </button>
+                                </div>
+                                <div id="upload-progress" style="display: none; margin-top: 16px;">
+                                    <div class="progress-info">
+                                        <span id="upload-progress-text">Enviando...</span>
+                                        <span id="upload-progress-percent">0%</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" id="upload-progress-bar" style="width: 0%;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Upload por URL -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                                    Importar por URL
+                                </h2>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-group">
+                                    <label class="form-label">URL do PDF da ARTESP</label>
+                                    <input type="text" class="form-input" id="upload-url" placeholder="https://www.artesp.sp.gov.br/...pdf">
+                                </div>
+                                <button class="btn btn-primary" onclick="App.PageUpload.uploadFromUrl()" style="margin-top: 12px;">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                                    Baixar e Importar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Lista de PDFs -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                PDFs Carregados
+                            </h2>
+                            <div class="card-actions">
+                                <button class="btn btn-secondary btn-sm" onclick="App.PageUpload.load()">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                    Atualizar
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body" style="padding: 0;">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Arquivo</th>
+                                        <th>Tamanho</th>
+                                        <th>Status</th>
+                                        <th>Deliberacoes</th>
+                                        <th>Acoes</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="upload-table-body">
+                                    <tr><td colspan="6"><div class="empty-state">Nenhum PDF carregado ainda</div></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================
+                     PAGE: Analise de PDFs
+                     ============================================ -->
+                <div id="page-analise" class="page-view">
+                    <div class="page-header">
+                        <div class="page-title-section">
+                            <h1 class="page-title">Analise de PDFs</h1>
+                            <p class="page-subtitle">Analise os PDFs carregados para extrair deliberacoes e dados estruturados</p>
+                        </div>
+                        <div class="page-actions">
+                            <button class="btn btn-primary" onclick="App.PageAnalise.analisarTodos()">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                                Analisar Todos
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Total de PDFs</span>
+                            </div>
+                            <div class="stat-card-value" id="analise-total">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Aguardando Analise</span>
+                            </div>
+                            <div class="stat-card-value warning" id="analise-pendentes">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Analisados</span>
+                            </div>
+                            <div class="stat-card-value success" id="analise-concluidos">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Deliberacoes Extraidas</span>
+                            </div>
+                            <div class="stat-card-value primary" id="analise-deliberacoes">0</div>
+                        </div>
+                    </div>
+
+                    <!-- Status da Analise -->
+                    <div class="card" id="analise-status-card" style="margin-bottom: 24px; display: none;">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                                Analise em Andamento
+                            </h2>
+                        </div>
+                        <div class="card-body">
+                            <div id="analise-status-content">
+                                <div class="progress-info">
+                                    <span id="analise-status-text">Iniciando analise...</span>
+                                    <span id="analise-status-percent">0%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="analise-progress-bar" style="width: 0%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Lista de PDFs para Analise -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                                PDFs para Analise
+                            </h2>
+                            <div class="card-actions">
+                                <button class="btn btn-secondary btn-sm" onclick="App.PageAnalise.load()">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                    Atualizar
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body" style="padding: 0;">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Arquivo</th>
+                                        <th>Status</th>
+                                        <th>Deliberacoes</th>
+                                        <th>Ultima Analise</th>
+                                        <th>Acoes</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="analise-table-body">
+                                    <tr><td colspan="6"><div class="empty-state">Nenhum PDF disponivel para analise</div></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Resultados da Analise -->
+                    <div class="card" id="analise-resultados-card" style="margin-top: 24px; display: none;">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                Resultado da Analise
+                            </h2>
+                        </div>
+                        <div class="card-body" id="analise-resultados-content">
                         </div>
                     </div>
                 </div>
