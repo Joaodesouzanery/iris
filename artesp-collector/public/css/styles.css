@@ -1,51 +1,60 @@
 /**
- * IRIS Platform - Modern UI Theme
- * Design inspirado na plataforma Lovable
- * Tema claro, moderno e profissional
+ * IRIS Platform - Identidade Visual Oficial
+ * Instituto de Regulacao, Inovacao e Sustentabilidade
+ * Tema: Azul Escuro + Dourado
  */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 /* ============================================
-   CSS VARIABLES
+   CSS VARIABLES - IRIS Brand Colors
    ============================================ */
 :root {
-    --primary: #0d9488;
-    --primary-dark: #0f766e;
-    --primary-light: #14b8a6;
-    --primary-bg: #f0fdfa;
+    /* Cores principais IRIS */
+    --primary: #c9a227;
+    --primary-dark: #a88a1f;
+    --primary-light: #e8c547;
+    --primary-bg: rgba(201, 162, 39, 0.1);
 
-    --background: #f8fafc;
-    --surface: #ffffff;
-    --surface-hover: #f1f5f9;
+    /* Backgrounds - Azul escuro IRIS */
+    --background: #0a1628;
+    --surface: #0d1e36;
+    --surface-hover: #142a4a;
+    --surface-light: #1a3a5c;
 
-    --text-primary: #0f172a;
-    --text-secondary: #64748b;
-    --text-muted: #94a3b8;
+    /* Textos */
+    --text-primary: #ffffff;
+    --text-secondary: #a0aec0;
+    --text-muted: #718096;
 
-    --border: #e2e8f0;
-    --border-light: #f1f5f9;
+    /* Bordas */
+    --border: #1a3a5c;
+    --border-light: #243b55;
 
-    --success: #10b981;
-    --success-bg: #ecfdf5;
-    --warning: #f59e0b;
-    --warning-bg: #fffbeb;
-    --danger: #ef4444;
-    --danger-bg: #fef2f2;
-    --info: #3b82f6;
-    --info-bg: #eff6ff;
+    /* Estados */
+    --success: #4ade80;
+    --success-bg: rgba(74, 222, 128, 0.15);
+    --warning: #fbbf24;
+    --warning-bg: rgba(251, 191, 36, 0.15);
+    --danger: #f87171;
+    --danger-bg: rgba(248, 113, 113, 0.15);
+    --info: #60a5fa;
+    --info-bg: rgba(96, 165, 250, 0.15);
 
-    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-    --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    /* Sombras */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+    --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.3);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.3);
 
+    /* Bordas arredondadas */
     --radius-sm: 6px;
     --radius: 8px;
     --radius-lg: 12px;
     --radius-xl: 16px;
 
-    --sidebar-width: 240px;
+    /* Layout */
+    --sidebar-width: 260px;
     --header-height: 64px;
 }
 
@@ -87,11 +96,11 @@ svg:not([width]):not([height]) {
 }
 
 /* ============================================
-   SIDEBAR
+   SIDEBAR - IRIS Brand
    ============================================ */
 .sidebar {
     width: var(--sidebar-width);
-    background: var(--primary-dark);
+    background: linear-gradient(180deg, #0a1628 0%, #0d1e36 100%);
     height: 100vh;
     position: fixed;
     left: 0;
@@ -100,6 +109,7 @@ svg:not([width]):not([height]) {
     flex-direction: column;
     z-index: 100;
     transition: transform 0.3s ease;
+    border-right: 1px solid var(--border);
 }
 
 .sidebar-header {
@@ -107,26 +117,54 @@ svg:not([width]):not([height]) {
     display: flex;
     align-items: center;
     gap: 12px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid var(--border);
 }
 
 .sidebar-logo {
-    width: 36px;
-    height: 36px;
-    background: var(--primary-light);
-    border-radius: var(--radius);
+    height: 40px;
+    width: auto;
+}
+
+.sidebar-logo img {
+    height: 100%;
+    width: auto;
+}
+
+/* Logo SVG estilizada */
+.iris-logo {
     display: flex;
     align-items: center;
-    justify-content: center;
+    gap: 10px;
+}
+
+.iris-logo-text {
+    font-family: 'Inter', sans-serif;
+    font-size: 24px;
     font-weight: 700;
-    font-size: 14px;
-    color: white;
+    letter-spacing: 4px;
+    background: linear-gradient(90deg, #c9a227, #e8c547);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .sidebar-brand {
-    color: white;
-    font-size: 18px;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-brand-name {
+    color: var(--primary);
+    font-size: 22px;
     font-weight: 700;
+    letter-spacing: 3px;
+}
+
+.sidebar-brand-subtitle {
+    color: var(--text-secondary);
+    font-size: 10px;
+    letter-spacing: 0.5px;
+    margin-top: 2px;
 }
 
 .sidebar-toggle {
@@ -404,13 +442,23 @@ svg:not([width]):not([height]) {
 .page-title {
     font-size: 24px;
     font-weight: 700;
-    color: var(--text-primary);
+    color: var(--primary);
     margin-bottom: 4px;
 }
 
 .page-subtitle {
     color: var(--text-secondary);
     font-size: 14px;
+}
+
+/* Section titles with gold accent */
+.section-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--primary);
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
 }
 
 .page-actions {
@@ -677,6 +725,17 @@ svg:not([width]):not([height]) {
 .stat-card-value.danger { color: var(--danger); }
 .stat-card-value.warning { color: var(--warning); }
 .stat-card-value.primary { color: var(--primary); }
+.stat-card-value.gold { color: #c9a227; }
+
+/* Stat card com destaque dourado */
+.stat-card.highlight {
+    border-color: var(--primary);
+    background: linear-gradient(135deg, var(--surface) 0%, rgba(201, 162, 39, 0.1) 100%);
+}
+
+.stat-card.highlight .stat-card-value {
+    color: var(--primary);
+}
 
 .stat-card-subtitle {
     font-size: 12px;
