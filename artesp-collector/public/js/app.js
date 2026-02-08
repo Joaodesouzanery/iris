@@ -38,8 +38,8 @@
         },
 
         handleRoute() {
-            const path = window.location.pathname || '/deliberacoes';
-            const handler = this.routes[path] || this.routes['/deliberacoes'];
+            const path = window.location.pathname || '/metricas';
+            const handler = this.routes[path] || this.routes['/metricas'];
 
             // Update active nav
             document.querySelectorAll('.nav-item').forEach(item => {
@@ -48,6 +48,22 @@
                     item.classList.add('active');
                 }
             });
+
+            // Update breadcrumb
+            const pageNames = {
+                '/metricas': 'Dashboard Geral',
+                '/deliberacoes': 'Deliberacoes',
+                '/monitor': 'Monitor de Reunioes',
+                '/diretores': 'Diretores e Mandatos',
+                '/jurimetria': 'Jurimetria',
+                '/governanca': 'Governanca Regulatoria',
+                '/boletim': 'Boletim Mensal',
+                '/auditoria': 'Auditoria Forense'
+            };
+            const breadcrumb = document.getElementById('breadcrumb-page');
+            if (breadcrumb) {
+                breadcrumb.textContent = pageNames[path] || 'Inteligencia Regulatoria';
+            }
 
             // Show page
             document.querySelectorAll('.page-view').forEach(page => {
@@ -751,7 +767,11 @@
             });
             Router.register('/', () => {
                 PageMonitor.destroy();
-                PageDeliberacoes.init();
+                PageMetricas.init();
+            });
+            Router.register('/app', () => {
+                PageMonitor.destroy();
+                PageMetricas.init();
             });
 
             // Initialize router
