@@ -2016,6 +2016,153 @@ app.get('/metricas', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'metricas.html'));
 });
 
+// ============================================================================
+// PÁGINAS DA PLATAFORMA IRIS
+// ============================================================================
+
+// Decisões
+app.get('/deliberacoes', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'deliberacoes.html'));
+});
+
+app.get('/monitor', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'monitor.html'));
+});
+
+// Diretores
+app.get('/diretores', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'diretores.html'));
+});
+
+app.get('/jurimetria', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'jurimetria.html'));
+});
+
+app.get('/governanca', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'governanca.html'));
+});
+
+// Inteligência
+app.get('/boletim', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'boletim.html'));
+});
+
+app.get('/auditoria', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'auditoria.html'));
+});
+
+// ============================================================================
+// APIs PARA DELIBERAÇÕES
+// ============================================================================
+
+// Lista todas as deliberações extraídas
+app.get('/api/deliberacoes', (req, res) => {
+    // Extrai deliberações de todos os PDFs analisados
+    const deliberacoes = [];
+
+    pdfsProcessados.forEach((pdf, pdfIndex) => {
+        if (pdf.analise && pdf.analise.deliberacoes) {
+            pdf.analise.deliberacoes.forEach((delib, delibIndex) => {
+                deliberacoes.push({
+                    id: `${pdfIndex}-${delibIndex}`,
+                    pdf_nome: pdf.nomeArquivo,
+                    processo: delib.numero_deliberacao || delib.processo || '',
+                    interessado: delib.interessado || '',
+                    microtema: delib.microtema || delib.classificacao || '',
+                    decisao: delib.resultado || '',
+                    pauta_interna: delib.classificacao === 'Ato Interno',
+                    numero_reuniao: delib.reuniao_ordinaria || '',
+                    data_reuniao: pdf.data || '',
+                    votos_favor: delib.votos_a_favor || [],
+                    votos_contra: delib.votos_contra || []
+                });
+            });
+        }
+    });
+
+    res.json({
+        total: deliberacoes.length,
+        deliberacoes
+    });
+});
+
+// ============================================================================
+// APIs PARA REUNIÕES MONITORADAS
+// ============================================================================
+
+// Armazena reuniões monitoradas
+let reunioesMonitoradas = [];
+
+app.get('/api/reunioes-monitoradas', (req, res) => {
+    res.json({
+        total: reunioesMonitoradas.length,
+        reunioes: reunioesMonitoradas
+    });
+});
+
+app.post('/api/reunioes-monitoradas', (req, res) => {
+    const { url, tipo } = req.body;
+
+    if (!url) {
+        return res.status(400).json({ erro: 'URL é obrigatória' });
+    }
+
+    const novaReuniao = {
+        id: Date.now().toString(),
+        url_origem: url,
+        tipo: tipo || 'deliberacao',
+        status: 'pendente',
+        progresso: 0,
+        tentativas: 0,
+        created_at: new Date().toISOString()
+    };
+
+    reunioesMonitoradas.push(novaReuniao);
+
+    res.json({
+        sucesso: true,
+        mensagem: 'Reunião adicionada para monitoramento',
+        reuniao: novaReuniao
+    });
+});
+
+app.post('/api/reunioes-monitoradas/:id/processar', async (req, res) => {
+    const { id } = req.params;
+    const reuniao = reunioesMonitoradas.find(r => r.id === id);
+
+    if (!reuniao) {
+        return res.status(404).json({ erro: 'Reunião não encontrada' });
+    }
+
+    // Simula início do processamento
+    reuniao.status = 'processando';
+    reuniao.progresso = 10;
+    reuniao.tentativas++;
+
+    // Em produção, aqui seria chamada a função de processamento real
+    res.json({
+        sucesso: true,
+        mensagem: 'Processamento iniciado',
+        reuniao
+    });
+});
+
+app.delete('/api/reunioes-monitoradas/:id', (req, res) => {
+    const { id } = req.params;
+    const index = reunioesMonitoradas.findIndex(r => r.id === id);
+
+    if (index === -1) {
+        return res.status(404).json({ erro: 'Reunião não encontrada' });
+    }
+
+    reunioesMonitoradas.splice(index, 1);
+
+    res.json({
+        sucesso: true,
+        mensagem: 'Reunião removida'
+    });
+});
+
 // Código antigo da página de métricas removido - agora serve arquivo estático
 // ============================================================================
 

@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IRIS - Deliberacoes</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0a1628 0%, #0d1e36 50%, #0a1628 100%);
+            min-height: 100vh;
+            color: #e4e4e4;
+            display: flex;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: rgba(10, 22, 40, 0.95);
+            border-right: 1px solid #1a3a5c;
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            padding: 20px 0;
+            overflow-y: auto;
+        }
+
+        .logo {
+            padding: 0 20px 30px;
+            border-bottom: 1px solid #1a3a5c;
+            margin-bottom: 20px;
+        }
+
+        .logo h1 {
+            font-size: 1.8em;
+            background: linear-gradient(90deg, #c9a227, #e8c547);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo p {
+            font-size: 11px;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        .nav-section {
+            margin-bottom: 25px;
+        }
+
+        .nav-section-title {
+            font-size: 10px;
+            text-transform: uppercase;
+            color: #666;
+            padding: 0 20px;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: #999;
+            text-decoration: none;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: rgba(201, 162, 39, 0.1);
+            color: #fff;
+        }
+
+        .nav-item.active {
+            background: rgba(201, 162, 39, 0.15);
+            color: #c9a227;
+            border-left-color: #c9a227;
+        }
+
+        .nav-item svg {
+            width: 18px;
+            height: 18px;
+            margin-right: 12px;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 260px;
+            flex: 1;
+            padding: 30px;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .page-title {
+            font-size: 1.8em;
+            color: #c9a227;
+        }
+
+        .page-subtitle {
+            color: #888;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #c9a227, #a88620);
+            color: #0a1628;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(201, 162, 39, 0.3);
+        }
+
+        /* Filters */
+        .filters {
+            background: rgba(13, 30, 54, 0.8);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .filter-group label {
+            font-size: 11px;
+            color: #888;
+            text-transform: uppercase;
+        }
+
+        .filter-group select,
+        .filter-group input {
+            background: #0a1628;
+            border: 1px solid #1a3a5c;
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 6px;
+            min-width: 150px;
+        }
+
+        .filter-group select:focus,
+        .filter-group input:focus {
+            outline: none;
+            border-color: #c9a227;
+        }
+
+        /* Stats Cards */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: rgba(13, 30, 54, 0.8);
+            border-radius: 12px;
+            padding: 20px;
+            border-left: 4px solid #c9a227;
+        }
+
+        .stat-card h3 {
+            font-size: 11px;
+            color: #888;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .value {
+            font-size: 2em;
+            font-weight: 700;
+            color: #c9a227;
+        }
+
+        .stat-card .value.green { color: #4ade80; }
+        .stat-card .value.red { color: #f87171; }
+
+        /* Table */
+        .table-container {
+            background: rgba(13, 30, 54, 0.8);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: rgba(10, 22, 40, 0.9);
+            padding: 15px;
+            text-align: left;
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #888;
+            border-bottom: 1px solid #1a3a5c;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #1a3a5c;
+            font-size: 13px;
+        }
+
+        tr:hover {
+            background: rgba(201, 162, 39, 0.05);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .badge-deferido { background: rgba(74, 222, 128, 0.2); color: #4ade80; }
+        .badge-indeferido { background: rgba(248, 113, 113, 0.2); color: #f87171; }
+        .badge-externo { background: rgba(96, 165, 250, 0.2); color: #60a5fa; }
+        .badge-interno { background: rgba(192, 132, 252, 0.2); color: #c084fc; }
+
+        .processo-link {
+            color: #c9a227;
+            text-decoration: none;
+        }
+
+        .processo-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #1a3a5c;
+            border-top-color: #c9a227;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <div class="logo">
+            <h1>IRIS</h1>
+            <p>Instituto de Regulacao, Inovacao e Sustentabilidade</p>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Decisoes</div>
+            <a href="/deliberacoes" class="nav-item active">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                Deliberacoes
+            </a>
+            <a href="/monitor" class="nav-item">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                Monitor de Reunioes
+            </a>
+            <a href="/" class="nav-item">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                Upload PDF
+            </a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Diretores</div>
+            <a href="/diretores" class="nav-item">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                Mandatos
+            </a>
+            <a href="/jurimetria" class="nav-item">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                Jurimetria
+            </a>
+            <a href="/governanca" class="nav-item">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                Governanca
+            </a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Inteligencia</div>
+            <a href="/metricas" class="nav-item">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path></svg>
+                Dashboard
+            </a>
+            <a href="/boletim" class="nav-item">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path></svg>
+                Boletim Mensal
+            </a>
+            <a href="/auditoria" class="nav-item">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                Auditoria Forense
+            </a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Deliberacoes Extraidas</h1>
+                <p class="page-subtitle">Lista de todas as deliberacoes processadas da ARTESP</p>
+            </div>
+            <button class="btn btn-primary" onclick="exportarCSV()">Exportar CSV</button>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters">
+            <div class="filter-group">
+                <label>Decisao</label>
+                <select id="filtroDecisao" onchange="filtrarDeliberacoes()">
+                    <option value="">Todas</option>
+                    <option value="Deferido">Deferido</option>
+                    <option value="Indeferido">Indeferido</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Tipo</label>
+                <select id="filtroTipo" onchange="filtrarDeliberacoes()">
+                    <option value="">Todos</option>
+                    <option value="externo">Pleito Externo</option>
+                    <option value="interno">Ato Interno</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Microtema</label>
+                <select id="filtroMicrotema" onchange="filtrarDeliberacoes()">
+                    <option value="">Todos</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Buscar</label>
+                <input type="text" id="filtroBusca" placeholder="Processo, interessado..." oninput="filtrarDeliberacoes()">
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-row" id="statsRow">
+            <div class="stat-card">
+                <h3>Total de Deliberacoes</h3>
+                <div class="value" id="totalDelibs">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>Deferidas</h3>
+                <div class="value green" id="totalDeferidas">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>Indeferidas</h3>
+                <div class="value red" id="totalIndeferidas">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>Taxa de Aprovacao</h3>
+                <div class="value" id="taxaAprovacao">-</div>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Processo</th>
+                        <th>Interessado</th>
+                        <th>Microtema</th>
+                        <th>Decisao</th>
+                        <th>Tipo</th>
+                        <th>Reuniao</th>
+                        <th>Data</th>
+                    </tr>
+                </thead>
+                <tbody id="deliberacoesBody">
+                    <tr>
+                        <td colspan="7">
+                            <div class="loading">
+                                <div class="spinner"></div>
+                                Carregando deliberacoes...
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <script>
+        let todasDeliberacoes = [];
+        let deliberacoesFiltradas = [];
+
+        async function carregarDeliberacoes() {
+            try {
+                const res = await fetch('/api/deliberacoes');
+                const data = await res.json();
+                todasDeliberacoes = data.deliberacoes || [];
+                deliberacoesFiltradas = [...todasDeliberacoes];
+
+                // Preencher filtro de microtemas
+                const microtemas = [...new Set(todasDeliberacoes.map(d => d.microtema).filter(Boolean))];
+                const selectMicrotema = document.getElementById('filtroMicrotema');
+                microtemas.forEach(m => {
+                    const opt = document.createElement('option');
+                    opt.value = m;
+                    opt.textContent = m;
+                    selectMicrotema.appendChild(opt);
+                });
+
+                atualizarTabela();
+                atualizarEstatisticas();
+            } catch (e) {
+                document.getElementById('deliberacoesBody').innerHTML =
+                    '<tr><td colspan="7"><div class="empty-state">Erro ao carregar deliberacoes</div></td></tr>';
+            }
+        }
+
+        function filtrarDeliberacoes() {
+            const decisao = document.getElementById('filtroDecisao').value;
+            const tipo = document.getElementById('filtroTipo').value;
+            const microtema = document.getElementById('filtroMicrotema').value;
+            const busca = document.getElementById('filtroBusca').value.toLowerCase();
+
+            deliberacoesFiltradas = todasDeliberacoes.filter(d => {
+                if (decisao && d.decisao !== decisao) return false;
+                if (tipo === 'externo' && d.pauta_interna) return false;
+                if (tipo === 'interno' && !d.pauta_interna) return false;
+                if (microtema && d.microtema !== microtema) return false;
+                if (busca) {
+                    const texto = (d.processo + ' ' + d.interessado + ' ' + d.resumo_pleito).toLowerCase();
+                    if (!texto.includes(busca)) return false;
+                }
+                return true;
+            });
+
+            atualizarTabela();
+            atualizarEstatisticas();
+        }
+
+        function atualizarTabela() {
+            const tbody = document.getElementById('deliberacoesBody');
+
+            if (deliberacoesFiltradas.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state">Nenhuma deliberacao encontrada</div></td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = deliberacoesFiltradas.map(d => {
+                const decisaoClass = d.decisao === 'Deferido' ? 'badge-deferido' :
+                                    d.decisao === 'Indeferido' ? 'badge-indeferido' : '';
+                const tipoClass = d.pauta_interna ? 'badge-interno' : 'badge-externo';
+                const tipoLabel = d.pauta_interna ? 'Ato Interno' : 'Pleito Externo';
+
+                return '<tr>' +
+                    '<td><a href="/deliberacao/' + d.id + '" class="processo-link">' + (d.processo || '-') + '</a></td>' +
+                    '<td>' + (d.interessado || '-') + '</td>' +
+                    '<td>' + (d.microtema || '-') + '</td>' +
+                    '<td><span class="badge ' + decisaoClass + '">' + (d.decisao || '-') + '</span></td>' +
+                    '<td><span class="badge ' + tipoClass + '">' + tipoLabel + '</span></td>' +
+                    '<td>' + (d.numero_reuniao || '-') + '</td>' +
+                    '<td>' + (d.data_reuniao || '-') + '</td>' +
+                '</tr>';
+            }).join('');
+        }
+
+        function atualizarEstatisticas() {
+            const total = deliberacoesFiltradas.length;
+            const deferidas = deliberacoesFiltradas.filter(d => d.decisao === 'Deferido').length;
+            const indeferidas = deliberacoesFiltradas.filter(d => d.decisao === 'Indeferido').length;
+            const taxa = total > 0 ? ((deferidas / total) * 100).toFixed(1) : 0;
+
+            document.getElementById('totalDelibs').textContent = total;
+            document.getElementById('totalDeferidas').textContent = deferidas;
+            document.getElementById('totalIndeferidas').textContent = indeferidas;
+            document.getElementById('taxaAprovacao').textContent = taxa + '%';
+        }
+
+        function exportarCSV() {
+            if (deliberacoesFiltradas.length === 0) {
+                alert('Nenhuma deliberacao para exportar');
+                return;
+            }
+
+            const headers = ['Processo', 'Interessado', 'Microtema', 'Decisao', 'Tipo', 'Reuniao', 'Data'];
+            const rows = deliberacoesFiltradas.map(d => [
+                d.processo || '',
+                d.interessado || '',
+                d.microtema || '',
+                d.decisao || '',
+                d.pauta_interna ? 'Ato Interno' : 'Pleito Externo',
+                d.numero_reuniao || '',
+                d.data_reuniao || ''
+            ]);
+
+            const csv = [headers.join(','), ...rows.map(r => r.map(c => '"' + c + '"').join(','))].join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'deliberacoes_iris.csv';
+            a.click();
+        }
+
+        // Carregar ao iniciar
+        carregarDeliberacoes();
+    </script>
+</body>
+</html>

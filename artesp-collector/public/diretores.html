@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IRIS - Diretores e Mandatos</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #0a1628 0%, #0d1e36 50%, #0a1628 100%); min-height: 100vh; color: #e4e4e4; display: flex; }
+        .sidebar { width: 260px; background: rgba(10, 22, 40, 0.95); border-right: 1px solid #1a3a5c; height: 100vh; position: fixed; left: 0; top: 0; padding: 20px 0; overflow-y: auto; }
+        .logo { padding: 0 20px 30px; border-bottom: 1px solid #1a3a5c; margin-bottom: 20px; }
+        .logo h1 { font-size: 1.8em; background: linear-gradient(90deg, #c9a227, #e8c547); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .logo p { font-size: 11px; color: #888; margin-top: 5px; }
+        .nav-section { margin-bottom: 25px; }
+        .nav-section-title { font-size: 10px; text-transform: uppercase; color: #666; padding: 0 20px; margin-bottom: 10px; letter-spacing: 1px; }
+        .nav-item { display: flex; align-items: center; padding: 12px 20px; color: #999; text-decoration: none; transition: all 0.3s; border-left: 3px solid transparent; }
+        .nav-item:hover { background: rgba(201, 162, 39, 0.1); color: #fff; }
+        .nav-item.active { background: rgba(201, 162, 39, 0.15); color: #c9a227; border-left-color: #c9a227; }
+        .nav-item svg { width: 18px; height: 18px; margin-right: 12px; }
+        .main-content { margin-left: 260px; flex: 1; padding: 30px; }
+        .page-header { margin-bottom: 30px; }
+        .page-title { font-size: 1.8em; color: #c9a227; }
+        .page-subtitle { color: #888; font-size: 14px; margin-top: 5px; }
+
+        /* Timeline */
+        .timeline-container { background: rgba(13, 30, 54, 0.8); border-radius: 12px; padding: 25px; margin-bottom: 25px; }
+        .timeline-title { color: #c9a227; font-size: 14px; margin-bottom: 20px; }
+        .timeline { position: relative; padding: 20px 0; }
+        .timeline::before { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 4px; background: #1a3a5c; }
+        .timeline-years { display: flex; justify-content: space-between; position: relative; }
+        .timeline-year { text-align: center; }
+        .timeline-year .year { font-size: 12px; color: #888; margin-bottom: 10px; }
+        .timeline-year .marker { width: 12px; height: 12px; background: #c9a227; border-radius: 50%; margin: 0 auto; }
+
+        /* Directors Grid */
+        .directors-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; }
+
+        .director-card {
+            background: rgba(13, 30, 54, 0.8);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #1a3a5c;
+            transition: all 0.3s;
+        }
+        .director-card:hover { border-color: #c9a227; transform: translateY(-3px); }
+
+        .director-header {
+            background: linear-gradient(135deg, rgba(201, 162, 39, 0.2), rgba(201, 162, 39, 0.05));
+            padding: 25px;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .director-avatar {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, #c9a227, #a88620);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 700;
+            color: #0a1628;
+            flex-shrink: 0;
+        }
+
+        .director-info h3 { font-size: 18px; color: #fff; margin-bottom: 5px; }
+        .director-info .role { color: #c9a227; font-size: 13px; margin-bottom: 8px; }
+        .director-info .period { color: #888; font-size: 12px; }
+
+        .director-status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .status-active { background: rgba(74, 222, 128, 0.2); color: #4ade80; }
+        .status-inactive { background: rgba(248, 113, 113, 0.2); color: #f87171; }
+
+        .director-body { padding: 25px; }
+
+        .director-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-item { text-align: center; }
+        .stat-item .value { font-size: 1.5em; font-weight: 700; color: #c9a227; }
+        .stat-item .value.green { color: #4ade80; }
+        .stat-item .value.red { color: #f87171; }
+        .stat-item .label { font-size: 10px; color: #888; text-transform: uppercase; margin-top: 3px; }
+
+        .director-bar { margin-top: 15px; }
+        .director-bar-label { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 5px; }
+        .director-bar-label span:first-child { color: #888; }
+        .director-bar-label span:last-child { color: #c9a227; }
+        .bar-track { height: 8px; background: #1a3a5c; border-radius: 4px; overflow: hidden; }
+        .bar-fill { height: 100%; border-radius: 4px; transition: width 0.5s; }
+        .bar-fill.green { background: linear-gradient(90deg, #4ade80, #22c55e); }
+        .bar-fill.gold { background: linear-gradient(90deg, #c9a227, #e8c547); }
+
+        /* Gantt Chart */
+        .gantt-container { background: rgba(13, 30, 54, 0.8); border-radius: 12px; padding: 25px; margin-top: 25px; }
+        .gantt-title { color: #c9a227; font-size: 14px; margin-bottom: 20px; border-bottom: 1px solid #1a3a5c; padding-bottom: 10px; }
+
+        .gantt-chart { overflow-x: auto; }
+        .gantt-row { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid #1a3a5c; }
+        .gantt-label { width: 180px; flex-shrink: 0; font-size: 13px; }
+        .gantt-bars { flex: 1; position: relative; height: 30px; }
+        .gantt-bar {
+            position: absolute;
+            height: 24px;
+            background: linear-gradient(90deg, #c9a227, #e8c547);
+            border-radius: 4px;
+            top: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: #0a1628;
+            font-weight: 600;
+        }
+        .gantt-bar.ended { background: linear-gradient(90deg, #666, #888); color: #fff; }
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="logo"><h1>IRIS</h1><p>Instituto de Regulacao, Inovacao e Sustentabilidade</p></div>
+        <div class="nav-section">
+            <div class="nav-section-title">Decisoes</div>
+            <a href="/deliberacoes" class="nav-item"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>Deliberacoes</a>
+            <a href="/monitor" class="nav-item"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>Monitor de Reunioes</a>
+            <a href="/" class="nav-item"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>Upload PDF</a>
+        </div>
+        <div class="nav-section">
+            <div class="nav-section-title">Diretores</div>
+            <a href="/diretores" class="nav-item active"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>Mandatos</a>
+            <a href="/jurimetria" class="nav-item"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>Jurimetria</a>
+            <a href="/governanca" class="nav-item"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>Governanca</a>
+        </div>
+        <div class="nav-section">
+            <div class="nav-section-title">Inteligencia</div>
+            <a href="/metricas" class="nav-item"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path></svg>Dashboard</a>
+            <a href="/boletim" class="nav-item"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path></svg>Boletim Mensal</a>
+            <a href="/auditoria" class="nav-item"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>Auditoria Forense</a>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="page-header">
+            <h1 class="page-title">Diretores e Mandatos</h1>
+            <p class="page-subtitle">Composicao atual e historico do Conselho Diretor da ARTESP</p>
+        </div>
+
+        <!-- Timeline -->
+        <div class="timeline-container">
+            <h2 class="timeline-title">Linha do Tempo dos Mandatos</h2>
+            <div class="timeline">
+                <div class="timeline-years">
+                    <div class="timeline-year"><div class="year">2020</div><div class="marker"></div></div>
+                    <div class="timeline-year"><div class="year">2021</div><div class="marker"></div></div>
+                    <div class="timeline-year"><div class="year">2022</div><div class="marker"></div></div>
+                    <div class="timeline-year"><div class="year">2023</div><div class="marker"></div></div>
+                    <div class="timeline-year"><div class="year">2024</div><div class="marker"></div></div>
+                    <div class="timeline-year"><div class="year">2025</div><div class="marker"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Directors Grid -->
+        <div class="directors-grid" id="directorsGrid"></div>
+
+        <!-- Gantt Chart -->
+        <div class="gantt-container">
+            <h2 class="gantt-title">Grafico de Mandatos (Gantt)</h2>
+            <div class="gantt-chart" id="ganttChart"></div>
+        </div>
+    </main>
+
+    <script>
+        const diretores = [
+            { nome: 'Milton Persoli', iniciais: 'MP', cargo: 'Diretor-Presidente', inicio: '2021-01-15', fim: null, ativo: true, reunioes: 156, votos: 245, favoravel: 78.2, contrario: 15.5 },
+            { nome: 'Marcos Antonio Ribeiro', iniciais: 'MR', cargo: 'Diretor de Fiscalizacao', inicio: '2020-06-01', fim: null, ativo: true, reunioes: 178, votos: 198, favoravel: 65.4, contrario: 28.3 },
+            { nome: 'Patricia Vanzolini', iniciais: 'PV', cargo: 'Diretora de Planejamento', inicio: '2022-03-10', fim: null, ativo: true, reunioes: 98, votos: 212, favoravel: 82.1, contrario: 12.3 },
+            { nome: 'Carlos Eduardo Silva', iniciais: 'CS', cargo: 'Diretor de Investimentos', inicio: '2021-08-20', fim: null, ativo: true, reunioes: 134, votos: 187, favoravel: 71.2, contrario: 22.4 },
+            { nome: 'Ana Maria Santos', iniciais: 'AS', cargo: 'Diretora de Regulacao', inicio: '2019-01-10', fim: '2023-06-30', ativo: false, reunioes: 210, votos: 312, favoravel: 74.5, contrario: 18.2 }
+        ];
+
+        function renderDirectors() {
+            document.getElementById('directorsGrid').innerHTML = diretores.map(d => {
+                const statusClass = d.ativo ? 'status-active' : 'status-inactive';
+                const statusLabel = d.ativo ? 'Ativo' : 'Encerrado';
+                const periodo = d.fim ? formatDate(d.inicio) + ' - ' + formatDate(d.fim) : formatDate(d.inicio) + ' - Atual';
+
+                return '<div class="director-card">' +
+                    '<div class="director-header">' +
+                        '<div class="director-avatar">' + d.iniciais + '</div>' +
+                        '<div class="director-info">' +
+                            '<h3>' + d.nome + '</h3>' +
+                            '<div class="role">' + d.cargo + '</div>' +
+                            '<div class="period">' + periodo + '</div>' +
+                            '<span class="director-status ' + statusClass + '">' + statusLabel + '</span>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="director-body">' +
+                        '<div class="director-stats">' +
+                            '<div class="stat-item"><div class="value">' + d.reunioes + '</div><div class="label">Reunioes</div></div>' +
+                            '<div class="stat-item"><div class="value">' + d.votos + '</div><div class="label">Votos</div></div>' +
+                            '<div class="stat-item"><div class="value green">' + d.favoravel + '%</div><div class="label">Favoravel</div></div>' +
+                            '<div class="stat-item"><div class="value red">' + d.contrario + '%</div><div class="label">Contrario</div></div>' +
+                        '</div>' +
+                        '<div class="director-bar">' +
+                            '<div class="director-bar-label"><span>Taxa de Aprovacao</span><span>' + d.favoravel + '%</span></div>' +
+                            '<div class="bar-track"><div class="bar-fill green" style="width: ' + d.favoravel + '%;"></div></div>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
+        }
+
+        function renderGantt() {
+            const startYear = 2019;
+            const endYear = 2026;
+            const totalMonths = (endYear - startYear) * 12;
+
+            document.getElementById('ganttChart').innerHTML = diretores.map(d => {
+                const startDate = new Date(d.inicio);
+                const endDate = d.fim ? new Date(d.fim) : new Date();
+                const startOffset = ((startDate.getFullYear() - startYear) * 12 + startDate.getMonth()) / totalMonths * 100;
+                const duration = ((endDate - startDate) / (1000 * 60 * 60 * 24 * 30)) / totalMonths * 100;
+                const barClass = d.ativo ? '' : 'ended';
+
+                return '<div class="gantt-row">' +
+                    '<div class="gantt-label">' + d.nome + '</div>' +
+                    '<div class="gantt-bars">' +
+                        '<div class="gantt-bar ' + barClass + '" style="left: ' + startOffset + '%; width: ' + Math.min(duration, 100 - startOffset) + '%;">' +
+                            d.cargo.split(' ')[0] +
+                        '</div>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
+        }
+
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' });
+        }
+
+        renderDirectors();
+        renderGantt();
+    </script>
+</body>
+</html>

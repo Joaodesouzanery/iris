@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IRIS - Boletim Mensal</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #0a1628 0%, #0d1e36 50%, #0a1628 100%); min-height: 100vh; color: #e4e4e4; display: flex; }
+        .sidebar { width: 260px; background: rgba(10, 22, 40, 0.95); border-right: 1px solid #1a3a5c; height: 100vh; position: fixed; left: 0; top: 0; padding: 20px 0; overflow-y: auto; }
+        .logo { padding: 0 20px 30px; border-bottom: 1px solid #1a3a5c; margin-bottom: 20px; }
+        .logo h1 { font-size: 1.8em; background: linear-gradient(90deg, #c9a227, #e8c547); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .logo p { font-size: 11px; color: #888; margin-top: 5px; }
+        .nav-section { margin-bottom: 25px; }
+        .nav-section-title { font-size: 10px; text-transform: uppercase; color: #666; padding: 0 20px; margin-bottom: 10px; letter-spacing: 1px; }
+        .nav-item { display: flex; align-items: center; padding: 12px 20px; color: #999; text-decoration: none; transition: all 0.3s; border-left: 3px solid transparent; }
+        .nav-item:hover { background: rgba(201, 162, 39, 0.1); color: #fff; }
+        .nav-item.active { background: rgba(201, 162, 39, 0.15); color: #c9a227; border-left-color: #c9a227; }
+        .nav-item svg { width: 18px; height: 18px; margin-right: 12px; }
+        .main-content { margin-left: 260px; flex: 1; padding: 30px; }
+
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .page-title { font-size: 1.8em; color: #c9a227; }
+        .page-subtitle { color: #888; font-size: 14px; margin-top: 5px; }
+
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; transition: all 0.3s; }
+        .btn-primary { background: linear-gradient(135deg, #c9a227, #a88620); color: #0a1628; }
+        .btn-secondary { background: #1a3a5c; color: #fff; margin-left: 10px; }
+
+        /* Bulletin Container */
+        .bulletin { background: rgba(13, 30, 54, 0.8); border-radius: 12px; padding: 40px; max-width: 900px; margin: 0 auto; }
+
+        .bulletin-header { text-align: center; margin-bottom: 40px; padding-bottom: 30px; border-bottom: 2px solid #c9a227; }
+        .bulletin-header h1 { font-size: 2em; color: #c9a227; margin-bottom: 10px; }
+        .bulletin-header .period { font-size: 1.2em; color: #fff; }
+        .bulletin-header .date { color: #888; font-size: 13px; margin-top: 10px; }
+
+        .bulletin-section { margin-bottom: 35px; }
+        .bulletin-section h2 { color: #c9a227; font-size: 1.2em; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #1a3a5c; }
+
+        /* Stats Grid */
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px; }
+        .stat-box { background: rgba(10, 22, 40, 0.5); padding: 20px; border-radius: 10px; text-align: center; }
+        .stat-box .value { font-size: 2em; font-weight: 700; color: #c9a227; }
+        .stat-box .value.green { color: #4ade80; }
+        .stat-box .value.red { color: #f87171; }
+        .stat-box .label { font-size: 11px; color: #888; text-transform: uppercase; margin-top: 5px; }
+
+        /* Highlights */
+        .highlight-list { list-style: none; }
+        .highlight-list li { padding: 15px; background: rgba(10, 22, 40, 0.5); border-radius: 8px; margin-bottom: 10px; border-left: 3px solid #c9a227; }
+        .highlight-list li strong { color: #c9a227; }
+
+        /* Top Themes */
+        .theme-item { display: flex; align-items: center; gap: 15px; padding: 12px 0; border-bottom: 1px solid #1a3a5c; }
+        .theme-item:last-child { border-bottom: none; }
+        .theme-rank { width: 30px; height: 30px; background: #c9a227; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #0a1628; font-size: 14px; }
+        .theme-info { flex: 1; }
+        .theme-info h4 { font-size: 14px; color: #fff; margin-bottom: 3px; }
+        .theme-info p { font-size: 12px; color: #888; }
+        .theme-count { font-size: 1.5em; font-weight: 700; color: #c9a227; }
+
+        /* Directors Summary */
+        .director-summary { display: flex; align-items: center; gap: 15px; padding: 15px; background: rgba(10, 22, 40, 0.5); border-radius: 10px; margin-bottom: 10px; }
+        .director-avatar { width: 45px; height: 45px; background: linear-gradient(135deg, #c9a227, #a88620); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #0a1628; }
+        .director-data { flex: 1; }
+        .director-data h4 { font-size: 14px; color: #fff; margin-bottom: 3px; }
+        .director-data p { font-size: 12px; color: #888; }
+        .director-stats { display: flex; gap: 20px; }
+        .director-stat { text-align: center; }
+        .director-stat .value { font-weight: 700; }
+        .director-stat .value.green { color: #4ade80; }
+        .director-stat .label { font-size: 10px; color: #888; }
+
+        /* Chart placeholder */
+        .chart-placeholder { height: 200px; background: rgba(10, 22, 40, 0.5); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #666; }
+
+        /* Month selector */
+        .month-selector { display: flex; gap: 10px; align-items: center; }
+        .month-selector select { background: #0a1628; border: 1px solid #1a3a5c; color: #fff; padding: 10px 15px; border-radius: 8px; }
+
+        @media print {
+            .sidebar, .page-header { display: none; }
+            .main-content { margin-left: 0; padding: 0; }
+            .bulletin { box-shadow: none; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="logo"><h1>IRIS</h1><p>Instituto de Regulacao, Inovacao e Sustentabilidade</p></div>
+        <div class="nav-section">
+            <div class="nav-section-title">Decisoes</div>
+            <a href="/deliberacoes" class="nav-item"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>Deliberacoes</a>
+            <a href="/monitor" class="nav-item"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>Monitor de Reunioes</a>
+            <a href="/" class="nav-item"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>Upload PDF</a>
+        </div>
+        <div class="nav-section">
+            <div class="nav-section-title">Diretores</div>
+            <a href="/diretores" class="nav-item"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>Mandatos</a>
+            <a href="/jurimetria" class="nav-item"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>Jurimetria</a>
+            <a href="/governanca" class="nav-item"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>Governanca</a>
+        </div>
+        <div class="nav-section">
+            <div class="nav-section-title">Inteligencia</div>
+            <a href="/metricas" class="nav-item"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path></svg>Dashboard</a>
+            <a href="/boletim" class="nav-item active"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path></svg>Boletim Mensal</a>
+            <a href="/auditoria" class="nav-item"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>Auditoria Forense</a>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Boletim Mensal</h1>
+                <p class="page-subtitle">Resumo executivo das atividades regulatorias da ARTESP</p>
+            </div>
+            <div>
+                <div class="month-selector">
+                    <select id="mesSelect">
+                        <option value="2026-02">Fevereiro 2026</option>
+                        <option value="2026-01">Janeiro 2026</option>
+                        <option value="2025-12">Dezembro 2025</option>
+                    </select>
+                    <button class="btn btn-primary" onclick="gerarBoletim()">Gerar</button>
+                    <button class="btn btn-secondary" onclick="window.print()">Imprimir</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="bulletin">
+            <div class="bulletin-header">
+                <h1>BOLETIM REGULATORIO ARTESP</h1>
+                <div class="period">Fevereiro 2026</div>
+                <div class="date">Gerado em 08/02/2026 as 14:30</div>
+            </div>
+
+            <div class="bulletin-section">
+                <h2>Resumo do Periodo</h2>
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="value">4</div>
+                        <div class="label">Reunioes</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="value">87</div>
+                        <div class="label">Deliberacoes</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="value green">68</div>
+                        <div class="label">Deferidas</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="value red">19</div>
+                        <div class="label">Indeferidas</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bulletin-section">
+                <h2>Destaques do Mes</h2>
+                <ul class="highlight-list">
+                    <li><strong>Revisao Tarifaria Extraordinaria:</strong> Aprovada revisao de 4.2% para o Sistema Anchieta-Imigrantes devido a variacao do IPCA acumulado.</li>
+                    <li><strong>Novos Investimentos:</strong> Homologado pacote de R$ 234 milhoes em melhorias para rodovias do interior paulista.</li>
+                    <li><strong>Fiscalizacao Intensificada:</strong> 12 autos de infracao lavrados contra concessionarias por irregularidades em sinalizacao.</li>
+                    <li><strong>Audiencia Publica:</strong> Realizada consulta sobre novo modelo de pedagio free-flow na Rodovia dos Bandeirantes.</li>
+                </ul>
+            </div>
+
+            <div class="bulletin-section">
+                <h2>Temas Mais Frequentes</h2>
+                <div class="theme-item">
+                    <div class="theme-rank">1</div>
+                    <div class="theme-info"><h4>Revisao Tarifaria</h4><p>Reajustes e revisoes de pedagio</p></div>
+                    <div class="theme-count">23</div>
+                </div>
+                <div class="theme-item">
+                    <div class="theme-rank">2</div>
+                    <div class="theme-info"><h4>Multas e Sancoes</h4><p>Recursos contra penalidades</p></div>
+                    <div class="theme-count">18</div>
+                </div>
+                <div class="theme-item">
+                    <div class="theme-rank">3</div>
+                    <div class="theme-info"><h4>Obras e Investimentos</h4><p>Aprovacao de projetos</p></div>
+                    <div class="theme-count">15</div>
+                </div>
+                <div class="theme-item">
+                    <div class="theme-rank">4</div>
+                    <div class="theme-info"><h4>Contratos</h4><p>Aditivos e termos de ajuste</p></div>
+                    <div class="theme-count">12</div>
+                </div>
+                <div class="theme-item">
+                    <div class="theme-rank">5</div>
+                    <div class="theme-info"><h4>Licenciamento</h4><p>Autorizacoes e permissoes</p></div>
+                    <div class="theme-count">9</div>
+                </div>
+            </div>
+
+            <div class="bulletin-section">
+                <h2>Desempenho dos Diretores</h2>
+                <div class="director-summary">
+                    <div class="director-avatar">MP</div>
+                    <div class="director-data">
+                        <h4>Milton Persoli</h4>
+                        <p>Diretor-Presidente</p>
+                    </div>
+                    <div class="director-stats">
+                        <div class="director-stat"><div class="value">22</div><div class="label">Votos</div></div>
+                        <div class="director-stat"><div class="value green">86%</div><div class="label">Favoravel</div></div>
+                        <div class="director-stat"><div class="value">5</div><div class="label">Relatorias</div></div>
+                    </div>
+                </div>
+                <div class="director-summary">
+                    <div class="director-avatar">MR</div>
+                    <div class="director-data">
+                        <h4>Marcos Antonio Ribeiro</h4>
+                        <p>Diretor de Fiscalizacao</p>
+                    </div>
+                    <div class="director-stats">
+                        <div class="director-stat"><div class="value">22</div><div class="label">Votos</div></div>
+                        <div class="director-stat"><div class="value green">72%</div><div class="label">Favoravel</div></div>
+                        <div class="director-stat"><div class="value">7</div><div class="label">Relatorias</div></div>
+                    </div>
+                </div>
+                <div class="director-summary">
+                    <div class="director-avatar">PV</div>
+                    <div class="director-data">
+                        <h4>Patricia Vanzolini</h4>
+                        <p>Diretora de Planejamento</p>
+                    </div>
+                    <div class="director-stats">
+                        <div class="director-stat"><div class="value">22</div><div class="label">Votos</div></div>
+                        <div class="director-stat"><div class="value green">91%</div><div class="label">Favoravel</div></div>
+                        <div class="director-stat"><div class="value">6</div><div class="label">Relatorias</div></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bulletin-section">
+                <h2>Tendencias</h2>
+                <div class="chart-placeholder">Grafico de tendencias sera carregado aqui</div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function gerarBoletim() {
+            const mes = document.getElementById('mesSelect').value;
+            alert('Gerando boletim para ' + mes + '...\nEsta funcionalidade sera conectada a API de geracao de boletins.');
+        }
+    </script>
+</body>
+</html>
