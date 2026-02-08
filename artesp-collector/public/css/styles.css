@@ -67,6 +67,17 @@ body {
     min-height: 100vh;
 }
 
+/* SVG default sizing to prevent giant icons */
+svg {
+    max-width: 100%;
+    height: auto;
+}
+
+svg:not([width]):not([height]) {
+    width: 24px;
+    height: 24px;
+}
+
 /* ============================================
    LAYOUT
    ============================================ */
@@ -826,15 +837,42 @@ tr:hover {
     width: 200px;
     height: 200px;
     margin: 0 auto;
+    flex-shrink: 0;
 }
 
 .donut-chart svg {
     transform: rotate(-90deg);
+    width: 200px;
+    height: 200px;
+    max-width: 200px;
+    max-height: 200px;
 }
 
 .donut-chart circle {
     fill: none;
     stroke-width: 30;
+}
+
+/* Chart Legend */
+.chart-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    flex-shrink: 0;
 }
 
 .donut-bg {

@@ -609,75 +609,11 @@
     // PAGE: Metricas (Dashboard)
     // ============================================
     const PageMetricas = {
-        async init() {
+        init() {
             const page = document.getElementById('page-metricas');
-            page.classList.add('active');
-
-            Utils.showLoading('metricas-content');
-
-            try {
-                const [resumo, porDiretor, porTema, institucional] = await Promise.all([
-                    API.get('/api/metricas/resumo'),
-                    API.get('/api/metricas/por-diretor'),
-                    API.get('/api/metricas/por-tema'),
-                    API.get('/api/metricas/institucional')
-                ]);
-
-                this.render(resumo, porDiretor, porTema, institucional);
-            } catch (e) {
-                Utils.showEmpty('metricas-content', 'Erro ao carregar metricas');
+            if (page) {
+                page.classList.add('active');
             }
-        },
-
-        render(resumo, porDiretor, porTema, institucional) {
-            if (!resumo || resumo.totalDeliberacoes === 0) {
-                document.getElementById('metricas-content').innerHTML = `
-                    <div class="empty-state">
-                        <h2 style="color: #c9a227;">Nenhuma deliberacao analisada</h2>
-                        <p>Faca upload de PDFs e analise-os para ver as metricas.</p>
-                        <button class="btn btn-primary" style="margin-top: 20px;" onclick="App.Router.navigate('/monitor')">Ir para Monitor</button>
-                    </div>`;
-                return;
-            }
-
-            const totalDecisoes = resumo.deferidos + resumo.indeferidos;
-            const pctDeferido = totalDecisoes > 0 ? Math.round((resumo.deferidos / totalDecisoes) * 100) : 0;
-
-            let html = `
-                <h2 class="section-title">Metricas de Valor Regulatorio</h2>
-                <div class="cards-grid">
-                    <div class="metric-card"><h3>Deliberacoes Processadas</h3><div class="value">${resumo.totalDeliberacoes}</div></div>
-                    <div class="metric-card"><h3>PDFs Analisados</h3><div class="value">${resumo.pdfsAnalisados}</div><div class="subtitle">de ${resumo.totalPdfs} carregados</div></div>
-                    <div class="metric-card"><h3>% Classificadas</h3><div class="value green">${resumo.percentualClassificado}%</div></div>
-                    <div class="metric-card"><h3>Microtemas</h3><div class="value purple">${resumo.microtemasIdentificados}</div></div>
-                    <div class="metric-card"><h3>Deferidos</h3><div class="value green">${resumo.deferidos}</div><div class="subtitle">${resumo.taxaDeferimento}% do total</div></div>
-                    <div class="metric-card"><h3>Indeferidos</h3><div class="value red">${resumo.indeferidos}</div></div>
-                    <div class="metric-card"><h3>Diretores Mapeados</h3><div class="value">${resumo.diretoresMapeados}</div></div>
-                    <div class="metric-card"><h3>Pauta Externa</h3><div class="value">${resumo.pautaExterna}</div><div class="subtitle">pleitos de terceiros</div></div>
-                </div>
-
-                <div class="two-columns">
-                    <div class="chart-container">
-                        <div class="chart-title">Resultado das Deliberacoes</div>
-                        <div class="bar-chart">
-                            <div class="bar-item"><span class="bar-label">Deferidos</span><div class="bar-track"><div class="bar-fill" style="width: ${pctDeferido}%">${resumo.deferidos}</div></div></div>
-                            <div class="bar-item"><span class="bar-label">Indeferidos</span><div class="bar-track"><div class="bar-fill red" style="width: ${100 - pctDeferido}%">${resumo.indeferidos}</div></div></div>
-                        </div>
-                    </div>
-                    <div class="chart-container">
-                        <div class="chart-title">Pauta Interna vs Externa</div>
-                        <div class="bar-chart">
-                            <div class="bar-item"><span class="bar-label">Pauta Externa</span><div class="bar-track"><div class="bar-fill" style="width: ${institucional?.percentualPautaExterna || 0}%">${institucional?.pautaExterna || 0}</div></div></div>
-                            <div class="bar-item"><span class="bar-label">Pauta Interna</span><div class="bar-track"><div class="bar-fill purple" style="width: ${institucional?.percentualPautaInterna || 0}%">${institucional?.pautaInterna || 0}</div></div></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div style="text-align: center; margin-top: 40px;">
-                    <button class="btn btn-primary" onclick="App.PageMetricas.exportar()">Exportar Dados (JSON)</button>
-                </div>`;
-
-            document.getElementById('metricas-content').innerHTML = html;
         },
 
         async exportar() {
