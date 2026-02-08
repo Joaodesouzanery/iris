@@ -904,23 +904,23 @@ app.get('/', (req, res) => {
 
         body {
             font-family: 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
+            background: linear-gradient(135deg, #0a1628 0%, #0d1e36 50%, #0a1628 100%);
             min-height: 100vh;
             color: #e4e4e4;
         }
 
         .header {
-            background: rgba(0, 0, 0, 0.3);
+            background: rgba(10, 22, 40, 0.9);
             padding: 20px 40px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid #333;
+            border-bottom: 1px solid #1a3a5c;
         }
 
         .header h1 {
             font-size: 1.8em;
-            background: linear-gradient(90deg, #00d4ff, #00ff88);
+            background: linear-gradient(90deg, #c9a227, #e8c547);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
@@ -944,20 +944,20 @@ app.get('/', (req, res) => {
         }
 
         .sidebar {
-            background: rgba(0, 0, 0, 0.2);
-            border-right: 1px solid #333;
+            background: rgba(10, 22, 40, 0.5);
+            border-right: 1px solid #1a3a5c;
             display: flex;
             flex-direction: column;
         }
 
         .sidebar-header {
             padding: 20px;
-            border-bottom: 1px solid #333;
+            border-bottom: 1px solid #1a3a5c;
         }
 
         .sidebar-header h2 {
             font-size: 1.1em;
-            color: #00d4ff;
+            color: #c9a227;
             margin-bottom: 15px;
         }
 
@@ -973,23 +973,23 @@ app.get('/', (req, res) => {
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #00d4ff, #0099cc);
-            color: #000;
+            background: linear-gradient(135deg, #c9a227, #a88620);
+            color: #0a1628;
         }
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(0, 212, 255, 0.4);
+            box-shadow: 0 5px 20px rgba(201, 162, 39, 0.4);
         }
 
         .btn-secondary {
-            background: #2a2a4a;
+            background: #1a3a5c;
             color: #fff;
             margin-top: 10px;
         }
 
         .btn-secondary:hover {
-            background: #3a3a5a;
+            background: #254a70;
         }
 
         .btn:disabled {
@@ -1018,8 +1018,8 @@ app.get('/', (req, res) => {
         }
 
         .pdf-item.selected {
-            border-left-color: #00d4ff;
-            background: rgba(0, 212, 255, 0.1);
+            border-left-color: #c9a227;
+            background: rgba(201, 162, 39, 0.1);
         }
 
         .pdf-item.analisado {
@@ -1063,11 +1063,11 @@ app.get('/', (req, res) => {
         }
 
         .content-header h2 {
-            color: #00d4ff;
+            color: #c9a227;
         }
 
         .texto-box {
-            background: #0d1117;
+            background: #0a1628;
             border-radius: 10px;
             padding: 20px;
             height: calc(100% - 80px);
@@ -1076,28 +1076,28 @@ app.get('/', (req, res) => {
             font-size: 13px;
             line-height: 1.6;
             white-space: pre-wrap;
-            border: 1px solid #333;
+            border: 1px solid #1a3a5c;
         }
 
         .analysis-panel {
             background: rgba(0, 0, 0, 0.2);
-            border-left: 1px solid #333;
+            border: 1px solid #1a3a5c;
             padding: 20px;
             overflow-y: auto;
         }
 
         .analysis-panel h2 {
-            color: #00d4ff;
+            color: #c9a227;
             margin-bottom: 20px;
             font-size: 1.1em;
         }
 
         .analysis-card {
-            background: #0d1117;
+            background: #0a1628;
             border-radius: 10px;
             padding: 15px;
             margin-bottom: 15px;
-            border-left: 3px solid #00d4ff;
+            border-left: 3px solid #c9a227;
         }
 
         .analysis-card h3 {
@@ -1119,14 +1119,14 @@ app.get('/', (req, res) => {
 
         .confidence-bar {
             height: 4px;
-            background: #333;
+            background: #1a3a5c;
             border-radius: 2px;
             margin-top: 8px;
         }
 
         .confidence-fill {
             height: 100%;
-            background: linear-gradient(90deg, #00d4ff, #4ade80);
+            background: linear-gradient(90deg, #c9a227, #4ade80);
             border-radius: 2px;
         }
 
@@ -1174,8 +1174,8 @@ app.get('/', (req, res) => {
             display: inline-block;
             width: 30px;
             height: 30px;
-            border: 3px solid #333;
-            border-top-color: #00d4ff;
+            border: 1px solid #1a3a5c;
+            border-top-color: #c9a227;
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
@@ -1199,7 +1199,7 @@ app.get('/', (req, res) => {
         .stat-item .value {
             font-size: 1.5em;
             font-weight: 700;
-            color: #00d4ff;
+            color: #c9a227;
         }
 
         .stat-item .label {
@@ -1220,14 +1220,14 @@ app.get('/', (req, res) => {
 
         .progress-bar {
             height: 4px;
-            background: #333;
+            background: #1a3a5c;
             border-radius: 2px;
             overflow: hidden;
         }
 
         .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, #00d4ff, #4ade80);
+            background: linear-gradient(90deg, #c9a227, #4ade80);
             width: 0%;
             transition: width 0.3s;
         }
@@ -1278,7 +1278,7 @@ app.get('/', (req, res) => {
             width: 500px;
             max-height: 80vh;
             overflow: hidden;
-            border: 1px solid #333;
+            border: 1px solid #1a3a5c;
         }
 
         .modal-header {
@@ -1286,11 +1286,11 @@ app.get('/', (req, res) => {
             justify-content: space-between;
             align-items: center;
             padding: 20px;
-            border-bottom: 1px solid #333;
+            border: 1px solid #1a3a5c;
         }
 
         .modal-header h2 {
-            color: #00d4ff;
+            color: #c9a227;
             font-size: 1.2em;
         }
 
@@ -1313,7 +1313,7 @@ app.get('/', (req, res) => {
         }
 
         .monitor-info {
-            background: #0d1117;
+            background: #0a1628;
             padding: 15px;
             border-radius: 10px;
             margin-bottom: 15px;
@@ -1619,10 +1619,10 @@ app.get('/', (req, res) => {
                                        d.resultado === 'Indeferido' ? 'indeferido' : '';
 
                     html += \`
-                        <div class="delib-card" style="background: #0d1117; border-radius: 10px; padding: 15px; margin-bottom: 15px; border-left: 3px solid \${d.resultado === 'Deferido' ? '#4ade80' : d.resultado === 'Indeferido' ? '#f87171' : '#00d4ff'};">
+                        <div class="delib-card" style="background: #0a1628; border-radius: 10px; padding: 15px; margin-bottom: 15px; border-left: 3px solid \${d.resultado === 'Deferido' ? '#4ade80' : d.resultado === 'Indeferido' ? '#f87171' : '#c9a227'};">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                                <span style="font-weight: bold; color: #00d4ff;">Deliberacao \${i + 1}</span>
-                                <span class="badge \${resultClass ? 'badge-' + resultClass : ''}" style="padding: 4px 10px; border-radius: 12px; font-size: 11px; background: \${d.resultado === 'Deferido' ? 'rgba(74,222,128,0.2)' : d.resultado === 'Indeferido' ? 'rgba(248,113,113,0.2)' : 'rgba(0,212,255,0.2)'}; color: \${d.resultado === 'Deferido' ? '#4ade80' : d.resultado === 'Indeferido' ? '#f87171' : '#00d4ff'};">
+                                <span style="font-weight: bold; color: #c9a227;">Deliberacao \${i + 1}</span>
+                                <span class="badge \${resultClass ? 'badge-' + resultClass : ''}" style="padding: 4px 10px; border-radius: 12px; font-size: 11px; background: \${d.resultado === 'Deferido' ? 'rgba(74,222,128,0.2)' : d.resultado === 'Indeferido' ? 'rgba(248,113,113,0.2)' : 'rgba(0,212,255,0.2)'}; color: \${d.resultado === 'Deferido' ? '#4ade80' : d.resultado === 'Indeferido' ? '#f87171' : '#c9a227'};">
                                     \${d.resultado || 'N/A'}
                                 </span>
                             </div>
@@ -1635,7 +1635,7 @@ app.get('/', (req, res) => {
                             \${d.classificacao ? \`<div style="margin-bottom: 5px;"><span style="color: #888; font-size: 11px;">Classificacao:</span> <span style="color: #fbbf24;">\${d.classificacao}</span></div>\` : ''}
 
                             \${d.votos_a_favor && d.votos_a_favor.length > 0 ? \`
-                                <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #333;">
+                                <div style="margin-top: 10px; padding-top: 10px; border: 1px solid #1a3a5c;">
                                     <span style="color: #4ade80; font-size: 11px;">A Favor (\${d.votos_a_favor.length}):</span>
                                     <span style="font-size: 12px; color: #888;"> \${d.votos_a_favor.join(', ')}</span>
                                 </div>
@@ -1703,7 +1703,7 @@ app.get('/', (req, res) => {
                 html += \`
                     <div class="analysis-card">
                         <h3>Confianca Geral</h3>
-                        <div class="analysis-value" style="color: #00d4ff">\${analise.confiancaGeral}%</div>
+                        <div class="analysis-value" style="color: #c9a227">\${analise.confiancaGeral}%</div>
                     </div>
                 \`;
 
@@ -1991,7 +1991,7 @@ app.get('/', (req, res) => {
                         <div class="novo-doc-item">
                             <div class="nome">\${doc.nomeArquivo}</div>
                             <div class="data">Detectado em: \${new Date(doc.descobertoEm).toLocaleString('pt-BR')}</div>
-                            <a href="\${doc.url}" target="_blank" style="font-size: 11px; color: #00d4ff;">Baixar PDF</a>
+                            <a href="\${doc.url}" target="_blank" style="font-size: 11px; color: #c9a227;">Baixar PDF</a>
                         </div>
                     \`).join('');
 
@@ -2045,16 +2045,16 @@ Agora serve: public/metricas.html
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid #333;
+            border: 1px solid #1a3a5c;
         }
         .header h1 {
             font-size: 1.8em;
-            background: linear-gradient(90deg, #00d4ff, #00ff88);
+            background: linear-gradient(90deg, #c9a227, #e8c547);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
         .header nav a {
-            color: #00d4ff;
+            color: #c9a227;
             text-decoration: none;
             margin-left: 20px;
             padding: 8px 15px;
@@ -2069,11 +2069,11 @@ Agora serve: public/metricas.html
             margin: 0 auto;
         }
         .section-title {
-            color: #00d4ff;
+            color: #c9a227;
             font-size: 1.3em;
             margin-bottom: 20px;
             padding-bottom: 10px;
-            border-bottom: 1px solid #333;
+            border: 1px solid #1a3a5c;
         }
         .cards-grid {
             display: grid;
@@ -2085,7 +2085,7 @@ Agora serve: public/metricas.html
             background: #1a1a2e;
             border-radius: 15px;
             padding: 20px;
-            border-left: 4px solid #00d4ff;
+            border-left: 4px solid #c9a227;
         }
         .metric-card h3 {
             font-size: 12px;
@@ -2096,7 +2096,7 @@ Agora serve: public/metricas.html
         .metric-card .value {
             font-size: 2.5em;
             font-weight: 700;
-            color: #00d4ff;
+            color: #c9a227;
         }
         .metric-card .value.green { color: #4ade80; }
         .metric-card .value.red { color: #f87171; }
@@ -2113,7 +2113,7 @@ Agora serve: public/metricas.html
             margin-bottom: 20px;
         }
         .chart-title {
-            color: #00d4ff;
+            color: #c9a227;
             font-size: 1em;
             margin-bottom: 15px;
         }
@@ -2135,13 +2135,13 @@ Agora serve: public/metricas.html
         .bar-track {
             flex: 1;
             height: 24px;
-            background: #0d1117;
+            background: #0a1628;
             border-radius: 12px;
             overflow: hidden;
         }
         .bar-fill {
             height: 100%;
-            background: linear-gradient(90deg, #00d4ff, #4ade80);
+            background: linear-gradient(90deg, #c9a227, #4ade80);
             border-radius: 12px;
             display: flex;
             align-items: center;
@@ -2152,14 +2152,14 @@ Agora serve: public/metricas.html
         }
         .bar-fill.red { background: linear-gradient(90deg, #f87171, #fbbf24); }
         .director-card {
-            background: #0d1117;
+            background: #0a1628;
             border-radius: 10px;
             padding: 15px;
             margin-bottom: 10px;
         }
         .director-name {
             font-weight: 600;
-            color: #00d4ff;
+            color: #c9a227;
             margin-bottom: 10px;
         }
         .director-stats {
@@ -2226,8 +2226,8 @@ Agora serve: public/metricas.html
             display: inline-block;
             width: 30px;
             height: 30px;
-            border: 3px solid #333;
-            border-top-color: #00d4ff;
+            border: 1px solid #1a3a5c;
+            border-top-color: #c9a227;
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
@@ -2242,7 +2242,7 @@ Agora serve: public/metricas.html
         th, td {
             padding: 12px;
             text-align: left;
-            border-bottom: 1px solid #333;
+            border: 1px solid #1a3a5c;
         }
         th {
             color: #888;
@@ -2258,7 +2258,7 @@ Agora serve: public/metricas.html
             border-radius: 8px;
             cursor: pointer;
             font-size: 14px;
-            background: #00d4ff;
+            background: #c9a227;
             color: #000;
             font-weight: 600;
         }
@@ -2303,7 +2303,7 @@ Agora serve: public/metricas.html
             if (resumo.totalDeliberacoes === 0) {
                 document.getElementById('content').innerHTML = \\\`
                     <div class="empty-state">
-                        <h2 style="color: #00d4ff; margin-bottom: 20px;">Nenhuma deliberacao analisada</h2>
+                        <h2 style="color: #c9a227; margin-bottom: 20px;">Nenhuma deliberacao analisada</h2>
                         <p>Faca upload de PDFs e analise-os para ver as metricas.</p>
                         <a href="/" class="btn" style="display: inline-block; margin-top: 20px; text-decoration: none;">Ir para Analise</a>
                     </div>
@@ -2459,7 +2459,7 @@ Agora serve: public/metricas.html
                     const topTemas = d.temasOrdenados.slice(0, 3).map(t => t.tema).join(', ');
                     html += \\\`
                         <tr>
-                            <td style="color: #00d4ff; font-weight: 600;">\\\${d.nome}</td>
+                            <td style="color: #c9a227; font-weight: 600;">\\\${d.nome}</td>
                             <td>\\\${d.totalVotos}</td>
                             <td style="color: #4ade80;">\\\${d.votosFavor}</td>
                             <td style="color: #f87171;">\\\${d.votosContra}</td>

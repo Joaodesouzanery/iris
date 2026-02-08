@@ -8,7 +8,7 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
+            background: linear-gradient(135deg, #0a1628 0%, #0d1e36 50%, #0a1628 100%);
             min-height: 100vh;
             color: #e4e4e4;
         }
@@ -18,24 +18,24 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid #333;
+            border-bottom: 1px solid #1a3a5c;
         }
         .header h1 {
             font-size: 1.8em;
-            background: linear-gradient(90deg, #00d4ff, #00ff88);
+            background: linear-gradient(90deg, #c9a227, #e8c547);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
         .header nav a {
-            color: #00d4ff;
+            color: #c9a227;
             text-decoration: none;
             margin-left: 20px;
             padding: 8px 15px;
             border-radius: 20px;
-            background: rgba(0,212,255,0.1);
+            background: rgba(201,162,39,0.1);
             transition: all 0.3s;
         }
-        .header nav a:hover { background: rgba(0,212,255,0.2); }
+        .header nav a:hover { background: rgba(201,162,39,0.2); }
         .header nav a.active { background: rgba(192,132,252,0.3); color: #c084fc; }
         .container {
             padding: 30px;
@@ -43,11 +43,11 @@
             margin: 0 auto;
         }
         .section-title {
-            color: #00d4ff;
+            color: #c9a227;
             font-size: 1.3em;
             margin-bottom: 20px;
             padding-bottom: 10px;
-            border-bottom: 1px solid #333;
+            border-bottom: 1px solid #1a3a5c;
         }
         .cards-grid {
             display: grid;
@@ -56,10 +56,10 @@
             margin-bottom: 40px;
         }
         .metric-card {
-            background: #1a1a2e;
+            background: #0d1e36;
             border-radius: 15px;
             padding: 20px;
-            border-left: 4px solid #00d4ff;
+            border-left: 4px solid #c9a227;
         }
         .metric-card h3 {
             font-size: 12px;
@@ -70,7 +70,7 @@
         .metric-card .value {
             font-size: 2.5em;
             font-weight: 700;
-            color: #00d4ff;
+            color: #c9a227;
         }
         .metric-card .value.green { color: #4ade80; }
         .metric-card .value.red { color: #f87171; }
@@ -81,13 +81,13 @@
             margin-top: 5px;
         }
         .chart-container {
-            background: #1a1a2e;
+            background: #0d1e36;
             border-radius: 15px;
             padding: 20px;
             margin-bottom: 20px;
         }
         .chart-title {
-            color: #00d4ff;
+            color: #c9a227;
             font-size: 1em;
             margin-bottom: 15px;
         }
@@ -115,7 +115,7 @@
         }
         .bar-fill {
             height: 100%;
-            background: linear-gradient(90deg, #00d4ff, #4ade80);
+            background: linear-gradient(90deg, #c9a227, #4ade80);
             border-radius: 12px;
             display: flex;
             align-items: center;
@@ -141,7 +141,7 @@
             padding: 60px 40px;
             color: #666;
         }
-        .empty-state h2 { color: #00d4ff; margin-bottom: 20px; }
+        .empty-state h2 { color: #c9a227; margin-bottom: 20px; }
         .loading {
             text-align: center;
             padding: 60px;
@@ -151,15 +151,15 @@
             display: inline-block;
             width: 40px;
             height: 40px;
-            border: 3px solid #333;
-            border-top-color: #00d4ff;
+            border: 3px solid #1a3a5c;
+            border-top-color: #c9a227;
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
         .table-container {
             overflow-x: auto;
-            background: #1a1a2e;
+            background: #0d1e36;
             border-radius: 15px;
             padding: 20px;
             margin-bottom: 40px;
@@ -171,7 +171,7 @@
         th, td {
             padding: 12px;
             text-align: left;
-            border-bottom: 1px solid #333;
+            border-bottom: 1px solid #1a3a5c;
         }
         th {
             color: #888;
@@ -185,7 +185,7 @@
             border-radius: 8px;
             cursor: pointer;
             font-size: 14px;
-            background: linear-gradient(135deg, #00d4ff, #0099cc);
+            background: linear-gradient(135deg, #c9a227, #0099cc);
             color: #000;
             font-weight: 600;
             transition: all 0.3s;
@@ -309,7 +309,7 @@
                 porDiretor.diretores.forEach(function(d) {
                     var topTemas = d.temasOrdenados.slice(0, 3).map(function(t) { return t.tema; }).join(', ');
                     html += '<tr>';
-                    html += '<td style="color: #00d4ff; font-weight: 600;">' + d.nome + '</td>';
+                    html += '<td style="color: #c9a227; font-weight: 600;">' + d.nome + '</td>';
                     html += '<td>' + d.totalVotos + '</td>';
                     html += '<td style="color: #4ade80;">' + d.votosFavor + '</td>';
                     html += '<td style="color: #f87171;">' + d.votosContra + '</td>';
