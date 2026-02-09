@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IRIS - Plataforma de Inteligencia Regulatoria</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- PDF.js para leitura de PDFs no browser -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <style>
         :root {
@@ -29,9 +28,11 @@
             --danger-bg: rgba(248, 113, 113, 0.15);
             --info: #60a5fa;
             --info-bg: rgba(96, 165, 250, 0.15);
+            --purple: #a78bfa;
+            --purple-bg: rgba(167, 139, 250, 0.15);
             --radius: 8px;
             --radius-lg: 12px;
-            --sidebar-width: 260px;
+            --sidebar-width: 280px;
             --header-height: 64px;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -43,9 +44,9 @@
             line-height: 1.5;
             min-height: 100vh;
         }
-        svg { max-width: 100%; height: auto; }
-        svg:not([width]):not([height]) { width: 24px; height: 24px; }
         .app-container { display: flex; min-height: 100vh; }
+
+        /* Sidebar */
         .sidebar {
             width: var(--sidebar-width);
             background: linear-gradient(180deg, #0a1628 0%, #0d1e36 100%);
@@ -57,6 +58,7 @@
             flex-direction: column;
             z-index: 100;
             border-right: 1px solid var(--border);
+            overflow-y: auto;
         }
         .sidebar-header {
             padding: 20px;
@@ -66,47 +68,50 @@
             border-bottom: 1px solid var(--border);
         }
         .sidebar-brand { display: flex; flex-direction: column; }
-        .sidebar-brand-name { color: var(--primary); font-size: 22px; font-weight: 700; letter-spacing: 3px; }
-        .sidebar-brand-subtitle { color: var(--text-secondary); font-size: 10px; letter-spacing: 0.5px; margin-top: 2px; }
-        .sidebar-nav { flex: 1; padding: 16px 12px; overflow-y: auto; }
-        .nav-section { margin-bottom: 24px; }
+        .sidebar-brand-name { color: var(--primary); font-size: 24px; font-weight: 700; letter-spacing: 3px; }
+        .sidebar-brand-subtitle { color: var(--text-secondary); font-size: 10px; letter-spacing: 0.5px; }
+        .sidebar-nav { flex: 1; padding: 16px 12px; }
+        .nav-section { margin-bottom: 20px; }
         .nav-section-title {
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 600;
             color: var(--text-muted);
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 1px;
             padding: 0 12px;
             margin-bottom: 8px;
         }
         .nav-item {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
             padding: 10px 12px;
             color: var(--text-secondary);
             text-decoration: none;
             border-radius: var(--radius);
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 500;
             transition: all 0.2s ease;
             cursor: pointer;
+            margin-bottom: 2px;
         }
         .nav-item:hover { background: var(--surface-hover); color: var(--text-primary); }
         .nav-item.active { background: var(--primary-bg); color: var(--primary); }
-        .nav-item svg { width: 20px; height: 20px; flex-shrink: 0; }
+        .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
         .sidebar-footer { padding: 16px; border-top: 1px solid var(--border); }
-        .alert-badge {
+        .pdf-counter {
             display: flex;
             align-items: center;
             gap: 8px;
-            padding: 10px 12px;
-            background: var(--success-bg);
+            padding: 12px;
+            background: var(--primary-bg);
             border-radius: var(--radius);
-            color: var(--success);
+            color: var(--primary);
             font-size: 13px;
-            font-weight: 500;
+            font-weight: 600;
         }
+
+        /* Main Content */
         .main-content {
             flex: 1;
             margin-left: var(--sidebar-width);
@@ -128,9 +133,7 @@
         }
         .breadcrumb { display: flex; align-items: center; gap: 8px; font-size: 14px; }
         .breadcrumb-item { color: var(--text-muted); }
-        .breadcrumb-separator { color: var(--text-muted); }
         .breadcrumb-current { color: var(--text-primary); font-weight: 500; }
-        .header-right { display: flex; align-items: center; gap: 16px; }
         .status-badge {
             display: flex;
             align-items: center;
@@ -151,32 +154,23 @@
             animation: pulse 2s infinite;
         }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-        .user-avatar {
-            width: 36px;
-            height: 36px;
-            background: linear-gradient(135deg, var(--primary), var(--primary-light));
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            font-size: 13px;
-            color: #000;
-        }
+
         .page-content { padding: 24px; flex: 1; }
         .page-view { display: none; }
         .page-view.active { display: block; }
+
         .page-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
             margin-bottom: 24px;
             gap: 16px;
+            flex-wrap: wrap;
         }
-        .page-title-section { flex: 1; }
         .page-title { font-size: 24px; font-weight: 700; color: var(--primary); margin-bottom: 4px; }
         .page-subtitle { color: var(--text-secondary); font-size: 14px; }
-        .page-actions { display: flex; gap: 12px; align-items: center; }
+
+        /* Buttons */
         .btn {
             display: inline-flex;
             align-items: center;
@@ -194,13 +188,16 @@
         .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(201, 162, 39, 0.3); }
         .btn-secondary { background: var(--surface-light); color: var(--text-primary); }
         .btn-danger { background: var(--danger-bg); color: var(--danger); }
-        .btn-sm { padding: 6px 12px; font-size: 13px; }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* Cards */
         .card {
             background: var(--surface);
             border-radius: var(--radius-lg);
             border: 1px solid var(--border);
             overflow: hidden;
+            margin-bottom: 20px;
         }
         .card-header {
             padding: 16px 20px;
@@ -210,7 +207,7 @@
             justify-content: space-between;
         }
         .card-title {
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 600;
             color: var(--primary);
             display: flex;
@@ -218,15 +215,14 @@
             gap: 8px;
         }
         .card-body { padding: 20px; }
-        .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
+
+        /* Stats Grid */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
             margin-bottom: 24px;
         }
-        @media (max-width: 1200px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } .grid-2 { grid-template-columns: 1fr; } }
-        @media (max-width: 600px) { .stats-grid { grid-template-columns: 1fr; } }
         .stat-card {
             background: var(--surface);
             border-radius: var(--radius-lg);
@@ -239,41 +235,57 @@
             align-items: flex-start;
             margin-bottom: 12px;
         }
-        .stat-card-title { font-size: 13px; font-weight: 500; color: var(--text-secondary); }
+        .stat-card-title { font-size: 12px; font-weight: 500; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
         .stat-card-icon {
-            width: 40px;
-            height: 40px;
+            width: 36px;
+            height: 36px;
             background: var(--primary-bg);
             border-radius: var(--radius);
             display: flex;
             align-items: center;
             justify-content: center;
         }
-        .stat-card-icon svg { width: 20px; height: 20px; color: var(--primary); }
-        .stat-card-value { font-size: 32px; font-weight: 700; color: var(--text-primary); line-height: 1; }
+        .stat-card-icon svg { width: 18px; height: 18px; color: var(--primary); }
+        .stat-card-icon.success { background: var(--success-bg); }
+        .stat-card-icon.success svg { color: var(--success); }
+        .stat-card-icon.danger { background: var(--danger-bg); }
+        .stat-card-icon.danger svg { color: var(--danger); }
+        .stat-card-icon.info { background: var(--info-bg); }
+        .stat-card-icon.info svg { color: var(--info); }
+        .stat-card-icon.purple { background: var(--purple-bg); }
+        .stat-card-icon.purple svg { color: var(--purple); }
+        .stat-card-value { font-size: 28px; font-weight: 700; color: var(--text-primary); line-height: 1; }
         .stat-card-value.success { color: var(--success); }
         .stat-card-value.danger { color: var(--danger); }
         .stat-card-value.warning { color: var(--warning); }
         .stat-card-value.primary { color: var(--primary); }
-        .stat-card-subtitle { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+        .stat-card-value.info { color: var(--info); }
+        .stat-card-subtitle { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+        /* Tables */
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border); }
-        th { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; background: var(--background); }
-        td { font-size: 14px; color: var(--text-primary); }
+        th { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; background: var(--background); }
+        td { font-size: 13px; color: var(--text-primary); }
         tr:hover td { background: var(--surface-hover); }
+
+        /* Badges */
         .badge {
             display: inline-flex;
             align-items: center;
             padding: 4px 10px;
             border-radius: 20px;
-            font-size: 12px;
-            font-weight: 500;
+            font-size: 11px;
+            font-weight: 600;
         }
         .badge-success { background: var(--success-bg); color: var(--success); }
         .badge-danger { background: var(--danger-bg); color: var(--danger); }
         .badge-warning { background: var(--warning-bg); color: var(--warning); }
         .badge-info { background: var(--info-bg); color: var(--info); }
         .badge-secondary { background: var(--surface-light); color: var(--text-secondary); }
+        .badge-purple { background: var(--purple-bg); color: var(--purple); }
+
+        /* Upload Zone */
         .upload-zone {
             border: 2px dashed var(--border);
             border-radius: var(--radius-lg);
@@ -288,8 +300,10 @@
             background: var(--primary-bg);
         }
         .upload-zone svg { width: 48px; height: 48px; color: var(--primary); margin-bottom: 16px; }
-        .upload-zone h3 { font-size: 18px; font-weight: 600; margin-bottom: 8px; color: var(--text-primary); }
+        .upload-zone h3 { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
         .upload-zone p { color: var(--text-secondary); margin-bottom: 16px; }
+
+        /* Progress */
         .progress-container { margin-top: 20px; }
         .progress-info { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px; }
         .progress-bar { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
@@ -299,28 +313,39 @@
             border-radius: 4px;
             transition: width 0.3s ease;
         }
+
+        /* Charts */
+        .chart-container { display: flex; flex-direction: column; gap: 12px; }
+        .bar-item { display: grid; grid-template-columns: 150px 1fr 60px; align-items: center; gap: 12px; }
+        .bar-label { font-size: 12px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .bar-track { height: 24px; background: var(--background); border-radius: 12px; overflow: hidden; position: relative; }
+        .bar-fill { height: 100%; border-radius: 12px; transition: width 0.5s ease; }
+        .bar-fill.primary { background: linear-gradient(90deg, var(--primary), var(--primary-light)); }
+        .bar-fill.success { background: linear-gradient(90deg, #22c55e, #4ade80); }
+        .bar-fill.danger { background: linear-gradient(90deg, #ef4444, #f87171); }
+        .bar-fill.info { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+        .bar-value { font-size: 13px; font-weight: 600; color: var(--text-primary); text-align: right; }
+
+        .donut-chart { position: relative; width: 160px; height: 160px; }
+        .donut-chart svg { transform: rotate(-90deg); }
+        .donut-chart circle { fill: none; stroke-width: 24; }
+        .donut-bg { stroke: var(--border); }
+        .donut-fill { stroke-linecap: round; transition: stroke-dashoffset 0.5s ease; }
+        .donut-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
+        .donut-value { font-size: 24px; font-weight: 700; }
+        .donut-label { font-size: 11px; color: var(--text-muted); }
+
+        /* Grid layouts */
+        .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+        @media (max-width: 1200px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+
+        /* Empty state */
         .empty-state { text-align: center; padding: 40px; color: var(--text-muted); }
         .empty-state svg { width: 48px; height: 48px; margin-bottom: 16px; opacity: 0.5; }
         .empty-state h3 { color: var(--text-secondary); margin-bottom: 8px; }
-        .action-buttons { display: flex; gap: 8px; }
-        .bar-chart { display: flex; flex-direction: column; gap: 12px; }
-        .bar-item { display: grid; grid-template-columns: 180px 1fr 50px; align-items: center; gap: 12px; }
-        .bar-label { font-size: 13px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .bar-track { height: 24px; background: var(--background); border-radius: 12px; overflow: hidden; }
-        .bar-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--primary-light)); border-radius: 12px; }
-        .bar-value { font-size: 14px; font-weight: 600; color: var(--text-primary); text-align: right; }
-        .donut-chart { position: relative; width: 200px; height: 200px; margin: 0 auto; }
-        .donut-chart svg { transform: rotate(-90deg); width: 200px; height: 200px; }
-        .donut-chart circle { fill: none; stroke-width: 30; }
-        .donut-bg { stroke: var(--border); }
-        .donut-fill { stroke: var(--primary); stroke-linecap: round; transition: stroke-dashoffset 0.5s ease; }
-        .donut-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
-        .donut-value { font-size: 32px; font-weight: 700; color: var(--primary); }
-        .donut-label { font-size: 13px; color: var(--text-muted); }
-        .chart-legend { display: flex; flex-direction: column; gap: 12px; }
-        .legend-item { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text-secondary); }
-        .legend-color { width: 12px; height: 12px; border-radius: 3px; }
-        #file-input { display: none; }
+
+        /* Loading */
         .loading-overlay {
             position: fixed;
             top: 0;
@@ -345,14 +370,74 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
         .loading-text { margin-top: 16px; color: var(--text-secondary); }
-        @media (max-width: 768px) {
-            .sidebar { transform: translateX(-100%); }
-            .main-content { margin-left: 0; }
+
+        /* Metrics sections */
+        .metrics-section { margin-bottom: 32px; }
+        .metrics-section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
         }
+
+        /* Diretor card */
+        .diretor-card {
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            border: 1px solid var(--border);
+        }
+        .diretor-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+        .diretor-avatar {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 16px;
+            color: #000;
+        }
+        .diretor-name { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+        .diretor-role { font-size: 12px; color: var(--text-muted); }
+        .diretor-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .diretor-stat { text-align: center; padding: 12px; background: var(--background); border-radius: var(--radius); }
+        .diretor-stat-value { font-size: 20px; font-weight: 700; }
+        .diretor-stat-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; }
+
+        #file-input { display: none; }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--background); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--surface-light); }
+
+        /* Action buttons */
+        .action-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+
+        /* Tabs */
+        .tabs { display: flex; gap: 4px; margin-bottom: 20px; background: var(--background); padding: 4px; border-radius: var(--radius); }
+        .tab {
+            padding: 8px 16px;
+            border-radius: var(--radius);
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            background: transparent;
+        }
+        .tab:hover { color: var(--text-primary); }
+        .tab.active { background: var(--primary); color: #000; }
     </style>
 </head>
 <body>
-    <!-- Loading Overlay -->
     <div id="loading-overlay" class="loading-overlay hidden">
         <div class="spinner"></div>
         <div class="loading-text" id="loading-text">Processando...</div>
@@ -362,21 +447,9 @@
         <!-- Sidebar -->
         <nav class="sidebar">
             <div class="sidebar-header">
-                <div class="iris-logo">
-                    <svg width="60" height="32" viewBox="0 0 120 50" fill="none">
-                        <rect x="0" y="5" width="3" height="40" fill="#c9a227"/>
-                        <rect x="6" y="5" width="3" height="40" fill="#c9a227"/>
-                        <rect x="20" y="5" width="3" height="40" fill="#c9a227"/>
-                        <path d="M23 5 H35 Q42 5 42 15 Q42 25 35 25 H23" stroke="#c9a227" stroke-width="3" fill="none"/>
-                        <line x1="30" y1="25" x2="42" y2="45" stroke="#c9a227" stroke-width="3"/>
-                        <rect x="52" y="5" width="3" height="40" fill="#c9a227"/>
-                        <rect x="58" y="5" width="3" height="40" fill="#c9a227"/>
-                        <path d="M72 12 Q72 5 82 5 Q92 5 92 12 Q92 20 82 22 Q72 24 72 32 Q72 45 82 45 Q92 45 92 38" stroke="#c9a227" stroke-width="3" fill="none"/>
-                    </svg>
-                </div>
                 <div class="sidebar-brand">
                     <span class="sidebar-brand-name">IRIS</span>
-                    <span class="sidebar-brand-subtitle">Instituto de Regulacao</span>
+                    <span class="sidebar-brand-subtitle">Inteligencia Regulatoria</span>
                 </div>
             </div>
 
@@ -384,36 +457,56 @@
                 <div class="nav-section">
                     <div class="nav-section-title">Documentos</div>
                     <a data-route="/upload" class="nav-item active">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
                         Upload de PDFs
                     </a>
-                    <a data-route="/analise" class="nav-item">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
-                        Analise de PDFs
+                    <a data-route="/deliberacoes" class="nav-item">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        Deliberacoes
                     </a>
                 </div>
 
                 <div class="nav-section">
-                    <div class="nav-section-title">Resultados</div>
-                    <a data-route="/metricas" class="nav-item">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path></svg>
-                        Dashboard Geral
-                    </a>
-                    <a data-route="/deliberacoes" class="nav-item">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                        Deliberacoes
+                    <div class="nav-section-title">Metricas</div>
+                    <a data-route="/valor-regulatorio" class="nav-item">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                        Valor Regulatorio
                     </a>
                     <a data-route="/diretores" class="nav-item">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                        Diretores
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                        Por Diretor
+                    </a>
+                    <a data-route="/temas" class="nav-item">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+                        Por Tema
+                    </a>
+                    <a data-route="/institucional" class="nav-item">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                        Institucional
+                    </a>
+                    <a data-route="/diferencial" class="nav-item">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                        Diferencial
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Exportar</div>
+                    <a onclick="App.exportarCSV()" class="nav-item">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                        Exportar CSV
+                    </a>
+                    <a onclick="App.exportarJSON()" class="nav-item">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+                        Exportar JSON
                     </a>
                 </div>
             </div>
 
             <div class="sidebar-footer">
-                <div class="alert-badge" id="pdf-count-badge">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                    <span id="pdf-count-text">0 PDFs carregados</span>
+                <div class="pdf-counter">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:20px;height:20px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    <span id="pdf-count-text">0 PDFs | 0 Deliberacoes</span>
                 </div>
             </div>
         </nav>
@@ -421,30 +514,25 @@
         <!-- Main Content -->
         <main class="main-content">
             <header class="top-header">
-                <div class="header-left">
-                    <div class="breadcrumb">
-                        <span class="breadcrumb-item">IRIS</span>
-                        <span class="breadcrumb-separator">/</span>
-                        <span class="breadcrumb-current" id="breadcrumb-page">Upload de PDFs</span>
-                    </div>
+                <div class="breadcrumb">
+                    <span class="breadcrumb-item">IRIS</span>
+                    <span style="color:var(--text-muted)">/</span>
+                    <span class="breadcrumb-current" id="breadcrumb-page">Upload de PDFs</span>
                 </div>
-                <div class="header-right">
-                    <span class="status-badge">Modo Offline</span>
-                    <div class="user-avatar">IR</div>
-                </div>
+                <div class="status-badge">Modo Offline</div>
             </header>
 
             <div class="page-content">
                 <!-- PAGE: Upload -->
                 <div id="page-upload" class="page-view active">
                     <div class="page-header">
-                        <div class="page-title-section">
+                        <div>
                             <h1 class="page-title">Upload de PDFs</h1>
-                            <p class="page-subtitle">Faca upload de documentos da ARTESP para analise e extracao de dados</p>
+                            <p class="page-subtitle">Faca upload de documentos da ARTESP para analise automatica</p>
                         </div>
-                        <div class="page-actions">
+                        <div class="action-buttons">
                             <button class="btn btn-primary" onclick="document.getElementById('file-input').click()">
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                                 Selecionar PDFs
                             </button>
                         </div>
@@ -456,47 +544,54 @@
                         <div class="stat-card">
                             <div class="stat-card-header">
                                 <span class="stat-card-title">PDFs Carregados</span>
-                                <div class="stat-card-icon">
-                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                </div>
+                                <div class="stat-card-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></div>
                             </div>
                             <div class="stat-card-value" id="stat-total">0</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-card-header"><span class="stat-card-title">Pendentes</span></div>
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Pendentes</span>
+                                <div class="stat-card-icon" style="background:var(--warning-bg)"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color:var(--warning)"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
+                            </div>
                             <div class="stat-card-value warning" id="stat-pendentes">0</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-card-header"><span class="stat-card-title">Analisados</span></div>
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Analisados</span>
+                                <div class="stat-card-icon success"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></div>
+                            </div>
                             <div class="stat-card-value success" id="stat-analisados">0</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-card-header"><span class="stat-card-title">Deliberacoes</span></div>
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Deliberacoes</span>
+                                <div class="stat-card-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg></div>
+                            </div>
                             <div class="stat-card-value primary" id="stat-deliberacoes">0</div>
                         </div>
                     </div>
 
-                    <div class="card" style="margin-bottom: 24px;">
+                    <div class="card">
                         <div class="card-header">
-                            <h2 class="card-title">
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                            <span class="card-title">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:18px;height:18px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
                                 Enviar Arquivos
-                            </h2>
+                            </span>
                         </div>
                         <div class="card-body">
                             <div class="upload-zone" id="upload-dropzone">
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
                                 <h3>Arraste arquivos PDF aqui</h3>
                                 <p>ou clique para selecionar multiplos arquivos</p>
                                 <button class="btn btn-primary" onclick="document.getElementById('file-input').click()">Selecionar PDFs</button>
                             </div>
-                            <div class="progress-container" id="upload-progress" style="display: none;">
+                            <div class="progress-container" id="upload-progress" style="display:none">
                                 <div class="progress-info">
                                     <span id="progress-text">Processando...</span>
                                     <span id="progress-percent">0%</span>
                                 </div>
                                 <div class="progress-bar">
-                                    <div class="progress-fill" id="progress-bar" style="width: 0%;"></div>
+                                    <div class="progress-fill" id="progress-bar" style="width:0%"></div>
                                 </div>
                             </div>
                         </div>
@@ -504,119 +599,26 @@
 
                     <div class="card">
                         <div class="card-header">
-                            <h2 class="card-title">PDFs Carregados</h2>
+                            <span class="card-title">PDFs Carregados</span>
                             <div class="action-buttons">
                                 <button class="btn btn-primary btn-sm" onclick="App.analisarTodos()" id="btn-analisar-todos" disabled>
-                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                                     Analisar Todos
                                 </button>
-                                <button class="btn btn-danger btn-sm" onclick="App.limparTodos()" id="btn-limpar" disabled>Limpar Todos</button>
+                                <button class="btn btn-danger btn-sm" onclick="App.limparTodos()" id="btn-limpar" disabled>Limpar</button>
                             </div>
                         </div>
-                        <div class="card-body" style="padding: 0;">
+                        <div class="card-body" style="padding:0">
                             <div id="pdf-table-container">
                                 <div class="empty-state" id="empty-state">
-                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                    <h3>Nenhum PDF carregado ainda</h3>
-                                    <p>Arraste arquivos ou clique no botao acima para fazer upload</p>
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                    <h3>Nenhum PDF carregado</h3>
+                                    <p>Arraste arquivos ou clique no botao acima</p>
                                 </div>
-                                <table id="pdf-table" style="display: none;">
-                                    <thead>
-                                        <tr>
-                                            <th>#</th>
-                                            <th>Arquivo</th>
-                                            <th>Paginas</th>
-                                            <th>Status</th>
-                                            <th>Deliberacoes</th>
-                                            <th>Acoes</th>
-                                        </tr>
-                                    </thead>
+                                <table id="pdf-table" style="display:none">
+                                    <thead><tr><th>#</th><th>Arquivo</th><th>Paginas</th><th>Status</th><th>Deliberacoes</th><th>Acoes</th></tr></thead>
                                     <tbody id="pdf-table-body"></tbody>
                                 </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- PAGE: Analise -->
-                <div id="page-analise" class="page-view">
-                    <div class="page-header">
-                        <div class="page-title-section">
-                            <h1 class="page-title">Analise de PDFs</h1>
-                            <p class="page-subtitle">Visualize os resultados da analise de cada PDF</p>
-                        </div>
-                    </div>
-                    <div id="analise-content">
-                        <div class="card"><div class="card-body"><div class="empty-state"><h3>Nenhum PDF analisado</h3><p>Faca upload e analise PDFs na pagina de Upload</p></div></div></div>
-                    </div>
-                </div>
-
-                <!-- PAGE: Metricas/Dashboard -->
-                <div id="page-metricas" class="page-view">
-                    <div class="page-header">
-                        <div class="page-title-section">
-                            <h1 class="page-title">Dashboard Geral</h1>
-                            <p class="page-subtitle">Visao consolidada das deliberacoes regulatorias</p>
-                        </div>
-                    </div>
-
-                    <div class="stats-grid" id="dashboard-stats">
-                        <div class="stat-card">
-                            <div class="stat-card-header"><span class="stat-card-title">Total de Deliberacoes</span></div>
-                            <div class="stat-card-value" id="dash-total">0</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-card-header"><span class="stat-card-title">Deferidas</span></div>
-                            <div class="stat-card-value success" id="dash-deferidas">0</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-card-header"><span class="stat-card-title">Indeferidas</span></div>
-                            <div class="stat-card-value danger" id="dash-indeferidas">0</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-card-header"><span class="stat-card-title">Taxa Deferimento</span></div>
-                            <div class="stat-card-value primary" id="dash-taxa">0%</div>
-                        </div>
-                    </div>
-
-                    <div class="grid-2" style="margin-bottom: 24px;">
-                        <div class="card">
-                            <div class="card-header">
-                                <h2 class="card-title">Deliberacoes por Microtema</h2>
-                            </div>
-                            <div class="card-body">
-                                <div class="bar-chart" id="chart-temas">
-                                    <div class="empty-state"><p>Analise PDFs para ver as metricas</p></div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card">
-                            <div class="card-header">
-                                <h2 class="card-title">Deferido vs Indeferido</h2>
-                            </div>
-                            <div class="card-body">
-                                <div style="display: flex; align-items: center; justify-content: center; gap: 40px;">
-                                    <div class="donut-chart">
-                                        <svg width="200" height="200" viewBox="0 0 200 200">
-                                            <circle class="donut-bg" cx="100" cy="100" r="70"/>
-                                            <circle class="donut-fill" id="donut-fill" cx="100" cy="100" r="70" stroke-dasharray="440" stroke-dashoffset="440"/>
-                                        </svg>
-                                        <div class="donut-center">
-                                            <div class="donut-value" id="donut-value">0%</div>
-                                            <div class="donut-label">Deferido</div>
-                                        </div>
-                                    </div>
-                                    <div class="chart-legend">
-                                        <div class="legend-item">
-                                            <div class="legend-color" style="background: var(--success);"></div>
-                                            <span id="legend-deferido">Deferido: 0</span>
-                                        </div>
-                                        <div class="legend-item">
-                                            <div class="legend-color" style="background: var(--danger);"></div>
-                                            <span id="legend-indeferido">Indeferido: 0</span>
-                                        </div>
-                                    </div>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -625,22 +627,44 @@
                 <!-- PAGE: Deliberacoes -->
                 <div id="page-deliberacoes" class="page-view">
                     <div class="page-header">
-                        <div class="page-title-section">
-                            <h1 class="page-title">Deliberacoes</h1>
-                            <p class="page-subtitle">Lista completa de todas as deliberacoes extraidas</p>
+                        <div>
+                            <h1 class="page-title">Deliberacoes Extraidas</h1>
+                            <p class="page-subtitle">Lista completa de todas as deliberacoes analisadas</p>
                         </div>
-                        <div class="page-actions">
-                            <button class="btn btn-primary" onclick="App.exportarCSV()">
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                                Exportar CSV
-                            </button>
+                        <div class="action-buttons">
+                            <button class="btn btn-primary" onclick="App.exportarCSV()">Exportar CSV</button>
                         </div>
                     </div>
                     <div class="card">
-                        <div class="card-body" style="padding: 0;">
+                        <div class="card-body" style="padding:0;overflow-x:auto">
                             <div id="deliberacoes-container">
-                                <div class="empty-state"><h3>Nenhuma deliberacao encontrada</h3><p>Analise PDFs para extrair deliberacoes</p></div>
+                                <div class="empty-state"><h3>Nenhuma deliberacao</h3><p>Analise PDFs para extrair deliberacoes</p></div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PAGE: Valor Regulatorio -->
+                <div id="page-valor-regulatorio" class="page-view">
+                    <div class="page-header">
+                        <div>
+                            <h1 class="page-title">Metricas de Valor Regulatorio</h1>
+                            <p class="page-subtitle">Indicadores de performance do processamento e analise</p>
+                        </div>
+                    </div>
+
+                    <div class="stats-grid" id="stats-valor-regulatorio">
+                        <!-- Populated by JS -->
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="card">
+                            <div class="card-header"><span class="card-title">Pleitos Externos vs Atos Internos</span></div>
+                            <div class="card-body" id="chart-tipo-deliberacao"></div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header"><span class="card-title">Votos por Diretor</span></div>
+                            <div class="card-body" id="chart-votos-diretor"></div>
                         </div>
                     </div>
                 </div>
@@ -648,13 +672,90 @@
                 <!-- PAGE: Diretores -->
                 <div id="page-diretores" class="page-view">
                     <div class="page-header">
-                        <div class="page-title-section">
-                            <h1 class="page-title">Diretores</h1>
-                            <p class="page-subtitle">Votos e participacoes dos diretores nas deliberacoes</p>
+                        <div>
+                            <h1 class="page-title">Metricas por Diretor</h1>
+                            <p class="page-subtitle">Analise detalhada do perfil decisorio de cada diretor</p>
                         </div>
                     </div>
-                    <div id="diretores-content">
-                        <div class="card"><div class="card-body"><div class="empty-state"><h3>Nenhum diretor identificado</h3><p>Analise PDFs para identificar diretores</p></div></div></div>
+                    <div id="diretores-content"></div>
+                </div>
+
+                <!-- PAGE: Temas -->
+                <div id="page-temas" class="page-view">
+                    <div class="page-header">
+                        <div>
+                            <h1 class="page-title">Metricas por Tema</h1>
+                            <p class="page-subtitle">Analise de recorrencia e decisoes por microtema</p>
+                        </div>
+                    </div>
+
+                    <div class="stats-grid" id="stats-temas"></div>
+
+                    <div class="grid-2">
+                        <div class="card">
+                            <div class="card-header"><span class="card-title">Temas Mais Recorrentes</span></div>
+                            <div class="card-body" id="chart-temas-recorrentes"></div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header"><span class="card-title">Taxa de Deferimento por Tema</span></div>
+                            <div class="card-body" id="chart-deferimento-tema"></div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header"><span class="card-title">Detalhamento por Tema</span></div>
+                        <div class="card-body" style="padding:0" id="table-temas"></div>
+                    </div>
+                </div>
+
+                <!-- PAGE: Institucional -->
+                <div id="page-institucional" class="page-view">
+                    <div class="page-header">
+                        <div>
+                            <h1 class="page-title">Metricas Institucionais</h1>
+                            <p class="page-subtitle">Indicadores da agencia reguladora</p>
+                        </div>
+                    </div>
+
+                    <div class="stats-grid" id="stats-institucional"></div>
+
+                    <div class="grid-2">
+                        <div class="card">
+                            <div class="card-header"><span class="card-title">Pauta Interna vs Externa</span></div>
+                            <div class="card-body" id="chart-pauta-tipo"></div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header"><span class="card-title">Reunioes por Periodo</span></div>
+                            <div class="card-body" id="chart-reunioes-periodo"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PAGE: Diferencial -->
+                <div id="page-diferencial" class="page-view">
+                    <div class="page-header">
+                        <div>
+                            <h1 class="page-title">Diferencial Competitivo</h1>
+                            <p class="page-subtitle">Insights estrategicos e tendencias decisorias</p>
+                        </div>
+                    </div>
+
+                    <div class="stats-grid" id="stats-diferencial"></div>
+
+                    <div class="card">
+                        <div class="card-header"><span class="card-title">Matriz Tema x Decisao x Diretor</span></div>
+                        <div class="card-body" id="matriz-tdd"></div>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="card">
+                            <div class="card-header"><span class="card-title">Comparacao entre Diretores</span></div>
+                            <div class="card-body" id="chart-comparacao-diretores"></div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header"><span class="card-title">Tendencia Decisoria</span></div>
+                            <div class="card-body" id="chart-tendencia"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -662,16 +763,15 @@
     </div>
 
     <script>
-        // Configurar PDF.js
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-        // ============================================
-        // APLICACAO PRINCIPAL
-        // ============================================
         const App = {
             pdfs: [],
             deliberacoes: [],
             diretores: {},
+            temas: {},
+            reunioes: new Set(),
+            tempoProcessamento: [],
 
             init() {
                 this.setupDropzone();
@@ -682,29 +782,16 @@
 
             setupDropzone() {
                 const dropzone = document.getElementById('upload-dropzone');
-
-                dropzone.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                    dropzone.classList.add('dragover');
-                });
-
-                dropzone.addEventListener('dragleave', () => {
-                    dropzone.classList.remove('dragover');
-                });
-
+                dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('dragover'); });
+                dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
                 dropzone.addEventListener('drop', (e) => {
                     e.preventDefault();
                     dropzone.classList.remove('dragover');
                     const files = Array.from(e.dataTransfer.files).filter(f => f.type === 'application/pdf');
-                    if (files.length > 0) {
-                        this.processFiles(files);
-                    }
+                    if (files.length > 0) this.processFiles(files);
                 });
-
                 dropzone.addEventListener('click', (e) => {
-                    if (e.target.tagName !== 'BUTTON') {
-                        document.getElementById('file-input').click();
-                    }
+                    if (e.target.tagName !== 'BUTTON') document.getElementById('file-input').click();
                 });
             },
 
@@ -712,19 +799,16 @@
                 const input = document.getElementById('file-input');
                 input.addEventListener('change', () => {
                     const files = Array.from(input.files);
-                    if (files.length > 0) {
-                        this.processFiles(files);
-                    }
+                    if (files.length > 0) this.processFiles(files);
                     input.value = '';
                 });
             },
 
             setupNavigation() {
-                document.querySelectorAll('.nav-item').forEach(item => {
+                document.querySelectorAll('.nav-item[data-route]').forEach(item => {
                     item.addEventListener('click', (e) => {
                         e.preventDefault();
-                        const route = item.dataset.route;
-                        if (route) this.navigateTo(route);
+                        this.navigateTo(item.dataset.route);
                     });
                 });
             },
@@ -732,10 +816,12 @@
             navigateTo(route) {
                 const pageNames = {
                     '/upload': 'Upload de PDFs',
-                    '/analise': 'Analise de PDFs',
-                    '/metricas': 'Dashboard Geral',
                     '/deliberacoes': 'Deliberacoes',
-                    '/diretores': 'Diretores'
+                    '/valor-regulatorio': 'Valor Regulatorio',
+                    '/diretores': 'Por Diretor',
+                    '/temas': 'Por Tema',
+                    '/institucional': 'Institucional',
+                    '/diferencial': 'Diferencial'
                 };
 
                 document.querySelectorAll('.nav-item').forEach(item => {
@@ -743,17 +829,19 @@
                 });
 
                 document.getElementById('breadcrumb-page').textContent = pageNames[route] || 'Dashboard';
-
                 document.querySelectorAll('.page-view').forEach(page => page.classList.remove('active'));
+
                 const pageId = 'page-' + route.replace('/', '');
                 const page = document.getElementById(pageId);
                 if (page) page.classList.add('active');
 
-                // Atualizar conteudo da pagina
-                if (route === '/metricas') this.updateDashboard();
-                if (route === '/deliberacoes') this.updateDeliberacoesPage();
-                if (route === '/diretores') this.updateDiretoresPage();
-                if (route === '/analise') this.updateAnalisePage();
+                // Update page content
+                if (route === '/deliberacoes') this.renderDeliberacoes();
+                if (route === '/valor-regulatorio') this.renderValorRegulatorio();
+                if (route === '/diretores') this.renderDiretores();
+                if (route === '/temas') this.renderTemas();
+                if (route === '/institucional') this.renderInstitucional();
+                if (route === '/diferencial') this.renderDiferencial();
             },
 
             async processFiles(files) {
@@ -767,8 +855,8 @@
                 for (let i = 0; i < files.length; i++) {
                     const file = files[i];
                     progressText.textContent = `Lendo ${file.name}... (${i + 1}/${files.length})`;
-                    progressPercent.textContent = Math.round(((i) / files.length) * 100) + '%';
-                    progressBar.style.width = Math.round(((i) / files.length) * 100) + '%';
+                    progressPercent.textContent = Math.round((i / files.length) * 100) + '%';
+                    progressBar.style.width = Math.round((i / files.length) * 100) + '%';
 
                     try {
                         const text = await this.extractTextFromPDF(file);
@@ -782,16 +870,12 @@
                             dataUpload: new Date().toISOString()
                         });
                     } catch (error) {
-                        console.error('Erro ao processar PDF:', error);
+                        console.error('Erro:', error);
                         this.pdfs.push({
                             nome: file.name,
-                            tamanho: file.size,
-                            numPaginas: 0,
-                            texto: '',
                             status: 'erro',
                             erro: error.message,
-                            deliberacoes: [],
-                            dataUpload: new Date().toISOString()
+                            deliberacoes: []
                         });
                     }
                 }
@@ -811,15 +895,13 @@
             async extractTextFromPDF(file) {
                 const arrayBuffer = await file.arrayBuffer();
                 const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-
                 let fullText = '';
                 const numPages = pdf.numPages;
 
                 for (let i = 1; i <= numPages; i++) {
                     const page = await pdf.getPage(i);
                     const textContent = await page.getTextContent();
-                    const pageText = textContent.items.map(item => item.str).join(' ');
-                    fullText += pageText + '\n\n';
+                    fullText += textContent.items.map(item => item.str).join(' ') + '\n\n';
                 }
 
                 return { text: fullText, numPages };
@@ -830,33 +912,25 @@
                 if (!pdf || pdf.status === 'analisado') return;
 
                 this.showLoading(`Analisando ${pdf.nome}...`);
+                const startTime = Date.now();
 
                 setTimeout(() => {
-                    const deliberacoes = this.extrairDeliberacoes(pdf.texto);
+                    const deliberacoes = this.extrairDeliberacoes(pdf.texto, pdf.nome);
                     pdf.deliberacoes = deliberacoes;
                     pdf.status = 'analisado';
+                    pdf.tempoProcessamento = Date.now() - startTime;
 
-                    // Adicionar ao array global
+                    this.tempoProcessamento.push(pdf.tempoProcessamento);
+
                     deliberacoes.forEach(d => {
                         d.arquivoOrigem = pdf.nome;
                         this.deliberacoes.push(d);
-
-                        // Contar votos por diretor
-                        (d.votos_favor || []).forEach(dir => {
-                            if (!this.diretores[dir]) this.diretores[dir] = { nome: dir, favor: 0, contra: 0, total: 0 };
-                            this.diretores[dir].favor++;
-                            this.diretores[dir].total++;
-                        });
-                        (d.votos_contra || []).forEach(dir => {
-                            if (!this.diretores[dir]) this.diretores[dir] = { nome: dir, favor: 0, contra: 0, total: 0 };
-                            this.diretores[dir].contra++;
-                            this.diretores[dir].total++;
-                        });
+                        this.processarMetricas(d);
                     });
 
                     this.hideLoading();
                     this.updateUI();
-                }, 500);
+                }, 300);
             },
 
             analisarTodos() {
@@ -877,139 +951,162 @@
                     if (pdf.status === 'pendente') {
                         document.getElementById('loading-text').textContent = `Analisando ${pdf.nome}... (${index + 1}/${this.pdfs.length})`;
 
-                        const deliberacoes = this.extrairDeliberacoes(pdf.texto);
+                        const startTime = Date.now();
+                        const deliberacoes = this.extrairDeliberacoes(pdf.texto, pdf.nome);
                         pdf.deliberacoes = deliberacoes;
                         pdf.status = 'analisado';
+                        pdf.tempoProcessamento = Date.now() - startTime;
+                        this.tempoProcessamento.push(pdf.tempoProcessamento);
 
                         deliberacoes.forEach(d => {
                             d.arquivoOrigem = pdf.nome;
                             this.deliberacoes.push(d);
-
-                            (d.votos_favor || []).forEach(dir => {
-                                if (!this.diretores[dir]) this.diretores[dir] = { nome: dir, favor: 0, contra: 0, total: 0 };
-                                this.diretores[dir].favor++;
-                                this.diretores[dir].total++;
-                            });
-                            (d.votos_contra || []).forEach(dir => {
-                                if (!this.diretores[dir]) this.diretores[dir] = { nome: dir, favor: 0, contra: 0, total: 0 };
-                                this.diretores[dir].contra++;
-                                this.diretores[dir].total++;
-                            });
+                            this.processarMetricas(d);
                         });
                     }
 
                     index++;
-                    setTimeout(processNext, 100);
+                    setTimeout(processNext, 50);
                 };
 
                 setTimeout(processNext, 100);
             },
 
-            extrairDeliberacoes(texto) {
+            extrairDeliberacoes(texto, nomeArquivo) {
                 const deliberacoes = [];
 
-                // Padroes para encontrar deliberacoes
-                const padraoDelib = /DELIBERA[CÇ][AÃ]O\s*(?:N[ºo°]?\s*)?(\d+(?:\/\d+)?)/gi;
-                const padraoDeferido = /\b(DEFERIDO|DEFERIDA|DEFERE|APROVADO|APROVADA)\b/gi;
-                const padraoIndeferido = /\b(INDEFERIDO|INDEFERIDA|INDEFERE|NEGADO|NEGADA|REJEITADO)\b/gi;
+                // Patterns
+                const padraoDelib = /DELIBERA[CÇ][AÃ]O\s*(?:ARTESP\s*)?(?:N[ºo°]?\s*)?(\d+[\-\/]?\d*(?:\/\d+)?)/gi;
+                const padraoProcesso = /(?:Processo|PROCESSO)\s*(?:n[ºo°]?\s*)?([\w\-\.\/]+\d+[\w\-\.\/]*)/gi;
+                const padraoReuniao = /(\d+)[ªºa°]?\s*(?:Reuni[aã]o\s*Ordin[aá]ria|R\.?O\.?)/gi;
+
+                // Decision patterns
+                const deferido = /\b(DEFERIDO|DEFERIDA|DEFERE|APROVADO|APROVADA|ACOLHE|ACOLHIDO|D[AÁ]\s*PROVIMENTO|PROCEDENTE)\b/i;
+                const indeferido = /\b(INDEFERIDO|INDEFERIDA|INDEFERE|NEGADO|NEGADA|N[AÃ]O\s*CONHECE|NEGA\s*PROVIMENTO|IMPROCEDENTE|MANT[EÉ]M\s*INDEFERIMENTO)\b/i;
+                const parcial = /\b(PARCIALMENTE|EM\s*PARTE)\b/i;
 
                 // Microtemas
-                const temas = {
-                    'Revisao Tarifaria': /revis[aã]o\s*tarif[aá]ria|reajuste\s*tarif[aá]rio|tarifa/i,
-                    'Obras / Investimentos': /obra|investimento|constru[cç][aã]o|implanta[cç][aã]o|duplica[cç][aã]o/i,
-                    'Reequilibrio Economico': /reequil[ií]brio|equilibrio\s*econ[oô]mico|compensa[cç][aã]o/i,
-                    'Contrato / Aditivo': /contrato|aditivo|prorroga[cç][aã]o|termo\s*aditivo/i,
-                    'Multa / Penalidade': /multa|penalidade|infra[cç][aã]o|auto\s*de\s*infra[cç][aã]o/i,
-                    'Ato Interno': /ato\s*interno|administrativo|designa[cç][aã]o|nomea[cç][aã]o/i
+                const temasMap = {
+                    'Revisao Tarifaria': /revis[aã]o\s*tarif[aá]ria|reajuste\s*tarif[aá]rio|tarifa|pedagio/i,
+                    'Multa': /multa|penalidade|infra[cç][aã]o|auto\s*de\s*infra[cç][aã]o/i,
+                    'Reequilibrio Economico': /reequil[ií]brio|equil[ií]brio\s*econ[oô]mico|compensa[cç][aã]o/i,
+                    'Aditivo Contratual': /aditivo|termo\s*aditivo|altera[cç][aã]o\s*contratual/i,
+                    'Recurso Administrativo': /recurso|pedido\s*de\s*reconsidera[cç][aã]o/i,
+                    'Autorizacao': /autoriza[cç][aã]o|permiss[aã]o|outorga/i,
+                    'Fiscalizacao': /fiscaliza[cç][aã]o|vistoria|inspe[cç][aã]o/i,
+                    'Obras': /obra|investimento|constru[cç][aã]o|implanta[cç][aã]o|duplica[cç][aã]o/i,
+                    'Prorrogacao': /prorroga[cç][aã]o|prorroga|extensão\s*de\s*prazo/i,
+                    'Contrato': /contrato|concess[aã]o|licita[cç][aã]o/i
                 };
 
-                // Diretores conhecidos
+                // Directors patterns
                 const diretoresConhecidos = [
                     'Milton Persoli', 'Marcos Antonio Ribeiro', 'Patricia Vanzolini',
-                    'Carlos Eduardo', 'Fernando', 'Ricardo', 'Antonio', 'Jose',
-                    'Diretor-Presidente', 'Diretor de Fiscalizacao'
+                    'Rubens Rizek', 'Eduardo Ganymedes', 'Marco Cesar de Araujo',
+                    'Antonio Sergio', 'Jose Carlos', 'Fernando Santos', 'Ricardo Alves'
                 ];
 
-                // Buscar deliberacoes no texto
+                // Extract reunion number
+                let reuniaoMatch = padraoReuniao.exec(texto);
+                const reuniaoOrdinaria = reuniaoMatch ? reuniaoMatch[1] + 'ª R.O.' : 'N/A';
+                if (reuniaoMatch) this.reunioes.add(reuniaoMatch[1]);
+
+                // Find deliberations
                 let match;
+                let contadorDelib = 1;
+
                 while ((match = padraoDelib.exec(texto)) !== null) {
                     const numero = match[1];
                     const posicao = match.index;
-                    const contexto = texto.substring(Math.max(0, posicao - 200), Math.min(texto.length, posicao + 800));
+                    const contexto = texto.substring(Math.max(0, posicao - 300), Math.min(texto.length, posicao + 1500));
 
-                    // Determinar resultado
-                    let resultado = 'Nao Identificado';
-                    if (padraoDeferido.test(contexto)) resultado = 'Deferido';
-                    else if (padraoIndeferido.test(contexto)) resultado = 'Indeferido';
+                    // Extract process number
+                    let processo = 'N/A';
+                    const procMatch = contexto.match(/(?:Processo|PROCESSO)\s*(?:n[ºo°]?\s*)?([\w\-\.\/]+\d+[\w\-\.\/]*)/i);
+                    if (procMatch) processo = procMatch[1];
 
-                    // Determinar microtema
+                    // Determine result
+                    let resultado = 'A classificar';
+                    if (parcial.test(contexto)) resultado = 'Parcialmente Deferido';
+                    else if (deferido.test(contexto)) resultado = 'Deferido';
+                    else if (indeferido.test(contexto)) resultado = 'Indeferido';
+
+                    // Determine microtema
                     let microtema = 'Outros';
-                    for (const [tema, regex] of Object.entries(temas)) {
+                    for (const [tema, regex] of Object.entries(temasMap)) {
                         if (regex.test(contexto)) {
                             microtema = tema;
                             break;
                         }
                     }
 
-                    // Buscar interessado
+                    // Extract interested party
                     let interessado = 'Nao identificado';
-                    const matchInteressado = contexto.match(/interessad[oa]s?[:\s]+([^,\n]+)/i);
-                    if (matchInteressado) interessado = matchInteressado[1].trim().substring(0, 50);
+                    const matchInteressado = contexto.match(/interessad[oa]s?[:\s]+([^,\n\.]+)/i);
+                    if (matchInteressado) {
+                        interessado = matchInteressado[1].trim().substring(0, 60);
+                        if (/ARTESP/i.test(interessado)) interessado = 'ARTESP';
+                    }
 
-                    // Buscar votos
-                    const votos_favor = [];
-                    const votos_contra = [];
+                    // Check if internal
+                    const isPautaInterna = /ARTESP/i.test(interessado) || /ato\s*interno|administrativo|designa[cç][aã]o|nomea[cç][aã]o/i.test(contexto);
+
+                    // Extract votes
+                    const votosFavor = [];
+                    const votosContra = [];
                     diretoresConhecidos.forEach(dir => {
                         if (contexto.includes(dir)) {
-                            if (/favor[aá]vel|aprovou|votou\s+a\s+favor/i.test(contexto)) {
-                                votos_favor.push(dir);
+                            if (/contra|vencido|divergente/i.test(contexto.substring(contexto.indexOf(dir) - 50, contexto.indexOf(dir) + 50))) {
+                                votosContra.push(dir);
                             } else {
-                                votos_favor.push(dir); // Por padrao, assume a favor
+                                votosFavor.push(dir);
                             }
                         }
                     });
 
                     deliberacoes.push({
-                        numero: `DELIB-${numero}`,
+                        numeroDeliberacao: `DEL-${String(contadorDelib++).padStart(3, '0')}-${numero}`,
+                        reuniaoOrdinaria,
+                        processo,
                         interessado,
                         microtema,
                         resultado,
-                        votos_favor,
-                        votos_contra,
-                        contexto: contexto.substring(0, 300)
+                        votosFavor,
+                        votosContra,
+                        classificacao: isPautaInterna ? 'Pauta Interna da Agencia' : 'Pleito Externo',
+                        dataExtracao: new Date().toISOString()
                     });
                 }
 
-                // Se nao encontrou pelo padrao, tenta buscar por outras palavras-chave
+                // If no deliberations found, try alternate patterns
                 if (deliberacoes.length === 0) {
                     const linhas = texto.split('\n');
-                    let contadorDelib = 1;
-
                     linhas.forEach((linha, idx) => {
-                        if (/processo|delibera|decide|resolve/i.test(linha) && linha.length > 20) {
-                            const contexto = linhas.slice(Math.max(0, idx - 2), Math.min(linhas.length, idx + 5)).join(' ');
+                        if (/processo|delibera|decide|resolve/i.test(linha) && linha.length > 30) {
+                            const contexto = linhas.slice(Math.max(0, idx - 3), Math.min(linhas.length, idx + 8)).join(' ');
 
-                            let resultado = 'Nao Identificado';
-                            if (padraoDeferido.test(contexto)) resultado = 'Deferido';
-                            else if (padraoIndeferido.test(contexto)) resultado = 'Indeferido';
+                            let resultado = 'A classificar';
+                            if (parcial.test(contexto)) resultado = 'Parcialmente Deferido';
+                            else if (deferido.test(contexto)) resultado = 'Deferido';
+                            else if (indeferido.test(contexto)) resultado = 'Indeferido';
 
                             let microtema = 'Outros';
-                            for (const [tema, regex] of Object.entries(temas)) {
-                                if (regex.test(contexto)) {
-                                    microtema = tema;
-                                    break;
-                                }
+                            for (const [tema, regex] of Object.entries(temasMap)) {
+                                if (regex.test(contexto)) { microtema = tema; break; }
                             }
 
-                            if (resultado !== 'Nao Identificado' || microtema !== 'Outros') {
+                            if (resultado !== 'A classificar' || microtema !== 'Outros') {
                                 deliberacoes.push({
-                                    numero: `ITEM-${contadorDelib++}`,
-                                    interessado: 'A definir',
+                                    numeroDeliberacao: `DEL-${String(contadorDelib++).padStart(3, '0')}-AUTO`,
+                                    reuniaoOrdinaria,
+                                    processo: 'N/A',
+                                    interessado: 'A identificar',
                                     microtema,
                                     resultado,
-                                    votos_favor: [],
-                                    votos_contra: [],
-                                    contexto: contexto.substring(0, 300)
+                                    votosFavor: [],
+                                    votosContra: [],
+                                    classificacao: 'Pleito Externo',
+                                    dataExtracao: new Date().toISOString()
                                 });
                             }
                         }
@@ -1019,41 +1116,45 @@
                 return deliberacoes;
             },
 
-            excluirPDF(index) {
-                if (!confirm('Excluir este PDF?')) return;
+            processarMetricas(d) {
+                // Diretores
+                [...(d.votosFavor || []), ...(d.votosContra || [])].forEach(dir => {
+                    if (!this.diretores[dir]) {
+                        this.diretores[dir] = {
+                            nome: dir,
+                            totalVotos: 0,
+                            votosFavor: 0,
+                            votosContra: 0,
+                            pleitosExternos: 0,
+                            atosInternos: 0,
+                            deferimentos: 0,
+                            indeferimentos: 0,
+                            temas: {}
+                        };
+                    }
+                    const diretor = this.diretores[dir];
+                    diretor.totalVotos++;
 
-                const pdf = this.pdfs[index];
-                // Remover deliberacoes associadas
-                this.deliberacoes = this.deliberacoes.filter(d => d.arquivoOrigem !== pdf.nome);
-                this.pdfs.splice(index, 1);
+                    if ((d.votosFavor || []).includes(dir)) diretor.votosFavor++;
+                    if ((d.votosContra || []).includes(dir)) diretor.votosContra++;
 
-                // Recalcular diretores
-                this.recalcularDiretores();
-                this.updateUI();
-            },
+                    if (d.classificacao === 'Pleito Externo') diretor.pleitosExternos++;
+                    else diretor.atosInternos++;
 
-            limparTodos() {
-                if (!confirm('Limpar todos os PDFs?')) return;
-                this.pdfs = [];
-                this.deliberacoes = [];
-                this.diretores = {};
-                this.updateUI();
-            },
+                    if (d.resultado === 'Deferido') diretor.deferimentos++;
+                    else if (d.resultado === 'Indeferido') diretor.indeferimentos++;
 
-            recalcularDiretores() {
-                this.diretores = {};
-                this.deliberacoes.forEach(d => {
-                    (d.votos_favor || []).forEach(dir => {
-                        if (!this.diretores[dir]) this.diretores[dir] = { nome: dir, favor: 0, contra: 0, total: 0 };
-                        this.diretores[dir].favor++;
-                        this.diretores[dir].total++;
-                    });
-                    (d.votos_contra || []).forEach(dir => {
-                        if (!this.diretores[dir]) this.diretores[dir] = { nome: dir, favor: 0, contra: 0, total: 0 };
-                        this.diretores[dir].contra++;
-                        this.diretores[dir].total++;
-                    });
+                    diretor.temas[d.microtema] = (diretor.temas[d.microtema] || 0) + 1;
                 });
+
+                // Temas
+                if (!this.temas[d.microtema]) {
+                    this.temas[d.microtema] = { total: 0, deferidos: 0, indeferidos: 0, parciais: 0 };
+                }
+                this.temas[d.microtema].total++;
+                if (d.resultado === 'Deferido') this.temas[d.microtema].deferidos++;
+                else if (d.resultado === 'Indeferido') this.temas[d.microtema].indeferidos++;
+                else if (d.resultado === 'Parcialmente Deferido') this.temas[d.microtema].parciais++;
             },
 
             updateUI() {
@@ -1062,20 +1163,15 @@
                 const analisados = this.pdfs.filter(p => p.status === 'analisado').length;
                 const totalDelibs = this.deliberacoes.length;
 
-                // Stats
                 document.getElementById('stat-total').textContent = total;
                 document.getElementById('stat-pendentes').textContent = pendentes;
                 document.getElementById('stat-analisados').textContent = analisados;
                 document.getElementById('stat-deliberacoes').textContent = totalDelibs;
+                document.getElementById('pdf-count-text').textContent = `${total} PDFs | ${totalDelibs} Deliberacoes`;
 
-                // Sidebar badge
-                document.getElementById('pdf-count-text').textContent = `${total} PDFs carregados`;
-
-                // Botoes
                 document.getElementById('btn-analisar-todos').disabled = pendentes === 0;
                 document.getElementById('btn-limpar').disabled = total === 0;
 
-                // Tabela
                 const emptyState = document.getElementById('empty-state');
                 const table = document.getElementById('pdf-table');
                 const tbody = document.getElementById('pdf-table-body');
@@ -1088,17 +1184,14 @@
                     table.style.display = 'table';
 
                     tbody.innerHTML = this.pdfs.map((pdf, idx) => {
-                        const statusClass = pdf.status === 'analisado' ? 'badge-success' :
-                                           pdf.status === 'erro' ? 'badge-danger' : 'badge-warning';
-                        const statusLabel = pdf.status === 'analisado' ? 'Analisado' :
-                                           pdf.status === 'erro' ? 'Erro' : 'Pendente';
-
+                        const statusClass = pdf.status === 'analisado' ? 'badge-success' : pdf.status === 'erro' ? 'badge-danger' : 'badge-warning';
+                        const statusLabel = pdf.status === 'analisado' ? 'Analisado' : pdf.status === 'erro' ? 'Erro' : 'Pendente';
                         return `<tr>
                             <td>${idx + 1}</td>
                             <td><strong>${pdf.nome}</strong></td>
-                            <td>${pdf.numPaginas}</td>
+                            <td>${pdf.numPaginas || '-'}</td>
                             <td><span class="badge ${statusClass}">${statusLabel}</span></td>
-                            <td>${pdf.deliberacoes.length}</td>
+                            <td>${pdf.deliberacoes?.length || 0}</td>
                             <td>
                                 <div class="action-buttons">
                                     ${pdf.status === 'pendente' ? `<button class="btn btn-primary btn-sm" onclick="App.analisarPDF(${idx})">Analisar</button>` : ''}
@@ -1110,169 +1203,279 @@
                 }
             },
 
-            updateDashboard() {
-                const total = this.deliberacoes.length;
-                const deferidas = this.deliberacoes.filter(d => d.resultado === 'Deferido').length;
-                const indeferidas = this.deliberacoes.filter(d => d.resultado === 'Indeferido').length;
-                const taxa = total > 0 ? Math.round((deferidas / total) * 100) : 0;
-
-                document.getElementById('dash-total').textContent = total;
-                document.getElementById('dash-deferidas').textContent = deferidas;
-                document.getElementById('dash-indeferidas').textContent = indeferidas;
-                document.getElementById('dash-taxa').textContent = taxa + '%';
-
-                // Donut chart
-                const donutFill = document.getElementById('donut-fill');
-                const offset = 440 - (440 * taxa / 100);
-                donutFill.setAttribute('stroke-dashoffset', offset);
-                document.getElementById('donut-value').textContent = taxa + '%';
-                document.getElementById('legend-deferido').textContent = `Deferido: ${deferidas}`;
-                document.getElementById('legend-indeferido').textContent = `Indeferido: ${indeferidas}`;
-
-                // Bar chart - temas
-                const temas = {};
-                this.deliberacoes.forEach(d => {
-                    temas[d.microtema] = (temas[d.microtema] || 0) + 1;
-                });
-
-                const chartTemas = document.getElementById('chart-temas');
-                const temasOrdenados = Object.entries(temas).sort((a, b) => b[1] - a[1]).slice(0, 6);
-                const maxTema = temasOrdenados[0]?.[1] || 1;
-
-                if (temasOrdenados.length > 0) {
-                    chartTemas.innerHTML = temasOrdenados.map(([tema, count]) => {
-                        const pct = Math.round((count / maxTema) * 100);
-                        return `<div class="bar-item">
-                            <span class="bar-label">${tema}</span>
-                            <div class="bar-track"><div class="bar-fill" style="width: ${pct}%;"></div></div>
-                            <span class="bar-value">${count}</span>
-                        </div>`;
-                    }).join('');
-                } else {
-                    chartTemas.innerHTML = '<div class="empty-state"><p>Analise PDFs para ver as metricas</p></div>';
-                }
-            },
-
-            updateDeliberacoesPage() {
+            renderDeliberacoes() {
                 const container = document.getElementById('deliberacoes-container');
-
                 if (this.deliberacoes.length === 0) {
-                    container.innerHTML = '<div class="empty-state"><h3>Nenhuma deliberacao encontrada</h3><p>Analise PDFs para extrair deliberacoes</p></div>';
+                    container.innerHTML = '<div class="empty-state"><h3>Nenhuma deliberacao</h3><p>Analise PDFs para extrair deliberacoes</p></div>';
                     return;
                 }
 
                 container.innerHTML = `<table>
-                    <thead>
-                        <tr>
-                            <th>Numero</th>
-                            <th>Interessado</th>
-                            <th>Microtema</th>
-                            <th>Resultado</th>
-                            <th>Arquivo</th>
-                        </tr>
-                    </thead>
+                    <thead><tr>
+                        <th>Deliberacao</th>
+                        <th>Reuniao</th>
+                        <th>Processo</th>
+                        <th>Interessado</th>
+                        <th>Microtema</th>
+                        <th>Resultado</th>
+                        <th>Votos Favor</th>
+                        <th>Votos Contra</th>
+                        <th>Classificacao</th>
+                    </tr></thead>
                     <tbody>
                         ${this.deliberacoes.map(d => `<tr>
-                            <td><span style="color: var(--primary);">${d.numero}</span></td>
+                            <td><strong style="color:var(--primary)">${d.numeroDeliberacao}</strong></td>
+                            <td>${d.reuniaoOrdinaria}</td>
+                            <td style="font-size:11px">${d.processo}</td>
                             <td>${d.interessado}</td>
-                            <td>${d.microtema}</td>
-                            <td><span class="badge ${d.resultado === 'Deferido' ? 'badge-success' : d.resultado === 'Indeferido' ? 'badge-danger' : 'badge-secondary'}">${d.resultado}</span></td>
-                            <td style="font-size: 12px; color: var(--text-muted);">${d.arquivoOrigem}</td>
+                            <td><span class="badge badge-info">${d.microtema}</span></td>
+                            <td><span class="badge ${d.resultado === 'Deferido' ? 'badge-success' : d.resultado === 'Indeferido' ? 'badge-danger' : 'badge-warning'}">${d.resultado}</span></td>
+                            <td style="font-size:11px">${(d.votosFavor || []).join(', ') || '-'}</td>
+                            <td style="font-size:11px">${(d.votosContra || []).join(', ') || '-'}</td>
+                            <td><span class="badge ${d.classificacao === 'Pauta Interna da Agencia' ? 'badge-purple' : 'badge-secondary'}">${d.classificacao}</span></td>
                         </tr>`).join('')}
                     </tbody>
                 </table>`;
             },
 
-            updateDiretoresPage() {
-                const container = document.getElementById('diretores-content');
-                const diretoresList = Object.values(this.diretores).sort((a, b) => b.total - a.total);
+            renderValorRegulatorio() {
+                const total = this.deliberacoes.length;
+                const classificadas = this.deliberacoes.filter(d => d.resultado !== 'A classificar').length;
+                const pctClassificadas = total > 0 ? Math.round((classificadas / total) * 100) : 0;
+                const tempoMedio = this.tempoProcessamento.length > 0 ? Math.round(this.tempoProcessamento.reduce((a, b) => a + b, 0) / this.tempoProcessamento.length) : 0;
+                const numTemas = Object.keys(this.temas).length;
+                const numDiretores = Object.keys(this.diretores).length;
+                const pleitosExternos = this.deliberacoes.filter(d => d.classificacao === 'Pleito Externo').length;
+                const atosInternos = this.deliberacoes.filter(d => d.classificacao === 'Pauta Interna da Agencia').length;
 
-                if (diretoresList.length === 0) {
-                    container.innerHTML = '<div class="card"><div class="card-body"><div class="empty-state"><h3>Nenhum diretor identificado</h3><p>Analise PDFs para identificar diretores</p></div></div></div>';
+                document.getElementById('stats-valor-regulatorio').innerHTML = `
+                    <div class="stat-card"><div class="stat-card-header"><span class="stat-card-title">Deliberacoes Processadas</span></div><div class="stat-card-value">${total}</div></div>
+                    <div class="stat-card"><div class="stat-card-header"><span class="stat-card-title">% Classificadas Auto</span></div><div class="stat-card-value success">${pctClassificadas}%</div></div>
+                    <div class="stat-card"><div class="stat-card-header"><span class="stat-card-title">Tempo Medio/PDF</span></div><div class="stat-card-value info">${tempoMedio}ms</div></div>
+                    <div class="stat-card"><div class="stat-card-header"><span class="stat-card-title">Microtemas</span></div><div class="stat-card-value">${numTemas}</div></div>
+                    <div class="stat-card"><div class="stat-card-header"><span class="stat-card-title">Pleitos Externos</span></div><div class="stat-card-value primary">${pleitosExternos}</div></div>
+                    <div class="stat-card"><div class="stat-card-header"><span class="stat-card-title">Atos Internos</span></div><div class="stat-card-value warning">${atosInternos}</div></div>
+                    <div class="stat-card"><div class="stat-card-header"><span class="stat-card-title">Votos Mapeados</span></div><div class="stat-card-value">${numDiretores}</div></div>
+                    <div class="stat-card"><div class="stat-card-header"><span class="stat-card-title">Reunioes</span></div><div class="stat-card-value">${this.reunioes.size}</div></div>
+                `;
+
+                // Charts
+                document.getElementById('chart-tipo-deliberacao').innerHTML = this.renderDonut(pleitosExternos, atosInternos, 'Pleitos', 'Atos Int.');
+
+                const diretoresArr = Object.values(this.diretores).sort((a, b) => b.totalVotos - a.totalVotos).slice(0, 8);
+                document.getElementById('chart-votos-diretor').innerHTML = this.renderBarChart(diretoresArr.map(d => ({ label: d.nome.split(' ')[0], value: d.totalVotos })), 'primary');
+            },
+
+            renderDiretores() {
+                const container = document.getElementById('diretores-content');
+                const diretoresArr = Object.values(this.diretores).sort((a, b) => b.totalVotos - a.totalVotos);
+
+                if (diretoresArr.length === 0) {
+                    container.innerHTML = '<div class="card"><div class="card-body"><div class="empty-state"><h3>Nenhum diretor</h3><p>Analise PDFs para identificar diretores</p></div></div></div>';
                     return;
                 }
 
-                container.innerHTML = `<div class="card">
-                    <div class="card-body" style="padding: 0;">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Diretor</th>
-                                    <th>Total Votos</th>
-                                    <th>A Favor</th>
-                                    <th>Contra</th>
-                                    <th>Taxa Aprovacao</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${diretoresList.map(d => {
-                                    const taxa = d.total > 0 ? Math.round((d.favor / d.total) * 100) : 0;
-                                    return `<tr>
-                                        <td><strong style="color: var(--primary);">${d.nome}</strong></td>
-                                        <td>${d.total}</td>
-                                        <td><span class="badge badge-success">${d.favor}</span></td>
-                                        <td><span class="badge badge-danger">${d.contra}</span></td>
-                                        <td><strong style="color: var(--success);">${taxa}%</strong></td>
-                                    </tr>`;
-                                }).join('')}
-                            </tbody>
-                        </table>
+                container.innerHTML = `<div class="stats-grid">${diretoresArr.map(d => {
+                    const initials = d.nome.split(' ').map(n => n[0]).slice(0, 2).join('');
+                    const taxaDef = d.totalVotos > 0 ? Math.round((d.deferimentos / d.totalVotos) * 100) : 0;
+                    const pctExternos = d.totalVotos > 0 ? Math.round((d.pleitosExternos / d.totalVotos) * 100) : 0;
+                    const topTema = Object.entries(d.temas).sort((a, b) => b[1] - a[1])[0];
+
+                    return `<div class="diretor-card">
+                        <div class="diretor-header">
+                            <div class="diretor-avatar">${initials}</div>
+                            <div>
+                                <div class="diretor-name">${d.nome}</div>
+                                <div class="diretor-role">Diretor</div>
+                            </div>
+                        </div>
+                        <div class="diretor-stats">
+                            <div class="diretor-stat"><div class="diretor-stat-value">${d.totalVotos}</div><div class="diretor-stat-label">Total Votos</div></div>
+                            <div class="diretor-stat"><div class="diretor-stat-value" style="color:var(--success)">${taxaDef}%</div><div class="diretor-stat-label">Taxa Deferimento</div></div>
+                            <div class="diretor-stat"><div class="diretor-stat-value" style="color:var(--info)">${pctExternos}%</div><div class="diretor-stat-label">Pleitos Externos</div></div>
+                            <div class="diretor-stat"><div class="diretor-stat-value" style="color:var(--primary)">${topTema ? topTema[0].split(' ')[0] : '-'}</div><div class="diretor-stat-label">Tema Top</div></div>
+                        </div>
+                    </div>`;
+                }).join('')}</div>`;
+            },
+
+            renderTemas() {
+                const temasArr = Object.entries(this.temas).sort((a, b) => b[1].total - a[1].total);
+
+                document.getElementById('stats-temas').innerHTML = `
+                    <div class="stat-card"><div class="stat-card-header"><span class="stat-card-title">Total Temas</span></div><div class="stat-card-value">${temasArr.length}</div></div>
+                    <div class="stat-card"><div class="stat-card-header"><span class="stat-card-title">Tema Mais Recorrente</span></div><div class="stat-card-value primary" style="font-size:18px">${temasArr[0]?.[0] || '-'}</div></div>
+                    <div class="stat-card"><div class="stat-card-header"><span class="stat-card-title">Maior Deferimento</span></div><div class="stat-card-value success" style="font-size:18px">${temasArr.sort((a, b) => (b[1].deferidos / b[1].total) - (a[1].deferidos / a[1].total))[0]?.[0] || '-'}</div></div>
+                    <div class="stat-card"><div class="stat-card-header"><span class="stat-card-title">Maior Indeferimento</span></div><div class="stat-card-value danger" style="font-size:18px">${temasArr.sort((a, b) => (b[1].indeferidos / b[1].total) - (a[1].indeferidos / a[1].total))[0]?.[0] || '-'}</div></div>
+                `;
+
+                const temasOrdenados = Object.entries(this.temas).sort((a, b) => b[1].total - a[1].total).slice(0, 10);
+                document.getElementById('chart-temas-recorrentes').innerHTML = this.renderBarChart(temasOrdenados.map(([tema, data]) => ({ label: tema, value: data.total })), 'primary');
+
+                document.getElementById('chart-deferimento-tema').innerHTML = this.renderBarChart(temasOrdenados.map(([tema, data]) => ({
+                    label: tema,
+                    value: data.total > 0 ? Math.round((data.deferidos / data.total) * 100) : 0,
+                    suffix: '%'
+                })), 'success');
+
+                document.getElementById('table-temas').innerHTML = `<table>
+                    <thead><tr><th>Tema</th><th>Total</th><th>Deferidos</th><th>Indeferidos</th><th>Parciais</th><th>Taxa Def.</th></tr></thead>
+                    <tbody>${temasOrdenados.map(([tema, data]) => `<tr>
+                        <td><strong>${tema}</strong></td>
+                        <td>${data.total}</td>
+                        <td><span class="badge badge-success">${data.deferidos}</span></td>
+                        <td><span class="badge badge-danger">${data.indeferidos}</span></td>
+                        <td><span class="badge badge-warning">${data.parciais}</span></td>
+                        <td><strong style="color:var(--success)">${data.total > 0 ? Math.round((data.deferidos / data.total) * 100) : 0}%</strong></td>
+                    </tr>`).join('')}</tbody>
+                </table>`;
+            },
+
+            renderInstitucional() {
+                const total = this.deliberacoes.length;
+                const internos = this.deliberacoes.filter(d => d.classificacao === 'Pauta Interna da Agencia').length;
+                const externos = total - internos;
+                const pctInterno = total > 0 ? Math.round((internos / total) * 100) : 0;
+
+                document.getElementById('stats-institucional').innerHTML = `
+                    <div class="stat-card"><div class="stat-card-header"><span class="stat-card-title">Reunioes Processadas</span></div><div class="stat-card-value">${this.reunioes.size}</div></div>
+                    <div class="stat-card"><div class="stat-card-header"><span class="stat-card-title">PDFs Analisados</span></div><div class="stat-card-value">${this.pdfs.filter(p => p.status === 'analisado').length}</div></div>
+                    <div class="stat-card"><div class="stat-card-header"><span class="stat-card-title">% Pauta Interna</span></div><div class="stat-card-value warning">${pctInterno}%</div></div>
+                    <div class="stat-card"><div class="stat-card-header"><span class="stat-card-title">% Pauta Externa</span></div><div class="stat-card-value success">${100 - pctInterno}%</div></div>
+                `;
+
+                document.getElementById('chart-pauta-tipo').innerHTML = this.renderDonut(externos, internos, 'Externa', 'Interna');
+                document.getElementById('chart-reunioes-periodo').innerHTML = `<div class="empty-state"><p>Dados de periodo disponíveis apos conectar banco de dados</p></div>`;
+            },
+
+            renderDiferencial() {
+                const diretoresArr = Object.values(this.diretores).sort((a, b) => b.totalVotos - a.totalVotos);
+                const avgDeferimento = diretoresArr.length > 0 ? Math.round(diretoresArr.reduce((sum, d) => sum + (d.deferimentos / Math.max(d.totalVotos, 1)), 0) / diretoresArr.length * 100) : 0;
+
+                document.getElementById('stats-diferencial').innerHTML = `
+                    <div class="stat-card"><div class="stat-card-header"><span class="stat-card-title">Media Deferimento</span></div><div class="stat-card-value success">${avgDeferimento}%</div></div>
+                    <div class="stat-card"><div class="stat-card-header"><span class="stat-card-title">Diretores Ativos</span></div><div class="stat-card-value">${diretoresArr.length}</div></div>
+                    <div class="stat-card"><div class="stat-card-header"><span class="stat-card-title">Maior Votante</span></div><div class="stat-card-value primary" style="font-size:16px">${diretoresArr[0]?.nome.split(' ')[0] || '-'}</div></div>
+                    <div class="stat-card"><div class="stat-card-header"><span class="stat-card-title">Temas Unicos</span></div><div class="stat-card-value">${Object.keys(this.temas).length}</div></div>
+                `;
+
+                // Comparison chart
+                document.getElementById('chart-comparacao-diretores').innerHTML = this.renderBarChart(
+                    diretoresArr.slice(0, 6).map(d => ({
+                        label: d.nome.split(' ')[0],
+                        value: d.totalVotos > 0 ? Math.round((d.deferimentos / d.totalVotos) * 100) : 0,
+                        suffix: '%'
+                    })), 'success'
+                );
+
+                // Matrix
+                const temasTop = Object.entries(this.temas).sort((a, b) => b[1].total - a[1].total).slice(0, 5).map(t => t[0]);
+                const diretoresTop = diretoresArr.slice(0, 5);
+
+                document.getElementById('matriz-tdd').innerHTML = temasTop.length > 0 && diretoresTop.length > 0 ? `<table>
+                    <thead><tr><th>Tema</th>${diretoresTop.map(d => `<th>${d.nome.split(' ')[0]}</th>`).join('')}</tr></thead>
+                    <tbody>${temasTop.map(tema => `<tr>
+                        <td><strong>${tema}</strong></td>
+                        ${diretoresTop.map(d => `<td>${d.temas[tema] || 0}</td>`).join('')}
+                    </tr>`).join('')}</tbody>
+                </table>` : '<div class="empty-state"><p>Analise PDFs para gerar a matriz</p></div>';
+
+                document.getElementById('chart-tendencia').innerHTML = `<div class="empty-state"><p>Tendencia temporal disponivel apos conectar banco de dados</p></div>`;
+            },
+
+            renderBarChart(data, colorClass = 'primary') {
+                if (!data.length) return '<div class="empty-state"><p>Sem dados</p></div>';
+                const max = Math.max(...data.map(d => d.value));
+                return `<div class="chart-container">${data.map(d => {
+                    const pct = max > 0 ? Math.round((d.value / max) * 100) : 0;
+                    return `<div class="bar-item">
+                        <span class="bar-label">${d.label}</span>
+                        <div class="bar-track"><div class="bar-fill ${colorClass}" style="width:${pct}%"></div></div>
+                        <span class="bar-value">${d.value}${d.suffix || ''}</span>
+                    </div>`;
+                }).join('')}</div>`;
+            },
+
+            renderDonut(val1, val2, label1, label2) {
+                const total = val1 + val2;
+                const pct1 = total > 0 ? Math.round((val1 / total) * 100) : 0;
+                const circumference = 2 * Math.PI * 54;
+                const offset = circumference - (circumference * pct1 / 100);
+
+                return `<div style="display:flex;align-items:center;justify-content:center;gap:30px">
+                    <div class="donut-chart">
+                        <svg width="160" height="160" viewBox="0 0 160 160">
+                            <circle class="donut-bg" cx="80" cy="80" r="54"/>
+                            <circle class="donut-fill" cx="80" cy="80" r="54" stroke="var(--success)" stroke-dasharray="${circumference}" stroke-dashoffset="${offset}"/>
+                        </svg>
+                        <div class="donut-center">
+                            <div class="donut-value" style="color:var(--success)">${pct1}%</div>
+                            <div class="donut-label">${label1}</div>
+                        </div>
+                    </div>
+                    <div>
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+                            <div style="width:12px;height:12px;background:var(--success);border-radius:3px"></div>
+                            <span>${label1}: ${val1}</span>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:8px">
+                            <div style="width:12px;height:12px;background:var(--border);border-radius:3px"></div>
+                            <span>${label2}: ${val2}</span>
+                        </div>
                     </div>
                 </div>`;
             },
 
-            updateAnalisePage() {
-                const container = document.getElementById('analise-content');
-                const analisados = this.pdfs.filter(p => p.status === 'analisado');
+            excluirPDF(index) {
+                if (!confirm('Excluir este PDF?')) return;
+                const pdf = this.pdfs[index];
+                this.deliberacoes = this.deliberacoes.filter(d => d.arquivoOrigem !== pdf.nome);
+                this.pdfs.splice(index, 1);
+                this.recalcularMetricas();
+                this.updateUI();
+            },
 
-                if (analisados.length === 0) {
-                    container.innerHTML = '<div class="card"><div class="card-body"><div class="empty-state"><h3>Nenhum PDF analisado</h3><p>Faca upload e analise PDFs na pagina de Upload</p></div></div></div>';
-                    return;
-                }
+            limparTodos() {
+                if (!confirm('Limpar todos os PDFs?')) return;
+                this.pdfs = [];
+                this.deliberacoes = [];
+                this.diretores = {};
+                this.temas = {};
+                this.reunioes = new Set();
+                this.tempoProcessamento = [];
+                this.updateUI();
+            },
 
-                container.innerHTML = analisados.map(pdf => `
-                    <div class="card" style="margin-bottom: 16px;">
-                        <div class="card-header">
-                            <h2 class="card-title">${pdf.nome}</h2>
-                            <span class="badge badge-success">${pdf.deliberacoes.length} deliberacoes</span>
-                        </div>
-                        <div class="card-body" style="padding: 0;">
-                            ${pdf.deliberacoes.length > 0 ? `<table>
-                                <thead><tr><th>Numero</th><th>Microtema</th><th>Resultado</th></tr></thead>
-                                <tbody>
-                                    ${pdf.deliberacoes.map(d => `<tr>
-                                        <td>${d.numero}</td>
-                                        <td>${d.microtema}</td>
-                                        <td><span class="badge ${d.resultado === 'Deferido' ? 'badge-success' : d.resultado === 'Indeferido' ? 'badge-danger' : 'badge-secondary'}">${d.resultado}</span></td>
-                                    </tr>`).join('')}
-                                </tbody>
-                            </table>` : '<div class="empty-state"><p>Nenhuma deliberacao encontrada neste PDF</p></div>'}
-                        </div>
-                    </div>
-                `).join('');
+            recalcularMetricas() {
+                this.diretores = {};
+                this.temas = {};
+                this.reunioes = new Set();
+                this.deliberacoes.forEach(d => this.processarMetricas(d));
             },
 
             exportarCSV() {
-                if (this.deliberacoes.length === 0) {
-                    alert('Nenhuma deliberacao para exportar');
-                    return;
-                }
-
-                const headers = ['Numero', 'Interessado', 'Microtema', 'Resultado', 'Arquivo'];
+                if (this.deliberacoes.length === 0) { alert('Nenhuma deliberacao'); return; }
+                const headers = ['Numero', 'Reuniao', 'Processo', 'Interessado', 'Microtema', 'Resultado', 'Votos Favor', 'Votos Contra', 'Classificacao', 'Arquivo'];
                 const rows = this.deliberacoes.map(d => [
-                    d.numero,
-                    d.interessado,
-                    d.microtema,
-                    d.resultado,
-                    d.arquivoOrigem
+                    d.numeroDeliberacao, d.reuniaoOrdinaria, d.processo, d.interessado, d.microtema, d.resultado,
+                    (d.votosFavor || []).join('; '), (d.votosContra || []).join('; '), d.classificacao, d.arquivoOrigem
                 ]);
-
                 const csv = [headers.join(','), ...rows.map(r => r.map(c => `"${c}"`).join(','))].join('\n');
-                const blob = new Blob([csv], { type: 'text/csv' });
+                this.download(csv, 'deliberacoes.csv', 'text/csv');
+            },
+
+            exportarJSON() {
+                if (this.deliberacoes.length === 0) { alert('Nenhuma deliberacao'); return; }
+                const data = { deliberacoes: this.deliberacoes, diretores: this.diretores, temas: this.temas, metricas: { total: this.deliberacoes.length, reunioes: this.reunioes.size } };
+                this.download(JSON.stringify(data, null, 2), 'iris_dados.json', 'application/json');
+            },
+
+            download(content, filename, type) {
+                const blob = new Blob([content], { type });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `iris_deliberacoes_${new Date().toISOString().split('T')[0]}.csv`;
+                a.download = filename;
                 a.click();
                 URL.revokeObjectURL(url);
             },
@@ -1287,7 +1490,6 @@
             }
         };
 
-        // Inicializar
         App.init();
     </script>
 </body>
