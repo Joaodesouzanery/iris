@@ -31,6 +31,10 @@
     --border: #1a3a5c;
     --border-light: #243b55;
 
+    /* Cards */
+    --bg-card: #0d1e36;
+    --accent: #c9a227;
+
     /* Estados */
     --success: #4ade80;
     --success-bg: rgba(74, 222, 128, 0.15);
@@ -830,6 +834,33 @@ tr:hover {
 .badge-neutral {
     background: var(--surface-hover);
     color: var(--text-secondary);
+}
+
+.badge-tema {
+    background: var(--primary-bg);
+    color: var(--primary);
+    font-size: 11px;
+    padding: 2px 8px;
+}
+
+.badge-externo {
+    background: var(--info-bg);
+    color: var(--info);
+}
+
+.badge-interno {
+    background: rgba(168, 85, 247, 0.15);
+    color: #a855f7;
+}
+
+.badge-deferido {
+    background: var(--success-bg);
+    color: var(--success);
+}
+
+.badge-indeferido {
+    background: var(--danger-bg);
+    color: var(--danger);
 }
 
 /* ============================================

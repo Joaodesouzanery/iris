@@ -63,14 +63,41 @@ const CARGOS_DIRETORIA = [
     'Diretor de Assuntos Jurídicos',
     'Diretor Jurídico',
     'Diretor de Fiscalização',
+    'Diretora de Fiscalização',
     'Diretor Técnico',
+    'Diretora Técnica',
     'Diretor de Planejamento',
+    'Diretora de Planejamento',
     'Diretor Administrativo',
+    'Diretora Administrativa',
     'Diretor Financeiro',
+    'Diretora Financeira',
     'Diretor de Operações',
+    'Diretora de Operações',
     'Diretor de Regulação',
+    'Diretora de Regulação',
+    'Diretor de Investimentos',
+    'Diretora de Investimentos',
     'Conselheiro',
+    'Conselheira',
     'Membro'
+];
+
+/**
+ * Diretores conhecidos da ARTESP (para identificação direta)
+ */
+const DIRETORES_CONHECIDOS = [
+    // Diretoria atual (2024-2025)
+    { nome: 'André Isper Rodrigues Barnabé', cargo: 'Diretor-Presidente', variantes: ['Andre Isper', 'Barnabé', 'Barnabe'] },
+    { nome: 'Diego Albert Zanatto', cargo: 'Diretor de Fiscalização', variantes: ['Diego Zanatto', 'Zanatto'] },
+    { nome: 'Fernanda Esbizaro Rodrigues Rudnik', cargo: 'Diretora de Planejamento', variantes: ['Fernanda Rudnik', 'Esbizaro', 'Rudnik'] },
+    { nome: 'Raquel França Carneiro', cargo: 'Diretora de Investimentos', variantes: ['Raquel Carneiro', 'França Carneiro', 'Franca Carneiro'] },
+    // Diretoria anterior (para PDFs históricos)
+    { nome: 'Milton Persoli', cargo: 'Diretor-Presidente', variantes: ['Persoli'] },
+    { nome: 'Sergio Massaru Harada', cargo: 'Diretor', variantes: ['Massaru', 'Harada'] },
+    { nome: 'Carlos Eduardo Simões', cargo: 'Diretor', variantes: ['Carlos Simões', 'Carlos Simoes'] },
+    { nome: 'Antonio Carlos de Almeida', cargo: 'Diretor', variantes: ['Antonio Almeida'] },
+    { nome: 'Flavio Augusto Trevisan Saes', cargo: 'Diretor', variantes: ['Trevisan Saes', 'Flavio Saes'] }
 ];
 
 // ============================================================================
@@ -88,6 +115,33 @@ function extrairDiretores(texto) {
     }
 
     const diretores = new Map(); // Usa Map para evitar duplicatas
+    const textoNormalizado = texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+    // PRIMEIRO: Busca diretores conhecidos em TODO o texto
+    for (const diretor of DIRETORES_CONHECIDOS) {
+        const nomeNormalizado = diretor.nome.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+        // Verifica nome completo
+        if (textoNormalizado.includes(nomeNormalizado)) {
+            diretores.set(diretor.nome.toLowerCase(), {
+                nome: diretor.nome,
+                cargo: diretor.cargo
+            });
+            continue;
+        }
+
+        // Verifica variantes
+        for (const variante of diretor.variantes || []) {
+            const varianteNormalizada = variante.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+            if (textoNormalizado.includes(varianteNormalizada)) {
+                diretores.set(diretor.nome.toLowerCase(), {
+                    nome: diretor.nome,
+                    cargo: diretor.cargo
+                });
+                break;
+            }
+        }
+    }
 
     // Procura na parte final do texto (últimos 30%)
     const tamanhoTexto = texto.length;
@@ -450,5 +504,6 @@ module.exports = {
 
     // Exporta constantes para testes
     CARGOS_DIRETORIA,
+    DIRETORES_CONHECIDOS,
     PATTERNS_VOTACAO
 };

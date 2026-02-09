@@ -94,11 +94,20 @@ const MICROTEMAS = {
     'usuario': ['usuário', 'reclamação', 'ouvidoria', 'ressarcimento', 'indenização']
 };
 
-// Diretores conhecidos da ARTESP
+// Diretores conhecidos da ARTESP (atualizados 2024-2025)
 const DIRETORES = [
+    // Diretoria atual (2024-2025)
+    'André Isper Rodrigues Barnabé',
+    'Andre Isper Rodrigues Barnabe',
+    'Diego Albert Zanatto',
+    'Fernanda Esbizaro Rodrigues Rudnik',
+    'Raquel França Carneiro',
+    'Raquel Franca Carneiro',
+    // Diretoria anterior (para PDFs históricos)
     'Milton Persoli',
     'Sergio Massaru Harada',
     'Carlos Eduardo Simões',
+    'Carlos Eduardo Simoes',
     'Antonio Carlos de Almeida',
     'Flavio Augusto Trevisan Saes'
 ];
