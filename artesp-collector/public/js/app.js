@@ -520,80 +520,416 @@
     // ============================================
     const PageJurimetria = {
         diretores: [
-            { nome: 'Milton Persoli', cargo: 'Diretor-Presidente', iniciais: 'MP', totalVotos: 245, pctFavoravel: 78.2, pctContrario: 15.5, pctVista: 6.3, relatorias: 42, taxaSucessoRelator: 92.3, rigoroso: false },
-            { nome: 'Marcos Antonio Ribeiro', cargo: 'Diretor de Fiscalizacao', iniciais: 'MR', totalVotos: 198, pctFavoravel: 65.4, pctContrario: 28.3, pctVista: 6.3, relatorias: 35, taxaSucessoRelator: 88.6, rigoroso: true },
-            { nome: 'Patricia Vanzolini', cargo: 'Diretora de Planejamento', iniciais: 'PV', totalVotos: 212, pctFavoravel: 82.1, pctContrario: 12.3, pctVista: 5.6, relatorias: 38, taxaSucessoRelator: 94.7, rigoroso: false },
-            { nome: 'Carlos Eduardo Silva', cargo: 'Diretor de Investimentos', iniciais: 'CS', totalVotos: 187, pctFavoravel: 71.2, pctContrario: 22.4, pctVista: 6.4, relatorias: 31, taxaSucessoRelator: 90.3, rigoroso: false }
+            {
+                nome: 'Andre Isper Rodrigues Barnabe',
+                cargo: 'Diretor-Presidente',
+                iniciais: 'AI',
+                inicio: '2024-09-10',
+                tempoMandato: '5 anos e 0 meses',
+                participacoes: 42,
+                relatorias: 0,
+                favoravel: 42,
+                desfavoravel: 0,
+                vista: 0,
+                relator: 0,
+                acompanhou: 42,
+                divergente: 0,
+                nominal: 0,
+                colegiado: 42,
+                ativo: true
+            },
+            {
+                nome: 'Diego Albert Zanatto',
+                cargo: 'Diretor de Fiscalizacao',
+                iniciais: 'DZ',
+                inicio: '2024-09-10',
+                tempoMandato: '5 anos e 0 meses',
+                participacoes: 35,
+                relatorias: 0,
+                favoravel: 35,
+                desfavoravel: 0,
+                vista: 0,
+                relator: 0,
+                acompanhou: 35,
+                divergente: 0,
+                nominal: 0,
+                colegiado: 35,
+                ativo: true
+            },
+            {
+                nome: 'Fernanda Esbizaro Rodrigues Rudnik',
+                cargo: 'Diretora de Planejamento',
+                iniciais: 'FR',
+                inicio: '2024-09-10',
+                tempoMandato: '5 anos e 0 meses',
+                participacoes: 42,
+                relatorias: 0,
+                favoravel: 42,
+                desfavoravel: 0,
+                vista: 0,
+                relator: 0,
+                acompanhou: 42,
+                divergente: 0,
+                nominal: 0,
+                colegiado: 42,
+                ativo: true
+            },
+            {
+                nome: 'Raquel Franca Carneiro',
+                cargo: 'Diretora de Investimentos',
+                iniciais: 'RC',
+                inicio: '2024-09-10',
+                tempoMandato: '5 anos e 0 meses',
+                participacoes: 42,
+                relatorias: 0,
+                favoravel: 42,
+                desfavoravel: 0,
+                vista: 0,
+                relator: 0,
+                acompanhou: 42,
+                divergente: 0,
+                nominal: 0,
+                colegiado: 42,
+                ativo: true
+            }
         ],
+        selectedDirector: 0,
+        currentTab: 'mandatos',
 
         init() {
             const page = document.getElementById('page-jurimetria');
             page.classList.add('active');
-            this.renderCards();
-            this.renderMatrix();
+
+            this.setupTabs();
+            this.renderMandatos();
+            this.renderGantt();
+            this.renderVotingMatrix();
+            this.renderParticipationList();
+            this.renderDirectorSelector();
+            this.renderDirectorProfile();
         },
 
-        renderCards() {
-            const grid = document.getElementById('jurimetria-grid');
+        setupTabs() {
+            const tabBtns = document.querySelectorAll('#page-jurimetria .tab-btn');
+            tabBtns.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const tabId = e.target.dataset.tab;
+                    this.switchTab(tabId);
+                });
+            });
+        },
+
+        switchTab(tabId) {
+            // Update buttons
+            document.querySelectorAll('#page-jurimetria .tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.tab === tabId) {
+                    btn.classList.add('active');
+                }
+            });
+
+            // Update content
+            document.querySelectorAll('#page-jurimetria .tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            const tabContent = document.getElementById('tab-' + tabId);
+            if (tabContent) {
+                tabContent.classList.add('active');
+            }
+
+            this.currentTab = tabId;
+        },
+
+        renderMandatos() {
+            const grid = document.getElementById('mandatos-grid');
+            if (!grid) return;
 
             grid.innerHTML = this.diretores.map(d => `
-                <div class="director-card">
-                    <div class="director-header">
-                        <div class="director-avatar">${d.iniciais}</div>
-                        <div class="director-info">
-                            <h3>${d.nome}${d.rigoroso ? '<span class="badge-rigorous">Rigoroso</span>' : ''}</h3>
-                            <p>${d.cargo}</p>
+                <div class="mandato-card">
+                    <div class="mandato-header">
+                        <div class="mandato-avatar">${d.iniciais}</div>
+                        <div class="mandato-info">
+                            <div class="mandato-name">${d.nome}</div>
+                            <div class="mandato-role">${d.cargo}</div>
+                            <span class="mandato-status ${d.ativo ? 'active' : 'inactive'}">${d.ativo ? 'Em Exercicio' : 'Encerrado'}</span>
                         </div>
                     </div>
-                    <div class="director-stats">
-                        <div class="director-stat">
-                            <div class="value">${d.totalVotos}</div>
-                            <div class="label">Total Votos</div>
+                    <div class="mandato-body">
+                        <div class="mandato-stat">
+                            <div class="mandato-stat-value">${d.participacoes}</div>
+                            <div class="mandato-stat-label">Participacoes</div>
                         </div>
-                        <div class="director-stat">
-                            <div class="value green">${d.pctFavoravel.toFixed(1)}%</div>
-                            <div class="label">Favoravel</div>
+                        <div class="mandato-stat">
+                            <div class="mandato-stat-value">${d.relatorias}</div>
+                            <div class="mandato-stat-label">Relatorias</div>
                         </div>
-                        <div class="director-stat">
-                            <div class="value red">${d.pctContrario.toFixed(1)}%</div>
-                            <div class="label">Contrario</div>
-                        </div>
-                    </div>
-                    <div style="margin-top: 20px;">
-                        <div class="metric-row">
-                            <div class="metric-label"><span>Taxa Aprovacao como Relator</span><span>${d.taxaSucessoRelator.toFixed(1)}%</span></div>
-                            <div class="metric-bar"><div class="metric-fill green" style="width: ${d.taxaSucessoRelator}%;"></div></div>
-                        </div>
-                        <div class="metric-row">
-                            <div class="metric-label"><span>Relatorias</span><span>${d.relatorias} casos</span></div>
-                            <div class="metric-bar"><div class="metric-fill" style="width: ${d.relatorias / 50 * 100}%;"></div></div>
+                        <div class="mandato-progress">
+                            <div class="mandato-progress-label">
+                                <span>Taxa de Participacao</span>
+                                <span>100%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill success" style="width: 100%;"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
             `).join('');
         },
 
-        renderMatrix() {
-            const container = document.getElementById('jurimetria-matrix');
-            const reunioes = ['RO-245', 'RO-246', 'RO-247', 'RO-248', 'RO-249'];
+        renderGantt() {
+            const container = document.getElementById('gantt-chart');
+            if (!container) return;
 
-            let html = '<table class="voting-matrix"><thead><tr><th>Diretor</th>';
-            reunioes.forEach(r => html += `<th>${r}</th>`);
-            html += '<th>% Favoravel</th></tr></thead><tbody>';
+            const startYear = 2019;
+            const endYear = 2026;
+            const totalMonths = (endYear - startYear) * 12;
 
-            this.diretores.forEach(d => {
-                html += `<tr><td class="name">${d.nome}</td>`;
-                reunioes.forEach(() => {
-                    const rand = Math.random();
-                    if (rand > 0.25) html += '<td class="vote-favor">F</td>';
-                    else if (rand > 0.1) html += '<td class="vote-contra">C</td>';
-                    else html += '<td class="vote-vista">V</td>';
-                });
-                html += `<td style="color: #4ade80; font-weight: 600;">${d.pctFavoravel.toFixed(1)}%</td></tr>`;
+            container.innerHTML = this.diretores.map(d => {
+                const startDate = new Date(d.inicio);
+                const endDate = d.ativo ? new Date() : new Date(d.fim || new Date());
+                const startOffset = ((startDate.getFullYear() - startYear) * 12 + startDate.getMonth()) / totalMonths * 100;
+                const duration = ((endDate - startDate) / (1000 * 60 * 60 * 24 * 30)) / totalMonths * 100;
+                const barClass = d.ativo ? '' : 'ended';
+
+                return `<div class="gantt-row">
+                    <div class="gantt-label">${d.nome.split(' ').slice(0, 2).join(' ')}</div>
+                    <div class="gantt-bars">
+                        <div class="gantt-bar ${barClass}" style="left: ${startOffset}%; width: ${Math.min(duration, 100 - startOffset)}%;">
+                            ${d.cargo.split(' ')[0]}
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+        },
+
+        renderVotingMatrix() {
+            const tbody = document.getElementById('voting-matrix-body');
+            if (!tbody) return;
+
+            tbody.innerHTML = this.diretores.map(d => `
+                <tr>
+                    <td>${d.nome}</td>
+                    <td><span class="vote-badge favorable">${d.favoravel}</span></td>
+                    <td>${d.desfavoravel}</td>
+                    <td>${d.vista}</td>
+                    <td>${d.relator}</td>
+                    <td><span class="vote-badge acompanhou">${d.acompanhou}</span></td>
+                    <td>${d.divergente}</td>
+                    <td>${d.nominal}</td>
+                    <td><span class="vote-badge colegiado">${d.colegiado}</span></td>
+                    <td><strong>${d.participacoes}</strong></td>
+                </tr>
+            `).join('');
+        },
+
+        renderParticipationList() {
+            const list = document.getElementById('participation-list');
+            if (!list) return;
+
+            const sortedDiretores = [...this.diretores].sort((a, b) => b.participacoes - a.participacoes);
+
+            list.innerHTML = sortedDiretores.map((d, i) => `
+                <div class="participation-item">
+                    <div style="display: flex; align-items: center;">
+                        <div class="participation-rank">${i + 1}</div>
+                        <div class="participation-info">
+                            <div class="participation-name">${d.nome}</div>
+                            <div class="participation-count">${d.participacoes} participacoes</div>
+                        </div>
+                    </div>
+                    <span class="participation-badge">${d.relatorias} relatorias</span>
+                </div>
+            `).join('');
+        },
+
+        renderDirectorSelector() {
+            const list = document.getElementById('director-selector-list');
+            if (!list) return;
+
+            list.innerHTML = this.diretores.map((d, i) => `
+                <div class="director-option ${i === this.selectedDirector ? 'active' : ''}" data-index="${i}" onclick="App.PageJurimetria.selectDirector(${i})">
+                    <div class="director-option-info">
+                        <div class="director-option-name">${d.nome}</div>
+                        <div class="director-option-stats">${d.participacoes} participacoes colegiadas</div>
+                    </div>
+                    <span class="director-option-badge">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        Colegiado
+                    </span>
+                </div>
+            `).join('');
+        },
+
+        selectDirector(index) {
+            this.selectedDirector = index;
+
+            // Update selector UI
+            document.querySelectorAll('.director-option').forEach((el, i) => {
+                el.classList.toggle('active', i === index);
             });
 
-            html += '</tbody></table>';
-            container.innerHTML = html;
+            this.renderDirectorProfile();
+        },
+
+        renderDirectorProfile() {
+            const container = document.getElementById('director-profile');
+            if (!container) return;
+
+            const d = this.diretores[this.selectedDirector];
+            const inicioDate = new Date(d.inicio);
+            const inicioFormatted = inicioDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+            container.innerHTML = `
+                <div class="profile-header">
+                    <div class="profile-avatar">${d.iniciais}</div>
+                    <div class="profile-info">
+                        <div class="profile-name">${d.nome}</div>
+                        <div class="profile-role">${d.cargo}</div>
+                        <span class="profile-status">Em Exercicio</span>
+                    </div>
+                </div>
+
+                <div class="profile-metrics">
+                    <div class="profile-metric">
+                        <div class="profile-metric-icon">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        </div>
+                        <div class="profile-metric-label">Inicio</div>
+                        <div class="profile-metric-value">${inicioFormatted}</div>
+                    </div>
+                    <div class="profile-metric">
+                        <div class="profile-metric-icon">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </div>
+                        <div class="profile-metric-label">Tempo</div>
+                        <div class="profile-metric-value">${d.tempoMandato}</div>
+                    </div>
+                    <div class="profile-metric">
+                        <div class="profile-metric-icon">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        </div>
+                        <div class="profile-metric-label">Participacoes Colegiadas</div>
+                        <div class="profile-metric-value">${d.participacoes}</div>
+                    </div>
+                    <div class="profile-metric">
+                        <div class="profile-metric-icon">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path></svg>
+                        </div>
+                        <div class="profile-metric-label">Relatorias</div>
+                        <div class="profile-metric-value">${d.relatorias}</div>
+                    </div>
+                </div>
+
+                <div class="profile-alert">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <p>As atas da ARTESP (2025) registram decisoes colegiadas, sem identificacao publica de voto individual por diretor. Os dados abaixo refletem <strong>participacao institucional</strong>, nao decisoes individuais atribuiveis.</p>
+                </div>
+
+                <div class="profile-tabs">
+                    <button class="profile-tab active" onclick="App.PageJurimetria.switchProfileTab(this, 'juridico')">Perfil Juridico</button>
+                    <button class="profile-tab" onclick="App.PageJurimetria.switchProfileTab(this, 'historico')">Historico de Votos</button>
+                    <button class="profile-tab" onclick="App.PageJurimetria.switchProfileTab(this, 'tendencias')">Tendencias</button>
+                </div>
+
+                <div class="profile-content" id="profile-tab-content">
+                    <h4 style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        Participacao Institucional
+                    </h4>
+
+                    <div class="info-alert">
+                        <svg class="info-alert-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <div class="info-alert-content">
+                            <h4>Analise comportamental individual indisponivel.</h4>
+                            <p>As atas processadas registram apenas decisoes colegiadas unanimes. Taxas de aprovacao, divergencia e rigor individual so podem ser calculadas quando votos nominais explicitos sao identificados nos documentos.</p>
+                        </div>
+                    </div>
+
+                    <div class="participation-stats">
+                        <div class="participation-stat-card">
+                            <div class="participation-stat-value">${d.participacoes}</div>
+                            <div class="participation-stat-label">colegiadas unanimes</div>
+                        </div>
+                        <div class="participation-stat-card">
+                            <div class="participation-stat-value">${d.relatorias}</div>
+                            <div class="participation-stat-label">relatorios apresentados</div>
+                        </div>
+                    </div>
+
+                    <div class="methodology-note">
+                        <strong>Nota metodologica:</strong>
+                        <p>A analise de tendencia individual (pro-aprovacao, conservador, analitico) requer identificacao de votos nominais divergentes ou pedidos de vista documentados individualmente. Quando disponiveis, esses indicadores serao exibidos automaticamente.</p>
+                    </div>
+                </div>
+            `;
+        },
+
+        switchProfileTab(btn, tab) {
+            document.querySelectorAll('.profile-tab').forEach(t => t.classList.remove('active'));
+            btn.classList.add('active');
+
+            const d = this.diretores[this.selectedDirector];
+            const content = document.getElementById('profile-tab-content');
+
+            if (tab === 'juridico') {
+                content.innerHTML = `
+                    <h4 style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        Participacao Institucional
+                    </h4>
+
+                    <div class="info-alert">
+                        <svg class="info-alert-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <div class="info-alert-content">
+                            <h4>Analise comportamental individual indisponivel.</h4>
+                            <p>As atas processadas registram apenas decisoes colegiadas unanimes. Taxas de aprovacao, divergencia e rigor individual so podem ser calculadas quando votos nominais explicitos sao identificados nos documentos.</p>
+                        </div>
+                    </div>
+
+                    <div class="participation-stats">
+                        <div class="participation-stat-card">
+                            <div class="participation-stat-value">${d.participacoes}</div>
+                            <div class="participation-stat-label">colegiadas unanimes</div>
+                        </div>
+                        <div class="participation-stat-card">
+                            <div class="participation-stat-value">${d.relatorias}</div>
+                            <div class="participation-stat-label">relatorios apresentados</div>
+                        </div>
+                    </div>
+
+                    <div class="methodology-note">
+                        <strong>Nota metodologica:</strong>
+                        <p>A analise de tendencia individual (pro-aprovacao, conservador, analitico) requer identificacao de votos nominais divergentes ou pedidos de vista documentados individualmente. Quando disponiveis, esses indicadores serao exibidos automaticamente.</p>
+                    </div>
+                `;
+            } else if (tab === 'historico') {
+                content.innerHTML = `
+                    <h4 style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        Historico de Votos
+                    </h4>
+
+                    <div style="text-align: center; padding: 40px; color: var(--text-secondary);">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="48" height="48" style="margin-bottom: 16px; opacity: 0.5;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                        <p>Historico detalhado de votos individuais nao disponivel.</p>
+                        <p style="font-size: 12px; margin-top: 8px;">As atas registram apenas decisoes colegiadas unanimes.</p>
+                    </div>
+                `;
+            } else if (tab === 'tendencias') {
+                content.innerHTML = `
+                    <h4 style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                        Analise de Tendencias
+                    </h4>
+
+                    <div style="text-align: center; padding: 40px; color: var(--text-secondary);">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="48" height="48" style="margin-bottom: 16px; opacity: 0.5;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                        <p>Analise de tendencias requer votos nominais identificados.</p>
+                        <p style="font-size: 12px; margin-top: 8px;">Com mais dados, sera possivel identificar padroes de votacao.</p>
+                    </div>
+                `;
+            }
         }
     };
 
