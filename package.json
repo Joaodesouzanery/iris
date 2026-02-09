@@ -1,0 +1,13 @@
+{
+  "name": "iris-platform",
+  "version": "1.0.0",
+  "description": "IRIS Platform - Inteligencia Regulatoria para ARTESP",
+  "main": "artesp-collector/server-unified.js",
+  "scripts": {
+    "start": "node artesp-collector/server-unified.js",
+    "dev": "node artesp-collector/server-unified.js"
+  },
+  "keywords": ["iris", "artesp", "regulatorio", "jurimetria"],
+  "author": "IRIS",
+  "license": "MIT"
+}
