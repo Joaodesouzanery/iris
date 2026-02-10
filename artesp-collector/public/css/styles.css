@@ -3753,3 +3753,586 @@ tr:hover {
     border-radius: 2px;
     border: 1px solid rgba(255, 255, 255, 0.2);
 }
+
+/* ============================================
+   DELIBERACOES LIST CARDS
+   ============================================ */
+.deliberacoes-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.deliberacao-card {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.deliberacao-card:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.deliberacao-card-header {
+    padding: 20px 24px;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(135deg, rgba(255, 239, 77, 0.05) 0%, transparent 100%);
+}
+
+.deliberacao-number {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.deliberacao-badge {
+    background: var(--primary);
+    color: var(--background);
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 18px;
+}
+
+.deliberacao-agency {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.deliberacao-main-info {
+    flex: 1;
+}
+
+.deliberacao-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.deliberacao-processo {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+.deliberacao-meta {
+    display: flex;
+    gap: 24px;
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.deliberacao-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.deliberacao-meta-item svg {
+    width: 14px;
+    height: 14px;
+}
+
+.deliberacao-decision {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.decision-badge {
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 13px;
+}
+
+.decision-badge.deferido {
+    background: var(--success-bg);
+    color: var(--success);
+}
+
+.decision-badge.indeferido {
+    background: var(--danger-bg);
+    color: var(--danger);
+}
+
+.deliberacao-card-body {
+    padding: 20px 24px;
+}
+
+.deliberacao-resumo {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 16px;
+}
+
+.deliberacao-votos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.voto-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: var(--success-bg);
+    border-radius: 20px;
+    font-size: 12px;
+    color: var(--success);
+}
+
+.voto-chip svg {
+    width: 12px;
+    height: 12px;
+}
+
+/* ============================================
+   DELIBERACAO MODAL
+   ============================================ */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.modal-content {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    max-width: 900px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    border: 1px solid var(--border);
+}
+
+.modal-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 28px;
+    cursor: pointer;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.modal-close:hover {
+    background: var(--surface-hover);
+    color: var(--text-primary);
+}
+
+.deliberacao-modal-content {
+    padding: 0;
+}
+
+.modal-header-section {
+    padding: 32px;
+    background: linear-gradient(135deg, rgba(255, 239, 77, 0.1) 0%, transparent 100%);
+    border-bottom: 1px solid var(--border);
+}
+
+.modal-title-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.modal-number-badge {
+    background: var(--primary);
+    color: var(--background);
+    padding: 16px 24px;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.modal-number-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    opacity: 0.8;
+}
+
+.modal-number-value {
+    font-size: 32px;
+    font-weight: 800;
+}
+
+.modal-title-info {
+    flex: 1;
+}
+
+.modal-agency-name {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 4px;
+}
+
+.modal-date {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.modal-info-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+}
+
+.modal-info-item {
+    background: var(--background);
+    padding: 16px;
+    border-radius: var(--radius);
+}
+
+.modal-info-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.modal-info-value {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.modal-info-value.success {
+    color: var(--success);
+}
+
+.modal-body-section {
+    padding: 32px;
+}
+
+.modal-section {
+    margin-bottom: 28px;
+}
+
+.modal-section:last-child {
+    margin-bottom: 0;
+}
+
+.modal-section-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--primary);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.modal-section-content {
+    font-size: 15px;
+    color: var(--text-secondary);
+    line-height: 1.7;
+}
+
+.modal-votos-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.modal-voto-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: var(--success-bg);
+    border-radius: var(--radius);
+    border: 1px solid rgba(74, 222, 128, 0.3);
+}
+
+.modal-voto-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--success);
+    color: var(--background);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 13px;
+}
+
+.modal-voto-name {
+    font-weight: 500;
+    color: var(--text-primary);
+    font-size: 14px;
+}
+
+.modal-json-section {
+    background: #0a192f;
+    border-radius: var(--radius);
+    padding: 20px;
+    overflow-x: auto;
+}
+
+.modal-json-section pre {
+    margin: 0;
+    color: #e2e8f0;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.modal-json-section .json-key {
+    color: #f472b6;
+}
+
+.modal-json-section .json-string {
+    color: #4ade80;
+}
+
+.modal-json-section .json-number {
+    color: #60a5fa;
+}
+
+.modal-json-section .json-boolean {
+    color: #fbbf24;
+}
+
+.modal-json-section .json-null {
+    color: #94a3b8;
+}
+
+/* ============================================
+   AGENCY SELECTOR TABS
+   ============================================ */
+.agency-selector-bar {
+    margin-bottom: 24px;
+}
+
+.agency-tabs {
+    display: flex;
+    gap: 12px;
+    background: var(--background);
+    padding: 8px;
+    border-radius: var(--radius-lg);
+    width: fit-content;
+}
+
+.agency-tab {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.agency-tab:hover {
+    background: var(--surface-hover);
+    color: var(--text-primary);
+}
+
+.agency-tab.active {
+    background: var(--primary);
+    color: var(--background);
+}
+
+.agency-tab-icon {
+    font-size: 18px;
+}
+
+/* ============================================
+   MANDATOS DETAILED GRID
+   ============================================ */
+.mandatos-detailed-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 20px;
+    margin-bottom: 24px;
+}
+
+.mandato-detailed-card {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+.mandato-detailed-card:hover {
+    border-color: var(--primary);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.mandato-card-header {
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    border-bottom: 1px solid var(--border);
+}
+
+.mandato-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 20px;
+    color: var(--background);
+    flex-shrink: 0;
+}
+
+.mandato-info {
+    flex: 1;
+}
+
+.mandato-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.mandato-role {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.mandato-status {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.mandato-status.ativo {
+    background: var(--success-bg);
+    color: var(--success);
+}
+
+.mandato-status.inativo {
+    background: var(--danger-bg);
+    color: var(--danger);
+}
+
+.mandato-card-body {
+    padding: 20px;
+}
+
+.mandato-dates {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 16px;
+}
+
+.mandato-date-item {
+    flex: 1;
+}
+
+.mandato-date-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.mandato-date-value {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.mandato-progress {
+    margin-bottom: 20px;
+}
+
+.mandato-progress-text {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+.mandato-progress-bar {
+    height: 8px;
+    background: var(--background);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.mandato-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), var(--primary-light));
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.mandato-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.mandato-stat {
+    background: var(--background);
+    padding: 16px;
+    border-radius: var(--radius);
+    text-align: center;
+}
+
+.mandato-stat-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 4px;
+}
+
+.mandato-stat-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}

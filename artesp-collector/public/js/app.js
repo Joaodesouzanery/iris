@@ -196,14 +196,86 @@
         data: [],
         filtered: [],
 
+        // Dados de exemplo para demonstracao
+        sampleData: [
+            {
+                id: 1,
+                processo: 'SEI! n° 134.00037303/2024-01',
+                interessado: 'Viacao Cometa S/A',
+                microtema: 'Outros',
+                decisao: 'Deferido',
+                pauta_interna: false,
+                numero_reuniao: '1176',
+                data_reuniao: '2025-12-18',
+                votos_favor: ['Andre Isper Rodrigues Barnabe', 'Diego Albert Zanatto', 'Fernanda Esbizaro Rodrigues Rudnik', 'Raquel Franca Carneiro'],
+                votos_contra: null,
+                resumo_pleito: 'A Viacao Cometa S/A solicitou o ressarcimento referente a utilizacao do servico de transporte intermunicipal com beneficio tarifario de gratuidade, conforme previsto no Decreto n° 68.937, de 3 de outubro de 2024, que estabelece a gratuidade nos dias 6 e 27 de outubro de 2024.',
+                fundamento_decisao: 'RECOMENDA O DEFERIMENTO do pedido da operadora Viacao Cometa S/A, para conceder o ressarcimento no Servico Regular Rodoviario de 18.366 (dezoito mil, trezentos e sessenta e seis) gratuidades, no montante de R$ 1.029.792,49 (um milhao, vinte e nove mil, setecentos e noventa e dois reais e quarenta e nove centavos), decorrente dos impactos do Decreto n° 68.937, de 03 de outubro de 2024.'
+            },
+            {
+                id: 2,
+                processo: 'SEI! n° 134.00038201/2024-02',
+                interessado: 'Concessionaria ViaOeste S/A',
+                microtema: 'Rodovias',
+                decisao: 'Deferido',
+                pauta_interna: false,
+                numero_reuniao: '1176',
+                data_reuniao: '2025-12-18',
+                votos_favor: ['Andre Isper Rodrigues Barnabe', 'Diego Albert Zanatto', 'Fernanda Esbizaro Rodrigues Rudnik', 'Raquel Franca Carneiro'],
+                votos_contra: null,
+                resumo_pleito: 'A Concessionaria ViaOeste S/A solicitou aprovacao do projeto de ampliacao da faixa de pedagio no km 42 da Rodovia Raposo Tavares.',
+                fundamento_decisao: 'RECOMENDA O DEFERIMENTO do pedido de ampliacao, considerando os estudos de demanda e seguranca viaria apresentados.'
+            },
+            {
+                id: 3,
+                processo: 'SEI! n° 134.00039102/2024-03',
+                interessado: 'EMTU - Empresa Metropolitana de Transportes Urbanos',
+                microtema: 'Onibus',
+                decisao: 'Deferido',
+                pauta_interna: true,
+                numero_reuniao: '1175',
+                data_reuniao: '2025-12-11',
+                votos_favor: ['Andre Isper Rodrigues Barnabe', 'Diego Albert Zanatto', 'Fernanda Esbizaro Rodrigues Rudnik', 'Raquel Franca Carneiro'],
+                votos_contra: null,
+                resumo_pleito: 'Solicitacao de aprovacao de novas linhas metropolitanas para atendimento da regiao de Guarulhos.',
+                fundamento_decisao: 'RECOMENDA O DEFERIMENTO considerando o estudo de demanda e viabilidade operacional.'
+            },
+            {
+                id: 4,
+                processo: 'SEI! n° 134.00040003/2024-04',
+                interessado: 'AutoBan Concessionaria S/A',
+                microtema: 'Regulacao',
+                decisao: 'Indeferido',
+                pauta_interna: false,
+                numero_reuniao: '1175',
+                data_reuniao: '2025-12-11',
+                votos_favor: [],
+                votos_contra: ['Andre Isper Rodrigues Barnabe', 'Diego Albert Zanatto', 'Fernanda Esbizaro Rodrigues Rudnik', 'Raquel Franca Carneiro'],
+                resumo_pleito: 'Pedido de revisao extraordinaria de tarifas devido a variacao cambial.',
+                fundamento_decisao: 'RECOMENDA O INDEFERIMENTO por nao atender aos requisitos contratuais estabelecidos.'
+            }
+        ],
+
         async init() {
             const page = document.getElementById('page-deliberacoes');
             page.classList.add('active');
 
-            Utils.showLoading('deliberacoes-table-body');
+            const container = document.getElementById('deliberacoes-list');
+            if (container) {
+                container.innerHTML = '<div class="loading"><div class="spinner"></div><span>Carregando deliberacoes...</span></div>';
+            }
 
-            const response = await API.get('/api/deliberacoes');
-            this.data = response?.deliberacoes || [];
+            try {
+                const response = await API.get('/api/deliberacoes');
+                this.data = response?.deliberacoes || [];
+                if (this.data.length === 0) {
+                    // Usar dados de exemplo se nao houver dados reais
+                    this.data = this.sampleData;
+                }
+            } catch (e) {
+                // Usar dados de exemplo em caso de erro
+                this.data = this.sampleData;
+            }
             this.filtered = [...this.data];
 
             this.populateFilters();
@@ -255,29 +327,238 @@
         },
 
         render() {
-            const tbody = document.getElementById('deliberacoes-table-body');
+            const container = document.getElementById('deliberacoes-list');
+            if (!container) return;
 
             if (this.filtered.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state">Nenhuma deliberacao encontrada</div></td></tr>';
+                container.innerHTML = '<div class="empty-state">Nenhuma deliberacao encontrada</div>';
                 return;
             }
 
-            tbody.innerHTML = this.filtered.map(d => {
-                const decisaoClass = d.decisao === 'Deferido' ? 'badge-deferido' :
-                                    d.decisao === 'Indeferido' ? 'badge-indeferido' : '';
-                const tipoClass = d.pauta_interna ? 'badge-interno' : 'badge-externo';
-                const tipoLabel = d.pauta_interna ? 'Ato Interno' : 'Pleito Externo';
+            container.innerHTML = this.filtered.map((d, index) => {
+                const votos = d.votos_favor || [];
+                const tipoLabel = d.pauta_interna ? 'Pauta Interna' : 'Pauta Externa';
+                const dataFormatada = this.formatDate(d.data_reuniao);
 
-                return `<tr>
-                    <td><span class="processo-link">${d.processo || '-'}</span></td>
-                    <td>${d.interessado || '-'}</td>
-                    <td>${d.microtema || '-'}</td>
-                    <td><span class="badge ${decisaoClass}">${d.decisao || '-'}</span></td>
-                    <td><span class="badge ${tipoClass}">${tipoLabel}</span></td>
-                    <td>${d.numero_reuniao || '-'}</td>
-                    <td>${d.data_reuniao || '-'}</td>
-                </tr>`;
+                return `
+                <div class="deliberacao-card" onclick="App.PageDeliberacoes.openModal(${index})">
+                    <div class="deliberacao-card-header">
+                        <div class="deliberacao-number">
+                            <div class="deliberacao-badge">${d.numero_reuniao || '-'}</div>
+                            <span class="deliberacao-agency">ARTESP</span>
+                        </div>
+                        <div class="deliberacao-main-info">
+                            <div class="deliberacao-title">
+                                ${d.interessado || 'Interessado nao identificado'}
+                            </div>
+                            <div class="deliberacao-processo">${d.processo || 'Processo nao identificado'}</div>
+                            <div class="deliberacao-meta">
+                                <span class="deliberacao-meta-item">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                    ${dataFormatada}
+                                </span>
+                                <span class="deliberacao-meta-item">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
+                                    ${d.microtema || 'Nao classificado'}
+                                </span>
+                                <span class="deliberacao-meta-item">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                    ${tipoLabel}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="deliberacao-decision">
+                            <span class="decision-badge ${d.decisao?.toLowerCase() || ''}">${d.decisao || '-'}</span>
+                        </div>
+                    </div>
+                    <div class="deliberacao-card-body">
+                        <div class="deliberacao-resumo">${this.truncate(d.resumo_pleito, 200)}</div>
+                        <div class="deliberacao-votos">
+                            ${votos.slice(0, 4).map(v => `
+                                <span class="voto-chip">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                    ${this.getFirstLastName(v)}
+                                </span>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+                `;
             }).join('');
+        },
+
+        formatDate(dateStr) {
+            if (!dateStr) return 'Data nao informada';
+            try {
+                const parts = dateStr.split('-');
+                if (parts.length === 3) {
+                    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+                }
+                return dateStr;
+            } catch (e) {
+                return dateStr;
+            }
+        },
+
+        truncate(text, maxLength) {
+            if (!text) return '';
+            if (text.length <= maxLength) return text;
+            return text.substring(0, maxLength) + '...';
+        },
+
+        getFirstLastName(fullName) {
+            if (!fullName) return '';
+            const parts = fullName.split(' ');
+            if (parts.length >= 2) {
+                return `${parts[0]} ${parts[parts.length - 1]}`;
+            }
+            return fullName;
+        },
+
+        getInitials(fullName) {
+            if (!fullName) return '??';
+            const parts = fullName.split(' ');
+            if (parts.length >= 2) {
+                return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+            }
+            return fullName.substring(0, 2).toUpperCase();
+        },
+
+        openModal(index) {
+            const d = this.filtered[index];
+            if (!d) return;
+
+            const modal = document.getElementById('deliberacao-modal');
+            const body = document.getElementById('deliberacao-modal-body');
+
+            const votos = d.votos_favor || [];
+            const votosContra = d.votos_contra || [];
+            const dataFormatada = this.formatDate(d.data_reuniao);
+            const tipoLabel = d.pauta_interna ? 'Pauta Interna' : 'Pauta Externa';
+
+            const jsonData = {
+                decisao: d.decisao,
+                processo: d.processo,
+                microtema: d.microtema,
+                interessado: d.interessado,
+                votos_favor: d.votos_favor,
+                data_reuniao: d.data_reuniao,
+                votos_contra: d.votos_contra,
+                pauta_interna: d.pauta_interna,
+                resumo_pleito: d.resumo_pleito,
+                numero_reuniao: d.numero_reuniao,
+                fundamento_decisao: d.fundamento_decisao
+            };
+
+            body.innerHTML = `
+                <div class="modal-header-section">
+                    <div class="modal-title-row">
+                        <div class="modal-number-badge">
+                            <div class="modal-number-label">Deliberacao</div>
+                            <div class="modal-number-value">${d.numero_reuniao || '-'}</div>
+                        </div>
+                        <div class="modal-title-info">
+                            <div class="modal-agency-name">ARTESP</div>
+                            <div class="modal-date">${dataFormatada}</div>
+                        </div>
+                    </div>
+                    <div class="modal-info-grid">
+                        <div class="modal-info-item">
+                            <div class="modal-info-label">Agencia</div>
+                            <div class="modal-info-value">ARTESP</div>
+                        </div>
+                        <div class="modal-info-item">
+                            <div class="modal-info-label">Numero da Reuniao</div>
+                            <div class="modal-info-value">${d.numero_reuniao || '-'}</div>
+                        </div>
+                        <div class="modal-info-item">
+                            <div class="modal-info-label">Data</div>
+                            <div class="modal-info-value">${dataFormatada}</div>
+                        </div>
+                        <div class="modal-info-item">
+                            <div class="modal-info-label">Decisao</div>
+                            <div class="modal-info-value ${d.decisao === 'Deferido' ? 'success' : ''}">${d.decisao || '-'}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-body-section">
+                    <div class="modal-section">
+                        <div class="modal-section-title">Votos a Favor</div>
+                        <div class="modal-votos-grid">
+                            ${votos.map(v => `
+                                <div class="modal-voto-item">
+                                    <div class="modal-voto-avatar">${this.getInitials(v)}</div>
+                                    <div class="modal-voto-name">${v}</div>
+                                </div>
+                            `).join('')}
+                            ${votos.length === 0 ? '<span style="color: var(--text-muted);">Nenhum voto registrado</span>' : ''}
+                        </div>
+                    </div>
+
+                    <div class="modal-section">
+                        <div class="modal-section-title">Detalhes da Deliberacao</div>
+                        <div class="modal-info-grid" style="grid-template-columns: repeat(3, 1fr);">
+                            <div class="modal-info-item">
+                                <div class="modal-info-label">Interessado</div>
+                                <div class="modal-info-value">${d.interessado || '-'}</div>
+                            </div>
+                            <div class="modal-info-item">
+                                <div class="modal-info-label">Tipo de Pauta</div>
+                                <div class="modal-info-value">${tipoLabel}</div>
+                            </div>
+                            <div class="modal-info-item">
+                                <div class="modal-info-label">Microtema</div>
+                                <div class="modal-info-value">${d.microtema || '-'}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-section">
+                        <div class="modal-section-title">Resumo do Pleito</div>
+                        <div class="modal-section-content">${d.resumo_pleito || 'Resumo nao disponivel'}</div>
+                    </div>
+
+                    ${d.fundamento_decisao ? `
+                    <div class="modal-section">
+                        <div class="modal-section-title">Fundamento da Decisao</div>
+                        <div class="modal-section-content">${d.fundamento_decisao}</div>
+                    </div>
+                    ` : ''}
+
+                    <div class="modal-section">
+                        <div class="modal-section-title">Dados Extraidos (JSON)</div>
+                        <div class="modal-json-section">
+                            <pre>${this.formatJSON(jsonData)}</pre>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            modal.style.display = 'flex';
+
+            // Fechar modal ao clicar fora
+            modal.onclick = (e) => {
+                if (e.target === modal) {
+                    this.closeModal();
+                }
+            };
+        },
+
+        formatJSON(obj) {
+            const json = JSON.stringify(obj, null, 2);
+            return json
+                .replace(/"([^"]+)":/g, '<span class="json-key">"$1"</span>:')
+                .replace(/: "([^"]*)"/g, ': <span class="json-string">"$1"</span>')
+                .replace(/: (\d+)/g, ': <span class="json-number">$1</span>')
+                .replace(/: (true|false)/g, ': <span class="json-boolean">$1</span>')
+                .replace(/: null/g, ': <span class="json-null">null</span>');
+        },
+
+        closeModal() {
+            const modal = document.getElementById('deliberacao-modal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
         },
 
         exportCSV() {
@@ -521,41 +802,150 @@
     // PAGE: Jurimetria
     // ============================================
     const PageJurimetria = {
-        // Diretores base com informacoes estaticas
-        diretoresBase: [
-            {
-                nome: 'Andre Isper Rodrigues Barnabe',
-                variantes: ['André Isper Rodrigues Barnabé', 'Andre Isper', 'Barnabé', 'Barnabe'],
-                cargo: 'Diretor-Presidente',
-                iniciais: 'AI',
-                inicio: '2024-09-10',
-                ativo: true
+        // Dados por agencia
+        agenciasData: {
+            artesp: {
+                nome: 'ARTESP',
+                cor: '#FFEF4D',
+                diretores: [
+                    {
+                        nome: 'Fernanda Esbizaro Rodrigues Rudnik',
+                        cargo: 'Diretora',
+                        iniciais: 'FE',
+                        inicio: '2025-08-28',
+                        termino: '2030-08-27',
+                        ativo: true,
+                        participacoes: 42,
+                        relatorias: 0
+                    },
+                    {
+                        nome: 'Raquel Franca Carneiro',
+                        cargo: 'Diretora',
+                        iniciais: 'RF',
+                        inicio: '2025-05-14',
+                        termino: '2030-05-13',
+                        ativo: true,
+                        participacoes: 42,
+                        relatorias: 0
+                    },
+                    {
+                        nome: 'Andre Isper Rodrigues Barnabe',
+                        cargo: 'Diretor-Presidente',
+                        iniciais: 'AI',
+                        inicio: '2024-09-10',
+                        termino: '2029-09-09',
+                        ativo: true,
+                        participacoes: 42,
+                        relatorias: 0
+                    },
+                    {
+                        nome: 'Diego Albert Zanatto',
+                        cargo: 'Diretor',
+                        iniciais: 'DA',
+                        inicio: '2024-08-14',
+                        termino: '2029-08-13',
+                        ativo: true,
+                        participacoes: 35,
+                        relatorias: 0
+                    }
+                ],
+                stats: {
+                    diretoresAtivos: 4,
+                    participacoesColegiadas: 161,
+                    taxaConsenso: 100,
+                    deliberacoes: 89
+                },
+                votos: {
+                    favoravel: 161,
+                    desfavoravel: 0,
+                    vista: 0,
+                    relator: 0
+                },
+                setores: [
+                    { nome: 'Rodovias', valor: 48, cor: '#f472b6' },
+                    { nome: 'Onibus', valor: 21, cor: '#4ade80' },
+                    { nome: 'Regulacao', valor: 12, cor: '#fbbf24' },
+                    { nome: 'Marcos Legais', valor: 5, cor: '#a855f7' },
+                    { nome: 'Ferrovias', valor: 1, cor: '#60a5fa' }
+                ]
             },
-            {
-                nome: 'Diego Albert Zanatto',
-                variantes: ['Diego Zanatto', 'Zanatto'],
-                cargo: 'Diretor de Fiscalizacao',
-                iniciais: 'DZ',
-                inicio: '2024-09-10',
-                ativo: true
-            },
-            {
-                nome: 'Fernanda Esbizaro Rodrigues Rudnik',
-                variantes: ['Fernanda Esbizaro', 'Rudnik'],
-                cargo: 'Diretora de Planejamento',
-                iniciais: 'FR',
-                inicio: '2024-09-10',
-                ativo: true
-            },
-            {
-                nome: 'Raquel Franca Carneiro',
-                variantes: ['Raquel França Carneiro', 'Raquel Carneiro', 'Carneiro'],
-                cargo: 'Diretora de Investimentos',
-                iniciais: 'RC',
-                inicio: '2024-09-10',
-                ativo: true
+            anm: {
+                nome: 'ANM',
+                cor: '#60A5FA',
+                diretores: [
+                    {
+                        nome: 'Mauro Henrique Moreira Sousa',
+                        cargo: 'Diretor-Geral',
+                        iniciais: 'MM',
+                        inicio: '2023-04-15',
+                        termino: '2027-04-14',
+                        ativo: true,
+                        participacoes: 78,
+                        relatorias: 12
+                    },
+                    {
+                        nome: 'Luiz Paniago Neves',
+                        cargo: 'Diretor Substituto',
+                        iniciais: 'LP',
+                        inicio: '2023-06-01',
+                        termino: '2027-05-31',
+                        ativo: true,
+                        participacoes: 65,
+                        relatorias: 8
+                    },
+                    {
+                        nome: 'Fabio Fernando Borges',
+                        cargo: 'Diretor Substituto',
+                        iniciais: 'FB',
+                        inicio: '2022-11-20',
+                        termino: '2026-11-19',
+                        ativo: true,
+                        participacoes: 89,
+                        relatorias: 15
+                    },
+                    {
+                        nome: 'Caio Mario Trivellato Seabra Filho',
+                        cargo: 'Diretor',
+                        iniciais: 'CT',
+                        inicio: '2024-02-10',
+                        termino: '2028-02-09',
+                        ativo: true,
+                        participacoes: 45,
+                        relatorias: 5
+                    },
+                    {
+                        nome: 'Jose Fernando de Mendonca Gomes Junior',
+                        cargo: 'Diretor',
+                        iniciais: 'JG',
+                        inicio: '2024-03-01',
+                        termino: '2028-02-29',
+                        ativo: true,
+                        participacoes: 42,
+                        relatorias: 3
+                    }
+                ],
+                stats: {
+                    diretoresAtivos: 5,
+                    participacoesColegiadas: 319,
+                    taxaConsenso: 94,
+                    deliberacoes: 156
+                },
+                votos: {
+                    favoravel: 298,
+                    desfavoravel: 12,
+                    vista: 6,
+                    relator: 3
+                },
+                setores: [
+                    { nome: 'Licenciamento', valor: 67, cor: '#f472b6' },
+                    { nome: 'Fiscalizacao', valor: 45, cor: '#4ade80' },
+                    { nome: 'Outorga', valor: 28, cor: '#fbbf24' },
+                    { nome: 'Arrecadacao', valor: 12, cor: '#a855f7' },
+                    { nome: 'Outros', valor: 4, cor: '#60a5fa' }
+                ]
             }
-        ],
+        },
+        selectedAgency: 'artesp',
         diretores: [],
         metricasAPI: null,
         selectedDirector: 0,
@@ -569,12 +959,204 @@
             await this.carregarMetricas();
 
             this.setupTabs();
-            this.renderMandatos();
+            this.setupAgencyTabs();
+            this.renderMandatosDetailed();
+            this.renderMandatosStats();
+            this.renderMandatosVotingMatrix();
             this.renderGantt();
             this.renderVotingMatrix();
             this.renderParticipationList();
             this.renderDirectorSelector();
             this.renderDirectorProfile();
+        },
+
+        setupAgencyTabs() {
+            const tabs = document.querySelectorAll('#mandatos-agency-tabs .agency-tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    const agency = e.currentTarget.dataset.agency;
+                    this.switchAgency(agency);
+                });
+            });
+        },
+
+        switchAgency(agency) {
+            this.selectedAgency = agency;
+
+            // Update tabs
+            document.querySelectorAll('#mandatos-agency-tabs .agency-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.agency === agency);
+            });
+
+            // Re-render everything
+            this.renderMandatosDetailed();
+            this.renderMandatosStats();
+            this.renderMandatosVotingMatrix();
+            this.renderGantt();
+        },
+
+        renderMandatosStats() {
+            const data = this.agenciasData[this.selectedAgency];
+            if (!data) return;
+
+            const stats = data.stats;
+            document.getElementById('mandatos-diretores').textContent = stats.diretoresAtivos;
+            document.getElementById('mandatos-participacoes').textContent = stats.participacoesColegiadas;
+            document.getElementById('mandatos-consenso').textContent = stats.taxaConsenso + '%';
+            document.getElementById('mandatos-deliberacoes').textContent = stats.deliberacoes;
+
+            // Atualiza votos
+            document.getElementById('mandatos-favoravel').textContent = data.votos.favoravel;
+            document.getElementById('mandatos-desfavoravel').textContent = data.votos.desfavoravel;
+            document.getElementById('mandatos-vista').textContent = data.votos.vista;
+            document.getElementById('mandatos-relator').textContent = data.votos.relator;
+            document.getElementById('mandatos-votos-total').textContent = data.votos.favoravel;
+
+            // Atualiza setores
+            const setoresContainer = document.getElementById('mandatos-setores-chart');
+            if (setoresContainer) {
+                const maxVal = Math.max(...data.setores.map(s => s.valor));
+                setoresContainer.innerHTML = data.setores.map(s => `
+                    <div class="h-bar-item">
+                        <span class="h-bar-label">${s.nome}</span>
+                        <div class="h-bar-track">
+                            <div class="h-bar-fill" style="width: ${(s.valor / maxVal * 100)}%; background: ${s.cor};"></div>
+                        </div>
+                        <span style="width: 30px; text-align: right; font-weight: 600;">${s.valor}</span>
+                    </div>
+                `).join('');
+            }
+
+            // Atualiza matriz stats
+            const totalVotos = data.votos.favoravel + data.votos.desfavoravel;
+            document.getElementById('matrix-nominais').textContent = `0 (0%)`;
+            document.getElementById('matrix-colegiadas').textContent = `${stats.participacoesColegiadas} (100%)`;
+            document.getElementById('matrix-confianca').textContent = '0';
+            document.getElementById('matrix-inferidos').textContent = stats.participacoesColegiadas;
+        },
+
+        renderMandatosDetailed() {
+            const grid = document.getElementById('mandatos-grid');
+            if (!grid) return;
+
+            const data = this.agenciasData[this.selectedAgency];
+            if (!data) return;
+
+            grid.innerHTML = data.diretores.map(d => {
+                const inicio = new Date(d.inicio);
+                const termino = new Date(d.termino);
+                const agora = new Date();
+
+                // Calcula tempo decorrido
+                const mesesDecorridos = Math.floor((agora - inicio) / (1000 * 60 * 60 * 24 * 30));
+                const anosDecorridos = Math.floor(mesesDecorridos / 12);
+                const mesesRestantes = mesesDecorridos % 12;
+
+                // Calcula porcentagem do mandato
+                const totalMandato = termino - inicio;
+                const decorrido = agora - inicio;
+                const percentual = Math.min(100, Math.round((decorrido / totalMandato) * 100));
+
+                // Formata tempo decorrido
+                let tempoStr = '';
+                if (anosDecorridos > 0) {
+                    tempoStr = `${anosDecorridos}a ${mesesRestantes}m decorridos`;
+                } else {
+                    tempoStr = `${mesesDecorridos} meses decorridos`;
+                }
+
+                const inicioFormatado = this.formatDateBR(d.inicio);
+                const terminoFormatado = this.formatDateBR(d.termino);
+
+                return `
+                <div class="mandato-detailed-card">
+                    <div class="mandato-card-header">
+                        <div class="mandato-avatar" style="background: ${data.cor};">${d.iniciais}</div>
+                        <div class="mandato-info">
+                            <div class="mandato-name">${d.nome}</div>
+                            <div class="mandato-role">${d.cargo}</div>
+                        </div>
+                        <span class="mandato-status ${d.ativo ? 'ativo' : 'inativo'}">${d.ativo ? 'Ativo' : 'Inativo'}</span>
+                    </div>
+                    <div class="mandato-card-body">
+                        <div class="mandato-dates">
+                            <div class="mandato-date-item">
+                                <div class="mandato-date-label">Inicio</div>
+                                <div class="mandato-date-value">${inicioFormatado}</div>
+                            </div>
+                            <div class="mandato-date-item">
+                                <div class="mandato-date-label">Termino</div>
+                                <div class="mandato-date-value">${terminoFormatado}</div>
+                            </div>
+                        </div>
+                        <div class="mandato-progress">
+                            <div class="mandato-progress-text">${tempoStr}<span style="float: right; color: var(--primary);">${percentual}% do mandato</span></div>
+                            <div class="mandato-progress-bar">
+                                <div class="mandato-progress-fill" style="width: ${percentual}%;"></div>
+                            </div>
+                        </div>
+                        <div class="mandato-stats">
+                            <div class="mandato-stat">
+                                <div class="mandato-stat-value" style="color: ${data.cor};">${d.participacoes}</div>
+                                <div class="mandato-stat-label">Participacoes</div>
+                            </div>
+                            <div class="mandato-stat">
+                                <div class="mandato-stat-value">${d.relatorias}</div>
+                                <div class="mandato-stat-label">Relatorias</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        },
+
+        renderMandatosVotingMatrix() {
+            const tbody = document.getElementById('mandatos-voting-matrix-body');
+            if (!tbody) return;
+
+            const data = this.agenciasData[this.selectedAgency];
+            if (!data) return;
+
+            tbody.innerHTML = data.diretores.map(d => {
+                const total = d.participacoes;
+                const favoravel = total;
+                const desfavoravel = 0;
+                const vista = 0;
+                const relator = 0;
+                const acompanhou = total;
+                const divergente = 0;
+                const nominal = 0;
+                const colegiado = total;
+
+                return `
+                <tr>
+                    <td>${d.nome}</td>
+                    <td><span class="vote-badge favorable">${favoravel}</span></td>
+                    <td>${desfavoravel}</td>
+                    <td>${vista}</td>
+                    <td>${relator}</td>
+                    <td><span class="vote-badge acompanhou">${acompanhou}</span></td>
+                    <td>${divergente}</td>
+                    <td>${nominal}</td>
+                    <td><span class="vote-badge colegiado">${colegiado}</span></td>
+                    <td><strong>${total}</strong></td>
+                </tr>
+                `;
+            }).join('');
+        },
+
+        formatDateBR(dateStr) {
+            if (!dateStr) return '-';
+            try {
+                const parts = dateStr.split('-');
+                if (parts.length === 3) {
+                    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+                }
+                return dateStr;
+            } catch (e) {
+                return dateStr;
+            }
         },
 
         async carregarMetricas() {
@@ -773,21 +1355,25 @@
             const container = document.getElementById('gantt-chart');
             if (!container) return;
 
+            const data = this.agenciasData[this.selectedAgency];
+            if (!data) return;
+
             const startYear = 2019;
-            const endYear = 2026;
+            const endYear = 2031;
             const totalMonths = (endYear - startYear) * 12;
 
-            container.innerHTML = this.diretores.map(d => {
+            container.innerHTML = data.diretores.map(d => {
                 const startDate = new Date(d.inicio);
-                const endDate = d.ativo ? new Date() : new Date(d.fim || new Date());
+                const endDate = new Date(d.termino);
                 const startOffset = ((startDate.getFullYear() - startYear) * 12 + startDate.getMonth()) / totalMonths * 100;
-                const duration = ((endDate - startDate) / (1000 * 60 * 60 * 24 * 30)) / totalMonths * 100;
+                const durationMonths = (endDate - startDate) / (1000 * 60 * 60 * 24 * 30);
+                const duration = durationMonths / totalMonths * 100;
                 const barClass = d.ativo ? '' : 'ended';
 
                 return `<div class="gantt-row">
                     <div class="gantt-label">${d.nome.split(' ').slice(0, 2).join(' ')}</div>
                     <div class="gantt-bars">
-                        <div class="gantt-bar ${barClass}" style="left: ${startOffset}%; width: ${Math.min(duration, 100 - startOffset)}%;">
+                        <div class="gantt-bar ${barClass}" style="left: ${Math.max(0, startOffset)}%; width: ${Math.min(duration, 100 - startOffset)}%; background: ${data.cor};">
                             ${d.cargo.split(' ')[0]}
                         </div>
                     </div>
