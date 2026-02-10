@@ -1622,43 +1622,14 @@
         init() {
             const page = document.getElementById('page-agencias');
             page.classList.add('active');
-            this.renderAgenciasGrid();
+            this.renderAgencyCards();
             this.updateStats();
-        },
-
-        setupInteractivity() {
-            const cards = document.querySelectorAll('.iso-card');
-            cards.forEach((card, index) => {
-                const agencia = this.agencias[index];
-                if (!agencia) return;
-
-                // Atualiza dados dinamicos
-                const decisoesEl = card.querySelector('.iso-metric-value');
-                const aprovEl = card.querySelectorAll('.iso-metric-value')[1];
-                const pendEl = card.querySelectorAll('.iso-metric-value')[2];
-
-                if (decisoesEl) decisoesEl.textContent = agencia.decisoes.toLocaleString('pt-BR');
-
-                // Efeitos de hover interativos
-                card.addEventListener('mouseenter', () => {
-                    card.style.transform = 'rotateX(55deg) rotateZ(-45deg) translateZ(40px)';
-                });
-
-                card.addEventListener('mouseleave', () => {
-                    card.style.transform = 'rotateX(55deg) rotateZ(-45deg) translateZ(20px)';
-                });
-
-                // Click para ver detalhes
-                card.addEventListener('click', () => {
-                    this.showAgenciaDetails(agencia);
-                });
-            });
         },
 
         updateStats() {
             const totalDecisoes = this.agencias.reduce((sum, a) => sum + a.decisoes, 0);
             const totalAprovadas = this.agencias.reduce((sum, a) => sum + a.aprovadas, 0);
-            const totalPendentes = this.agencias.reduce((sum, a) => sum + a.pendentes, 0);
+            const totalDiretores = this.agencias.reduce((sum, a) => sum + (a.diretores ? a.diretores.length : 0), 0);
             const taxaMedia = Math.round((totalAprovadas / totalDecisoes) * 100);
 
             // Atualiza stats cards se existirem
@@ -1666,80 +1637,68 @@
             if (statsEl.length >= 4) {
                 statsEl[0].textContent = this.agencias.length;
                 statsEl[1].textContent = totalDecisoes.toLocaleString('pt-BR');
-                statsEl[2].textContent = totalAprovadas.toLocaleString('pt-BR');
-                statsEl[3].textContent = taxaMedia + '%';
+                statsEl[2].textContent = taxaMedia + '%';
+                statsEl[3].textContent = totalDiretores;
             }
         },
 
-        showAgenciaDetails(agencia) {
-            const taxa = Math.round((agencia.aprovadas / agencia.decisoes) * 100);
-            const diretoresInfo = agencia.diretores
-                ? '\n\nDiretoria Colegiada:\n' + agencia.diretores.map(d => `- ${d.nome} (${d.cargo})`).join('\n')
-                : '';
-            alert(`${agencia.nome}\n${agencia.nomeCompleto}\n\nDecisoes: ${agencia.decisoes.toLocaleString('pt-BR')}\nAprovadas: ${agencia.aprovadas.toLocaleString('pt-BR')} (${taxa}%)\nPendentes: ${agencia.pendentes}${diretoresInfo}`);
-        },
+        renderAgencyCards() {
+            const container = document.getElementById('agency-cards-container');
+            if (!container) return;
 
-        renderAgenciasGrid() {
-            const grid = document.getElementById('agencias-iso-grid');
-            if (!grid) return;
-
-            grid.innerHTML = this.agencias.map(a => {
+            container.innerHTML = this.agencias.map(a => {
                 const icone = this.icones[a.setor] || this.icones.transporte;
                 const taxa = Math.round((a.aprovadas / a.decisoes) * 100);
 
                 return `
-                <div class="iso-card-3d" data-agencia="${a.id}">
-                    <div class="iso-card-inner" style="--card-color: ${a.cor}; --card-color-dark: ${a.corSecundaria};">
-                        <!-- Topo do card com icone 3D -->
-                        <div class="iso-card-top-face">
-                            <div class="iso-3d-icon" style="color: ${a.cor};">
-                                ${icone}
+                <div class="agency-card" style="--agency-color: ${a.cor};">
+                    <div class="agency-card-header" style="background: linear-gradient(135deg, ${a.cor}15 0%, transparent 100%);">
+                        <div class="agency-icon" style="color: ${a.cor};">
+                            ${icone}
+                        </div>
+                        <div class="agency-title-section">
+                            <div class="agency-name" style="color: ${a.cor};">${a.nome}</div>
+                            <div class="agency-fullname">${a.nomeCompleto}</div>
+                        </div>
+                        <span class="agency-badge" style="background: ${a.cor}25; color: ${a.cor};">${a.esfera}</span>
+                    </div>
+                    <div class="agency-card-body">
+                        <div class="agency-stats-row">
+                            <div class="agency-stat-box">
+                                <div class="agency-stat-value" style="color: ${a.cor};">${a.decisoes.toLocaleString('pt-BR')}</div>
+                                <div class="agency-stat-label">Decisoes</div>
+                            </div>
+                            <div class="agency-stat-box">
+                                <div class="agency-stat-value" style="color: #4ADE80;">${a.aprovadas.toLocaleString('pt-BR')}</div>
+                                <div class="agency-stat-label">Aprovadas</div>
+                            </div>
+                            <div class="agency-stat-box">
+                                <div class="agency-stat-value" style="color: #4ADE80;">${taxa}%</div>
+                                <div class="agency-stat-label">Taxa</div>
                             </div>
                         </div>
-
-                        <!-- Frente do card com informacoes -->
-                        <div class="iso-card-front-face">
-                            <div class="iso-agency-logo" style="color: ${a.cor};">
-                                <span class="iso-agency-name">${a.nome}</span>
-                                <span class="iso-agency-badge" style="background: ${a.cor}25; color: ${a.cor};">${a.esfera}</span>
-                            </div>
-                            <div class="iso-agency-fullname">${a.nomeCompleto}</div>
-
-                            <div class="iso-stats-row">
-                                <div class="iso-stat-box">
-                                    <div class="iso-stat-value" style="color: ${a.cor};">${a.decisoes.toLocaleString('pt-BR')}</div>
-                                    <div class="iso-stat-label">Decisoes</div>
-                                </div>
-                                <div class="iso-stat-box">
-                                    <div class="iso-stat-value" style="color: #4ADE80;">${taxa}%</div>
-                                    <div class="iso-stat-label">Aprovacao</div>
-                                </div>
-                            </div>
-
-                            <div class="iso-directors-section">
-                                <div class="iso-directors-title">Diretoria Colegiada</div>
-                                <div class="iso-directors-grid">
-                                    ${(a.diretores || []).map(d => `
-                                        <div class="iso-director-chip" title="${d.nome} - ${d.cargo}" style="--chip-color: ${a.cor};">
-                                            <span class="iso-director-initials">${d.iniciais}</span>
+                        <div class="agency-directors-section">
+                            <div class="agency-directors-title">Diretoria Colegiada</div>
+                            <div class="agency-directors-list">
+                                ${(a.diretores || []).map(d => `
+                                    <div class="agency-director-item">
+                                        <div class="agency-director-avatar" style="background: ${a.cor};">${d.iniciais}</div>
+                                        <div class="agency-director-info">
+                                            <div class="agency-director-name">${d.nome}</div>
+                                            <div class="agency-director-role">${d.cargo}</div>
                                         </div>
-                                    `).join('')}
-                                </div>
+                                    </div>
+                                `).join('')}
                             </div>
                         </div>
-
-                        <!-- Lateral direita -->
-                        <div class="iso-card-right-face"></div>
                     </div>
                 </div>
             `}).join('');
-
-            this.setupInteractivity();
         }
     };
 
     // ============================================
-    // PAGE: Mapa do Brasil
+    // PAGE: Mapa do Brasil (D3.js)
     // ============================================
     const PageMapa = {
         estados: {
@@ -1780,65 +1739,323 @@
             'Norte': { estados: ['PA', 'AM', 'RO', 'TO', 'AC', 'AP', 'RR'], cor: '#A78BFA' }
         },
 
+        // Simplified Brazil state coordinates for D3.js visualization
+        statePositions: {
+            'AC': { x: 120, y: 280, labelPos: 'left' },
+            'AM': { x: 200, y: 180, labelPos: 'left' },
+            'AP': { x: 340, y: 80, labelPos: 'top' },
+            'PA': { x: 340, y: 160, labelPos: 'top' },
+            'RR': { x: 220, y: 60, labelPos: 'top' },
+            'RO': { x: 180, y: 280, labelPos: 'left' },
+            'TO': { x: 380, y: 260, labelPos: 'right' },
+            'MA': { x: 440, y: 170, labelPos: 'top' },
+            'PI': { x: 480, y: 220, labelPos: 'right' },
+            'CE': { x: 530, y: 170, labelPos: 'right' },
+            'RN': { x: 570, y: 180, labelPos: 'right' },
+            'PB': { x: 570, y: 210, labelPos: 'right' },
+            'PE': { x: 550, y: 240, labelPos: 'right' },
+            'AL': { x: 560, y: 270, labelPos: 'right' },
+            'SE': { x: 540, y: 290, labelPos: 'right' },
+            'BA': { x: 480, y: 310, labelPos: 'right' },
+            'MT': { x: 260, y: 290, labelPos: 'left' },
+            'GO': { x: 360, y: 340, labelPos: 'bottom' },
+            'DF': { x: 400, y: 330, labelPos: 'right' },
+            'MS': { x: 280, y: 380, labelPos: 'left' },
+            'MG': { x: 440, y: 380, labelPos: 'right' },
+            'ES': { x: 510, y: 390, labelPos: 'right' },
+            'RJ': { x: 480, y: 430, labelPos: 'right' },
+            'SP': { x: 380, y: 430, labelPos: 'bottom' },
+            'PR': { x: 340, y: 470, labelPos: 'bottom' },
+            'SC': { x: 360, y: 510, labelPos: 'bottom' },
+            'RS': { x: 320, y: 550, labelPos: 'bottom' }
+        },
+
+        selectedState: null,
+        svg: null,
+
         init() {
             const page = document.getElementById('page-mapa');
             page.classList.add('active');
-            this.setupMapInteractivity();
-            this.updateStats();
+            this.renderD3Map();
             this.renderRanking();
         },
 
-        setupMapInteractivity() {
-            const svgPaths = document.querySelectorAll('#brazil-map path[data-state]');
+        renderD3Map() {
+            const container = document.getElementById('brazil-d3-map');
+            if (!container || typeof d3 === 'undefined') {
+                console.warn('D3.js not loaded or container not found');
+                this.renderFallbackMap();
+                return;
+            }
+
+            // Clear container
+            container.innerHTML = '';
+
+            const width = container.offsetWidth || 600;
+            const height = 500;
+
+            // Create SVG
+            this.svg = d3.select(container)
+                .append('svg')
+                .attr('width', width)
+                .attr('height', height)
+                .attr('viewBox', '0 0 650 600');
+
+            // Add gradient definitions
+            const defs = this.svg.append('defs');
+
+            // Glow filter for active states
+            const glowFilter = defs.append('filter')
+                .attr('id', 'glow-active')
+                .attr('x', '-50%')
+                .attr('y', '-50%')
+                .attr('width', '200%')
+                .attr('height', '200%');
+            glowFilter.append('feGaussianBlur')
+                .attr('stdDeviation', '4')
+                .attr('result', 'coloredBlur');
+            const glowMerge = glowFilter.append('feMerge');
+            glowMerge.append('feMergeNode').attr('in', 'coloredBlur');
+            glowMerge.append('feMergeNode').attr('in', 'SourceGraphic');
+
+            // Create state hexagons/circles
+            const statesGroup = this.svg.append('g').attr('class', 'states-group');
+            const labelsGroup = this.svg.append('g').attr('class', 'labels-group');
+            const calloutGroup = this.svg.append('g').attr('class', 'callout-group');
+
+            const maxDecisoes = Math.max(...Object.values(this.estados).map(e => e.decisoes));
             const tooltip = document.getElementById('map-tooltip');
 
-            svgPaths.forEach(path => {
-                const stateCode = path.getAttribute('data-state');
-                const estado = this.estados[stateCode];
-
+            Object.entries(this.statePositions).forEach(([code, pos]) => {
+                const estado = this.estados[code];
                 if (!estado) return;
 
-                // Cor baseada na quantidade de decisoes
-                const maxDecisoes = 4521; // SP
-                const intensity = Math.min(1, estado.decisoes / maxDecisoes);
-                const baseColor = this.getRegionColor(stateCode);
-                path.style.fill = baseColor;
-                path.style.opacity = 0.4 + (intensity * 0.6);
+                const intensity = estado.decisoes / maxDecisoes;
+                const radius = 20 + (intensity * 15);
 
-                path.addEventListener('mouseenter', (e) => {
-                    path.style.opacity = 1;
-                    path.style.filter = 'brightness(1.2)';
-                    if (tooltip) {
-                        tooltip.innerHTML = `
-                            <strong>${estado.nome} (${stateCode})</strong><br>
-                            Decisoes: ${estado.decisoes.toLocaleString('pt-BR')}<br>
-                            Taxa Aprovacao: ${estado.taxa}%
-                        `;
-                        tooltip.style.display = 'block';
-                        tooltip.style.left = (e.pageX + 10) + 'px';
-                        tooltip.style.top = (e.pageY + 10) + 'px';
-                    }
-                });
+                // Create state circle
+                const circle = statesGroup.append('circle')
+                    .attr('cx', pos.x)
+                    .attr('cy', pos.y)
+                    .attr('r', radius)
+                    .attr('class', 'state-path')
+                    .attr('data-state', code)
+                    .style('fill', '#1e3a5f')
+                    .style('stroke', '#38bdf8')
+                    .style('stroke-width', 1.5)
+                    .style('cursor', 'pointer')
+                    .style('transition', 'all 0.3s ease');
 
-                path.addEventListener('mousemove', (e) => {
-                    if (tooltip) {
-                        tooltip.style.left = (e.pageX + 10) + 'px';
-                        tooltip.style.top = (e.pageY + 10) + 'px';
-                    }
-                });
+                // State label inside circle
+                statesGroup.append('text')
+                    .attr('x', pos.x)
+                    .attr('y', pos.y + 4)
+                    .attr('text-anchor', 'middle')
+                    .attr('class', 'state-code')
+                    .style('fill', '#e2e8f0')
+                    .style('font-size', '11px')
+                    .style('font-weight', '700')
+                    .style('pointer-events', 'none')
+                    .text(code);
 
-                path.addEventListener('mouseleave', () => {
-                    path.style.opacity = 0.4 + (intensity * 0.6);
-                    path.style.filter = 'none';
-                    if (tooltip) {
-                        tooltip.style.display = 'none';
-                    }
-                });
+                // External labels with callout lines
+                const labelOffset = 60;
+                let labelX, labelY, lineEndX, lineEndY;
 
-                path.addEventListener('click', () => {
-                    this.showStateDetails(stateCode, estado);
-                });
+                switch (pos.labelPos) {
+                    case 'left':
+                        labelX = pos.x - labelOffset - 40;
+                        labelY = pos.y;
+                        lineEndX = pos.x - radius - 5;
+                        lineEndY = pos.y;
+                        break;
+                    case 'right':
+                        labelX = pos.x + labelOffset + 40;
+                        labelY = pos.y;
+                        lineEndX = pos.x + radius + 5;
+                        lineEndY = pos.y;
+                        break;
+                    case 'top':
+                        labelX = pos.x;
+                        labelY = pos.y - labelOffset;
+                        lineEndX = pos.x;
+                        lineEndY = pos.y - radius - 5;
+                        break;
+                    case 'bottom':
+                        labelX = pos.x;
+                        labelY = pos.y + labelOffset;
+                        lineEndX = pos.x;
+                        lineEndY = pos.y + radius + 5;
+                        break;
+                }
+
+                // Callout line
+                calloutGroup.append('line')
+                    .attr('x1', lineEndX)
+                    .attr('y1', lineEndY)
+                    .attr('x2', labelX)
+                    .attr('y2', labelY)
+                    .attr('class', 'callout-line')
+                    .attr('data-state', code)
+                    .style('stroke', '#38bdf8')
+                    .style('stroke-width', 1)
+                    .style('stroke-dasharray', '3,2')
+                    .style('opacity', 0);
+
+                // External label group
+                const labelGroup = labelsGroup.append('g')
+                    .attr('class', 'state-label')
+                    .attr('data-state', code)
+                    .style('opacity', 0);
+
+                labelGroup.append('text')
+                    .attr('x', labelX)
+                    .attr('y', labelY - 6)
+                    .attr('text-anchor', 'middle')
+                    .attr('class', 'label-text')
+                    .style('fill', '#e2e8f0')
+                    .style('font-size', '10px')
+                    .style('font-weight', '500')
+                    .text(estado.nome);
+
+                labelGroup.append('text')
+                    .attr('x', labelX)
+                    .attr('y', labelY + 10)
+                    .attr('text-anchor', 'middle')
+                    .attr('class', 'label-value')
+                    .style('fill', '#f0e68c')
+                    .style('font-size', '14px')
+                    .style('font-weight', '700')
+                    .text(estado.decisoes.toLocaleString('pt-BR'));
+
+                // Event handlers
+                circle
+                    .on('mouseenter', (event) => {
+                        d3.select(event.target)
+                            .style('fill', '#2d5a7b')
+                            .style('stroke-width', 2)
+                            .style('filter', 'drop-shadow(0 0 8px rgba(56, 189, 248, 0.5))');
+
+                        // Show callout and label
+                        d3.select(`.callout-line[data-state="${code}"]`).style('opacity', 0.6);
+                        d3.select(`.state-label[data-state="${code}"]`).style('opacity', 1);
+
+                        // Show tooltip
+                        if (tooltip) {
+                            tooltip.innerHTML = `
+                                <div class="tooltip-title">${estado.nome}</div>
+                                <div class="tooltip-stats">
+                                    <div class="tooltip-stat">
+                                        <span class="tooltip-stat-label">Decisoes</span>
+                                        <span class="tooltip-stat-value">${estado.decisoes.toLocaleString('pt-BR')}</span>
+                                    </div>
+                                    <div class="tooltip-stat">
+                                        <span class="tooltip-stat-label">Taxa Aprovacao</span>
+                                        <span class="tooltip-stat-value">${estado.taxa}%</span>
+                                    </div>
+                                </div>
+                            `;
+                            tooltip.classList.add('active');
+                            const rect = container.getBoundingClientRect();
+                            tooltip.style.left = (event.clientX - rect.left + 15) + 'px';
+                            tooltip.style.top = (event.clientY - rect.top + 15) + 'px';
+                        }
+                    })
+                    .on('mousemove', (event) => {
+                        if (tooltip) {
+                            const rect = container.getBoundingClientRect();
+                            tooltip.style.left = (event.clientX - rect.left + 15) + 'px';
+                            tooltip.style.top = (event.clientY - rect.top + 15) + 'px';
+                        }
+                    })
+                    .on('mouseleave', (event) => {
+                        if (this.selectedState !== code) {
+                            d3.select(event.target)
+                                .style('fill', '#1e3a5f')
+                                .style('stroke-width', 1.5)
+                                .style('filter', 'none');
+
+                            d3.select(`.callout-line[data-state="${code}"]`).style('opacity', 0);
+                            d3.select(`.state-label[data-state="${code}"]`).style('opacity', 0);
+                        }
+
+                        if (tooltip) {
+                            tooltip.classList.remove('active');
+                        }
+                    })
+                    .on('click', (event) => {
+                        // Clear previous selection
+                        if (this.selectedState) {
+                            d3.select(`.state-path[data-state="${this.selectedState}"]`)
+                                .style('fill', '#1e3a5f')
+                                .style('stroke', '#38bdf8')
+                                .style('filter', 'none');
+                            d3.select(`.callout-line[data-state="${this.selectedState}"]`).style('opacity', 0);
+                            d3.select(`.state-label[data-state="${this.selectedState}"]`).style('opacity', 0);
+                        }
+
+                        // Set new selection
+                        this.selectedState = code;
+                        d3.select(event.target)
+                            .style('fill', '#f0e68c')
+                            .style('stroke', '#f0e68c')
+                            .style('filter', 'url(#glow-active)');
+
+                        d3.select(`.callout-line[data-state="${code}"]`)
+                            .style('stroke', '#f0e68c')
+                            .style('opacity', 0.8);
+                        d3.select(`.state-label[data-state="${code}"]`).style('opacity', 1);
+                    });
             });
+
+            // Add legend
+            this.renderMapLegend();
+        },
+
+        renderFallbackMap() {
+            const container = document.getElementById('brazil-d3-map');
+            if (!container) return;
+
+            const html = `
+                <div style="text-align: center; padding: 40px; color: #94a3b8;">
+                    <svg width="64" height="64" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
+                    </svg>
+                    <p style="margin-top: 16px;">Carregando mapa interativo...</p>
+                    <p style="font-size: 12px; opacity: 0.7;">Certifique-se de que o D3.js esta carregado</p>
+                </div>
+            `;
+            container.innerHTML = html;
+        },
+
+        renderMapLegend() {
+            const container = document.querySelector('.d3-map-container');
+            if (!container) return;
+
+            // Remove existing legend
+            const existingLegend = container.querySelector('.d3-map-legend');
+            if (existingLegend) existingLegend.remove();
+
+            const legend = document.createElement('div');
+            legend.className = 'd3-map-legend';
+            legend.innerHTML = `
+                <div class="d3-map-legend-title">Decisoes por Estado</div>
+                <div class="d3-map-legend-scale">
+                    <div class="d3-map-legend-item">
+                        <div class="d3-map-legend-color" style="background: #1e3a5f;"></div>
+                        <span>Menor volume</span>
+                    </div>
+                    <div class="d3-map-legend-item">
+                        <div class="d3-map-legend-color" style="background: #38bdf8;"></div>
+                        <span>Volume medio</span>
+                    </div>
+                    <div class="d3-map-legend-item">
+                        <div class="d3-map-legend-color" style="background: #f0e68c;"></div>
+                        <span>Maior volume</span>
+                    </div>
+                </div>
+            `;
+            container.appendChild(legend);
         },
 
         getRegionColor(stateCode) {
@@ -1850,43 +2067,38 @@
             return '#FFEF4D';
         },
 
-        updateStats() {
-            const totalDecisoes = Object.values(this.estados).reduce((sum, e) => sum + e.decisoes, 0);
-            const mediaAprovacao = Object.values(this.estados).reduce((sum, e) => sum + e.taxa, 0) / Object.keys(this.estados).length;
-
-            const statsEl = document.querySelectorAll('#page-mapa .mapa-stat-value');
-            if (statsEl.length >= 4) {
-                statsEl[0].textContent = Object.keys(this.estados).length;
-                statsEl[1].textContent = totalDecisoes.toLocaleString('pt-BR');
-                statsEl[2].textContent = Math.round(mediaAprovacao) + '%';
-                statsEl[3].textContent = Object.keys(this.regioes).length;
-            }
-        },
-
         renderRanking() {
-            const list = document.getElementById('state-ranking-list');
+            const list = document.querySelector('#page-mapa .state-ranking');
             if (!list) return;
 
             const sorted = Object.entries(this.estados)
                 .sort((a, b) => b[1].decisoes - a[1].decisoes)
-                .slice(0, 10);
+                .slice(0, 7);
 
             list.innerHTML = sorted.map(([code, data], index) => `
-                <div class="ranking-item">
-                    <div class="ranking-position">${index + 1}</div>
-                    <div class="ranking-info">
-                        <div class="ranking-state">${data.nome}</div>
-                        <div class="ranking-stats">${data.decisoes.toLocaleString('pt-BR')} decisoes</div>
+                <div class="state-item" data-state="${code}">
+                    <div class="state-rank">${index + 1}</div>
+                    <div class="state-info">
+                        <div class="state-name">${data.nome}</div>
+                        <div class="state-bar">
+                            <div class="state-bar-fill" style="width: ${(data.decisoes / sorted[0][1].decisoes * 100)}%;"></div>
+                        </div>
                     </div>
-                    <div class="ranking-badge" style="background: ${this.getRegionColor(code)}20; color: ${this.getRegionColor(code)};">
-                        ${data.taxa}%
-                    </div>
+                    <div class="state-value">${data.decisoes.toLocaleString('pt-BR')}</div>
                 </div>
             `).join('');
-        },
 
-        showStateDetails(code, estado) {
-            alert(`${estado.nome} (${code})\n\nDecisoes: ${estado.decisoes.toLocaleString('pt-BR')}\nTaxa de Aprovacao: ${estado.taxa}%`);
+            // Add click handlers to ranking items
+            list.querySelectorAll('.state-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const code = item.dataset.state;
+                    const circle = document.querySelector(`.state-path[data-state="${code}"]`);
+                    if (circle) {
+                        circle.dispatchEvent(new Event('click'));
+                    }
+                });
+                item.style.cursor = 'pointer';
+            });
         }
     };
 

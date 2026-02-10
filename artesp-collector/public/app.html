@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IRIS - Plataforma de Inteligencia Regulatoria</title>
     <link rel="stylesheet" href="/css/styles.css">
+    <!-- D3.js para visualizacao de mapas -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://d3js.org/topojson.v3.min.js"></script>
 </head>
 <body>
     <div class="app-container">
@@ -1838,163 +1841,9 @@
                         </div>
                     </div>
 
-                    <!-- Isometric 3D Scene -->
-                    <div class="card isometric-card">
-                        <div class="card-header">
-                            <h2 class="card-title">
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-                                Panorama das Agencias Reguladoras
-                            </h2>
-                            <p class="card-subtitle">Visualizacao isometrica 3D - ARTESP e ANM</p>
-                        </div>
-                        <div class="card-body iso-scene-container">
-                            <!-- Isometric 3D Scene SVG -->
-                            <svg class="iso-scene-svg" viewBox="0 0 1200 600" preserveAspectRatio="xMidYMid meet">
-                                <defs>
-                                    <!-- Glow filter -->
-                                    <filter id="glow-yellow" x="-50%" y="-50%" width="200%" height="200%">
-                                        <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
-                                        <feMerge>
-                                            <feMergeNode in="coloredBlur"/>
-                                            <feMergeNode in="SourceGraphic"/>
-                                        </feMerge>
-                                    </filter>
-                                    <filter id="glow-blue" x="-50%" y="-50%" width="200%" height="200%">
-                                        <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
-                                        <feMerge>
-                                            <feMergeNode in="coloredBlur"/>
-                                            <feMergeNode in="SourceGraphic"/>
-                                        </feMerge>
-                                    </filter>
-                                    <!-- Gradients -->
-                                    <linearGradient id="grad-yellow" x1="0%" y1="0%" x2="0%" y2="100%">
-                                        <stop offset="0%" style="stop-color:#FFEF4D;stop-opacity:1" />
-                                        <stop offset="100%" style="stop-color:#e6d645;stop-opacity:1" />
-                                    </linearGradient>
-                                    <linearGradient id="grad-blue" x1="0%" y1="0%" x2="0%" y2="100%">
-                                        <stop offset="0%" style="stop-color:#60A5FA;stop-opacity:1" />
-                                        <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:1" />
-                                    </linearGradient>
-                                    <linearGradient id="grad-dark" x1="0%" y1="0%" x2="0%" y2="100%">
-                                        <stop offset="0%" style="stop-color:#2d4594;stop-opacity:1" />
-                                        <stop offset="100%" style="stop-color:#1a2a5a;stop-opacity:1" />
-                                    </linearGradient>
-                                </defs>
-
-                                <!-- Grid floor pattern -->
-                                <g opacity="0.1">
-                                    <line x1="0" y1="300" x2="1200" y2="300" stroke="#FFEF4D" stroke-width="1"/>
-                                    <line x1="0" y1="350" x2="1200" y2="350" stroke="#FFEF4D" stroke-width="1"/>
-                                    <line x1="0" y1="400" x2="1200" y2="400" stroke="#FFEF4D" stroke-width="1"/>
-                                    <line x1="0" y1="450" x2="1200" y2="450" stroke="#FFEF4D" stroke-width="1"/>
-                                    <line x1="0" y1="500" x2="1200" y2="500" stroke="#FFEF4D" stroke-width="1"/>
-                                </g>
-
-                                <!-- Connection line between agencies -->
-                                <g class="connections">
-                                    <path d="M380,350 C500,320 700,320 820,350" fill="none" stroke="#FFEF4D" stroke-width="3" stroke-dasharray="10,5" opacity="0.6" filter="url(#glow-yellow)">
-                                        <animate attributeName="stroke-dashoffset" from="0" to="30" dur="2s" repeatCount="indefinite"/>
-                                    </path>
-                                    <circle cx="600" cy="330" r="8" fill="#FFEF4D" filter="url(#glow-yellow)">
-                                        <animate attributeName="r" values="6;10;6" dur="1.5s" repeatCount="indefinite"/>
-                                    </circle>
-                                </g>
-
-                                <!-- ARTESP - Transport Building (Left) -->
-                                <g class="agency-artesp" transform="translate(100, 200)" style="cursor: pointer;">
-                                    <!-- Building shadow -->
-                                    <ellipse cx="150" cy="320" rx="120" ry="30" fill="#000" opacity="0.3"/>
-
-                                    <!-- Main building - isometric -->
-                                    <g transform="skewY(-15)">
-                                        <!-- Building base -->
-                                        <rect x="50" y="100" width="200" height="180" fill="url(#grad-dark)" stroke="#FFEF4D" stroke-width="2"/>
-                                        <!-- Building windows -->
-                                        <rect x="70" y="120" width="30" height="25" fill="#FFEF4D" opacity="0.3"/>
-                                        <rect x="110" y="120" width="30" height="25" fill="#FFEF4D" opacity="0.3"/>
-                                        <rect x="150" y="120" width="30" height="25" fill="#FFEF4D" opacity="0.3"/>
-                                        <rect x="190" y="120" width="30" height="25" fill="#FFEF4D" opacity="0.3"/>
-                                        <rect x="70" y="160" width="30" height="25" fill="#FFEF4D" opacity="0.3"/>
-                                        <rect x="110" y="160" width="30" height="25" fill="#FFEF4D" opacity="0.3"/>
-                                        <rect x="150" y="160" width="30" height="25" fill="#FFEF4D" opacity="0.3"/>
-                                        <rect x="190" y="160" width="30" height="25" fill="#FFEF4D" opacity="0.3"/>
-                                        <rect x="70" y="200" width="30" height="25" fill="#FFEF4D" opacity="0.5"/>
-                                        <rect x="110" y="200" width="30" height="25" fill="#FFEF4D" opacity="0.5"/>
-                                        <rect x="150" y="200" width="30" height="25" fill="#FFEF4D" opacity="0.5"/>
-                                        <rect x="190" y="200" width="30" height="25" fill="#FFEF4D" opacity="0.5"/>
-                                        <!-- Building roof -->
-                                        <polygon points="50,100 150,60 250,100" fill="#FFEF4D" opacity="0.8"/>
-                                    </g>
-
-                                    <!-- Highway/Road element -->
-                                    <g transform="translate(0, 280)">
-                                        <rect x="0" y="0" width="300" height="20" fill="#333" stroke="#FFEF4D" stroke-width="1"/>
-                                        <line x1="150" y1="0" x2="150" y2="20" stroke="#FFEF4D" stroke-width="2" stroke-dasharray="10,10"/>
-                                        <!-- Truck icon -->
-                                        <g transform="translate(60, -25)">
-                                            <rect x="0" y="10" width="50" height="20" fill="#FFEF4D" rx="3"/>
-                                            <rect x="50" y="15" width="20" height="15" fill="#FFEF4D" rx="2"/>
-                                            <circle cx="15" cy="35" r="8" fill="#333" stroke="#FFEF4D" stroke-width="2"/>
-                                            <circle cx="55" cy="35" r="8" fill="#333" stroke="#FFEF4D" stroke-width="2"/>
-                                        </g>
-                                    </g>
-
-                                    <!-- Data label -->
-                                    <g transform="translate(80, 20)">
-                                        <rect x="0" y="0" width="140" height="50" rx="8" fill="#1a2a5a" stroke="#FFEF4D" stroke-width="2" filter="url(#glow-yellow)"/>
-                                        <text x="70" y="22" text-anchor="middle" fill="#FFEF4D" font-size="14" font-weight="bold">ARTESP</text>
-                                        <text x="70" y="40" text-anchor="middle" fill="#fff" font-size="12">1.247 decisoes</text>
-                                    </g>
-                                </g>
-
-                                <!-- ANM - Mining Building (Right) -->
-                                <g class="agency-anm" transform="translate(700, 200)" style="cursor: pointer;">
-                                    <!-- Building shadow -->
-                                    <ellipse cx="150" cy="320" rx="120" ry="30" fill="#000" opacity="0.3"/>
-
-                                    <!-- Mountain/Mining structure - isometric -->
-                                    <g transform="skewY(15)">
-                                        <!-- Mountains -->
-                                        <polygon points="50,280 150,120 250,280" fill="url(#grad-dark)" stroke="#60A5FA" stroke-width="2"/>
-                                        <polygon points="100,280 180,160 260,280" fill="#233770" stroke="#60A5FA" stroke-width="2"/>
-
-                                        <!-- Mining tower -->
-                                        <rect x="140" y="100" width="20" height="100" fill="#60A5FA"/>
-                                        <polygon points="130,100 150,60 170,100" fill="#60A5FA"/>
-                                        <line x1="150" y1="60" x2="150" y2="30" stroke="#60A5FA" stroke-width="3"/>
-                                        <circle cx="150" cy="25" r="8" fill="#60A5FA" filter="url(#glow-blue)">
-                                            <animate attributeName="opacity" values="1;0.5;1" dur="2s" repeatCount="indefinite"/>
-                                        </circle>
-
-                                        <!-- Mining cart track -->
-                                        <line x1="80" y1="250" x2="220" y2="250" stroke="#60A5FA" stroke-width="3"/>
-                                        <rect x="130" y="235" width="40" height="20" fill="#60A5FA" rx="3"/>
-                                    </g>
-
-                                    <!-- Minerals/Resources -->
-                                    <g transform="translate(50, 300)">
-                                        <circle cx="30" cy="0" r="10" fill="#FFEF4D" opacity="0.8"/>
-                                        <circle cx="60" cy="5" r="8" fill="#FFEF4D" opacity="0.6"/>
-                                        <circle cx="90" cy="-5" r="12" fill="#FFEF4D" opacity="0.7"/>
-                                    </g>
-
-                                    <!-- Data label -->
-                                    <g transform="translate(80, 20)">
-                                        <rect x="0" y="0" width="140" height="50" rx="8" fill="#1a2a5a" stroke="#60A5FA" stroke-width="2" filter="url(#glow-blue)"/>
-                                        <text x="70" y="22" text-anchor="middle" fill="#60A5FA" font-size="14" font-weight="bold">ANM</text>
-                                        <text x="70" y="40" text-anchor="middle" fill="#fff" font-size="12">892 decisoes</text>
-                                    </g>
-                                </g>
-
-                                <!-- Center info panel -->
-                                <g transform="translate(500, 480)">
-                                    <rect x="0" y="0" width="200" height="80" rx="10" fill="#1a2a5a" stroke="#FFEF4D" stroke-width="1" opacity="0.9"/>
-                                    <text x="100" y="25" text-anchor="middle" fill="#FFEF4D" font-size="12" font-weight="bold">AGENCIAS CONECTADAS</text>
-                                    <text x="100" y="50" text-anchor="middle" fill="#fff" font-size="20" font-weight="bold">2.139</text>
-                                    <text x="100" y="70" text-anchor="middle" fill="#c5d0e8" font-size="11">Total de Deliberacoes</text>
-                                </g>
-                            </svg>
-                        </div>
+                    <!-- Agency Cards - Simple Layout -->
+                    <div class="agency-cards-grid" id="agency-cards-container">
+                        <!-- Cards serao renderizados via JavaScript -->
                     </div>
 
                     <!-- Tabela Comparativa -->
@@ -2135,58 +1984,13 @@
                                     Mapa Interativo
                                 </h2>
                             </div>
-                            <div class="card-body">
-                                <div class="brazil-map-wrapper">
-                                    <!-- Mapa simplificado e funcional do Brasil -->
-                                    <div class="brazil-simple-map">
-                                        <div class="map-region map-norte">
-                                            <div class="state" data-state="AM" data-deliberacoes="23">AM</div>
-                                            <div class="state" data-state="PA" data-deliberacoes="45">PA</div>
-                                            <div class="state" data-state="RR" data-deliberacoes="5">RR</div>
-                                            <div class="state" data-state="AP" data-deliberacoes="7">AP</div>
-                                            <div class="state" data-state="AC" data-deliberacoes="8">AC</div>
-                                            <div class="state" data-state="RO" data-deliberacoes="12">RO</div>
-                                            <div class="state" data-state="TO" data-deliberacoes="18">TO</div>
-                                        </div>
-                                        <div class="map-region map-nordeste">
-                                            <div class="state" data-state="MA" data-deliberacoes="34">MA</div>
-                                            <div class="state" data-state="PI" data-deliberacoes="21">PI</div>
-                                            <div class="state" data-state="CE" data-deliberacoes="67">CE</div>
-                                            <div class="state" data-state="RN" data-deliberacoes="28">RN</div>
-                                            <div class="state" data-state="PB" data-deliberacoes="31">PB</div>
-                                            <div class="state" data-state="PE" data-deliberacoes="89">PE</div>
-                                            <div class="state" data-state="AL" data-deliberacoes="19">AL</div>
-                                            <div class="state" data-state="SE" data-deliberacoes="15">SE</div>
-                                            <div class="state" data-state="BA" data-deliberacoes="112">BA</div>
-                                        </div>
-                                        <div class="map-region map-centro-oeste">
-                                            <div class="state" data-state="MT" data-deliberacoes="42">MT</div>
-                                            <div class="state" data-state="GO" data-deliberacoes="56">GO</div>
-                                            <div class="state" data-state="MS" data-deliberacoes="38">MS</div>
-                                            <div class="state highlight" data-state="DF" data-deliberacoes="234">DF</div>
-                                        </div>
-                                        <div class="map-region map-sudeste">
-                                            <div class="state" data-state="MG" data-deliberacoes="187">MG</div>
-                                            <div class="state" data-state="ES" data-deliberacoes="45">ES</div>
-                                            <div class="state" data-state="RJ" data-deliberacoes="156">RJ</div>
-                                            <div class="state active" data-state="SP" data-deliberacoes="456">SP</div>
-                                        </div>
-                                        <div class="map-region map-sul">
-                                            <div class="state" data-state="PR" data-deliberacoes="98">PR</div>
-                                            <div class="state" data-state="SC" data-deliberacoes="67">SC</div>
-                                            <div class="state" data-state="RS" data-deliberacoes="89">RS</div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Legenda por regiao -->
-                                    <div class="map-region-legend">
-                                        <div class="region-item"><span class="region-color norte"></span> Norte</div>
-                                        <div class="region-item"><span class="region-color nordeste"></span> Nordeste</div>
-                                        <div class="region-item"><span class="region-color centro-oeste"></span> Centro-Oeste</div>
-                                        <div class="region-item"><span class="region-color sudeste"></span> Sudeste</div>
-                                        <div class="region-item"><span class="region-color sul"></span> Sul</div>
-                                    </div>
+                            <div class="card-body d3-map-container">
+                                <!-- D3.js Map Container -->
+                                <div id="brazil-d3-map" class="brazil-d3-map">
+                                    <!-- Mapa sera renderizado via D3.js -->
                                 </div>
+                                <!-- Tooltip -->
+                                <div id="map-tooltip" class="d3-map-tooltip"></div>
                             </div>
                         </div>
 
