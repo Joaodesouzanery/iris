@@ -855,6 +855,250 @@ app.get('/api/metricas/por-diretor', (req, res) => {
     res.json({ diretores });
 });
 
+// Métricas avançadas por diretor (Tendência, Votos Divergentes, Mandato)
+app.get('/api/metricas/diretor-avancado', (req, res) => {
+    const deliberacoes = coletarTodasDeliberacoes();
+
+    // Dados dos mandatos dos diretores
+    const mandatosConfig = {
+        'André Isper Rodrigues Barnabé': { inicio: '2024-09-10', termino: '2029-09-09', cargo: 'Diretor-Presidente' },
+        'Andre Isper Rodrigues Barnabe': { inicio: '2024-09-10', termino: '2029-09-09', cargo: 'Diretor-Presidente' },
+        'Diego Albert Zanatto': { inicio: '2024-08-14', termino: '2029-08-13', cargo: 'Diretor' },
+        'Fernanda Esbízaro Rodrigues Rudnik': { inicio: '2025-08-28', termino: '2030-08-27', cargo: 'Diretora' },
+        'Fernanda Esbizaro Rodrigues Rudnik': { inicio: '2025-08-28', termino: '2030-08-27', cargo: 'Diretora' },
+        'Raquel França Carneiro': { inicio: '2025-05-14', termino: '2030-05-13', cargo: 'Diretora' },
+        'Raquel Franca Carneiro': { inicio: '2025-05-14', termino: '2030-05-13', cargo: 'Diretora' }
+    };
+
+    // Estrutura para análise por diretor
+    const diretoresAnalise = {};
+
+    deliberacoes.forEach(d => {
+        // Extrai data da deliberação (do arquivo ou reunião)
+        let dataDeliberacao = null;
+        if (d.dataArquivo) {
+            // Formato esperado: YYYY-MM ou similar
+            const match = d.dataArquivo.match(/(\d{4})-(\d{2})/);
+            if (match) {
+                dataDeliberacao = new Date(match[1], parseInt(match[2]) - 1, 15);
+            }
+        }
+        if (!dataDeliberacao && d.reuniao_ordinaria) {
+            // Estima data baseado no número da reunião (aproximado)
+            const numReuniao = parseInt(d.reuniao_ordinaria);
+            if (numReuniao >= 1170) {
+                dataDeliberacao = new Date(2025, 11, 1); // Dezembro 2025
+            } else if (numReuniao >= 1150) {
+                dataDeliberacao = new Date(2025, 6, 1); // Julho 2025
+            } else if (numReuniao >= 1130) {
+                dataDeliberacao = new Date(2025, 0, 1); // Janeiro 2025
+            } else {
+                dataDeliberacao = new Date(2024, 6, 1); // Julho 2024
+            }
+        }
+        if (!dataDeliberacao) {
+            dataDeliberacao = new Date(); // Fallback para hoje
+        }
+
+        const mesAno = `${dataDeliberacao.getFullYear()}-${String(dataDeliberacao.getMonth() + 1).padStart(2, '0')}`;
+
+        // Processa votos a favor
+        (d.votos_a_favor || []).forEach(diretor => {
+            if (!diretoresAnalise[diretor]) {
+                const mandato = mandatosConfig[diretor] || { inicio: '2024-01-01', termino: '2029-01-01', cargo: 'Diretor(a)' };
+                diretoresAnalise[diretor] = {
+                    nome: diretor,
+                    cargo: mandato.cargo,
+                    mandato: {
+                        inicio: mandato.inicio,
+                        termino: mandato.termino
+                    },
+                    votosPorMes: {},
+                    votosDivergentes: 0,
+                    votosAcompanhou: 0,
+                    totalVotos: 0,
+                    decisoesDuranteMandato: 0,
+                    decisoesForaMandato: 0,
+                    tendenciaPorPeriodo: {},
+                    votosFavorDeferido: 0,
+                    votosFavorIndeferido: 0
+                };
+            }
+
+            const dir = diretoresAnalise[diretor];
+            dir.totalVotos++;
+            dir.votosAcompanhou++;
+
+            // Agrupa por mês
+            if (!dir.votosPorMes[mesAno]) {
+                dir.votosPorMes[mesAno] = { favor: 0, contra: 0, deferidos: 0, indeferidos: 0, total: 0 };
+            }
+            dir.votosPorMes[mesAno].favor++;
+            dir.votosPorMes[mesAno].total++;
+            if (d.resultado === 'Deferido') {
+                dir.votosPorMes[mesAno].deferidos++;
+                dir.votosFavorDeferido++;
+            }
+            if (d.resultado === 'Indeferido') {
+                dir.votosPorMes[mesAno].indeferidos++;
+                dir.votosFavorIndeferido++;
+            }
+
+            // Verifica se está dentro do mandato
+            const inicioMandato = new Date(dir.mandato.inicio);
+            const terminoMandato = new Date(dir.mandato.termino);
+            if (dataDeliberacao >= inicioMandato && dataDeliberacao <= terminoMandato) {
+                dir.decisoesDuranteMandato++;
+            } else {
+                dir.decisoesForaMandato++;
+            }
+        });
+
+        // Processa votos contra (votos divergentes)
+        (d.votos_contra || []).forEach(diretor => {
+            if (!diretoresAnalise[diretor]) {
+                const mandato = mandatosConfig[diretor] || { inicio: '2024-01-01', termino: '2029-01-01', cargo: 'Diretor(a)' };
+                diretoresAnalise[diretor] = {
+                    nome: diretor,
+                    cargo: mandato.cargo,
+                    mandato: {
+                        inicio: mandato.inicio,
+                        termino: mandato.termino
+                    },
+                    votosPorMes: {},
+                    votosDivergentes: 0,
+                    votosAcompanhou: 0,
+                    totalVotos: 0,
+                    decisoesDuranteMandato: 0,
+                    decisoesForaMandato: 0,
+                    tendenciaPorPeriodo: {},
+                    votosFavorDeferido: 0,
+                    votosFavorIndeferido: 0
+                };
+            }
+
+            const dir = diretoresAnalise[diretor];
+            dir.totalVotos++;
+            dir.votosDivergentes++; // Voto contra = divergente
+
+            // Agrupa por mês
+            if (!dir.votosPorMes[mesAno]) {
+                dir.votosPorMes[mesAno] = { favor: 0, contra: 0, deferidos: 0, indeferidos: 0, total: 0 };
+            }
+            dir.votosPorMes[mesAno].contra++;
+            dir.votosPorMes[mesAno].total++;
+
+            // Verifica se está dentro do mandato
+            const inicioMandato = new Date(dir.mandato.inicio);
+            const terminoMandato = new Date(dir.mandato.termino);
+            if (dataDeliberacao >= inicioMandato && dataDeliberacao <= terminoMandato) {
+                dir.decisoesDuranteMandato++;
+            } else {
+                dir.decisoesForaMandato++;
+            }
+        });
+    });
+
+    // Calcula tendência decisória para cada diretor
+    const diretoresComTendencia = Object.values(diretoresAnalise).map(dir => {
+        // Ordena meses cronologicamente
+        const mesesOrdenados = Object.keys(dir.votosPorMes).sort();
+
+        // Calcula tendência por período (trimestre)
+        const tendenciaTrimestral = {};
+        mesesOrdenados.forEach(mes => {
+            const ano = mes.substring(0, 4);
+            const mesNum = parseInt(mes.substring(5, 7));
+            const trimestre = Math.ceil(mesNum / 3);
+            const chave = `${ano}-T${trimestre}`;
+
+            if (!tendenciaTrimestral[chave]) {
+                tendenciaTrimestral[chave] = { deferidos: 0, indeferidos: 0, total: 0, periodo: chave };
+            }
+            tendenciaTrimestral[chave].deferidos += dir.votosPorMes[mes].deferidos;
+            tendenciaTrimestral[chave].indeferidos += dir.votosPorMes[mes].indeferidos;
+            tendenciaTrimestral[chave].total += dir.votosPorMes[mes].total;
+        });
+
+        // Calcula taxa de deferimento por trimestre
+        const tendenciaArray = Object.values(tendenciaTrimestral).map(t => ({
+            ...t,
+            taxaDeferimento: t.total > 0 ? Math.round((t.deferidos / t.total) * 100) : 0
+        })).sort((a, b) => a.periodo.localeCompare(b.periodo));
+
+        // Identifica tendência geral (crescente, estável, decrescente)
+        let tendenciaGeral = 'estável';
+        if (tendenciaArray.length >= 2) {
+            const primeiros = tendenciaArray.slice(0, Math.ceil(tendenciaArray.length / 2));
+            const ultimos = tendenciaArray.slice(Math.ceil(tendenciaArray.length / 2));
+            const mediaPrimeiros = primeiros.reduce((s, t) => s + t.taxaDeferimento, 0) / primeiros.length;
+            const mediaUltimos = ultimos.reduce((s, t) => s + t.taxaDeferimento, 0) / ultimos.length;
+
+            if (mediaUltimos > mediaPrimeiros + 5) {
+                tendenciaGeral = 'crescente';
+            } else if (mediaUltimos < mediaPrimeiros - 5) {
+                tendenciaGeral = 'decrescente';
+            }
+        }
+
+        // Evolução mensal
+        const evolucaoMensal = mesesOrdenados.map(mes => ({
+            mes,
+            ...dir.votosPorMes[mes],
+            taxaDeferimento: dir.votosPorMes[mes].total > 0
+                ? Math.round((dir.votosPorMes[mes].deferidos / dir.votosPorMes[mes].total) * 100)
+                : 0
+        }));
+
+        return {
+            nome: dir.nome,
+            cargo: dir.cargo,
+            mandato: dir.mandato,
+            metricas: {
+                totalVotos: dir.totalVotos,
+                votosDivergentes: dir.votosDivergentes,
+                votosAcompanhou: dir.votosAcompanhou,
+                percentualDivergencia: dir.totalVotos > 0
+                    ? Math.round((dir.votosDivergentes / dir.totalVotos) * 100)
+                    : 0,
+                decisoesDuranteMandato: dir.decisoesDuranteMandato,
+                decisoesForaMandato: dir.decisoesForaMandato,
+                taxaDeferimentoGeral: dir.totalVotos > 0
+                    ? Math.round((dir.votosFavorDeferido / dir.totalVotos) * 100)
+                    : 0
+            },
+            tendencia: {
+                geral: tendenciaGeral,
+                porTrimestre: tendenciaArray,
+                evolucaoMensal
+            }
+        };
+    }).filter(d => d.metricas.totalVotos > 0);
+
+    // Estatísticas agregadas
+    const estatisticasGerais = {
+        totalDiretoresAnalisados: diretoresComTendencia.length,
+        totalVotosDivergentesGeral: diretoresComTendencia.reduce((s, d) => s + d.metricas.votosDivergentes, 0),
+        mediaTaxaDeferimento: Math.round(
+            diretoresComTendencia.reduce((s, d) => s + d.metricas.taxaDeferimentoGeral, 0) /
+            (diretoresComTendencia.length || 1)
+        ),
+        diretoresMaisDivergentes: [...diretoresComTendencia]
+            .sort((a, b) => b.metricas.votosDivergentes - a.metricas.votosDivergentes)
+            .slice(0, 5)
+            .map(d => ({ nome: d.nome, divergentes: d.metricas.votosDivergentes })),
+        diretoresTendenciaCrescente: diretoresComTendencia.filter(d => d.tendencia.geral === 'crescente').length,
+        diretoresTendenciaDecrescente: diretoresComTendencia.filter(d => d.tendencia.geral === 'decrescente').length,
+        diretoresTendenciaEstavel: diretoresComTendencia.filter(d => d.tendencia.geral === 'estável').length
+    };
+
+    res.json({
+        diretores: diretoresComTendencia,
+        estatisticas: estatisticasGerais,
+        atualizadoEm: new Date().toISOString()
+    });
+});
+
 // Métricas por tema
 app.get('/api/metricas/por-tema', (req, res) => {
     const deliberacoes = coletarTodasDeliberacoes();
