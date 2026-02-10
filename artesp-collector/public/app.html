@@ -1996,48 +1996,148 @@
                             </div>
                             <div class="card-body">
                                 <div class="brazil-map-container">
-                                    <svg id="brazil-map" viewBox="0 0 600 600" class="brazil-map">
+                                    <svg id="brazil-map" viewBox="0 0 700 750" class="brazil-map">
+                                        <!-- Fundo sutil -->
+                                        <defs>
+                                            <filter id="glow">
+                                                <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                                                <feMerge>
+                                                    <feMergeNode in="coloredBlur"/>
+                                                    <feMergeNode in="SourceGraphic"/>
+                                                </feMerge>
+                                            </filter>
+                                        </defs>
+
                                         <!-- Norte -->
                                         <g class="region-norte">
-                                            <path id="AM" class="estado" d="M80,120 L180,100 L200,150 L180,200 L120,220 L60,180 Z" data-estado="Amazonas" data-deliberacoes="23"/>
-                                            <path id="PA" class="estado" d="M200,150 L320,130 L340,200 L280,240 L180,200 Z" data-estado="Para" data-deliberacoes="45"/>
-                                            <path id="AC" class="estado" d="M40,180 L80,160 L100,200 L60,220 Z" data-estado="Acre" data-deliberacoes="8"/>
-                                            <path id="RO" class="estado" d="M100,200 L140,190 L160,240 L120,260 Z" data-estado="Rondonia" data-deliberacoes="12"/>
-                                            <path id="RR" class="estado" d="M140,60 L180,50 L200,100 L160,110 Z" data-estado="Roraima" data-deliberacoes="5"/>
-                                            <path id="AP" class="estado" d="M280,80 L320,70 L330,120 L290,130 Z" data-estado="Amapa" data-deliberacoes="7"/>
-                                            <path id="TO" class="estado" d="M280,240 L320,230 L340,310 L300,320 Z" data-estado="Tocantins" data-deliberacoes="18"/>
+                                            <path id="AM" class="estado" d="M50,150 L100,100 L200,90 L280,110 L300,180 L280,250 L200,280 L120,260 L80,220 L50,180 Z" data-estado="Amazonas" data-deliberacoes="23">
+                                                <title>Amazonas - 23 deliberacoes</title>
+                                            </path>
+                                            <path id="PA" class="estado" d="M280,110 L380,90 L450,100 L480,150 L470,220 L420,280 L350,300 L280,280 L280,250 L300,180 Z" data-estado="Para" data-deliberacoes="45">
+                                                <title>Para - 45 deliberacoes</title>
+                                            </path>
+                                            <path id="AC" class="estado" d="M20,200 L50,180 L80,220 L70,260 L30,250 Z" data-estado="Acre" data-deliberacoes="8">
+                                                <title>Acre - 8 deliberacoes</title>
+                                            </path>
+                                            <path id="RO" class="estado" d="M80,220 L120,260 L140,320 L100,340 L70,300 L70,260 Z" data-estado="Rondonia" data-deliberacoes="12">
+                                                <title>Rondonia - 12 deliberacoes</title>
+                                            </path>
+                                            <path id="RR" class="estado" d="M180,30 L240,20 L260,60 L240,100 L200,90 L180,60 Z" data-estado="Roraima" data-deliberacoes="5">
+                                                <title>Roraima - 5 deliberacoes</title>
+                                            </path>
+                                            <path id="AP" class="estado" d="M400,40 L450,30 L470,80 L450,120 L410,100 L400,60 Z" data-estado="Amapa" data-deliberacoes="7">
+                                                <title>Amapa - 7 deliberacoes</title>
+                                            </path>
+                                            <path id="TO" class="estado" d="M350,300 L400,290 L420,380 L380,420 L340,400 L330,340 Z" data-estado="Tocantins" data-deliberacoes="18">
+                                                <title>Tocantins - 18 deliberacoes</title>
+                                            </path>
                                         </g>
+
                                         <!-- Nordeste -->
                                         <g class="region-nordeste">
-                                            <path id="MA" class="estado" d="M340,200 L400,180 L420,240 L360,260 Z" data-estado="Maranhao" data-deliberacoes="34"/>
-                                            <path id="PI" class="estado" d="M360,260 L400,250 L420,320 L380,330 Z" data-estado="Piaui" data-deliberacoes="21"/>
-                                            <path id="CE" class="estado" d="M420,220 L480,200 L490,260 L440,270 Z" data-estado="Ceara" data-deliberacoes="67"/>
-                                            <path id="RN" class="estado" d="M490,230 L530,220 L540,260 L500,270 Z" data-estado="Rio Grande do Norte" data-deliberacoes="28"/>
-                                            <path id="PB" class="estado" d="M490,270 L540,260 L550,300 L500,310 Z" data-estado="Paraiba" data-deliberacoes="31"/>
-                                            <path id="PE" class="estado" d="M440,300 L520,290 L530,340 L450,350 Z" data-estado="Pernambuco" data-deliberacoes="89"/>
-                                            <path id="AL" class="estado" d="M500,340 L540,330 L550,370 L510,380 Z" data-estado="Alagoas" data-deliberacoes="19"/>
-                                            <path id="SE" class="estado" d="M490,380 L530,370 L540,400 L500,410 Z" data-estado="Sergipe" data-deliberacoes="15"/>
-                                            <path id="BA" class="estado" d="M380,330 L480,310 L500,420 L400,440 Z" data-estado="Bahia" data-deliberacoes="112"/>
+                                            <path id="MA" class="estado" d="M420,220 L500,200 L530,260 L500,320 L440,300 L420,280 Z" data-estado="Maranhao" data-deliberacoes="34">
+                                                <title>Maranhao - 34 deliberacoes</title>
+                                            </path>
+                                            <path id="PI" class="estado" d="M440,300 L500,320 L510,400 L460,420 L420,380 L420,340 Z" data-estado="Piaui" data-deliberacoes="21">
+                                                <title>Piaui - 21 deliberacoes</title>
+                                            </path>
+                                            <path id="CE" class="estado" d="M530,260 L590,240 L610,300 L570,340 L520,320 Z" data-estado="Ceara" data-deliberacoes="67">
+                                                <title>Ceara - 67 deliberacoes</title>
+                                            </path>
+                                            <path id="RN" class="estado" d="M610,280 L660,270 L670,320 L630,340 L610,320 Z" data-estado="Rio Grande do Norte" data-deliberacoes="28">
+                                                <title>RN - 28 deliberacoes</title>
+                                            </path>
+                                            <path id="PB" class="estado" d="M600,340 L660,330 L670,370 L620,380 Z" data-estado="Paraiba" data-deliberacoes="31">
+                                                <title>Paraiba - 31 deliberacoes</title>
+                                            </path>
+                                            <path id="PE" class="estado" d="M520,360 L610,350 L620,400 L540,420 L510,400 Z" data-estado="Pernambuco" data-deliberacoes="89">
+                                                <title>Pernambuco - 89 deliberacoes</title>
+                                            </path>
+                                            <path id="AL" class="estado" d="M600,400 L650,390 L660,430 L620,440 Z" data-estado="Alagoas" data-deliberacoes="19">
+                                                <title>Alagoas - 19 deliberacoes</title>
+                                            </path>
+                                            <path id="SE" class="estado" d="M590,440 L640,430 L650,470 L610,480 Z" data-estado="Sergipe" data-deliberacoes="15">
+                                                <title>Sergipe - 15 deliberacoes</title>
+                                            </path>
+                                            <path id="BA" class="estado" d="M460,420 L540,420 L580,480 L560,560 L480,580 L420,540 L400,460 Z" data-estado="Bahia" data-deliberacoes="112">
+                                                <title>Bahia - 112 deliberacoes</title>
+                                            </path>
                                         </g>
+
                                         <!-- Centro-Oeste -->
                                         <g class="region-centro-oeste">
-                                            <path id="MT" class="estado" d="M160,240 L280,220 L300,340 L180,360 Z" data-estado="Mato Grosso" data-deliberacoes="42"/>
-                                            <path id="MS" class="estado" d="M180,360 L260,350 L280,440 L200,450 Z" data-estado="Mato Grosso do Sul" data-deliberacoes="38"/>
-                                            <path id="GO" class="estado" d="M280,340 L380,320 L400,420 L300,440 Z" data-estado="Goias" data-deliberacoes="56"/>
-                                            <path id="DF" class="estado" d="M340,370 L360,365 L365,390 L345,395 Z" data-estado="Distrito Federal" data-deliberacoes="234"/>
+                                            <path id="MT" class="estado" d="M140,320 L200,280 L280,280 L330,340 L320,440 L240,480 L160,440 L140,360 Z" data-estado="Mato Grosso" data-deliberacoes="42">
+                                                <title>Mato Grosso - 42 deliberacoes</title>
+                                            </path>
+                                            <path id="MS" class="estado" d="M200,500 L280,480 L320,540 L300,620 L220,640 L180,580 Z" data-estado="Mato Grosso do Sul" data-deliberacoes="38">
+                                                <title>MS - 38 deliberacoes</title>
+                                            </path>
+                                            <path id="GO" class="estado" d="M320,440 L400,420 L420,500 L380,560 L320,540 L300,480 Z" data-estado="Goias" data-deliberacoes="56">
+                                                <title>Goias - 56 deliberacoes</title>
+                                            </path>
+                                            <path id="DF" class="estado estado-destaque" d="M400,470 L430,460 L440,490 L420,510 L400,500 Z" data-estado="Distrito Federal" data-deliberacoes="234">
+                                                <title>DF - 234 deliberacoes</title>
+                                            </path>
                                         </g>
+
                                         <!-- Sudeste -->
                                         <g class="region-sudeste">
-                                            <path id="MG" class="estado estado-destaque" d="M320,420 L440,400 L460,500 L340,520 Z" data-estado="Minas Gerais" data-deliberacoes="187"/>
-                                            <path id="ES" class="estado" d="M460,440 L500,430 L510,490 L470,500 Z" data-estado="Espirito Santo" data-deliberacoes="45"/>
-                                            <path id="RJ" class="estado estado-destaque" d="M420,500 L480,490 L490,540 L430,550 Z" data-estado="Rio de Janeiro" data-deliberacoes="156"/>
-                                            <path id="SP" class="estado estado-ativo" d="M280,460 L380,450 L400,540 L300,550 Z" data-estado="Sao Paulo" data-deliberacoes="456"/>
+                                            <path id="MG" class="estado" d="M420,500 L480,480 L530,520 L540,600 L480,640 L400,620 L380,560 Z" data-estado="Minas Gerais" data-deliberacoes="187">
+                                                <title>Minas Gerais - 187 deliberacoes</title>
+                                            </path>
+                                            <path id="ES" class="estado" d="M540,540 L590,520 L600,580 L560,600 L540,580 Z" data-estado="Espirito Santo" data-deliberacoes="45">
+                                                <title>ES - 45 deliberacoes</title>
+                                            </path>
+                                            <path id="RJ" class="estado" d="M500,620 L560,600 L580,650 L520,680 L480,660 Z" data-estado="Rio de Janeiro" data-deliberacoes="156">
+                                                <title>RJ - 156 deliberacoes</title>
+                                            </path>
+                                            <path id="SP" class="estado estado-ativo" d="M300,580 L380,560 L420,600 L400,680 L320,700 L260,660 L280,600 Z" data-estado="Sao Paulo" data-deliberacoes="456" filter="url(#glow)">
+                                                <title>Sao Paulo - 456 deliberacoes</title>
+                                            </path>
                                         </g>
+
                                         <!-- Sul -->
                                         <g class="region-sul">
-                                            <path id="PR" class="estado" d="M260,520 L340,510 L360,580 L280,590 Z" data-estado="Parana" data-deliberacoes="98"/>
-                                            <path id="SC" class="estado" d="M300,580 L360,570 L375,620 L315,630 Z" data-estado="Santa Catarina" data-deliberacoes="67"/>
-                                            <path id="RS" class="estado" d="M280,620 L360,610 L380,700 L300,710 Z" data-estado="Rio Grande do Sul" data-deliberacoes="89"/>
+                                            <path id="PR" class="estado" d="M260,660 L340,640 L380,680 L360,740 L280,750 L240,710 Z" data-estado="Parana" data-deliberacoes="98">
+                                                <title>Parana - 98 deliberacoes</title>
+                                            </path>
+                                            <path id="SC" class="estado" d="M300,750 L370,740 L390,790 L330,810 L290,790 Z" data-estado="Santa Catarina" data-deliberacoes="67">
+                                                <title>SC - 67 deliberacoes</title>
+                                            </path>
+                                            <path id="RS" class="estado" d="M260,800 L340,790 L380,850 L340,920 L260,900 L240,840 Z" data-estado="Rio Grande do Sul" data-deliberacoes="89">
+                                                <title>RS - 89 deliberacoes</title>
+                                            </path>
+                                        </g>
+
+                                        <!-- Labels dos estados principais -->
+                                        <g class="state-labels" fill="white" font-size="14" font-weight="bold" text-anchor="middle">
+                                            <text x="180" y="180">AM</text>
+                                            <text x="380" y="180">PA</text>
+                                            <text x="50" y="230">AC</text>
+                                            <text x="100" y="290">RO</text>
+                                            <text x="220" y="60">RR</text>
+                                            <text x="430" y="80">AP</text>
+                                            <text x="370" y="360">TO</text>
+                                            <text x="470" y="270">MA</text>
+                                            <text x="460" y="370">PI</text>
+                                            <text x="560" y="300">CE</text>
+                                            <text x="640" y="300">RN</text>
+                                            <text x="630" y="360">PB</text>
+                                            <text x="560" y="390">PE</text>
+                                            <text x="630" y="420">AL</text>
+                                            <text x="620" y="460">SE</text>
+                                            <text x="490" y="500">BA</text>
+                                            <text x="230" y="390">MT</text>
+                                            <text x="250" y="570">MS</text>
+                                            <text x="360" y="490">GO</text>
+                                            <text x="415" y="490">DF</text>
+                                            <text x="470" y="570">MG</text>
+                                            <text x="570" y="560">ES</text>
+                                            <text x="530" y="650">RJ</text>
+                                            <text x="340" y="640" font-size="16" fill="#2A428C">SP</text>
+                                            <text x="310" y="700">PR</text>
+                                            <text x="340" y="780">SC</text>
+                                            <text x="310" y="860">RS</text>
                                         </g>
                                     </svg>
 

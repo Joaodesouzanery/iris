@@ -1555,15 +1555,42 @@
     // PAGE: Agencias (Visualizacao Isometrica 3D)
     // ============================================
     const PageAgencias = {
+        // Icones SVG para cada setor
+        icones: {
+            transporte: `<svg viewBox="0 0 80 80" fill="none">
+                <rect x="8" y="28" width="44" height="28" rx="4" fill="currentColor" opacity="0.2" stroke="currentColor" stroke-width="2"/>
+                <rect x="52" y="36" width="20" height="20" rx="3" fill="currentColor" opacity="0.2" stroke="currentColor" stroke-width="2"/>
+                <path d="M52 42 h12" stroke="currentColor" stroke-width="2" opacity="0.6"/>
+                <circle cx="20" cy="60" r="8" fill="none" stroke="currentColor" stroke-width="3"/>
+                <circle cx="20" cy="60" r="3" fill="currentColor"/>
+                <circle cx="62" cy="60" r="8" fill="none" stroke="currentColor" stroke-width="3"/>
+                <circle cx="62" cy="60" r="3" fill="currentColor"/>
+                <path d="M12 36 h32 M12 44 h24" stroke="currentColor" stroke-width="2" opacity="0.4"/>
+            </svg>`,
+            mineracao: `<svg viewBox="0 0 80 80" fill="none">
+                <path d="M10 65 L30 30 L40 42 L55 22 L70 65 Z" fill="currentColor" opacity="0.2" stroke="currentColor" stroke-width="2"/>
+                <path d="M18 65 L30 45 L40 55 L50 40 L62 65" stroke="currentColor" stroke-width="1.5" opacity="0.5"/>
+                <path d="M25 28 L35 18 L40 24 L32 35 Z" fill="currentColor"/>
+                <rect x="30" y="32" width="5" height="20" rx="2" fill="currentColor" transform="rotate(-45 32 42)"/>
+                <circle cx="58" cy="18" r="6" fill="#FFEF4D" stroke="#FFEF4D" stroke-width="1"/>
+                <path d="M58 10 v-4 M58 26 v4 M50 18 h-4 M66 18 h4 M52 12 l-2 -2 M64 24 l2 2 M52 24 l-2 2 M64 12 l2 -2" stroke="#FFEF4D" stroke-width="2"/>
+                <rect x="15" y="60" width="12" height="5" rx="1" fill="currentColor" opacity="0.5"/>
+                <rect x="45" y="60" width="10" height="5" rx="1" fill="currentColor" opacity="0.5"/>
+            </svg>`
+        },
+
         agencias: [
             {
                 id: 'artesp',
                 nome: 'ARTESP',
-                nomeCompleto: 'Agencia de Transporte do Estado de SP',
+                nomeCompleto: 'Agencia de Transporte do Estado de Sao Paulo',
+                setor: 'transporte',
+                esfera: 'Estadual - SP',
                 decisoes: 1247,
                 aprovadas: 892,
                 pendentes: 45,
                 cor: '#FFEF4D',
+                corSecundaria: '#e6d645',
                 diretores: [
                     { nome: 'Andre Isper Rodrigues Barnabe', cargo: 'Diretor-Presidente', iniciais: 'AI' },
                     { nome: 'Diego Albert Zanatto', cargo: 'Diretor de Fiscalizacao', iniciais: 'DZ' },
@@ -1575,10 +1602,13 @@
                 id: 'anm',
                 nome: 'ANM',
                 nomeCompleto: 'Agencia Nacional de Mineracao',
+                setor: 'mineracao',
+                esfera: 'Federal',
                 decisoes: 892,
                 aprovadas: 654,
                 pendentes: 78,
                 cor: '#60A5FA',
+                corSecundaria: '#3b82f6',
                 diretores: [
                     { nome: 'Mauro Henrique Moreira Sousa', cargo: 'Diretor-Geral', iniciais: 'MM' },
                     { nome: 'Luiz Paniago Neves', cargo: 'Diretor Substituto', iniciais: 'LP' },
@@ -1653,42 +1683,56 @@
             const grid = document.getElementById('agencias-iso-grid');
             if (!grid) return;
 
-            grid.innerHTML = this.agencias.map(a => `
-                <div class="iso-card" data-agencia="${a.id}" style="--card-color: ${a.cor};">
-                    <div class="iso-card-face iso-card-top">
-                        <div class="iso-card-header">
-                            <div class="iso-card-icon" style="background: ${a.cor}20; color: ${a.cor};">
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-                            </div>
-                            <div class="iso-card-title">${a.nome}</div>
-                        </div>
-                        <div class="iso-card-subtitle">${a.nomeCompleto}</div>
-                        <div class="iso-card-metrics">
-                            <div class="iso-metric">
-                                <div class="iso-metric-value">${a.decisoes.toLocaleString('pt-BR')}</div>
-                                <div class="iso-metric-label">Decisoes</div>
-                            </div>
-                            <div class="iso-metric">
-                                <div class="iso-metric-value" style="color: #4ADE80;">${a.aprovadas.toLocaleString('pt-BR')}</div>
-                                <div class="iso-metric-label">Aprovadas</div>
-                            </div>
-                            <div class="iso-metric">
-                                <div class="iso-metric-value" style="color: #FB923C;">${a.pendentes}</div>
-                                <div class="iso-metric-label">Pendentes</div>
+            grid.innerHTML = this.agencias.map(a => {
+                const icone = this.icones[a.setor] || this.icones.transporte;
+                const taxa = Math.round((a.aprovadas / a.decisoes) * 100);
+
+                return `
+                <div class="iso-card-3d" data-agencia="${a.id}">
+                    <div class="iso-card-inner" style="--card-color: ${a.cor}; --card-color-dark: ${a.corSecundaria};">
+                        <!-- Topo do card com icone 3D -->
+                        <div class="iso-card-top-face">
+                            <div class="iso-3d-icon" style="color: ${a.cor};">
+                                ${icone}
                             </div>
                         </div>
-                        <div class="iso-card-directors">
-                            <div class="iso-directors-label">Diretoria (${a.diretores?.length || 0})</div>
-                            <div class="iso-directors-avatars">
-                                ${(a.diretores || []).slice(0, 4).map(d => `<div class="iso-director-avatar" title="${d.nome} - ${d.cargo}">${d.iniciais}</div>`).join('')}
-                                ${(a.diretores?.length > 4) ? `<div class="iso-director-more">+${a.diretores.length - 4}</div>` : ''}
+
+                        <!-- Frente do card com informacoes -->
+                        <div class="iso-card-front-face">
+                            <div class="iso-agency-logo" style="color: ${a.cor};">
+                                <span class="iso-agency-name">${a.nome}</span>
+                                <span class="iso-agency-badge" style="background: ${a.cor}25; color: ${a.cor};">${a.esfera}</span>
+                            </div>
+                            <div class="iso-agency-fullname">${a.nomeCompleto}</div>
+
+                            <div class="iso-stats-row">
+                                <div class="iso-stat-box">
+                                    <div class="iso-stat-value" style="color: ${a.cor};">${a.decisoes.toLocaleString('pt-BR')}</div>
+                                    <div class="iso-stat-label">Decisoes</div>
+                                </div>
+                                <div class="iso-stat-box">
+                                    <div class="iso-stat-value" style="color: #4ADE80;">${taxa}%</div>
+                                    <div class="iso-stat-label">Aprovacao</div>
+                                </div>
+                            </div>
+
+                            <div class="iso-directors-section">
+                                <div class="iso-directors-title">Diretoria Colegiada</div>
+                                <div class="iso-directors-grid">
+                                    ${(a.diretores || []).map(d => `
+                                        <div class="iso-director-chip" title="${d.nome} - ${d.cargo}" style="--chip-color: ${a.cor};">
+                                            <span class="iso-director-initials">${d.iniciais}</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
                             </div>
                         </div>
+
+                        <!-- Lateral direita -->
+                        <div class="iso-card-right-face"></div>
                     </div>
-                    <div class="iso-card-face iso-card-front"></div>
-                    <div class="iso-card-face iso-card-side"></div>
                 </div>
-            `).join('');
+            `}).join('');
 
             this.setupInteractivity();
         }
