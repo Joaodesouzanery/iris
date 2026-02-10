@@ -1556,18 +1556,43 @@
     // ============================================
     const PageAgencias = {
         agencias: [
-            { id: 'artesp', nome: 'ARTESP', nomeCompleto: 'Agencia de Transporte do Estado de SP', decisoes: 1247, aprovadas: 892, pendentes: 45, cor: '#FFEF4D' },
-            { id: 'antt', nome: 'ANTT', nomeCompleto: 'Agencia Nacional de Transportes Terrestres', decisoes: 3456, aprovadas: 2890, pendentes: 123, cor: '#4ADE80' },
-            { id: 'anm', nome: 'ANM', nomeCompleto: 'Agencia Nacional de Mineracao', decisoes: 892, aprovadas: 654, pendentes: 78, cor: '#60A5FA' },
-            { id: 'aneel', nome: 'ANEEL', nomeCompleto: 'Agencia Nacional de Energia Eletrica', decisoes: 2134, aprovadas: 1823, pendentes: 89, cor: '#F472B6' },
-            { id: 'antaq', nome: 'ANTAQ', nomeCompleto: 'Agencia Nacional de Transp. Aquaviarios', decisoes: 567, aprovadas: 432, pendentes: 34, cor: '#A78BFA' },
-            { id: 'arsesp', nome: 'ARSESP', nomeCompleto: 'Agencia Reguladora de Saneamento SP', decisoes: 345, aprovadas: 298, pendentes: 12, cor: '#FB923C' }
+            {
+                id: 'artesp',
+                nome: 'ARTESP',
+                nomeCompleto: 'Agencia de Transporte do Estado de SP',
+                decisoes: 1247,
+                aprovadas: 892,
+                pendentes: 45,
+                cor: '#FFEF4D',
+                diretores: [
+                    { nome: 'Andre Isper Rodrigues Barnabe', cargo: 'Diretor-Presidente', iniciais: 'AI' },
+                    { nome: 'Diego Albert Zanatto', cargo: 'Diretor de Fiscalizacao', iniciais: 'DZ' },
+                    { nome: 'Fernanda Esbizaro Rodrigues Rudnik', cargo: 'Diretora de Planejamento', iniciais: 'FR' },
+                    { nome: 'Raquel Franca Carneiro', cargo: 'Diretora de Investimentos', iniciais: 'RC' }
+                ]
+            },
+            {
+                id: 'anm',
+                nome: 'ANM',
+                nomeCompleto: 'Agencia Nacional de Mineracao',
+                decisoes: 892,
+                aprovadas: 654,
+                pendentes: 78,
+                cor: '#60A5FA',
+                diretores: [
+                    { nome: 'Mauro Henrique Moreira Sousa', cargo: 'Diretor-Geral', iniciais: 'MM' },
+                    { nome: 'Luiz Paniago Neves', cargo: 'Diretor Substituto', iniciais: 'LP' },
+                    { nome: 'Fabio Fernando Borges', cargo: 'Diretor Substituto', iniciais: 'FB' },
+                    { nome: 'Caio Mario Trivellato Seabra Filho', cargo: 'Diretor', iniciais: 'CT' },
+                    { nome: 'Jose Fernando de Mendonca Gomes Junior', cargo: 'Diretor', iniciais: 'JG' }
+                ]
+            }
         ],
 
         init() {
             const page = document.getElementById('page-agencias');
             page.classList.add('active');
-            this.setupInteractivity();
+            this.renderAgenciasGrid();
             this.updateStats();
         },
 
@@ -1618,7 +1643,54 @@
 
         showAgenciaDetails(agencia) {
             const taxa = Math.round((agencia.aprovadas / agencia.decisoes) * 100);
-            alert(`${agencia.nome}\n${agencia.nomeCompleto}\n\nDecisoes: ${agencia.decisoes.toLocaleString('pt-BR')}\nAprovadas: ${agencia.aprovadas.toLocaleString('pt-BR')} (${taxa}%)\nPendentes: ${agencia.pendentes}`);
+            const diretoresInfo = agencia.diretores
+                ? '\n\nDiretoria Colegiada:\n' + agencia.diretores.map(d => `- ${d.nome} (${d.cargo})`).join('\n')
+                : '';
+            alert(`${agencia.nome}\n${agencia.nomeCompleto}\n\nDecisoes: ${agencia.decisoes.toLocaleString('pt-BR')}\nAprovadas: ${agencia.aprovadas.toLocaleString('pt-BR')} (${taxa}%)\nPendentes: ${agencia.pendentes}${diretoresInfo}`);
+        },
+
+        renderAgenciasGrid() {
+            const grid = document.getElementById('agencias-iso-grid');
+            if (!grid) return;
+
+            grid.innerHTML = this.agencias.map(a => `
+                <div class="iso-card" data-agencia="${a.id}" style="--card-color: ${a.cor};">
+                    <div class="iso-card-face iso-card-top">
+                        <div class="iso-card-header">
+                            <div class="iso-card-icon" style="background: ${a.cor}20; color: ${a.cor};">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                            </div>
+                            <div class="iso-card-title">${a.nome}</div>
+                        </div>
+                        <div class="iso-card-subtitle">${a.nomeCompleto}</div>
+                        <div class="iso-card-metrics">
+                            <div class="iso-metric">
+                                <div class="iso-metric-value">${a.decisoes.toLocaleString('pt-BR')}</div>
+                                <div class="iso-metric-label">Decisoes</div>
+                            </div>
+                            <div class="iso-metric">
+                                <div class="iso-metric-value" style="color: #4ADE80;">${a.aprovadas.toLocaleString('pt-BR')}</div>
+                                <div class="iso-metric-label">Aprovadas</div>
+                            </div>
+                            <div class="iso-metric">
+                                <div class="iso-metric-value" style="color: #FB923C;">${a.pendentes}</div>
+                                <div class="iso-metric-label">Pendentes</div>
+                            </div>
+                        </div>
+                        <div class="iso-card-directors">
+                            <div class="iso-directors-label">Diretoria (${a.diretores?.length || 0})</div>
+                            <div class="iso-directors-avatars">
+                                ${(a.diretores || []).slice(0, 4).map(d => `<div class="iso-director-avatar" title="${d.nome} - ${d.cargo}">${d.iniciais}</div>`).join('')}
+                                ${(a.diretores?.length > 4) ? `<div class="iso-director-more">+${a.diretores.length - 4}</div>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="iso-card-face iso-card-front"></div>
+                    <div class="iso-card-face iso-card-side"></div>
+                </div>
+            `).join('');
+
+            this.setupInteractivity();
         }
     };
 
