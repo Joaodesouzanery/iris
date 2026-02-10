@@ -60,7 +60,9 @@
                 '/boletim': 'Boletim Mensal',
                 '/auditoria': 'Auditoria Forense',
                 '/upload': 'Upload de PDFs',
-                '/analise': 'Analise de PDFs'
+                '/analise': 'Analise de PDFs',
+                '/agencias': 'Agencias Reguladoras',
+                '/mapa': 'Mapa do Brasil'
             };
             const breadcrumb = document.getElementById('breadcrumb-page');
             if (breadcrumb) {
@@ -1550,6 +1552,229 @@
     };
 
     // ============================================
+    // PAGE: Agencias (Visualizacao Isometrica 3D)
+    // ============================================
+    const PageAgencias = {
+        agencias: [
+            { id: 'artesp', nome: 'ARTESP', nomeCompleto: 'Agencia de Transporte do Estado de SP', decisoes: 1247, aprovadas: 892, pendentes: 45, cor: '#FFEF4D' },
+            { id: 'antt', nome: 'ANTT', nomeCompleto: 'Agencia Nacional de Transportes Terrestres', decisoes: 3456, aprovadas: 2890, pendentes: 123, cor: '#4ADE80' },
+            { id: 'anm', nome: 'ANM', nomeCompleto: 'Agencia Nacional de Mineracao', decisoes: 892, aprovadas: 654, pendentes: 78, cor: '#60A5FA' },
+            { id: 'aneel', nome: 'ANEEL', nomeCompleto: 'Agencia Nacional de Energia Eletrica', decisoes: 2134, aprovadas: 1823, pendentes: 89, cor: '#F472B6' },
+            { id: 'antaq', nome: 'ANTAQ', nomeCompleto: 'Agencia Nacional de Transp. Aquaviarios', decisoes: 567, aprovadas: 432, pendentes: 34, cor: '#A78BFA' },
+            { id: 'arsesp', nome: 'ARSESP', nomeCompleto: 'Agencia Reguladora de Saneamento SP', decisoes: 345, aprovadas: 298, pendentes: 12, cor: '#FB923C' }
+        ],
+
+        init() {
+            const page = document.getElementById('page-agencias');
+            page.classList.add('active');
+            this.setupInteractivity();
+            this.updateStats();
+        },
+
+        setupInteractivity() {
+            const cards = document.querySelectorAll('.iso-card');
+            cards.forEach((card, index) => {
+                const agencia = this.agencias[index];
+                if (!agencia) return;
+
+                // Atualiza dados dinamicos
+                const decisoesEl = card.querySelector('.iso-metric-value');
+                const aprovEl = card.querySelectorAll('.iso-metric-value')[1];
+                const pendEl = card.querySelectorAll('.iso-metric-value')[2];
+
+                if (decisoesEl) decisoesEl.textContent = agencia.decisoes.toLocaleString('pt-BR');
+
+                // Efeitos de hover interativos
+                card.addEventListener('mouseenter', () => {
+                    card.style.transform = 'rotateX(55deg) rotateZ(-45deg) translateZ(40px)';
+                });
+
+                card.addEventListener('mouseleave', () => {
+                    card.style.transform = 'rotateX(55deg) rotateZ(-45deg) translateZ(20px)';
+                });
+
+                // Click para ver detalhes
+                card.addEventListener('click', () => {
+                    this.showAgenciaDetails(agencia);
+                });
+            });
+        },
+
+        updateStats() {
+            const totalDecisoes = this.agencias.reduce((sum, a) => sum + a.decisoes, 0);
+            const totalAprovadas = this.agencias.reduce((sum, a) => sum + a.aprovadas, 0);
+            const totalPendentes = this.agencias.reduce((sum, a) => sum + a.pendentes, 0);
+            const taxaMedia = Math.round((totalAprovadas / totalDecisoes) * 100);
+
+            // Atualiza stats cards se existirem
+            const statsEl = document.querySelectorAll('#page-agencias .stats-value');
+            if (statsEl.length >= 4) {
+                statsEl[0].textContent = this.agencias.length;
+                statsEl[1].textContent = totalDecisoes.toLocaleString('pt-BR');
+                statsEl[2].textContent = totalAprovadas.toLocaleString('pt-BR');
+                statsEl[3].textContent = taxaMedia + '%';
+            }
+        },
+
+        showAgenciaDetails(agencia) {
+            const taxa = Math.round((agencia.aprovadas / agencia.decisoes) * 100);
+            alert(`${agencia.nome}\n${agencia.nomeCompleto}\n\nDecisoes: ${agencia.decisoes.toLocaleString('pt-BR')}\nAprovadas: ${agencia.aprovadas.toLocaleString('pt-BR')} (${taxa}%)\nPendentes: ${agencia.pendentes}`);
+        }
+    };
+
+    // ============================================
+    // PAGE: Mapa do Brasil
+    // ============================================
+    const PageMapa = {
+        estados: {
+            'SP': { nome: 'Sao Paulo', decisoes: 4521, taxa: 78.5 },
+            'RJ': { nome: 'Rio de Janeiro', decisoes: 2134, taxa: 72.3 },
+            'MG': { nome: 'Minas Gerais', decisoes: 1876, taxa: 81.2 },
+            'RS': { nome: 'Rio Grande do Sul', decisoes: 1245, taxa: 75.8 },
+            'PR': { nome: 'Parana', decisoes: 1123, taxa: 79.4 },
+            'BA': { nome: 'Bahia', decisoes: 987, taxa: 68.9 },
+            'SC': { nome: 'Santa Catarina', decisoes: 876, taxa: 82.1 },
+            'GO': { nome: 'Goias', decisoes: 654, taxa: 71.5 },
+            'PE': { nome: 'Pernambuco', decisoes: 543, taxa: 65.7 },
+            'CE': { nome: 'Ceara', decisoes: 432, taxa: 69.2 },
+            'DF': { nome: 'Distrito Federal', decisoes: 398, taxa: 84.3 },
+            'PA': { nome: 'Para', decisoes: 321, taxa: 62.8 },
+            'MT': { nome: 'Mato Grosso', decisoes: 287, taxa: 73.4 },
+            'ES': { nome: 'Espirito Santo', decisoes: 265, taxa: 77.1 },
+            'MS': { nome: 'Mato Grosso do Sul', decisoes: 234, taxa: 74.6 },
+            'MA': { nome: 'Maranhao', decisoes: 198, taxa: 61.3 },
+            'AM': { nome: 'Amazonas', decisoes: 176, taxa: 58.9 },
+            'RN': { nome: 'Rio Grande do Norte', decisoes: 154, taxa: 66.4 },
+            'PB': { nome: 'Paraiba', decisoes: 143, taxa: 64.8 },
+            'AL': { nome: 'Alagoas', decisoes: 121, taxa: 63.2 },
+            'PI': { nome: 'Piaui', decisoes: 98, taxa: 59.7 },
+            'SE': { nome: 'Sergipe', decisoes: 87, taxa: 67.3 },
+            'RO': { nome: 'Rondonia', decisoes: 76, taxa: 71.2 },
+            'TO': { nome: 'Tocantins', decisoes: 65, taxa: 68.5 },
+            'AC': { nome: 'Acre', decisoes: 43, taxa: 55.8 },
+            'AP': { nome: 'Amapa', decisoes: 32, taxa: 53.1 },
+            'RR': { nome: 'Roraima', decisoes: 21, taxa: 52.4 }
+        },
+
+        regioes: {
+            'Sudeste': { estados: ['SP', 'RJ', 'MG', 'ES'], cor: '#FFEF4D' },
+            'Sul': { estados: ['PR', 'SC', 'RS'], cor: '#4ADE80' },
+            'Nordeste': { estados: ['BA', 'PE', 'CE', 'MA', 'RN', 'PB', 'AL', 'PI', 'SE'], cor: '#60A5FA' },
+            'Centro-Oeste': { estados: ['GO', 'MT', 'MS', 'DF'], cor: '#F472B6' },
+            'Norte': { estados: ['PA', 'AM', 'RO', 'TO', 'AC', 'AP', 'RR'], cor: '#A78BFA' }
+        },
+
+        init() {
+            const page = document.getElementById('page-mapa');
+            page.classList.add('active');
+            this.setupMapInteractivity();
+            this.updateStats();
+            this.renderRanking();
+        },
+
+        setupMapInteractivity() {
+            const svgPaths = document.querySelectorAll('#brazil-map path[data-state]');
+            const tooltip = document.getElementById('map-tooltip');
+
+            svgPaths.forEach(path => {
+                const stateCode = path.getAttribute('data-state');
+                const estado = this.estados[stateCode];
+
+                if (!estado) return;
+
+                // Cor baseada na quantidade de decisoes
+                const maxDecisoes = 4521; // SP
+                const intensity = Math.min(1, estado.decisoes / maxDecisoes);
+                const baseColor = this.getRegionColor(stateCode);
+                path.style.fill = baseColor;
+                path.style.opacity = 0.4 + (intensity * 0.6);
+
+                path.addEventListener('mouseenter', (e) => {
+                    path.style.opacity = 1;
+                    path.style.filter = 'brightness(1.2)';
+                    if (tooltip) {
+                        tooltip.innerHTML = `
+                            <strong>${estado.nome} (${stateCode})</strong><br>
+                            Decisoes: ${estado.decisoes.toLocaleString('pt-BR')}<br>
+                            Taxa Aprovacao: ${estado.taxa}%
+                        `;
+                        tooltip.style.display = 'block';
+                        tooltip.style.left = (e.pageX + 10) + 'px';
+                        tooltip.style.top = (e.pageY + 10) + 'px';
+                    }
+                });
+
+                path.addEventListener('mousemove', (e) => {
+                    if (tooltip) {
+                        tooltip.style.left = (e.pageX + 10) + 'px';
+                        tooltip.style.top = (e.pageY + 10) + 'px';
+                    }
+                });
+
+                path.addEventListener('mouseleave', () => {
+                    path.style.opacity = 0.4 + (intensity * 0.6);
+                    path.style.filter = 'none';
+                    if (tooltip) {
+                        tooltip.style.display = 'none';
+                    }
+                });
+
+                path.addEventListener('click', () => {
+                    this.showStateDetails(stateCode, estado);
+                });
+            });
+        },
+
+        getRegionColor(stateCode) {
+            for (const [regiao, data] of Object.entries(this.regioes)) {
+                if (data.estados.includes(stateCode)) {
+                    return data.cor;
+                }
+            }
+            return '#FFEF4D';
+        },
+
+        updateStats() {
+            const totalDecisoes = Object.values(this.estados).reduce((sum, e) => sum + e.decisoes, 0);
+            const mediaAprovacao = Object.values(this.estados).reduce((sum, e) => sum + e.taxa, 0) / Object.keys(this.estados).length;
+
+            const statsEl = document.querySelectorAll('#page-mapa .mapa-stat-value');
+            if (statsEl.length >= 4) {
+                statsEl[0].textContent = Object.keys(this.estados).length;
+                statsEl[1].textContent = totalDecisoes.toLocaleString('pt-BR');
+                statsEl[2].textContent = Math.round(mediaAprovacao) + '%';
+                statsEl[3].textContent = Object.keys(this.regioes).length;
+            }
+        },
+
+        renderRanking() {
+            const list = document.getElementById('state-ranking-list');
+            if (!list) return;
+
+            const sorted = Object.entries(this.estados)
+                .sort((a, b) => b[1].decisoes - a[1].decisoes)
+                .slice(0, 10);
+
+            list.innerHTML = sorted.map(([code, data], index) => `
+                <div class="ranking-item">
+                    <div class="ranking-position">${index + 1}</div>
+                    <div class="ranking-info">
+                        <div class="ranking-state">${data.nome}</div>
+                        <div class="ranking-stats">${data.decisoes.toLocaleString('pt-BR')} decisoes</div>
+                    </div>
+                    <div class="ranking-badge" style="background: ${this.getRegionColor(code)}20; color: ${this.getRegionColor(code)};">
+                        ${data.taxa}%
+                    </div>
+                </div>
+            `).join('');
+        },
+
+        showStateDetails(code, estado) {
+            alert(`${estado.nome} (${code})\n\nDecisoes: ${estado.decisoes.toLocaleString('pt-BR')}\nTaxa de Aprovacao: ${estado.taxa}%`);
+        }
+    };
+
+    // ============================================
     // APP INITIALIZATION
     // ============================================
     const App = {
@@ -1567,6 +1792,8 @@
         PageAuditoria,
         PageUpload,
         PageAnalise,
+        PageAgencias,
+        PageMapa,
 
         init() {
             // Register routes
@@ -1606,6 +1833,14 @@
             Router.register('/analise', () => {
                 PageMonitor.destroy();
                 PageAnalise.init();
+            });
+            Router.register('/agencias', () => {
+                PageMonitor.destroy();
+                PageAgencias.init();
+            });
+            Router.register('/mapa', () => {
+                PageMonitor.destroy();
+                PageMapa.init();
             });
             Router.register('/', () => {
                 PageMonitor.destroy();

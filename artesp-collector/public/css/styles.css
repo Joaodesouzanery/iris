@@ -2543,3 +2543,417 @@ tr:hover {
     width: 14px;
     height: 14px;
 }
+
+/* ============================================
+   ISOMETRIC 3D VISUALIZATION - Agencias
+   ============================================ */
+.isometric-scene {
+    display: flex;
+    gap: 40px;
+    padding: 40px 20px;
+    min-height: 500px;
+    perspective: 1000px;
+}
+
+.isometric-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 40px;
+    flex: 1;
+    transform-style: preserve-3d;
+}
+
+.iso-card {
+    position: relative;
+    width: 160px;
+    height: 180px;
+    transform-style: preserve-3d;
+    transform: rotateX(60deg) rotateZ(-45deg);
+    cursor: pointer;
+    transition: all 0.4s ease;
+}
+
+.iso-card:hover {
+    transform: rotateX(60deg) rotateZ(-45deg) translateZ(20px);
+}
+
+.iso-card:hover .iso-glow {
+    opacity: 1;
+}
+
+.iso-card-top {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    transform: translateZ(60px);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 30px rgba(255, 239, 77, 0.3);
+}
+
+.iso-card-front {
+    position: absolute;
+    width: 100%;
+    height: 60px;
+    background: linear-gradient(180deg, var(--surface-light) 0%, var(--surface) 100%);
+    transform: rotateX(-90deg) translateZ(60px) translateY(-30px);
+    border-radius: 0 0 8px 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+    border-top: none;
+}
+
+.iso-card-right {
+    position: absolute;
+    width: 60px;
+    height: 100%;
+    background: linear-gradient(90deg, var(--surface) 0%, var(--surface-hover) 100%);
+    transform: rotateY(90deg) translateZ(80px) translateX(-30px);
+    border-radius: 0 8px 8px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+    border-left: none;
+}
+
+.iso-icon {
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.iso-icon svg {
+    width: 40px;
+    height: 40px;
+    stroke: var(--background);
+    stroke-width: 1.5;
+}
+
+.iso-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.iso-subtitle {
+    font-size: 10px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+}
+
+.iso-stat {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.iso-stat-label {
+    font-size: 8px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+}
+
+.iso-glow {
+    position: absolute;
+    width: 120%;
+    height: 120%;
+    top: -10%;
+    left: -10%;
+    background: radial-gradient(ellipse at center, rgba(255, 239, 77, 0.3) 0%, transparent 70%);
+    transform: translateZ(-10px);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    pointer-events: none;
+}
+
+.iso-connection {
+    position: absolute;
+    background: var(--primary);
+    opacity: 0.3;
+}
+
+.iso-conn-right {
+    width: 80px;
+    height: 2px;
+    right: -80px;
+    top: 50%;
+    transform: translateZ(30px);
+}
+
+.iso-conn-down {
+    width: 2px;
+    height: 80px;
+    bottom: -80px;
+    left: 50%;
+    transform: translateZ(30px);
+}
+
+.iso-info-panel {
+    width: 280px;
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    padding: 20px;
+    height: fit-content;
+    position: sticky;
+    top: 20px;
+}
+
+.iso-info-header {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 12px;
+    margin-bottom: 12px;
+}
+
+.iso-info-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.iso-info-body {
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+/* ============================================
+   BRAZIL MAP
+   ============================================ */
+.brazil-map-container {
+    position: relative;
+    width: 100%;
+    min-height: 500px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.brazil-map {
+    width: 100%;
+    max-width: 500px;
+    height: auto;
+}
+
+.estado {
+    fill: rgba(255, 239, 77, 0.2);
+    stroke: var(--border);
+    stroke-width: 1;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.estado:hover {
+    fill: rgba(255, 239, 77, 0.6);
+    stroke: var(--primary);
+    stroke-width: 2;
+}
+
+.estado-ativo {
+    fill: rgba(255, 239, 77, 0.8);
+    stroke: var(--primary);
+    stroke-width: 2;
+}
+
+.estado-destaque {
+    fill: rgba(255, 239, 77, 0.5);
+}
+
+.map-legend {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 16px;
+    border: 1px solid var(--border);
+}
+
+.legend-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 12px;
+}
+
+.legend-scale {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+.legend-color {
+    width: 20px;
+    height: 12px;
+    border-radius: 2px;
+    border: 1px solid var(--border);
+}
+
+.map-tooltip {
+    position: absolute;
+    background: var(--surface);
+    border: 1px solid var(--primary);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    z-index: 100;
+    box-shadow: var(--shadow-lg);
+}
+
+.map-tooltip.active {
+    opacity: 1;
+}
+
+/* State Ranking */
+.state-ranking {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.state-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: var(--background);
+    border-radius: var(--radius);
+    transition: all 0.2s ease;
+}
+
+.state-item:hover {
+    background: var(--surface-hover);
+}
+
+.state-rank {
+    width: 28px;
+    height: 28px;
+    background: var(--primary);
+    color: var(--background);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 12px;
+}
+
+.state-info {
+    flex: 1;
+}
+
+.state-name {
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.state-bar {
+    height: 6px;
+    background: var(--surface-hover);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.state-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), var(--primary-light));
+    border-radius: 3px;
+    transition: width 0.5s ease;
+}
+
+.state-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--primary);
+    min-width: 50px;
+    text-align: right;
+}
+
+/* Region Grid */
+.region-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 16px;
+}
+
+@media (max-width: 1200px) {
+    .region-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .region-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.region-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    background: var(--background);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    transition: all 0.2s ease;
+}
+
+.region-card:hover {
+    border-color: var(--primary);
+}
+
+.region-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--primary);
+}
+
+.region-info {
+    flex: 1;
+}
+
+.region-name {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.region-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.region-percent {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--primary);
+}

@@ -76,6 +76,18 @@
                 </div>
 
                 <div class="nav-section">
+                    <div class="nav-section-title">Agencias</div>
+                    <a data-route="/agencias" class="nav-item">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                        Visao Geral
+                    </a>
+                    <a data-route="/mapa" class="nav-item">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg>
+                        Mapa do Brasil
+                    </a>
+                </div>
+
+                <div class="nav-section">
                     <div class="nav-section-title">Inteligencia</div>
                     <a data-route="/metricas" class="nav-item">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path></svg>
@@ -1765,6 +1777,573 @@
                                         </tr>
                                     </tbody>
                                 </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================
+                     PAGE: Agencias - Visualizacao Isometrica 3D
+                     ============================================ -->
+                <div id="page-agencias" class="page-view">
+                    <div class="page-header">
+                        <div class="page-title-section">
+                            <h1 class="page-title">Agencias Reguladoras</h1>
+                            <p class="page-subtitle">Visao isometrica das agencias e suas metricas</p>
+                        </div>
+                        <div class="page-actions">
+                            <select class="filter-select" id="filtro-esfera">
+                                <option value="">Todas Esferas</option>
+                                <option value="federal">Federal</option>
+                                <option value="estadual">Estadual</option>
+                            </select>
+                            <select class="filter-select" id="filtro-setor">
+                                <option value="">Todos Setores</option>
+                                <option value="transporte">Transporte</option>
+                                <option value="mineracao">Mineracao</option>
+                                <option value="energia">Energia</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Stats Cards -->
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Agencias Monitoradas</span>
+                            </div>
+                            <div class="stat-card-value">6</div>
+                            <div class="stat-card-subtitle">4 federais, 2 estaduais</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Total Deliberacoes</span>
+                            </div>
+                            <div class="stat-card-value">1.247</div>
+                            <div class="stat-card-subtitle">Ultimos 12 meses</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Taxa Media Deferimento</span>
+                            </div>
+                            <div class="stat-card-value success">67%</div>
+                            <div class="stat-card-subtitle">Todas agencias</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Diretores Ativos</span>
+                            </div>
+                            <div class="stat-card-value">28</div>
+                            <div class="stat-card-subtitle">Em exercicio</div>
+                        </div>
+                    </div>
+
+                    <!-- Isometric 3D Grid -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                                Panorama das Agencias
+                            </h2>
+                        </div>
+                        <div class="card-body">
+                            <div class="isometric-scene">
+                                <!-- Grid Base -->
+                                <div class="isometric-grid">
+                                    <!-- ARTESP -->
+                                    <div class="iso-card" data-agency="artesp">
+                                        <div class="iso-card-top">
+                                            <div class="iso-icon">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                                    <path d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                                    <path d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1"/>
+                                                </svg>
+                                            </div>
+                                        </div>
+                                        <div class="iso-card-front">
+                                            <div class="iso-title">ARTESP</div>
+                                            <div class="iso-subtitle">Sao Paulo</div>
+                                        </div>
+                                        <div class="iso-card-right">
+                                            <div class="iso-stat">109</div>
+                                            <div class="iso-stat-label">deliberacoes</div>
+                                        </div>
+                                        <div class="iso-glow"></div>
+                                        <div class="iso-connection iso-conn-right"></div>
+                                    </div>
+
+                                    <!-- ANTT -->
+                                    <div class="iso-card" data-agency="antt">
+                                        <div class="iso-card-top">
+                                            <div class="iso-icon">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                                    <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                                </svg>
+                                            </div>
+                                        </div>
+                                        <div class="iso-card-front">
+                                            <div class="iso-title">ANTT</div>
+                                            <div class="iso-subtitle">Federal</div>
+                                        </div>
+                                        <div class="iso-card-right">
+                                            <div class="iso-stat">342</div>
+                                            <div class="iso-stat-label">deliberacoes</div>
+                                        </div>
+                                        <div class="iso-glow"></div>
+                                        <div class="iso-connection iso-conn-down"></div>
+                                    </div>
+
+                                    <!-- ANM -->
+                                    <div class="iso-card" data-agency="anm">
+                                        <div class="iso-card-top">
+                                            <div class="iso-icon">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                                    <path d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+                                                </svg>
+                                            </div>
+                                        </div>
+                                        <div class="iso-card-front">
+                                            <div class="iso-title">ANM</div>
+                                            <div class="iso-subtitle">Federal</div>
+                                        </div>
+                                        <div class="iso-card-right">
+                                            <div class="iso-stat">187</div>
+                                            <div class="iso-stat-label">deliberacoes</div>
+                                        </div>
+                                        <div class="iso-glow"></div>
+                                    </div>
+
+                                    <!-- ANEEL -->
+                                    <div class="iso-card" data-agency="aneel">
+                                        <div class="iso-card-top">
+                                            <div class="iso-icon">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                                    <path d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                                                </svg>
+                                            </div>
+                                        </div>
+                                        <div class="iso-card-front">
+                                            <div class="iso-title">ANEEL</div>
+                                            <div class="iso-subtitle">Federal</div>
+                                        </div>
+                                        <div class="iso-card-right">
+                                            <div class="iso-stat">456</div>
+                                            <div class="iso-stat-label">deliberacoes</div>
+                                        </div>
+                                        <div class="iso-glow"></div>
+                                    </div>
+
+                                    <!-- ANTAQ -->
+                                    <div class="iso-card" data-agency="antaq">
+                                        <div class="iso-card-top">
+                                            <div class="iso-icon">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                                    <path d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/>
+                                                </svg>
+                                            </div>
+                                        </div>
+                                        <div class="iso-card-front">
+                                            <div class="iso-title">ANTAQ</div>
+                                            <div class="iso-subtitle">Federal</div>
+                                        </div>
+                                        <div class="iso-card-right">
+                                            <div class="iso-stat">98</div>
+                                            <div class="iso-stat-label">deliberacoes</div>
+                                        </div>
+                                        <div class="iso-glow"></div>
+                                    </div>
+
+                                    <!-- ARSESP -->
+                                    <div class="iso-card" data-agency="arsesp">
+                                        <div class="iso-card-top">
+                                            <div class="iso-icon">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                                    <path d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+                                                </svg>
+                                            </div>
+                                        </div>
+                                        <div class="iso-card-front">
+                                            <div class="iso-title">ARSESP</div>
+                                            <div class="iso-subtitle">Sao Paulo</div>
+                                        </div>
+                                        <div class="iso-card-right">
+                                            <div class="iso-stat">55</div>
+                                            <div class="iso-stat-label">deliberacoes</div>
+                                        </div>
+                                        <div class="iso-glow"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Info Panel -->
+                                <div class="iso-info-panel" id="iso-info-panel">
+                                    <div class="iso-info-header">
+                                        <span class="iso-info-title">Selecione uma agencia</span>
+                                    </div>
+                                    <div class="iso-info-body">
+                                        <p>Passe o mouse sobre os cards para ver detalhes</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tabela Comparativa -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Comparativo entre Agencias</h2>
+                        </div>
+                        <div class="card-body" style="padding: 0;">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Agencia</th>
+                                        <th>Esfera</th>
+                                        <th>Setor</th>
+                                        <th>Deliberacoes</th>
+                                        <th>Deferidas</th>
+                                        <th>Taxa</th>
+                                        <th>Diretores</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong style="color: var(--primary);">ARTESP</strong></td>
+                                        <td><span class="badge badge-info">Estadual</span></td>
+                                        <td>Transporte Rodoviario</td>
+                                        <td>109</td>
+                                        <td>63</td>
+                                        <td><span style="color: var(--success);">58%</span></td>
+                                        <td>4</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong style="color: var(--primary);">ANTT</strong></td>
+                                        <td><span class="badge badge-warning">Federal</span></td>
+                                        <td>Transporte Terrestre</td>
+                                        <td>342</td>
+                                        <td>245</td>
+                                        <td><span style="color: var(--success);">72%</span></td>
+                                        <td>5</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong style="color: var(--primary);">ANM</strong></td>
+                                        <td><span class="badge badge-warning">Federal</span></td>
+                                        <td>Mineracao</td>
+                                        <td>187</td>
+                                        <td>112</td>
+                                        <td><span style="color: var(--success);">60%</span></td>
+                                        <td>5</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong style="color: var(--primary);">ANEEL</strong></td>
+                                        <td><span class="badge badge-warning">Federal</span></td>
+                                        <td>Energia Eletrica</td>
+                                        <td>456</td>
+                                        <td>342</td>
+                                        <td><span style="color: var(--success);">75%</span></td>
+                                        <td>5</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong style="color: var(--primary);">ANTAQ</strong></td>
+                                        <td><span class="badge badge-warning">Federal</span></td>
+                                        <td>Transporte Aquaviario</td>
+                                        <td>98</td>
+                                        <td>67</td>
+                                        <td><span style="color: var(--success);">68%</span></td>
+                                        <td>3</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong style="color: var(--primary);">ARSESP</strong></td>
+                                        <td><span class="badge badge-info">Estadual</span></td>
+                                        <td>Saneamento</td>
+                                        <td>55</td>
+                                        <td>38</td>
+                                        <td><span style="color: var(--success);">69%</span></td>
+                                        <td>4</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================
+                     PAGE: Mapa do Brasil
+                     ============================================ -->
+                <div id="page-mapa" class="page-view">
+                    <div class="page-header">
+                        <div class="page-title-section">
+                            <h1 class="page-title">Mapa do Brasil</h1>
+                            <p class="page-subtitle">Distribuicao geografica das deliberacoes por estado</p>
+                        </div>
+                        <div class="page-actions">
+                            <select class="filter-select" id="mapa-filtro-ano">
+                                <option value="2026">2026</option>
+                                <option value="2025">2025</option>
+                                <option value="todos">Todos os anos</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Stats do Mapa -->
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Estados Ativos</span>
+                            </div>
+                            <div class="stat-card-value">12</div>
+                            <div class="stat-card-subtitle">Com deliberacoes</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Estado Mais Ativo</span>
+                            </div>
+                            <div class="stat-card-value">SP</div>
+                            <div class="stat-card-subtitle">456 deliberacoes</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Regiao Sudeste</span>
+                            </div>
+                            <div class="stat-card-value">68%</div>
+                            <div class="stat-card-subtitle">Das deliberacoes</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Crescimento</span>
+                            </div>
+                            <div class="stat-card-value success">+12%</div>
+                            <div class="stat-card-subtitle">vs ano anterior</div>
+                        </div>
+                    </div>
+
+                    <div class="grid-2">
+                        <!-- Mapa SVG -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg>
+                                    Mapa Interativo
+                                </h2>
+                            </div>
+                            <div class="card-body">
+                                <div class="brazil-map-container">
+                                    <svg id="brazil-map" viewBox="0 0 600 600" class="brazil-map">
+                                        <!-- Norte -->
+                                        <g class="region-norte">
+                                            <path id="AM" class="estado" d="M80,120 L180,100 L200,150 L180,200 L120,220 L60,180 Z" data-estado="Amazonas" data-deliberacoes="23"/>
+                                            <path id="PA" class="estado" d="M200,150 L320,130 L340,200 L280,240 L180,200 Z" data-estado="Para" data-deliberacoes="45"/>
+                                            <path id="AC" class="estado" d="M40,180 L80,160 L100,200 L60,220 Z" data-estado="Acre" data-deliberacoes="8"/>
+                                            <path id="RO" class="estado" d="M100,200 L140,190 L160,240 L120,260 Z" data-estado="Rondonia" data-deliberacoes="12"/>
+                                            <path id="RR" class="estado" d="M140,60 L180,50 L200,100 L160,110 Z" data-estado="Roraima" data-deliberacoes="5"/>
+                                            <path id="AP" class="estado" d="M280,80 L320,70 L330,120 L290,130 Z" data-estado="Amapa" data-deliberacoes="7"/>
+                                            <path id="TO" class="estado" d="M280,240 L320,230 L340,310 L300,320 Z" data-estado="Tocantins" data-deliberacoes="18"/>
+                                        </g>
+                                        <!-- Nordeste -->
+                                        <g class="region-nordeste">
+                                            <path id="MA" class="estado" d="M340,200 L400,180 L420,240 L360,260 Z" data-estado="Maranhao" data-deliberacoes="34"/>
+                                            <path id="PI" class="estado" d="M360,260 L400,250 L420,320 L380,330 Z" data-estado="Piaui" data-deliberacoes="21"/>
+                                            <path id="CE" class="estado" d="M420,220 L480,200 L490,260 L440,270 Z" data-estado="Ceara" data-deliberacoes="67"/>
+                                            <path id="RN" class="estado" d="M490,230 L530,220 L540,260 L500,270 Z" data-estado="Rio Grande do Norte" data-deliberacoes="28"/>
+                                            <path id="PB" class="estado" d="M490,270 L540,260 L550,300 L500,310 Z" data-estado="Paraiba" data-deliberacoes="31"/>
+                                            <path id="PE" class="estado" d="M440,300 L520,290 L530,340 L450,350 Z" data-estado="Pernambuco" data-deliberacoes="89"/>
+                                            <path id="AL" class="estado" d="M500,340 L540,330 L550,370 L510,380 Z" data-estado="Alagoas" data-deliberacoes="19"/>
+                                            <path id="SE" class="estado" d="M490,380 L530,370 L540,400 L500,410 Z" data-estado="Sergipe" data-deliberacoes="15"/>
+                                            <path id="BA" class="estado" d="M380,330 L480,310 L500,420 L400,440 Z" data-estado="Bahia" data-deliberacoes="112"/>
+                                        </g>
+                                        <!-- Centro-Oeste -->
+                                        <g class="region-centro-oeste">
+                                            <path id="MT" class="estado" d="M160,240 L280,220 L300,340 L180,360 Z" data-estado="Mato Grosso" data-deliberacoes="42"/>
+                                            <path id="MS" class="estado" d="M180,360 L260,350 L280,440 L200,450 Z" data-estado="Mato Grosso do Sul" data-deliberacoes="38"/>
+                                            <path id="GO" class="estado" d="M280,340 L380,320 L400,420 L300,440 Z" data-estado="Goias" data-deliberacoes="56"/>
+                                            <path id="DF" class="estado" d="M340,370 L360,365 L365,390 L345,395 Z" data-estado="Distrito Federal" data-deliberacoes="234"/>
+                                        </g>
+                                        <!-- Sudeste -->
+                                        <g class="region-sudeste">
+                                            <path id="MG" class="estado estado-destaque" d="M320,420 L440,400 L460,500 L340,520 Z" data-estado="Minas Gerais" data-deliberacoes="187"/>
+                                            <path id="ES" class="estado" d="M460,440 L500,430 L510,490 L470,500 Z" data-estado="Espirito Santo" data-deliberacoes="45"/>
+                                            <path id="RJ" class="estado estado-destaque" d="M420,500 L480,490 L490,540 L430,550 Z" data-estado="Rio de Janeiro" data-deliberacoes="156"/>
+                                            <path id="SP" class="estado estado-ativo" d="M280,460 L380,450 L400,540 L300,550 Z" data-estado="Sao Paulo" data-deliberacoes="456"/>
+                                        </g>
+                                        <!-- Sul -->
+                                        <g class="region-sul">
+                                            <path id="PR" class="estado" d="M260,520 L340,510 L360,580 L280,590 Z" data-estado="Parana" data-deliberacoes="98"/>
+                                            <path id="SC" class="estado" d="M300,580 L360,570 L375,620 L315,630 Z" data-estado="Santa Catarina" data-deliberacoes="67"/>
+                                            <path id="RS" class="estado" d="M280,620 L360,610 L380,700 L300,710 Z" data-estado="Rio Grande do Sul" data-deliberacoes="89"/>
+                                        </g>
+                                    </svg>
+
+                                    <!-- Legenda -->
+                                    <div class="map-legend">
+                                        <div class="legend-title">Deliberacoes</div>
+                                        <div class="legend-scale">
+                                            <div class="legend-item">
+                                                <span class="legend-color" style="background: rgba(255,239,77,0.2);"></span>
+                                                <span>1-50</span>
+                                            </div>
+                                            <div class="legend-item">
+                                                <span class="legend-color" style="background: rgba(255,239,77,0.4);"></span>
+                                                <span>51-100</span>
+                                            </div>
+                                            <div class="legend-item">
+                                                <span class="legend-color" style="background: rgba(255,239,77,0.6);"></span>
+                                                <span>101-200</span>
+                                            </div>
+                                            <div class="legend-item">
+                                                <span class="legend-color" style="background: rgba(255,239,77,0.8);"></span>
+                                                <span>201-400</span>
+                                            </div>
+                                            <div class="legend-item">
+                                                <span class="legend-color" style="background: rgba(255,239,77,1);"></span>
+                                                <span>400+</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Tooltip -->
+                                    <div id="map-tooltip" class="map-tooltip"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Lista por Estado -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">Ranking por Estado</h2>
+                            </div>
+                            <div class="card-body">
+                                <div class="state-ranking">
+                                    <div class="state-item">
+                                        <div class="state-rank">1</div>
+                                        <div class="state-info">
+                                            <div class="state-name">Sao Paulo</div>
+                                            <div class="state-bar">
+                                                <div class="state-bar-fill" style="width: 100%;"></div>
+                                            </div>
+                                        </div>
+                                        <div class="state-value">456</div>
+                                    </div>
+                                    <div class="state-item">
+                                        <div class="state-rank">2</div>
+                                        <div class="state-info">
+                                            <div class="state-name">Distrito Federal</div>
+                                            <div class="state-bar">
+                                                <div class="state-bar-fill" style="width: 51%;"></div>
+                                            </div>
+                                        </div>
+                                        <div class="state-value">234</div>
+                                    </div>
+                                    <div class="state-item">
+                                        <div class="state-rank">3</div>
+                                        <div class="state-info">
+                                            <div class="state-name">Minas Gerais</div>
+                                            <div class="state-bar">
+                                                <div class="state-bar-fill" style="width: 41%;"></div>
+                                            </div>
+                                        </div>
+                                        <div class="state-value">187</div>
+                                    </div>
+                                    <div class="state-item">
+                                        <div class="state-rank">4</div>
+                                        <div class="state-info">
+                                            <div class="state-name">Rio de Janeiro</div>
+                                            <div class="state-bar">
+                                                <div class="state-bar-fill" style="width: 34%;"></div>
+                                            </div>
+                                        </div>
+                                        <div class="state-value">156</div>
+                                    </div>
+                                    <div class="state-item">
+                                        <div class="state-rank">5</div>
+                                        <div class="state-info">
+                                            <div class="state-name">Bahia</div>
+                                            <div class="state-bar">
+                                                <div class="state-bar-fill" style="width: 25%;"></div>
+                                            </div>
+                                        </div>
+                                        <div class="state-value">112</div>
+                                    </div>
+                                    <div class="state-item">
+                                        <div class="state-rank">6</div>
+                                        <div class="state-info">
+                                            <div class="state-name">Parana</div>
+                                            <div class="state-bar">
+                                                <div class="state-bar-fill" style="width: 21%;"></div>
+                                            </div>
+                                        </div>
+                                        <div class="state-value">98</div>
+                                    </div>
+                                    <div class="state-item">
+                                        <div class="state-rank">7</div>
+                                        <div class="state-info">
+                                            <div class="state-name">Rio Grande do Sul</div>
+                                            <div class="state-bar">
+                                                <div class="state-bar-fill" style="width: 19%;"></div>
+                                            </div>
+                                        </div>
+                                        <div class="state-value">89</div>
+                                    </div>
+                                    <div class="state-item">
+                                        <div class="state-rank">8</div>
+                                        <div class="state-info">
+                                            <div class="state-name">Pernambuco</div>
+                                            <div class="state-bar">
+                                                <div class="state-bar-fill" style="width: 19%;"></div>
+                                            </div>
+                                        </div>
+                                        <div class="state-value">89</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Distribuicao por Regiao -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Distribuicao por Regiao</h2>
+                        </div>
+                        <div class="card-body">
+                            <div class="region-grid">
+                                <div class="region-card">
+                                    <div class="region-icon" style="background: rgba(255,239,77,0.2);">SE</div>
+                                    <div class="region-info">
+                                        <div class="region-name">Sudeste</div>
+                                        <div class="region-value">844</div>
+                                    </div>
+                                    <div class="region-percent">68%</div>
+                                </div>
+                                <div class="region-card">
+                                    <div class="region-icon" style="background: rgba(96,165,250,0.2);">NE</div>
+                                    <div class="region-info">
+                                        <div class="region-name">Nordeste</div>
+                                        <div class="region-value">416</div>
+                                    </div>
+                                    <div class="region-percent">15%</div>
+                                </div>
+                                <div class="region-card">
+                                    <div class="region-icon" style="background: rgba(74,222,128,0.2);">S</div>
+                                    <div class="region-info">
+                                        <div class="region-name">Sul</div>
+                                        <div class="region-value">254</div>
+                                    </div>
+                                    <div class="region-percent">10%</div>
+                                </div>
+                                <div class="region-card">
+                                    <div class="region-icon" style="background: rgba(251,191,36,0.2);">CO</div>
+                                    <div class="region-info">
+                                        <div class="region-name">Centro-Oeste</div>
+                                        <div class="region-value">370</div>
+                                    </div>
+                                    <div class="region-percent">5%</div>
+                                </div>
+                                <div class="region-card">
+                                    <div class="region-icon" style="background: rgba(248,113,113,0.2);">N</div>
+                                    <div class="region-info">
+                                        <div class="region-name">Norte</div>
+                                        <div class="region-value">118</div>
+                                    </div>
+                                    <div class="region-percent">2%</div>
+                                </div>
                             </div>
                         </div>
                     </div>
