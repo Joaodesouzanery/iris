@@ -429,6 +429,303 @@ CREATE TABLE diretores (
 
 ---
 
+## PROCESSAMENTO DE PDFs - DETALHADO
+
+### Estrutura do PDF de Deliberações
+
+Um PDF típico de ata de reunião da ARTESP contém:
+
+```
+ATA DA 1176ª REUNIÃO ORDINÁRIA DO CONSELHO DIRETOR
+Data: 18 de dezembro de 2025
+
+PRESENTES:
+- André Isper Rodrigues Barnabé (Diretor-Presidente)
+- Diego Albert Zanatto (Diretor)
+- Fernanda Esbízaro Rodrigues Rudnik (Diretora)
+- Raquel França Carneiro (Diretora)
+
+PAUTA:
+
+1. DELIBERAÇÃO Nº 1
+   Interessado: Viação Cometa S/A
+   Processo: SEI! n° 134.00037303/2024-01
+   Assunto: Pedido de ressarcimento...
+   [texto do pleito]
+   DECISÃO: DEFERIDO por unanimidade
+
+2. DELIBERAÇÃO Nº 2
+   [próxima deliberação]
+   ...
+```
+
+### Extração de Dados do PDF
+
+O sistema deve extrair os seguintes dados de cada PDF:
+
+```javascript
+// Dados extraídos de cada PDF
+{
+  "arquivo": {
+    "nome": "ata_1176.pdf",
+    "tamanho": 2457600,
+    "data_upload": "2025-12-20T10:30:00Z",
+    "hash_md5": "a1b2c3d4..."  // Para evitar duplicatas
+  },
+
+  "reuniao": {
+    "numero": 1176,
+    "data": "2025-12-18",
+    "tipo": "Ordinária",
+    "presentes": ["André Isper...", "Diego Albert..."]
+  },
+
+  "deliberacoes": [
+    {
+      "numero_item": 1,
+      "interessado": "Viação Cometa S/A",
+      "processo": "SEI! n° 134.00037303/2024-01",
+      "microtema": "Tarifa",
+      "classificacao": "Pleito Externo",
+      "resumo_pleito": "A empresa solicitou...",
+      "fundamento_decisao": "RECOMENDA O DEFERIMENTO...",
+      "resultado": "Deferido",
+      "tipo_votacao": "Unanimidade",
+      "votos_favor": ["André Isper...", "Diego Albert...", "Fernanda...", "Raquel..."],
+      "votos_contra": []
+    }
+    // ... mais deliberações
+  ]
+}
+```
+
+---
+
+## ANÁLISE EM LOTE (BATCH PROCESSING)
+
+### O que é Análise em Lote?
+
+A análise em lote permite processar **múltiplos PDFs simultaneamente**, otimizando o tempo de extração quando há muitos documentos para analisar.
+
+### Interface de Análise em Lote
+
+```html
+<!-- Seção de Análise em Lote -->
+<div class="batch-analysis-section">
+    <!-- Seleção de Arquivos -->
+    <div class="batch-selection">
+        <label>
+            <input type="checkbox" id="select-all-pending">
+            Selecionar todos os pendentes
+        </label>
+        <span class="selected-count">0 arquivos selecionados</span>
+    </div>
+
+    <!-- Opções de Processamento -->
+    <div class="batch-options">
+        <select id="parallel-count">
+            <option value="1">1 arquivo por vez</option>
+            <option value="2">2 arquivos simultâneos</option>
+            <option value="3" selected>3 arquivos simultâneos</option>
+            <option value="5">5 arquivos simultâneos</option>
+        </select>
+
+        <button id="start-batch" disabled>
+            Iniciar Análise em Lote
+        </button>
+    </div>
+
+    <!-- Progresso do Lote -->
+    <div class="batch-progress" style="display: none;">
+        <div class="progress-stats">
+            <span class="completed">0 Concluídos</span>
+            <span class="processing">0 Processando</span>
+            <span class="remaining">0 Restantes</span>
+            <span class="errors">0 Erros</span>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" style="width: 0%"></div>
+        </div>
+        <button class="cancel-batch">Cancelar</button>
+    </div>
+</div>
+```
+
+### Lógica de Processamento Paralelo
+
+```javascript
+// Exemplo de implementação de análise em lote
+async function startBatchAnalysis(selectedFiles, parallelCount = 3) {
+    const queue = [...selectedFiles];
+    const activePromises = new Map();
+    let completed = 0;
+    let errors = 0;
+
+    // Função para processar um arquivo
+    const processFile = async (fileIndex) => {
+        try {
+            const response = await fetch(`/api/analisar-pdf/${fileIndex}`, {
+                method: 'POST'
+            });
+            const result = await response.json();
+
+            if (result.sucesso) {
+                completed++;
+                updateProgress(completed, errors, queue.length);
+            } else {
+                throw new Error(result.erro);
+            }
+        } catch (error) {
+            errors++;
+            console.error(`Erro no arquivo ${fileIndex}:`, error);
+        }
+    };
+
+    // Processa em paralelo respeitando o limite
+    while (queue.length > 0 || activePromises.size > 0) {
+        // Inicia novos processos até o limite
+        while (queue.length > 0 && activePromises.size < parallelCount) {
+            const fileIndex = queue.shift();
+            const promise = processFile(fileIndex);
+            activePromises.set(fileIndex, promise);
+            promise.finally(() => activePromises.delete(fileIndex));
+        }
+
+        // Aguarda pelo menos um completar
+        if (activePromises.size > 0) {
+            await Promise.race(activePromises.values());
+        }
+    }
+
+    return { completed, errors };
+}
+```
+
+### API para Análise em Lote
+
+```javascript
+// Endpoints necessários
+
+// 1. Analisar um único PDF
+POST /api/analisar-pdf/:index
+Response: {
+    "sucesso": true,
+    "deliberacoes_extraidas": 15,
+    "tempo_processamento_ms": 3500
+}
+
+// 2. Analisar múltiplos PDFs (alternativa ao paralelo no frontend)
+POST /api/analisar-lote
+Body: {
+    "indices": [0, 1, 2, 3, 4],
+    "paralelo": 3
+}
+Response: {
+    "sucesso": true,
+    "resultados": [
+        { "index": 0, "sucesso": true, "deliberacoes": 12 },
+        { "index": 1, "sucesso": true, "deliberacoes": 8 },
+        { "index": 2, "sucesso": false, "erro": "PDF corrompido" }
+    ],
+    "total_deliberacoes": 20,
+    "tempo_total_ms": 15000
+}
+
+// 3. Status do processamento em lote
+GET /api/lote/status/:batchId
+Response: {
+    "status": "processando",
+    "total": 10,
+    "concluidos": 6,
+    "erros": 1,
+    "em_andamento": 3
+}
+```
+
+### Tabela de PDFs com Seleção para Lote
+
+```html
+<table class="pdfs-table">
+    <thead>
+        <tr>
+            <th><input type="checkbox" id="select-all"></th>
+            <th>#</th>
+            <th>Arquivo</th>
+            <th>Tamanho</th>
+            <th>Status</th>
+            <th>Deliberações</th>
+            <th>Ações</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><input type="checkbox" class="pdf-checkbox" data-index="0"></td>
+            <td>1</td>
+            <td>ata_1176.pdf</td>
+            <td>2.4 MB</td>
+            <td><span class="badge pending">Pendente</span></td>
+            <td>-</td>
+            <td>
+                <button class="btn-analyze">Analisar</button>
+                <button class="btn-delete">Excluir</button>
+            </td>
+        </tr>
+        <!-- Mais linhas... -->
+    </tbody>
+</table>
+```
+
+### Estados do PDF
+
+```javascript
+const PDF_STATUS = {
+    PENDENTE: 'pendente',      // Aguardando análise
+    ANALISANDO: 'analisando',  // Em processamento
+    ANALISADO: 'analisado',    // Análise concluída com sucesso
+    ERRO: 'erro'               // Falha na análise
+};
+```
+
+### Fluxo Completo de Upload + Análise em Lote
+
+```
+1. UPLOAD
+   └── Usuário seleciona múltiplos PDFs (drag & drop ou botão)
+   └── Sistema faz upload de cada arquivo
+   └── PDFs ficam com status "pendente"
+
+2. SELEÇÃO PARA LOTE
+   └── Usuário marca checkbox nos PDFs pendentes
+   └── Ou clica em "Selecionar todos pendentes"
+   └── Sistema mostra contagem de selecionados
+
+3. CONFIGURAÇÃO
+   └── Usuário escolhe quantidade de processos paralelos
+   └── Opções: 1, 2, 3 ou 5 simultâneos
+   └── Mais paralelos = mais rápido, mas mais uso de recursos
+
+4. EXECUÇÃO
+   └── Usuário clica "Iniciar Análise em Lote"
+   └── Sistema processa PDFs respeitando limite paralelo
+   └── Interface mostra progresso em tempo real:
+       - Quantos concluídos
+       - Quantos em processamento
+       - Quantos restantes
+       - Quantos com erro
+
+5. CANCELAMENTO (opcional)
+   └── Usuário pode cancelar a qualquer momento
+   └── PDFs já iniciados terminam
+   └── Fila restante é descartada
+
+6. CONCLUSÃO
+   └── Sistema mostra resumo final
+   └── Lista de PDFs é atualizada com novos status
+   └── Métricas são recalculadas automaticamente
+```
+
+---
+
 ## COMPONENTES UI NECESSÁRIOS
 
 ### 1. Dashboard Principal

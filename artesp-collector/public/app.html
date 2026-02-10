@@ -1644,6 +1644,83 @@
                         </div>
                     </div>
 
+                    <!-- Análise em Lote -->
+                    <div class="card" style="margin-bottom: 24px;">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                                Analise em Lote
+                            </h2>
+                            <span class="badge badge-info">Multiplos PDFs</span>
+                        </div>
+                        <div class="card-body">
+                            <p style="color: var(--text-secondary); margin-bottom: 16px;">
+                                Processe varios PDFs simultaneamente. Selecione os arquivos pendentes e inicie a analise em lote para extrair todas as deliberacoes de uma vez.
+                            </p>
+
+                            <div class="batch-controls">
+                                <div class="batch-selection">
+                                    <label class="checkbox-container">
+                                        <input type="checkbox" id="batch-select-all" onchange="App.PageUpload.toggleSelectAll(this.checked)">
+                                        <span class="checkmark"></span>
+                                        <span>Selecionar todos os pendentes</span>
+                                    </label>
+                                    <span class="batch-count" id="batch-selected-count">0 arquivos selecionados</span>
+                                </div>
+
+                                <div class="batch-options">
+                                    <div class="form-group" style="margin-bottom: 0; flex: 1;">
+                                        <label class="form-label">Processamento paralelo</label>
+                                        <select class="form-input" id="batch-parallel-count" style="width: auto;">
+                                            <option value="1">1 arquivo por vez</option>
+                                            <option value="2">2 arquivos simultaneos</option>
+                                            <option value="3" selected>3 arquivos simultaneos</option>
+                                            <option value="5">5 arquivos simultaneos</option>
+                                        </select>
+                                    </div>
+
+                                    <button class="btn btn-primary" id="batch-start-btn" onclick="App.PageUpload.startBatchAnalysis()" disabled>
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                        Iniciar Analise em Lote
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Progresso do Lote -->
+                            <div id="batch-progress-container" style="display: none; margin-top: 20px;">
+                                <div class="batch-progress-header">
+                                    <span id="batch-progress-title">Processando lote...</span>
+                                    <button class="btn btn-danger btn-sm" onclick="App.PageUpload.cancelBatch()">
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                        Cancelar
+                                    </button>
+                                </div>
+                                <div class="batch-progress-stats">
+                                    <div class="batch-stat">
+                                        <span class="batch-stat-value" id="batch-completed">0</span>
+                                        <span class="batch-stat-label">Concluidos</span>
+                                    </div>
+                                    <div class="batch-stat">
+                                        <span class="batch-stat-value" id="batch-processing">0</span>
+                                        <span class="batch-stat-label">Processando</span>
+                                    </div>
+                                    <div class="batch-stat">
+                                        <span class="batch-stat-value" id="batch-remaining">0</span>
+                                        <span class="batch-stat-label">Restantes</span>
+                                    </div>
+                                    <div class="batch-stat">
+                                        <span class="batch-stat-value" id="batch-errors">0</span>
+                                        <span class="batch-stat-label">Erros</span>
+                                    </div>
+                                </div>
+                                <div class="progress-bar" style="height: 8px; margin-top: 12px;">
+                                    <div class="progress-fill" id="batch-progress-bar" style="width: 0%;"></div>
+                                </div>
+                                <div id="batch-current-files" style="margin-top: 12px; font-size: 12px; color: var(--text-secondary);"></div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Lista de PDFs -->
                     <div class="card">
                         <div class="card-header">
@@ -1662,6 +1739,9 @@
                             <table>
                                 <thead>
                                     <tr>
+                                        <th style="width: 40px;">
+                                            <input type="checkbox" id="table-select-all" onchange="App.PageUpload.toggleSelectAll(this.checked)" title="Selecionar todos">
+                                        </th>
                                         <th>#</th>
                                         <th>Arquivo</th>
                                         <th>Tamanho</th>
@@ -1671,7 +1751,7 @@
                                     </tr>
                                 </thead>
                                 <tbody id="upload-table-body">
-                                    <tr><td colspan="6"><div class="empty-state">Nenhum PDF carregado ainda</div></td></tr>
+                                    <tr><td colspan="7"><div class="empty-state">Nenhum PDF carregado ainda</div></td></tr>
                                 </tbody>
                             </table>
                         </div>

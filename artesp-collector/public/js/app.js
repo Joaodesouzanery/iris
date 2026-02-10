@@ -1942,6 +1942,226 @@
             } catch (error) {
                 alert('Erro ao excluir: ' + error.message);
             }
+        },
+
+        // ========== BATCH ANALYSIS ==========
+        selectedFiles: new Set(),
+        batchRunning: false,
+        batchCancelled: false,
+
+        toggleSelectAll(checked) {
+            const pendentes = this.pdfs
+                .map((pdf, index) => ({ pdf, index }))
+                .filter(item => item.pdf.status === 'pendente');
+
+            this.selectedFiles.clear();
+
+            if (checked) {
+                pendentes.forEach(item => this.selectedFiles.add(item.index));
+            }
+
+            // Update checkboxes in table
+            document.querySelectorAll('.pdf-checkbox').forEach(cb => {
+                const idx = parseInt(cb.dataset.index);
+                cb.checked = this.selectedFiles.has(idx);
+            });
+
+            // Sync header checkboxes
+            const selectAll1 = document.getElementById('batch-select-all');
+            const selectAll2 = document.getElementById('table-select-all');
+            if (selectAll1) selectAll1.checked = checked;
+            if (selectAll2) selectAll2.checked = checked;
+
+            this.updateBatchUI();
+        },
+
+        toggleFileSelection(index, checked) {
+            if (checked) {
+                this.selectedFiles.add(index);
+            } else {
+                this.selectedFiles.delete(index);
+            }
+            this.updateBatchUI();
+        },
+
+        updateBatchUI() {
+            const count = this.selectedFiles.size;
+            const countEl = document.getElementById('batch-selected-count');
+            const startBtn = document.getElementById('batch-start-btn');
+
+            if (countEl) {
+                countEl.textContent = count === 1 ? '1 arquivo selecionado' : `${count} arquivos selecionados`;
+            }
+            if (startBtn) {
+                startBtn.disabled = count === 0 || this.batchRunning;
+            }
+        },
+
+        async startBatchAnalysis() {
+            if (this.selectedFiles.size === 0 || this.batchRunning) return;
+
+            this.batchRunning = true;
+            this.batchCancelled = false;
+
+            const parallelCount = parseInt(document.getElementById('batch-parallel-count').value) || 3;
+            const selectedIndices = Array.from(this.selectedFiles);
+            const total = selectedIndices.length;
+            let completed = 0;
+            let errors = 0;
+            let processing = 0;
+
+            // Show progress container
+            const progressContainer = document.getElementById('batch-progress-container');
+            const startBtn = document.getElementById('batch-start-btn');
+            progressContainer.style.display = 'block';
+            startBtn.disabled = true;
+
+            const updateProgress = () => {
+                document.getElementById('batch-completed').textContent = completed;
+                document.getElementById('batch-processing').textContent = processing;
+                document.getElementById('batch-remaining').textContent = total - completed - errors - processing;
+                document.getElementById('batch-errors').textContent = errors;
+
+                const percent = Math.round(((completed + errors) / total) * 100);
+                document.getElementById('batch-progress-bar').style.width = percent + '%';
+                document.getElementById('batch-progress-title').textContent =
+                    `Processando lote... ${completed + errors}/${total}`;
+            };
+
+            // Process files in parallel batches
+            const queue = [...selectedIndices];
+            const activePromises = new Map();
+
+            const processNext = async () => {
+                if (this.batchCancelled || queue.length === 0) return;
+
+                const index = queue.shift();
+                processing++;
+                updateProgress();
+
+                // Show current file being processed
+                const currentFilesEl = document.getElementById('batch-current-files');
+                const currentFiles = Array.from(activePromises.keys())
+                    .map(idx => this.pdfs[idx]?.nome || `Arquivo ${idx + 1}`);
+                currentFilesEl.innerHTML = currentFiles.length > 0
+                    ? `<strong>Processando:</strong> ${currentFiles.join(', ')}`
+                    : '';
+
+                try {
+                    const response = await API.post(`/api/analisar-pdf/${index}`);
+                    if (!response?.sucesso) {
+                        errors++;
+                    } else {
+                        completed++;
+                    }
+                } catch (error) {
+                    console.error('Erro ao analisar:', error);
+                    errors++;
+                } finally {
+                    processing--;
+                    activePromises.delete(index);
+                    updateProgress();
+
+                    // Start next if available
+                    if (!this.batchCancelled && queue.length > 0) {
+                        const promise = processNext();
+                        if (queue.length > 0) {
+                            activePromises.set(queue[0], promise);
+                        }
+                    }
+                }
+            };
+
+            // Start initial batch
+            const initialBatch = Math.min(parallelCount, queue.length);
+            const startPromises = [];
+            for (let i = 0; i < initialBatch; i++) {
+                if (queue.length > 0) {
+                    const idx = queue[0];
+                    const promise = processNext();
+                    activePromises.set(idx, promise);
+                    startPromises.push(promise);
+                }
+            }
+
+            // Wait for all to complete
+            while (activePromises.size > 0 || queue.length > 0) {
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                // Keep spawning new processes
+                while (!this.batchCancelled && queue.length > 0 && activePromises.size < parallelCount) {
+                    const idx = queue[0];
+                    const promise = processNext();
+                    activePromises.set(idx, promise);
+                }
+            }
+
+            // Finish up
+            this.batchRunning = false;
+            this.selectedFiles.clear();
+
+            document.getElementById('batch-progress-title').textContent =
+                this.batchCancelled
+                    ? 'Analise cancelada!'
+                    : `Analise concluida! ${completed} sucesso, ${errors} erros`;
+            document.getElementById('batch-current-files').innerHTML = '';
+
+            // Reload the list
+            await this.load();
+
+            // Reset UI after delay
+            setTimeout(() => {
+                progressContainer.style.display = 'none';
+                document.getElementById('batch-progress-bar').style.width = '0%';
+                this.updateBatchUI();
+            }, 3000);
+        },
+
+        cancelBatch() {
+            this.batchCancelled = true;
+            document.getElementById('batch-progress-title').textContent = 'Cancelando...';
+        },
+
+        render() {
+            const tbody = document.getElementById('upload-table-body');
+
+            if (this.pdfs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state">Nenhum PDF carregado ainda</div></td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = this.pdfs.map((pdf, index) => {
+                const statusClass = pdf.status === 'analisado' ? 'badge-success' :
+                                   pdf.status === 'erro' ? 'badge-danger' :
+                                   pdf.status === 'analisando' ? 'badge-warning' : 'badge-secondary';
+                const statusLabel = pdf.status === 'analisado' ? 'Analisado' :
+                                   pdf.status === 'erro' ? 'Erro' :
+                                   pdf.status === 'analisando' ? 'Analisando...' : 'Pendente';
+                const tamanho = pdf.size ? (pdf.size / 1024 / 1024).toFixed(2) + ' MB' : '-';
+                const isPendente = pdf.status === 'pendente';
+                const isChecked = this.selectedFiles.has(index);
+
+                return `<tr>
+                    <td>
+                        ${isPendente
+                            ? `<input type="checkbox" class="pdf-checkbox" data-index="${index}" ${isChecked ? 'checked' : ''} onchange="App.PageUpload.toggleFileSelection(${index}, this.checked)">`
+                            : ''}
+                    </td>
+                    <td>${index + 1}</td>
+                    <td><span class="file-name">${pdf.nome || pdf.filename || 'Arquivo ' + (index + 1)}</span></td>
+                    <td>${tamanho}</td>
+                    <td><span class="badge ${statusClass}">${statusLabel}</span></td>
+                    <td>${pdf.deliberacoes_count || 0}</td>
+                    <td>
+                        <div class="action-buttons">
+                            ${pdf.status === 'pendente' ? `<button class="btn btn-primary btn-sm" onclick="App.PageUpload.analisar(${index})">Analisar</button>` : ''}
+                            <button class="btn btn-danger btn-sm" onclick="App.PageUpload.excluir(${index})">Excluir</button>
+                        </div>
+                    </td>
+                </tr>`;
+            }).join('');
+
+            this.updateBatchUI();
         }
     };
 

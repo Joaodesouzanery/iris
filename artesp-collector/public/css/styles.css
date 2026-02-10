@@ -1483,6 +1483,96 @@ tr:hover {
     transition: width 0.3s ease;
 }
 
+/* ============================================
+   Batch Analysis Controls
+   ============================================ */
+.batch-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.batch-selection {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.checkbox-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.checkbox-container input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--primary);
+    cursor: pointer;
+}
+
+.batch-count {
+    color: var(--text-secondary);
+    font-size: 13px;
+    padding: 4px 12px;
+    background: var(--background);
+    border-radius: 12px;
+}
+
+.batch-options {
+    display: flex;
+    align-items: flex-end;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.batch-progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.batch-progress-header span {
+    font-weight: 500;
+    color: var(--primary);
+}
+
+.batch-progress-stats {
+    display: flex;
+    gap: 24px;
+}
+
+.batch-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 20px;
+    background: var(--background);
+    border-radius: var(--radius);
+    min-width: 80px;
+}
+
+.batch-stat-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.batch-stat-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+.batch-stat:nth-child(1) .batch-stat-value { color: var(--success); }
+.batch-stat:nth-child(2) .batch-stat-value { color: var(--info); }
+.batch-stat:nth-child(3) .batch-stat-value { color: var(--warning); }
+.batch-stat:nth-child(4) .batch-stat-value { color: var(--danger); }
+
 /* File name styling */
 .file-name {
     font-weight: 500;
