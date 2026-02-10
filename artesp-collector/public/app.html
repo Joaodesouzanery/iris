@@ -1838,21 +1838,162 @@
                         </div>
                     </div>
 
-                    <!-- Isometric 3D Grid - Dynamic -->
-                    <div class="card">
+                    <!-- Isometric 3D Scene -->
+                    <div class="card isometric-card">
                         <div class="card-header">
                             <h2 class="card-title">
                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-                                Panorama das Agencias
+                                Panorama das Agencias Reguladoras
                             </h2>
-                            <p class="card-subtitle">ARTESP e ANM - Clique para ver detalhes</p>
+                            <p class="card-subtitle">Visualizacao isometrica 3D - ARTESP e ANM</p>
                         </div>
-                        <div class="card-body">
-                            <div class="isometric-scene">
-                                <div class="isometric-grid" id="agencias-iso-grid">
-                                    <!-- Grid sera gerado dinamicamente pelo JavaScript -->
-                                </div>
-                            </div>
+                        <div class="card-body iso-scene-container">
+                            <!-- Isometric 3D Scene SVG -->
+                            <svg class="iso-scene-svg" viewBox="0 0 1200 600" preserveAspectRatio="xMidYMid meet">
+                                <defs>
+                                    <!-- Glow filter -->
+                                    <filter id="glow-yellow" x="-50%" y="-50%" width="200%" height="200%">
+                                        <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+                                        <feMerge>
+                                            <feMergeNode in="coloredBlur"/>
+                                            <feMergeNode in="SourceGraphic"/>
+                                        </feMerge>
+                                    </filter>
+                                    <filter id="glow-blue" x="-50%" y="-50%" width="200%" height="200%">
+                                        <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+                                        <feMerge>
+                                            <feMergeNode in="coloredBlur"/>
+                                            <feMergeNode in="SourceGraphic"/>
+                                        </feMerge>
+                                    </filter>
+                                    <!-- Gradients -->
+                                    <linearGradient id="grad-yellow" x1="0%" y1="0%" x2="0%" y2="100%">
+                                        <stop offset="0%" style="stop-color:#FFEF4D;stop-opacity:1" />
+                                        <stop offset="100%" style="stop-color:#e6d645;stop-opacity:1" />
+                                    </linearGradient>
+                                    <linearGradient id="grad-blue" x1="0%" y1="0%" x2="0%" y2="100%">
+                                        <stop offset="0%" style="stop-color:#60A5FA;stop-opacity:1" />
+                                        <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:1" />
+                                    </linearGradient>
+                                    <linearGradient id="grad-dark" x1="0%" y1="0%" x2="0%" y2="100%">
+                                        <stop offset="0%" style="stop-color:#2d4594;stop-opacity:1" />
+                                        <stop offset="100%" style="stop-color:#1a2a5a;stop-opacity:1" />
+                                    </linearGradient>
+                                </defs>
+
+                                <!-- Grid floor pattern -->
+                                <g opacity="0.1">
+                                    <line x1="0" y1="300" x2="1200" y2="300" stroke="#FFEF4D" stroke-width="1"/>
+                                    <line x1="0" y1="350" x2="1200" y2="350" stroke="#FFEF4D" stroke-width="1"/>
+                                    <line x1="0" y1="400" x2="1200" y2="400" stroke="#FFEF4D" stroke-width="1"/>
+                                    <line x1="0" y1="450" x2="1200" y2="450" stroke="#FFEF4D" stroke-width="1"/>
+                                    <line x1="0" y1="500" x2="1200" y2="500" stroke="#FFEF4D" stroke-width="1"/>
+                                </g>
+
+                                <!-- Connection line between agencies -->
+                                <g class="connections">
+                                    <path d="M380,350 C500,320 700,320 820,350" fill="none" stroke="#FFEF4D" stroke-width="3" stroke-dasharray="10,5" opacity="0.6" filter="url(#glow-yellow)">
+                                        <animate attributeName="stroke-dashoffset" from="0" to="30" dur="2s" repeatCount="indefinite"/>
+                                    </path>
+                                    <circle cx="600" cy="330" r="8" fill="#FFEF4D" filter="url(#glow-yellow)">
+                                        <animate attributeName="r" values="6;10;6" dur="1.5s" repeatCount="indefinite"/>
+                                    </circle>
+                                </g>
+
+                                <!-- ARTESP - Transport Building (Left) -->
+                                <g class="agency-artesp" transform="translate(100, 200)" style="cursor: pointer;">
+                                    <!-- Building shadow -->
+                                    <ellipse cx="150" cy="320" rx="120" ry="30" fill="#000" opacity="0.3"/>
+
+                                    <!-- Main building - isometric -->
+                                    <g transform="skewY(-15)">
+                                        <!-- Building base -->
+                                        <rect x="50" y="100" width="200" height="180" fill="url(#grad-dark)" stroke="#FFEF4D" stroke-width="2"/>
+                                        <!-- Building windows -->
+                                        <rect x="70" y="120" width="30" height="25" fill="#FFEF4D" opacity="0.3"/>
+                                        <rect x="110" y="120" width="30" height="25" fill="#FFEF4D" opacity="0.3"/>
+                                        <rect x="150" y="120" width="30" height="25" fill="#FFEF4D" opacity="0.3"/>
+                                        <rect x="190" y="120" width="30" height="25" fill="#FFEF4D" opacity="0.3"/>
+                                        <rect x="70" y="160" width="30" height="25" fill="#FFEF4D" opacity="0.3"/>
+                                        <rect x="110" y="160" width="30" height="25" fill="#FFEF4D" opacity="0.3"/>
+                                        <rect x="150" y="160" width="30" height="25" fill="#FFEF4D" opacity="0.3"/>
+                                        <rect x="190" y="160" width="30" height="25" fill="#FFEF4D" opacity="0.3"/>
+                                        <rect x="70" y="200" width="30" height="25" fill="#FFEF4D" opacity="0.5"/>
+                                        <rect x="110" y="200" width="30" height="25" fill="#FFEF4D" opacity="0.5"/>
+                                        <rect x="150" y="200" width="30" height="25" fill="#FFEF4D" opacity="0.5"/>
+                                        <rect x="190" y="200" width="30" height="25" fill="#FFEF4D" opacity="0.5"/>
+                                        <!-- Building roof -->
+                                        <polygon points="50,100 150,60 250,100" fill="#FFEF4D" opacity="0.8"/>
+                                    </g>
+
+                                    <!-- Highway/Road element -->
+                                    <g transform="translate(0, 280)">
+                                        <rect x="0" y="0" width="300" height="20" fill="#333" stroke="#FFEF4D" stroke-width="1"/>
+                                        <line x1="150" y1="0" x2="150" y2="20" stroke="#FFEF4D" stroke-width="2" stroke-dasharray="10,10"/>
+                                        <!-- Truck icon -->
+                                        <g transform="translate(60, -25)">
+                                            <rect x="0" y="10" width="50" height="20" fill="#FFEF4D" rx="3"/>
+                                            <rect x="50" y="15" width="20" height="15" fill="#FFEF4D" rx="2"/>
+                                            <circle cx="15" cy="35" r="8" fill="#333" stroke="#FFEF4D" stroke-width="2"/>
+                                            <circle cx="55" cy="35" r="8" fill="#333" stroke="#FFEF4D" stroke-width="2"/>
+                                        </g>
+                                    </g>
+
+                                    <!-- Data label -->
+                                    <g transform="translate(80, 20)">
+                                        <rect x="0" y="0" width="140" height="50" rx="8" fill="#1a2a5a" stroke="#FFEF4D" stroke-width="2" filter="url(#glow-yellow)"/>
+                                        <text x="70" y="22" text-anchor="middle" fill="#FFEF4D" font-size="14" font-weight="bold">ARTESP</text>
+                                        <text x="70" y="40" text-anchor="middle" fill="#fff" font-size="12">1.247 decisoes</text>
+                                    </g>
+                                </g>
+
+                                <!-- ANM - Mining Building (Right) -->
+                                <g class="agency-anm" transform="translate(700, 200)" style="cursor: pointer;">
+                                    <!-- Building shadow -->
+                                    <ellipse cx="150" cy="320" rx="120" ry="30" fill="#000" opacity="0.3"/>
+
+                                    <!-- Mountain/Mining structure - isometric -->
+                                    <g transform="skewY(15)">
+                                        <!-- Mountains -->
+                                        <polygon points="50,280 150,120 250,280" fill="url(#grad-dark)" stroke="#60A5FA" stroke-width="2"/>
+                                        <polygon points="100,280 180,160 260,280" fill="#233770" stroke="#60A5FA" stroke-width="2"/>
+
+                                        <!-- Mining tower -->
+                                        <rect x="140" y="100" width="20" height="100" fill="#60A5FA"/>
+                                        <polygon points="130,100 150,60 170,100" fill="#60A5FA"/>
+                                        <line x1="150" y1="60" x2="150" y2="30" stroke="#60A5FA" stroke-width="3"/>
+                                        <circle cx="150" cy="25" r="8" fill="#60A5FA" filter="url(#glow-blue)">
+                                            <animate attributeName="opacity" values="1;0.5;1" dur="2s" repeatCount="indefinite"/>
+                                        </circle>
+
+                                        <!-- Mining cart track -->
+                                        <line x1="80" y1="250" x2="220" y2="250" stroke="#60A5FA" stroke-width="3"/>
+                                        <rect x="130" y="235" width="40" height="20" fill="#60A5FA" rx="3"/>
+                                    </g>
+
+                                    <!-- Minerals/Resources -->
+                                    <g transform="translate(50, 300)">
+                                        <circle cx="30" cy="0" r="10" fill="#FFEF4D" opacity="0.8"/>
+                                        <circle cx="60" cy="5" r="8" fill="#FFEF4D" opacity="0.6"/>
+                                        <circle cx="90" cy="-5" r="12" fill="#FFEF4D" opacity="0.7"/>
+                                    </g>
+
+                                    <!-- Data label -->
+                                    <g transform="translate(80, 20)">
+                                        <rect x="0" y="0" width="140" height="50" rx="8" fill="#1a2a5a" stroke="#60A5FA" stroke-width="2" filter="url(#glow-blue)"/>
+                                        <text x="70" y="22" text-anchor="middle" fill="#60A5FA" font-size="14" font-weight="bold">ANM</text>
+                                        <text x="70" y="40" text-anchor="middle" fill="#fff" font-size="12">892 decisoes</text>
+                                    </g>
+                                </g>
+
+                                <!-- Center info panel -->
+                                <g transform="translate(500, 480)">
+                                    <rect x="0" y="0" width="200" height="80" rx="10" fill="#1a2a5a" stroke="#FFEF4D" stroke-width="1" opacity="0.9"/>
+                                    <text x="100" y="25" text-anchor="middle" fill="#FFEF4D" font-size="12" font-weight="bold">AGENCIAS CONECTADAS</text>
+                                    <text x="100" y="50" text-anchor="middle" fill="#fff" font-size="20" font-weight="bold">2.139</text>
+                                    <text x="100" y="70" text-anchor="middle" fill="#c5d0e8" font-size="11">Total de Deliberacoes</text>
+                                </g>
+                            </svg>
                         </div>
                     </div>
 
@@ -1995,181 +2136,56 @@
                                 </h2>
                             </div>
                             <div class="card-body">
-                                <div class="brazil-map-container">
-                                    <svg id="brazil-map" viewBox="0 0 700 750" class="brazil-map">
-                                        <!-- Fundo sutil -->
-                                        <defs>
-                                            <filter id="glow">
-                                                <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-                                                <feMerge>
-                                                    <feMergeNode in="coloredBlur"/>
-                                                    <feMergeNode in="SourceGraphic"/>
-                                                </feMerge>
-                                            </filter>
-                                        </defs>
-
-                                        <!-- Norte -->
-                                        <g class="region-norte">
-                                            <path id="AM" class="estado" d="M50,150 L100,100 L200,90 L280,110 L300,180 L280,250 L200,280 L120,260 L80,220 L50,180 Z" data-estado="Amazonas" data-deliberacoes="23">
-                                                <title>Amazonas - 23 deliberacoes</title>
-                                            </path>
-                                            <path id="PA" class="estado" d="M280,110 L380,90 L450,100 L480,150 L470,220 L420,280 L350,300 L280,280 L280,250 L300,180 Z" data-estado="Para" data-deliberacoes="45">
-                                                <title>Para - 45 deliberacoes</title>
-                                            </path>
-                                            <path id="AC" class="estado" d="M20,200 L50,180 L80,220 L70,260 L30,250 Z" data-estado="Acre" data-deliberacoes="8">
-                                                <title>Acre - 8 deliberacoes</title>
-                                            </path>
-                                            <path id="RO" class="estado" d="M80,220 L120,260 L140,320 L100,340 L70,300 L70,260 Z" data-estado="Rondonia" data-deliberacoes="12">
-                                                <title>Rondonia - 12 deliberacoes</title>
-                                            </path>
-                                            <path id="RR" class="estado" d="M180,30 L240,20 L260,60 L240,100 L200,90 L180,60 Z" data-estado="Roraima" data-deliberacoes="5">
-                                                <title>Roraima - 5 deliberacoes</title>
-                                            </path>
-                                            <path id="AP" class="estado" d="M400,40 L450,30 L470,80 L450,120 L410,100 L400,60 Z" data-estado="Amapa" data-deliberacoes="7">
-                                                <title>Amapa - 7 deliberacoes</title>
-                                            </path>
-                                            <path id="TO" class="estado" d="M350,300 L400,290 L420,380 L380,420 L340,400 L330,340 Z" data-estado="Tocantins" data-deliberacoes="18">
-                                                <title>Tocantins - 18 deliberacoes</title>
-                                            </path>
-                                        </g>
-
-                                        <!-- Nordeste -->
-                                        <g class="region-nordeste">
-                                            <path id="MA" class="estado" d="M420,220 L500,200 L530,260 L500,320 L440,300 L420,280 Z" data-estado="Maranhao" data-deliberacoes="34">
-                                                <title>Maranhao - 34 deliberacoes</title>
-                                            </path>
-                                            <path id="PI" class="estado" d="M440,300 L500,320 L510,400 L460,420 L420,380 L420,340 Z" data-estado="Piaui" data-deliberacoes="21">
-                                                <title>Piaui - 21 deliberacoes</title>
-                                            </path>
-                                            <path id="CE" class="estado" d="M530,260 L590,240 L610,300 L570,340 L520,320 Z" data-estado="Ceara" data-deliberacoes="67">
-                                                <title>Ceara - 67 deliberacoes</title>
-                                            </path>
-                                            <path id="RN" class="estado" d="M610,280 L660,270 L670,320 L630,340 L610,320 Z" data-estado="Rio Grande do Norte" data-deliberacoes="28">
-                                                <title>RN - 28 deliberacoes</title>
-                                            </path>
-                                            <path id="PB" class="estado" d="M600,340 L660,330 L670,370 L620,380 Z" data-estado="Paraiba" data-deliberacoes="31">
-                                                <title>Paraiba - 31 deliberacoes</title>
-                                            </path>
-                                            <path id="PE" class="estado" d="M520,360 L610,350 L620,400 L540,420 L510,400 Z" data-estado="Pernambuco" data-deliberacoes="89">
-                                                <title>Pernambuco - 89 deliberacoes</title>
-                                            </path>
-                                            <path id="AL" class="estado" d="M600,400 L650,390 L660,430 L620,440 Z" data-estado="Alagoas" data-deliberacoes="19">
-                                                <title>Alagoas - 19 deliberacoes</title>
-                                            </path>
-                                            <path id="SE" class="estado" d="M590,440 L640,430 L650,470 L610,480 Z" data-estado="Sergipe" data-deliberacoes="15">
-                                                <title>Sergipe - 15 deliberacoes</title>
-                                            </path>
-                                            <path id="BA" class="estado" d="M460,420 L540,420 L580,480 L560,560 L480,580 L420,540 L400,460 Z" data-estado="Bahia" data-deliberacoes="112">
-                                                <title>Bahia - 112 deliberacoes</title>
-                                            </path>
-                                        </g>
-
-                                        <!-- Centro-Oeste -->
-                                        <g class="region-centro-oeste">
-                                            <path id="MT" class="estado" d="M140,320 L200,280 L280,280 L330,340 L320,440 L240,480 L160,440 L140,360 Z" data-estado="Mato Grosso" data-deliberacoes="42">
-                                                <title>Mato Grosso - 42 deliberacoes</title>
-                                            </path>
-                                            <path id="MS" class="estado" d="M200,500 L280,480 L320,540 L300,620 L220,640 L180,580 Z" data-estado="Mato Grosso do Sul" data-deliberacoes="38">
-                                                <title>MS - 38 deliberacoes</title>
-                                            </path>
-                                            <path id="GO" class="estado" d="M320,440 L400,420 L420,500 L380,560 L320,540 L300,480 Z" data-estado="Goias" data-deliberacoes="56">
-                                                <title>Goias - 56 deliberacoes</title>
-                                            </path>
-                                            <path id="DF" class="estado estado-destaque" d="M400,470 L430,460 L440,490 L420,510 L400,500 Z" data-estado="Distrito Federal" data-deliberacoes="234">
-                                                <title>DF - 234 deliberacoes</title>
-                                            </path>
-                                        </g>
-
-                                        <!-- Sudeste -->
-                                        <g class="region-sudeste">
-                                            <path id="MG" class="estado" d="M420,500 L480,480 L530,520 L540,600 L480,640 L400,620 L380,560 Z" data-estado="Minas Gerais" data-deliberacoes="187">
-                                                <title>Minas Gerais - 187 deliberacoes</title>
-                                            </path>
-                                            <path id="ES" class="estado" d="M540,540 L590,520 L600,580 L560,600 L540,580 Z" data-estado="Espirito Santo" data-deliberacoes="45">
-                                                <title>ES - 45 deliberacoes</title>
-                                            </path>
-                                            <path id="RJ" class="estado" d="M500,620 L560,600 L580,650 L520,680 L480,660 Z" data-estado="Rio de Janeiro" data-deliberacoes="156">
-                                                <title>RJ - 156 deliberacoes</title>
-                                            </path>
-                                            <path id="SP" class="estado estado-ativo" d="M300,580 L380,560 L420,600 L400,680 L320,700 L260,660 L280,600 Z" data-estado="Sao Paulo" data-deliberacoes="456" filter="url(#glow)">
-                                                <title>Sao Paulo - 456 deliberacoes</title>
-                                            </path>
-                                        </g>
-
-                                        <!-- Sul -->
-                                        <g class="region-sul">
-                                            <path id="PR" class="estado" d="M260,660 L340,640 L380,680 L360,740 L280,750 L240,710 Z" data-estado="Parana" data-deliberacoes="98">
-                                                <title>Parana - 98 deliberacoes</title>
-                                            </path>
-                                            <path id="SC" class="estado" d="M300,750 L370,740 L390,790 L330,810 L290,790 Z" data-estado="Santa Catarina" data-deliberacoes="67">
-                                                <title>SC - 67 deliberacoes</title>
-                                            </path>
-                                            <path id="RS" class="estado" d="M260,800 L340,790 L380,850 L340,920 L260,900 L240,840 Z" data-estado="Rio Grande do Sul" data-deliberacoes="89">
-                                                <title>RS - 89 deliberacoes</title>
-                                            </path>
-                                        </g>
-
-                                        <!-- Labels dos estados principais -->
-                                        <g class="state-labels" fill="white" font-size="14" font-weight="bold" text-anchor="middle">
-                                            <text x="180" y="180">AM</text>
-                                            <text x="380" y="180">PA</text>
-                                            <text x="50" y="230">AC</text>
-                                            <text x="100" y="290">RO</text>
-                                            <text x="220" y="60">RR</text>
-                                            <text x="430" y="80">AP</text>
-                                            <text x="370" y="360">TO</text>
-                                            <text x="470" y="270">MA</text>
-                                            <text x="460" y="370">PI</text>
-                                            <text x="560" y="300">CE</text>
-                                            <text x="640" y="300">RN</text>
-                                            <text x="630" y="360">PB</text>
-                                            <text x="560" y="390">PE</text>
-                                            <text x="630" y="420">AL</text>
-                                            <text x="620" y="460">SE</text>
-                                            <text x="490" y="500">BA</text>
-                                            <text x="230" y="390">MT</text>
-                                            <text x="250" y="570">MS</text>
-                                            <text x="360" y="490">GO</text>
-                                            <text x="415" y="490">DF</text>
-                                            <text x="470" y="570">MG</text>
-                                            <text x="570" y="560">ES</text>
-                                            <text x="530" y="650">RJ</text>
-                                            <text x="340" y="640" font-size="16" fill="#2A428C">SP</text>
-                                            <text x="310" y="700">PR</text>
-                                            <text x="340" y="780">SC</text>
-                                            <text x="310" y="860">RS</text>
-                                        </g>
-                                    </svg>
-
-                                    <!-- Legenda -->
-                                    <div class="map-legend">
-                                        <div class="legend-title">Deliberacoes</div>
-                                        <div class="legend-scale">
-                                            <div class="legend-item">
-                                                <span class="legend-color" style="background: rgba(255,239,77,0.2);"></span>
-                                                <span>1-50</span>
-                                            </div>
-                                            <div class="legend-item">
-                                                <span class="legend-color" style="background: rgba(255,239,77,0.4);"></span>
-                                                <span>51-100</span>
-                                            </div>
-                                            <div class="legend-item">
-                                                <span class="legend-color" style="background: rgba(255,239,77,0.6);"></span>
-                                                <span>101-200</span>
-                                            </div>
-                                            <div class="legend-item">
-                                                <span class="legend-color" style="background: rgba(255,239,77,0.8);"></span>
-                                                <span>201-400</span>
-                                            </div>
-                                            <div class="legend-item">
-                                                <span class="legend-color" style="background: rgba(255,239,77,1);"></span>
-                                                <span>400+</span>
-                                            </div>
+                                <div class="brazil-map-wrapper">
+                                    <!-- Mapa simplificado e funcional do Brasil -->
+                                    <div class="brazil-simple-map">
+                                        <div class="map-region map-norte">
+                                            <div class="state" data-state="AM" data-deliberacoes="23">AM</div>
+                                            <div class="state" data-state="PA" data-deliberacoes="45">PA</div>
+                                            <div class="state" data-state="RR" data-deliberacoes="5">RR</div>
+                                            <div class="state" data-state="AP" data-deliberacoes="7">AP</div>
+                                            <div class="state" data-state="AC" data-deliberacoes="8">AC</div>
+                                            <div class="state" data-state="RO" data-deliberacoes="12">RO</div>
+                                            <div class="state" data-state="TO" data-deliberacoes="18">TO</div>
+                                        </div>
+                                        <div class="map-region map-nordeste">
+                                            <div class="state" data-state="MA" data-deliberacoes="34">MA</div>
+                                            <div class="state" data-state="PI" data-deliberacoes="21">PI</div>
+                                            <div class="state" data-state="CE" data-deliberacoes="67">CE</div>
+                                            <div class="state" data-state="RN" data-deliberacoes="28">RN</div>
+                                            <div class="state" data-state="PB" data-deliberacoes="31">PB</div>
+                                            <div class="state" data-state="PE" data-deliberacoes="89">PE</div>
+                                            <div class="state" data-state="AL" data-deliberacoes="19">AL</div>
+                                            <div class="state" data-state="SE" data-deliberacoes="15">SE</div>
+                                            <div class="state" data-state="BA" data-deliberacoes="112">BA</div>
+                                        </div>
+                                        <div class="map-region map-centro-oeste">
+                                            <div class="state" data-state="MT" data-deliberacoes="42">MT</div>
+                                            <div class="state" data-state="GO" data-deliberacoes="56">GO</div>
+                                            <div class="state" data-state="MS" data-deliberacoes="38">MS</div>
+                                            <div class="state highlight" data-state="DF" data-deliberacoes="234">DF</div>
+                                        </div>
+                                        <div class="map-region map-sudeste">
+                                            <div class="state" data-state="MG" data-deliberacoes="187">MG</div>
+                                            <div class="state" data-state="ES" data-deliberacoes="45">ES</div>
+                                            <div class="state" data-state="RJ" data-deliberacoes="156">RJ</div>
+                                            <div class="state active" data-state="SP" data-deliberacoes="456">SP</div>
+                                        </div>
+                                        <div class="map-region map-sul">
+                                            <div class="state" data-state="PR" data-deliberacoes="98">PR</div>
+                                            <div class="state" data-state="SC" data-deliberacoes="67">SC</div>
+                                            <div class="state" data-state="RS" data-deliberacoes="89">RS</div>
                                         </div>
                                     </div>
 
-                                    <!-- Tooltip -->
-                                    <div id="map-tooltip" class="map-tooltip"></div>
+                                    <!-- Legenda por regiao -->
+                                    <div class="map-region-legend">
+                                        <div class="region-item"><span class="region-color norte"></span> Norte</div>
+                                        <div class="region-item"><span class="region-color nordeste"></span> Nordeste</div>
+                                        <div class="region-item"><span class="region-color centro-oeste"></span> Centro-Oeste</div>
+                                        <div class="region-item"><span class="region-color sudeste"></span> Sudeste</div>
+                                        <div class="region-item"><span class="region-color sul"></span> Sul</div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

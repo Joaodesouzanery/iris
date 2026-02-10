@@ -3081,75 +3081,164 @@ tr:hover {
 }
 
 /* ============================================
-   BRAZIL MAP - IMPROVED
+   ISOMETRIC 3D SCENE - SVG Based
    ============================================ */
-.brazil-map-container {
-    position: relative;
-    width: 100%;
-    min-height: 550px;
+.isometric-card {
+    background: linear-gradient(180deg, var(--surface) 0%, #1a2a5a 100%);
+}
+
+.iso-scene-container {
+    min-height: 500px;
     display: flex;
-    justify-content: center;
     align-items: center;
-    background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.1) 100%);
+    justify-content: center;
+    background: radial-gradient(ellipse at center, #1a2a5a 0%, #0f1a3a 100%);
     border-radius: var(--radius-lg);
-    padding: 20px;
+    overflow: hidden;
 }
 
-.brazil-map {
+.iso-scene-svg {
     width: 100%;
-    max-width: 550px;
+    max-width: 1200px;
     height: auto;
-    filter: drop-shadow(0 10px 30px rgba(0,0,0,0.3));
+    min-height: 400px;
 }
 
-.estado {
-    fill: var(--surface-light);
-    stroke: var(--primary);
-    stroke-width: 1.5;
+.iso-scene-svg .agency-artesp,
+.iso-scene-svg .agency-anm {
+    transition: transform 0.3s ease;
+}
+
+.iso-scene-svg .agency-artesp:hover,
+.iso-scene-svg .agency-anm:hover {
+    transform: translateY(-10px);
+}
+
+/* ============================================
+   BRAZIL MAP - SIMPLIFIED GRID
+   ============================================ */
+.brazil-map-wrapper {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.brazil-simple-map {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: var(--radius-lg);
+}
+
+.map-region {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.map-region .state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius);
+    font-size: 12px;
+    font-weight: 700;
     cursor: pointer;
     transition: all 0.3s ease;
+    border: 2px solid transparent;
 }
 
-.estado:hover {
-    fill: var(--primary);
-    stroke: var(--primary-light);
-    stroke-width: 2.5;
-    filter: brightness(1.2);
-}
-
-.estado-ativo {
-    fill: var(--primary);
-    stroke: var(--primary-light);
-    stroke-width: 2;
-    animation: pulse-state 2s ease-in-out infinite;
-}
-
-@keyframes pulse-state {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
-}
-
-.estado-destaque {
-    fill: rgba(255, 239, 77, 0.6);
-    stroke: var(--primary);
-    stroke-width: 2;
+.map-region .state:hover {
+    transform: scale(1.1);
+    z-index: 10;
+    box-shadow: 0 0 20px currentColor;
 }
 
 /* Cores por regiao */
-.region-norte .estado { fill: #A78BFA; stroke: #c4b5fd; }
-.region-nordeste .estado { fill: #60A5FA; stroke: #93c5fd; }
-.region-centro-oeste .estado { fill: #F472B6; stroke: #f9a8d4; }
-.region-sudeste .estado { fill: #FFEF4D; stroke: #fff176; }
-.region-sul .estado { fill: #4ADE80; stroke: #86efac; }
-
-.region-norte .estado:hover,
-.region-nordeste .estado:hover,
-.region-centro-oeste .estado:hover,
-.region-sudeste .estado:hover,
-.region-sul .estado:hover {
-    filter: brightness(1.3);
-    stroke-width: 2.5;
+.map-norte .state {
+    background: rgba(167, 139, 250, 0.3);
+    color: #A78BFA;
+    border-color: #A78BFA;
 }
+
+.map-nordeste .state {
+    background: rgba(96, 165, 250, 0.3);
+    color: #60A5FA;
+    border-color: #60A5FA;
+}
+
+.map-centro-oeste .state {
+    background: rgba(244, 114, 182, 0.3);
+    color: #F472B6;
+    border-color: #F472B6;
+}
+
+.map-sudeste .state {
+    background: rgba(255, 239, 77, 0.3);
+    color: #FFEF4D;
+    border-color: #FFEF4D;
+}
+
+.map-sul .state {
+    background: rgba(74, 222, 128, 0.3);
+    color: #4ADE80;
+    border-color: #4ADE80;
+}
+
+.map-region .state.active {
+    background: #FFEF4D;
+    color: #2A428C;
+    border-color: #FFEF4D;
+    box-shadow: 0 0 25px rgba(255, 239, 77, 0.6);
+    animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.map-region .state.highlight {
+    background: rgba(244, 114, 182, 0.6);
+    border-width: 3px;
+}
+
+@keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 25px rgba(255, 239, 77, 0.6); }
+    50% { box-shadow: 0 0 35px rgba(255, 239, 77, 0.9); }
+}
+
+/* Legenda por regiao */
+.map-region-legend {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    flex-wrap: wrap;
+    padding: 16px;
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+}
+
+.region-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.region-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+}
+
+.region-color.norte { background: #A78BFA; }
+.region-color.nordeste { background: #60A5FA; }
+.region-color.centro-oeste { background: #F472B6; }
+.region-color.sudeste { background: #FFEF4D; }
+.region-color.sul { background: #4ADE80; }
 
 .map-legend {
     position: absolute;
