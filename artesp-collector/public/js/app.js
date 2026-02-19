@@ -1291,9 +1291,60 @@
     // PAGE: Empresas
     // ============================================
     const PageEmpresas = {
-        init() {
+        empresasDetectadas: [],
+
+        async init() {
             const page = document.getElementById('page-empresas');
             page.classList.add('active');
+
+            // Carrega empresas detectadas nos PDFs
+            await this.loadEmpresasDetectadas();
+        },
+
+        async loadEmpresasDetectadas() {
+            try {
+                const response = await API.get('/api/empresas/detectadas');
+                if (response?.sucesso && response.empresas) {
+                    this.empresasDetectadas = response.empresas;
+                    this.renderEmpresasDetectadas();
+                }
+            } catch (error) {
+                console.error('Erro ao carregar empresas detectadas:', error);
+            }
+        },
+
+        renderEmpresasDetectadas() {
+            const container = document.getElementById('empresas-detectadas-list');
+            if (!container) return;
+
+            if (this.empresasDetectadas.length === 0) {
+                container.innerHTML = '<span class="empresas-none">Nenhuma empresa detectada ainda. Faca upload e analise de PDFs para detectar empresas automaticamente.</span>';
+                return;
+            }
+
+            container.innerHTML = this.empresasDetectadas.map(emp => `
+                <span class="empresa-detectada-tag" onclick="App.PageEmpresas.adicionarEmpresa('${emp.nome}', '${emp.setor}', '${emp.tipo}')" title="Clique para adicionar ao sistema">
+                    <svg class="add-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                    ${emp.nome}
+                    <span style="opacity: 0.7; font-size: 11px;">(${emp.setor} - ${emp.mencoes} mencoes em ${emp.documentos} docs)</span>
+                </span>
+            `).join('');
+        },
+
+        async adicionarEmpresa(nome, setor, tipo) {
+            if (!confirm(`Adicionar "${nome}" a lista de empresas do sistema?`)) return;
+
+            try {
+                const response = await API.post('/api/empresas/adicionar', { nome, setor, tipo });
+                if (response?.sucesso) {
+                    alert(`Empresa "${nome}" adicionada com sucesso!`);
+                    await this.loadEmpresasDetectadas();
+                } else {
+                    alert('Erro: ' + (response?.erro || 'Erro desconhecido'));
+                }
+            } catch (error) {
+                alert('Erro ao adicionar empresa: ' + error.message);
+            }
         }
     };
 

@@ -43,6 +43,117 @@ let novosDocumentos = [];
 let ultimoMonitoramento = null;
 const INTERVALO_MONITORAMENTO = 30 * 60 * 1000; // 30 minutos
 
+// ============================================================================
+// LISTA DE EMPRESAS CONHECIDAS (para deteccao automatica em PDFs)
+// ============================================================================
+const empresasConhecidas = [
+    // Rodovias - Concessionarias
+    { nome: 'AutoBAn', setor: 'Rodovias', tipo: 'Concessionaria', aliases: ['AUTOBAN', 'Auto Ban', 'Autovias Bandeirantes'] },
+    { nome: 'CCR ViaOeste', setor: 'Rodovias', tipo: 'Concessionaria', aliases: ['VIAOESTE', 'Via Oeste', 'CCR VIAOESTE'] },
+    { nome: 'CCR AutoBAn', setor: 'Rodovias', tipo: 'Concessionaria', aliases: ['CCR AUTOBAN'] },
+    { nome: 'CCR RodoAnel', setor: 'Rodovias', tipo: 'Concessionaria', aliases: ['RODOANEL', 'Rodo Anel'] },
+    { nome: 'CCR SPVias', setor: 'Rodovias', tipo: 'Concessionaria', aliases: ['SPVIAS', 'SP Vias'] },
+    { nome: 'EcoRodovias', setor: 'Rodovias', tipo: 'Concessionaria', aliases: ['ECORODOVIAS', 'Eco Rodovias', 'Ecovias'] },
+    { nome: 'Arteris', setor: 'Rodovias', tipo: 'Concessionaria', aliases: ['ARTERIS', 'Arteris S.A.'] },
+    { nome: 'Intervias', setor: 'Rodovias', tipo: 'Concessionaria', aliases: ['INTERVIAS', 'Inter Vias'] },
+    { nome: 'Renovias', setor: 'Rodovias', tipo: 'Concessionaria', aliases: ['RENOVIAS', 'Reno Vias'] },
+    { nome: 'Centrovias', setor: 'Rodovias', tipo: 'Concessionaria', aliases: ['CENTROVIAS', 'Centro Vias'] },
+    { nome: 'Triângulo do Sol', setor: 'Rodovias', tipo: 'Concessionaria', aliases: ['TRIANGULO DO SOL', 'TrianguloSol'] },
+    { nome: 'Tebe', setor: 'Rodovias', tipo: 'Concessionaria', aliases: ['TEBE'] },
+    { nome: 'Vianorte', setor: 'Rodovias', tipo: 'Concessionaria', aliases: ['VIANORTE', 'Via Norte'] },
+    { nome: 'Colinas', setor: 'Rodovias', tipo: 'Concessionaria', aliases: ['COLINAS', 'Colinas S.A.'] },
+    { nome: 'Entrevias', setor: 'Rodovias', tipo: 'Concessionaria', aliases: ['ENTREVIAS', 'Entre Vias'] },
+    { nome: 'Eixo SP', setor: 'Rodovias', tipo: 'Concessionaria', aliases: ['EIXO SP', 'EixoSP'] },
+    { nome: 'Rota das Bandeiras', setor: 'Rodovias', tipo: 'Concessionaria', aliases: ['ROTA DAS BANDEIRAS', 'RotaBandeiras'] },
+    { nome: 'Cart', setor: 'Rodovias', tipo: 'Concessionaria', aliases: ['CART', 'Concessionaria Auto Raposo Tavares'] },
+    { nome: 'ViaRondon', setor: 'Rodovias', tipo: 'Concessionaria', aliases: ['VIARONDON', 'Via Rondon'] },
+    { nome: 'Rodovias do Tiete', setor: 'Rodovias', tipo: 'Concessionaria', aliases: ['RODOVIAS DO TIETE', 'Tiete'] },
+    { nome: 'AB Nascentes das Gerais', setor: 'Rodovias', tipo: 'Concessionaria', aliases: ['NASCENTES DAS GERAIS', 'AB Nascentes'] },
+    { nome: 'Tamoios', setor: 'Rodovias', tipo: 'Concessionaria', aliases: ['TAMOIOS', 'Concessionaria Tamoios'] },
+    // Ferrovias
+    { nome: 'Rumo Logistica', setor: 'Ferrovias', tipo: 'Concessionaria', aliases: ['RUMO', 'Rumo S.A.', 'RUMO LOGISTICA'] },
+    { nome: 'CPTM', setor: 'Ferrovias', tipo: 'Estatal', aliases: ['CPTM', 'Companhia Paulista de Trens Metropolitanos'] },
+    { nome: 'VLI', setor: 'Ferrovias', tipo: 'Concessionaria', aliases: ['VLI', 'VLI Logistica'] },
+    { nome: 'MRS Logistica', setor: 'Ferrovias', tipo: 'Concessionaria', aliases: ['MRS', 'MRS LOGISTICA'] },
+    // Onibus
+    { nome: 'Viacao Barretos', setor: 'Onibus', tipo: 'Permissionaria', aliases: ['VIACAO BARRETOS', 'Barretos'] },
+    { nome: 'Viacao Cometa', setor: 'Onibus', tipo: 'Permissionaria', aliases: ['COMETA', 'VIACAO COMETA'] },
+    { nome: 'Viacao Garcia', setor: 'Onibus', tipo: 'Permissionaria', aliases: ['GARCIA', 'VIACAO GARCIA'] },
+    { nome: 'Viacao Itapemirim', setor: 'Onibus', tipo: 'Permissionaria', aliases: ['ITAPEMIRIM', 'VIACAO ITAPEMIRIM'] },
+    { nome: 'Socicam', setor: 'Onibus', tipo: 'Operadora', aliases: ['SOCICAM'] },
+    { nome: 'Viacao Piracicabana', setor: 'Onibus', tipo: 'Permissionaria', aliases: ['PIRACICABANA', 'VIACAO PIRACICABANA'] },
+    // Aeroportos
+    { nome: 'Viracopos', setor: 'Aeroportos', tipo: 'Concessionaria', aliases: ['VIRACOPOS', 'Aeroporto de Viracopos'] },
+    { nome: 'GRU Airport', setor: 'Aeroportos', tipo: 'Concessionaria', aliases: ['GRU', 'GRU AIRPORT', 'Guarulhos'] },
+    // Portos
+    { nome: 'Porto de Santos', setor: 'Portos', tipo: 'Autoridade', aliases: ['PORTO DE SANTOS', 'Santos Port'] },
+    { nome: 'Santos Brasil', setor: 'Portos', tipo: 'Operadora', aliases: ['SANTOS BRASIL'] },
+    { nome: 'DP World Santos', setor: 'Portos', tipo: 'Operadora', aliases: ['DP WORLD', 'DPWORLD'] },
+    // Multimodal
+    { nome: 'ViaQuatro', setor: 'Multimodal', tipo: 'Concessionaria', aliases: ['VIAQUATRO', 'Via Quatro', 'Linha 4'] },
+    { nome: 'ViaMobilidade', setor: 'Multimodal', tipo: 'Concessionaria', aliases: ['VIAMOBILIDADE', 'Via Mobilidade'] },
+    { nome: 'Metro SP', setor: 'Multimodal', tipo: 'Estatal', aliases: ['METRO', 'METRO SP', 'Metropolitano'] }
+];
+
+/**
+ * Detecta empresas mencionadas no texto do PDF
+ * @param {string} texto - Texto extraido do PDF
+ * @returns {Array} - Lista de empresas detectadas com suas informacoes
+ */
+function detectarEmpresas(texto) {
+    if (!texto) return [];
+
+    const textoUpper = texto.toUpperCase();
+    const empresasDetectadas = [];
+
+    for (const empresa of empresasConhecidas) {
+        // Verifica o nome principal
+        if (textoUpper.includes(empresa.nome.toUpperCase())) {
+            empresasDetectadas.push({
+                nome: empresa.nome,
+                setor: empresa.setor,
+                tipo: empresa.tipo,
+                mencoes: contarMencoes(textoUpper, empresa.nome.toUpperCase())
+            });
+            continue;
+        }
+
+        // Verifica aliases
+        for (const alias of empresa.aliases || []) {
+            if (textoUpper.includes(alias.toUpperCase())) {
+                empresasDetectadas.push({
+                    nome: empresa.nome,
+                    setor: empresa.setor,
+                    tipo: empresa.tipo,
+                    mencoes: contarMencoes(textoUpper, alias.toUpperCase())
+                });
+                break;
+            }
+        }
+    }
+
+    // Remove duplicatas e ordena por numero de mencoes
+    const empresasUnicas = [];
+    const nomesVistos = new Set();
+
+    for (const emp of empresasDetectadas) {
+        if (!nomesVistos.has(emp.nome)) {
+            nomesVistos.add(emp.nome);
+            empresasUnicas.push(emp);
+        }
+    }
+
+    return empresasUnicas.sort((a, b) => b.mencoes - a.mencoes);
+}
+
+/**
+ * Conta quantas vezes um termo aparece no texto
+ */
+function contarMencoes(texto, termo) {
+    const regex = new RegExp(termo.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+    return (texto.match(regex) || []).length;
+}
+
 // Middleware - aumentado para suportar uploads grandes
 app.use(express.json({ limit: '500mb' }));
 app.use(express.urlencoded({ extended: true, limit: '500mb' }));
@@ -251,20 +362,26 @@ app.post('/api/analisar-pdf/:index', (req, res) => {
         // Também faz análise tradicional para manter compatibilidade
         const analiseTradicional = irisCore.analisarTexto(pdf.texto);
 
+        // Detecta empresas mencionadas no texto
+        const empresasDetectadas = detectarEmpresas(pdf.texto);
+
         // Combina os resultados
         const analise = {
             ...analiseTradicional,
             deliberacoes: extracao.deliberations,
-            totalDeliberacoes: extracao.total
+            totalDeliberacoes: extracao.total,
+            empresasDetectadas: empresasDetectadas
         };
 
         // Salva análise no PDF
         pdfsProcessados[index].analise = analise;
+        pdfsProcessados[index].empresasDetectadas = empresasDetectadas;
 
         res.json({
             sucesso: true,
             nomeArquivo: pdf.nomeArquivo,
-            analise
+            analise,
+            empresasDetectadas
         });
 
     } catch (error) {
@@ -280,6 +397,7 @@ app.post('/api/analisar-todos', async (req, res) => {
 
         const resultados = [];
         let totalDeliberacoes = 0;
+        const todasEmpresas = new Map();
 
         for (let i = 0; i < pdfsProcessados.length; i++) {
             const pdf = pdfsProcessados[i];
@@ -289,14 +407,29 @@ app.post('/api/analisar-todos', async (req, res) => {
                 const extracao = irisCore.extrairDeliberacoesEstruturadas(pdf.texto);
                 const analiseTradicional = irisCore.analisarTexto(pdf.texto);
 
+                // Detecta empresas mencionadas
+                const empresasDetectadas = detectarEmpresas(pdf.texto);
+
                 const analise = {
                     ...analiseTradicional,
                     deliberacoes: extracao.deliberations,
-                    totalDeliberacoes: extracao.total
+                    totalDeliberacoes: extracao.total,
+                    empresasDetectadas: empresasDetectadas
                 };
 
                 pdfsProcessados[i].analise = analise;
+                pdfsProcessados[i].empresasDetectadas = empresasDetectadas;
                 totalDeliberacoes += extracao.total;
+
+                // Agrega empresas detectadas
+                for (const emp of empresasDetectadas) {
+                    if (todasEmpresas.has(emp.nome)) {
+                        todasEmpresas.get(emp.nome).mencoes += emp.mencoes;
+                        todasEmpresas.get(emp.nome).documentos++;
+                    } else {
+                        todasEmpresas.set(emp.nome, { ...emp, documentos: 1 });
+                    }
+                }
 
                 resultados.push({
                     index: i,
@@ -305,7 +438,8 @@ app.post('/api/analisar-todos', async (req, res) => {
                     decisao: analise.decisao,
                     microtema: analise.microtema,
                     confianca: analise.confiancaGeral,
-                    deliberacoes: extracao.deliberations.length
+                    deliberacoes: extracao.deliberations.length,
+                    empresasDetectadas: empresasDetectadas.length
                 });
             }
         }
@@ -314,6 +448,7 @@ app.post('/api/analisar-todos', async (req, res) => {
             sucesso: true,
             totalAnalisados: resultados.length,
             totalDeliberacoes,
+            empresasAgregadas: Array.from(todasEmpresas.values()).sort((a, b) => b.mencoes - a.mencoes),
             resultados
         });
 
@@ -345,6 +480,77 @@ app.get('/api/estatisticas', (req, res) => {
 });
 
 // ============================================================================
+// API - EMPRESAS DETECTADAS
+// ============================================================================
+
+// Endpoint para listar empresas conhecidas
+app.get('/api/empresas/conhecidas', (req, res) => {
+    res.json({
+        sucesso: true,
+        total: empresasConhecidas.length,
+        empresas: empresasConhecidas.map(e => ({
+            nome: e.nome,
+            setor: e.setor,
+            tipo: e.tipo
+        }))
+    });
+});
+
+// Endpoint para listar todas as empresas detectadas nos PDFs
+app.get('/api/empresas/detectadas', (req, res) => {
+    const empresasAgregadas = new Map();
+
+    for (const pdf of pdfsProcessados) {
+        const empresas = pdf.empresasDetectadas || [];
+        for (const emp of empresas) {
+            if (empresasAgregadas.has(emp.nome)) {
+                empresasAgregadas.get(emp.nome).mencoes += emp.mencoes;
+                empresasAgregadas.get(emp.nome).documentos++;
+            } else {
+                empresasAgregadas.set(emp.nome, { ...emp, documentos: 1 });
+            }
+        }
+    }
+
+    const lista = Array.from(empresasAgregadas.values()).sort((a, b) => b.mencoes - a.mencoes);
+
+    res.json({
+        sucesso: true,
+        total: lista.length,
+        empresas: lista
+    });
+});
+
+// Endpoint para adicionar empresa a partir de deteccao
+app.post('/api/empresas/adicionar', (req, res) => {
+    const { nome, setor, tipo } = req.body;
+
+    if (!nome || !setor) {
+        return res.status(400).json({ erro: 'Nome e setor sao obrigatorios' });
+    }
+
+    // Verifica se ja existe
+    const existe = empresasConhecidas.find(e => e.nome.toLowerCase() === nome.toLowerCase());
+    if (existe) {
+        return res.status(400).json({ erro: 'Empresa ja cadastrada' });
+    }
+
+    // Adiciona a nova empresa
+    empresasConhecidas.push({
+        nome,
+        setor,
+        tipo: tipo || 'Empresa',
+        aliases: [nome.toUpperCase()]
+    });
+
+    res.json({
+        sucesso: true,
+        mensagem: `Empresa "${nome}" adicionada com sucesso`,
+        empresa: { nome, setor, tipo: tipo || 'Empresa' }
+    });
+});
+
+// ============================================================================
 // API - UPLOAD DE PDFs
 // ============================================================================
 
@@ -366,6 +572,9 @@ app.post('/api/upload-pdf', async (req, res) => {
         // Extrai texto do PDF
         const pdfData = await pdfParse(buffer);
 
+        // Detecta empresas automaticamente no texto do PDF
+        const empresasDetectadas = detectarEmpresas(pdfData.text);
+
         const pdf = {
             nomeArquivo: nomeArquivo || `upload_${Date.now()}.pdf`,
             texto: pdfData.text,
@@ -373,12 +582,16 @@ app.post('/api/upload-pdf', async (req, res) => {
             numCaracteres: pdfData.text.length,
             data: new Date().toLocaleDateString('pt-BR'),
             origem: 'upload',
-            statusExtracao: 'sucesso'
+            statusExtracao: 'sucesso',
+            empresasDetectadas: empresasDetectadas
         };
 
         pdfsProcessados.push(pdf);
 
         console.log(`[IRIS] Upload processado: ${pdf.nomeArquivo} (${pdf.numPaginas} páginas)`);
+        if (empresasDetectadas.length > 0) {
+            console.log(`[IRIS] Empresas detectadas: ${empresasDetectadas.map(e => e.nome).join(', ')}`);
+        }
 
         res.json({
             sucesso: true,
@@ -388,7 +601,8 @@ app.post('/api/upload-pdf', async (req, res) => {
                 nomeArquivo: pdf.nomeArquivo,
                 numPaginas: pdf.numPaginas,
                 numCaracteres: pdf.numCaracteres
-            }
+            },
+            empresasDetectadas: empresasDetectadas
         });
 
     } catch (error) {

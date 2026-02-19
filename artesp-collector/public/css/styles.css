@@ -5348,3 +5348,308 @@ tr:hover {
 .line-chart-container svg {
     overflow: visible;
 }
+
+/* ============================================
+   DASHBOARD DE GOVERNANCA
+   ============================================ */
+.section-subtitle {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+/* Stat Icon dentro do card */
+.stat-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Temas Controversos List */
+.temas-controversos-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.tema-controverso-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    transition: all 0.2s ease;
+}
+
+.tema-controverso-item:hover {
+    border-color: var(--primary);
+    background: var(--surface-hover);
+}
+
+.tema-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.tema-titulo {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.tema-tags {
+    display: flex;
+    gap: 8px;
+}
+
+.tema-divergencias {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    font-size: 18px;
+}
+
+/* Setores Judicializados Grid */
+.setores-judicializados-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 16px;
+}
+
+@media (max-width: 1200px) {
+    .setores-judicializados-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .setores-judicializados-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.setor-card {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    text-align: center;
+    border: 1px solid var(--border);
+    transition: all 0.2s ease;
+}
+
+.setor-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+.setor-card .setor-icon {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 12px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.setor-card.setor-cyan .setor-icon {
+    background: rgba(6, 182, 212, 0.15);
+    color: #06b6d4;
+}
+
+.setor-card.setor-green .setor-icon {
+    background: rgba(34, 197, 94, 0.15);
+    color: #22c55e;
+}
+
+.setor-card.setor-orange .setor-icon {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+}
+
+.setor-card.setor-red .setor-icon {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+}
+
+.setor-card.setor-purple .setor-icon {
+    background: rgba(139, 92, 246, 0.15);
+    color: #8b5cf6;
+}
+
+.setor-card .setor-nome {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+.setor-card .setor-valor {
+    font-size: 36px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.setor-card.setor-cyan .setor-valor { color: #06b6d4; }
+.setor-card.setor-green .setor-valor { color: #22c55e; }
+.setor-card.setor-orange .setor-valor { color: #f59e0b; }
+.setor-card.setor-red .setor-valor { color: #ef4444; }
+.setor-card.setor-purple .setor-valor { color: #8b5cf6; }
+
+.setor-card .setor-percentual {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+/* ============================================
+   MICROTEMAS POR SETOR
+   ============================================ */
+.setores-microtemas-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.setor-microtemas-card {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    border: 1px solid var(--border);
+    transition: all 0.2s ease;
+}
+
+.setor-microtemas-card:hover {
+    border-color: var(--border-light);
+    box-shadow: var(--shadow-md);
+}
+
+.setor-microtemas-card .setor-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+}
+
+.setor-microtemas-card .setor-icon-wrapper {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.setor-microtemas-card.setor-cyan .setor-icon-wrapper {
+    background: rgba(6, 182, 212, 0.15);
+    color: #06b6d4;
+}
+
+.setor-microtemas-card.setor-green .setor-icon-wrapper {
+    background: rgba(34, 197, 94, 0.15);
+    color: #22c55e;
+}
+
+.setor-microtemas-card.setor-orange .setor-icon-wrapper {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+}
+
+.setor-microtemas-card.setor-red .setor-icon-wrapper {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+}
+
+.setor-microtemas-card.setor-purple .setor-icon-wrapper {
+    background: rgba(139, 92, 246, 0.15);
+    color: #8b5cf6;
+}
+
+.setor-microtemas-card .setor-title {
+    flex: 1;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.setor-microtemas-card .setor-count {
+    font-size: 12px;
+    color: var(--text-muted);
+    background: var(--background);
+    padding: 4px 10px;
+    border-radius: 12px;
+}
+
+.setor-microtemas-card .microtema-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+/* Empresas Detectadas */
+.empresas-detectadas-section {
+    margin-top: 20px;
+    padding: 16px;
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+}
+
+.empresas-detectadas-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.empresas-detectadas-header svg {
+    width: 18px;
+    height: 18px;
+    color: #22c55e;
+}
+
+.empresas-detectadas-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.empresa-detectada-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: rgba(34, 197, 94, 0.1);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    border-radius: 20px;
+    font-size: 12px;
+    color: #22c55e;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.empresa-detectada-tag:hover {
+    background: rgba(34, 197, 94, 0.2);
+    transform: translateY(-1px);
+}
+
+.empresa-detectada-tag .add-icon {
+    width: 14px;
+    height: 14px;
+}
+
+.empresas-none {
+    color: var(--text-muted);
+    font-size: 13px;
+    font-style: italic;
+}
