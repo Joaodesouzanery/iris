@@ -4868,3 +4868,483 @@ tr:hover {
     background: var(--danger-bg);
     color: var(--danger);
 }
+
+/* ============================================
+   TEMAS REGULADOS - SETORES
+   ============================================ */
+.setores-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.setor-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    background: var(--background);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    transition: all 0.2s ease;
+}
+
+.setor-item:hover {
+    border-color: var(--primary);
+    transform: translateX(4px);
+}
+
+.setor-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+}
+
+.setor-info {
+    flex: 1;
+}
+
+.setor-nome {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.setor-stats {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.setor-badge {
+    padding: 6px 12px;
+    background: var(--primary);
+    color: var(--background);
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* ============================================
+   TEMAS REGULADOS - MICROTEMAS
+   ============================================ */
+.microtemas-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+}
+
+.microtema-category {
+    padding: 20px;
+    background: var(--background);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+}
+
+.microtema-category-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--primary);
+}
+
+.microtema-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.microtema-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: var(--surface);
+    border-radius: var(--radius);
+    font-size: 13px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.microtema-tag:hover {
+    background: var(--primary);
+    color: var(--background);
+}
+
+.microtema-tag.primary {
+    background: var(--primary);
+    color: var(--background);
+}
+
+.microtema-tag .count {
+    font-weight: 600;
+    padding: 2px 6px;
+    background: rgba(0,0,0,0.1);
+    border-radius: 10px;
+    font-size: 11px;
+}
+
+/* Tags */
+.tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.tag-blue {
+    background: rgba(96, 165, 250, 0.2);
+    color: #60a5fa;
+}
+
+.tag-green {
+    background: rgba(74, 222, 128, 0.2);
+    color: #4ade80;
+}
+
+.tag-purple {
+    background: rgba(168, 85, 247, 0.2);
+    color: #a855f7;
+}
+
+.tag-red {
+    background: rgba(248, 113, 113, 0.2);
+    color: #f87171;
+}
+
+/* ============================================
+   TEMAS REGULADOS - EMPRESAS
+   ============================================ */
+.search-input {
+    padding: 10px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-primary);
+    font-size: 14px;
+    width: 300px;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.empresas-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 20px;
+}
+
+.empresa-card {
+    background: var(--background);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    padding: 20px;
+    transition: all 0.2s ease;
+}
+
+.empresa-card:hover {
+    border-color: var(--primary);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.empresa-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.empresa-logo {
+    width: 48px;
+    height: 48px;
+    background: var(--primary);
+    color: var(--background);
+    border-radius: var(--radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 16px;
+}
+
+.empresa-info {
+    flex: 1;
+}
+
+.empresa-nome {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+}
+
+.empresa-setor {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.empresa-status {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.empresa-status.ativo {
+    background: rgba(74, 222, 128, 0.2);
+    color: #4ade80;
+}
+
+.empresa-status.pendente {
+    background: rgba(251, 191, 36, 0.2);
+    color: #fbbf24;
+}
+
+.empresa-stats {
+    display: flex;
+    gap: 24px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+}
+
+.empresa-stat {
+    display: flex;
+    flex-direction: column;
+}
+
+.empresa-stat .stat-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.empresa-stat .stat-label {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+/* ============================================
+   TEMAS REGULADOS - HISTORICO
+   ============================================ */
+.timeline {
+    position: relative;
+    padding-left: 40px;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--border);
+}
+
+.timeline-item {
+    position: relative;
+    padding-bottom: 32px;
+}
+
+.timeline-item:last-child {
+    padding-bottom: 0;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -33px;
+    top: 4px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 3px solid var(--surface);
+}
+
+.timeline-marker.success { background: #4ade80; }
+.timeline-marker.primary { background: var(--primary); }
+.timeline-marker.warning { background: #fbbf24; }
+.timeline-marker.info { background: #60a5fa; }
+.timeline-marker.danger { background: #f87171; }
+
+.timeline-content {
+    background: var(--background);
+    border-radius: var(--radius);
+    padding: 20px;
+    border: 1px solid var(--border);
+}
+
+.timeline-date {
+    font-size: 12px;
+    color: var(--primary);
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.timeline-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+.timeline-description {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin-bottom: 12px;
+}
+
+.timeline-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.timeline-tag {
+    padding: 4px 10px;
+    background: var(--surface);
+    border-radius: 20px;
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+/* ============================================
+   MANDATOS/DIRETORES - ESTILOS ADICIONAIS
+   ============================================ */
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.section-title svg {
+    width: 24px;
+    height: 24px;
+    color: var(--primary);
+}
+
+.participation-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.participation-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    background: var(--background);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+}
+
+.participation-rank {
+    width: 32px;
+    height: 32px;
+    background: var(--surface);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: var(--text-muted);
+    font-size: 14px;
+}
+
+.participation-info {
+    flex: 1;
+}
+
+.participation-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+}
+
+.participation-count {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.relatorias-badge {
+    padding: 6px 12px;
+    background: var(--success-bg);
+    color: var(--success);
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* Vote badges */
+.vote-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    height: 24px;
+    padding: 0 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    background: var(--surface);
+    color: var(--text-secondary);
+}
+
+.vote-badge.green {
+    background: rgba(74, 222, 128, 0.2);
+    color: #4ade80;
+}
+
+.vote-badge.red {
+    background: rgba(248, 113, 113, 0.2);
+    color: #f87171;
+}
+
+.vote-badge.orange {
+    background: rgba(251, 191, 36, 0.2);
+    color: #fbbf24;
+}
+
+.vote-badge.purple {
+    background: rgba(168, 85, 247, 0.2);
+    color: #a855f7;
+}
+
+.vote-badge.blue {
+    background: rgba(96, 165, 250, 0.2);
+    color: #60a5fa;
+}
+
+.vote-badge.pink {
+    background: rgba(244, 114, 182, 0.2);
+    color: #f472b6;
+}
+
+/* Mandato avatar small */
+.mandato-avatar.small {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 11px !important;
+}
+
+/* Line chart container */
+.line-chart-container {
+    padding: 20px 0;
+}
+
+.line-chart-container svg {
+    overflow: visible;
+}

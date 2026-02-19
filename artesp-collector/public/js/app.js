@@ -722,80 +722,588 @@
     };
 
     // ============================================
-    // PAGE: Diretores
+    // PAGE: Diretores/Mandatos
     // ============================================
     const PageDiretores = {
-        diretores: [
-            { nome: 'Milton Persoli', iniciais: 'MP', cargo: 'Diretor-Presidente', inicio: '2021-01-15', fim: null, ativo: true, reunioes: 156, votos: 245, favoravel: 78.2, contrario: 15.5 },
-            { nome: 'Marcos Antonio Ribeiro', iniciais: 'MR', cargo: 'Diretor de Fiscalizacao', inicio: '2020-06-01', fim: null, ativo: true, reunioes: 178, votos: 198, favoravel: 65.4, contrario: 28.3 },
-            { nome: 'Patricia Vanzolini', iniciais: 'PV', cargo: 'Diretora de Planejamento', inicio: '2022-03-10', fim: null, ativo: true, reunioes: 98, votos: 212, favoravel: 82.1, contrario: 12.3 },
-            { nome: 'Carlos Eduardo Silva', iniciais: 'CS', cargo: 'Diretor de Investimentos', inicio: '2021-08-20', fim: null, ativo: true, reunioes: 134, votos: 187, favoravel: 71.2, contrario: 22.4 },
-            { nome: 'Ana Maria Santos', iniciais: 'AS', cargo: 'Diretora de Regulacao', inicio: '2019-01-10', fim: '2023-06-30', ativo: false, reunioes: 210, votos: 312, favoravel: 74.5, contrario: 18.2 }
-        ],
+        selectedAgency: 'artesp',
+
+        agenciasData: {
+            artesp: {
+                nome: 'ARTESP',
+                cor: '#c9a227',
+                diretores: [
+                    {
+                        nome: 'Andre Isper Rodrigues Barnabe',
+                        cargo: 'Diretor-Presidente',
+                        iniciais: 'AI',
+                        inicio: '2024-09-10',
+                        termino: '2029-09-09',
+                        ativo: true,
+                        participacoes: 42,
+                        relatorias: 0,
+                        favoravel: 42,
+                        desfavoravel: 0,
+                        vista: 0
+                    },
+                    {
+                        nome: 'Fernanda Esbizaro Rodrigues Rudnik',
+                        cargo: 'Diretora',
+                        iniciais: 'FE',
+                        inicio: '2025-08-28',
+                        termino: '2030-08-27',
+                        ativo: true,
+                        participacoes: 42,
+                        relatorias: 0,
+                        favoravel: 42,
+                        desfavoravel: 0,
+                        vista: 0
+                    },
+                    {
+                        nome: 'Raquel Franca Carneiro',
+                        cargo: 'Diretora',
+                        iniciais: 'RF',
+                        inicio: '2025-05-14',
+                        termino: '2030-05-13',
+                        ativo: true,
+                        participacoes: 42,
+                        relatorias: 0,
+                        favoravel: 42,
+                        desfavoravel: 0,
+                        vista: 0
+                    },
+                    {
+                        nome: 'Diego Albert Zanatto',
+                        cargo: 'Diretor',
+                        iniciais: 'DA',
+                        inicio: '2024-08-14',
+                        termino: '2029-08-13',
+                        ativo: true,
+                        participacoes: 35,
+                        relatorias: 0,
+                        favoravel: 35,
+                        desfavoravel: 0,
+                        vista: 0
+                    }
+                ],
+                stats: {
+                    diretoresAtivos: 4,
+                    participacoesColegiadas: 161,
+                    taxaConsenso: 100,
+                    deliberacoes: 89
+                },
+                votos: {
+                    favoravel: 161,
+                    desfavoravel: 0,
+                    vista: 0,
+                    relator: 0
+                },
+                setores: [
+                    { nome: 'Rodovias', valor: 48, cor: '#c9a227' },
+                    { nome: 'Onibus', valor: 21, cor: '#c9a227' },
+                    { nome: 'Regulacao', valor: 12, cor: '#c9a227' },
+                    { nome: 'Marcos Legais', valor: 5, cor: '#c9a227' },
+                    { nome: 'Ferrovias', valor: 1, cor: '#c9a227' }
+                ]
+            },
+            anm: {
+                nome: 'ANM',
+                cor: '#60A5FA',
+                diretores: [
+                    {
+                        nome: 'Mauro Henrique Moreira Sousa',
+                        cargo: 'Diretor-Geral',
+                        iniciais: 'MM',
+                        inicio: '2023-04-15',
+                        termino: '2027-04-14',
+                        ativo: true,
+                        participacoes: 78,
+                        relatorias: 12,
+                        favoravel: 72,
+                        desfavoravel: 4,
+                        vista: 2
+                    },
+                    {
+                        nome: 'Luiz Paniago Neves',
+                        cargo: 'Diretor Substituto',
+                        iniciais: 'LP',
+                        inicio: '2023-06-01',
+                        termino: '2027-05-31',
+                        ativo: true,
+                        participacoes: 65,
+                        relatorias: 8,
+                        favoravel: 60,
+                        desfavoravel: 3,
+                        vista: 2
+                    },
+                    {
+                        nome: 'Fabio Fernando Borges',
+                        cargo: 'Diretor Substituto',
+                        iniciais: 'FB',
+                        inicio: '2022-11-20',
+                        termino: '2026-11-19',
+                        ativo: true,
+                        participacoes: 89,
+                        relatorias: 15,
+                        favoravel: 82,
+                        desfavoravel: 5,
+                        vista: 2
+                    },
+                    {
+                        nome: 'Caio Mario Trivellato Seabra Filho',
+                        cargo: 'Diretor',
+                        iniciais: 'CT',
+                        inicio: '2024-02-10',
+                        termino: '2028-02-09',
+                        ativo: true,
+                        participacoes: 45,
+                        relatorias: 5,
+                        favoravel: 44,
+                        desfavoravel: 0,
+                        vista: 1
+                    },
+                    {
+                        nome: 'Jose Fernando de Mendonca Gomes Junior',
+                        cargo: 'Diretor',
+                        iniciais: 'JG',
+                        inicio: '2024-03-01',
+                        termino: '2028-02-29',
+                        ativo: true,
+                        participacoes: 42,
+                        relatorias: 3,
+                        favoravel: 40,
+                        desfavoravel: 0,
+                        vista: 2
+                    }
+                ],
+                stats: {
+                    diretoresAtivos: 5,
+                    participacoesColegiadas: 319,
+                    taxaConsenso: 94,
+                    deliberacoes: 156
+                },
+                votos: {
+                    favoravel: 298,
+                    desfavoravel: 12,
+                    vista: 6,
+                    relator: 3
+                },
+                setores: [
+                    { nome: 'Licenciamento', valor: 67, cor: '#60a5fa' },
+                    { nome: 'Fiscalizacao', valor: 45, cor: '#60a5fa' },
+                    { nome: 'Outorga', valor: 28, cor: '#60a5fa' },
+                    { nome: 'Arrecadacao', valor: 12, cor: '#60a5fa' },
+                    { nome: 'Outros', valor: 4, cor: '#60a5fa' }
+                ]
+            },
+            anatel: {
+                nome: 'ANATEL',
+                cor: '#10B981',
+                diretores: [
+                    {
+                        nome: 'Carlos Manuel Baigorri',
+                        cargo: 'Presidente',
+                        iniciais: 'CB',
+                        inicio: '2022-11-04',
+                        termino: '2027-11-03',
+                        ativo: true,
+                        participacoes: 156,
+                        relatorias: 28,
+                        favoravel: 148,
+                        desfavoravel: 5,
+                        vista: 3
+                    },
+                    {
+                        nome: 'Artur Coimbra de Oliveira',
+                        cargo: 'Conselheiro',
+                        iniciais: 'AC',
+                        inicio: '2021-02-05',
+                        termino: '2026-02-04',
+                        ativo: true,
+                        participacoes: 189,
+                        relatorias: 35,
+                        favoravel: 180,
+                        desfavoravel: 6,
+                        vista: 3
+                    },
+                    {
+                        nome: 'Alexandre Freire',
+                        cargo: 'Conselheiro',
+                        iniciais: 'AF',
+                        inicio: '2023-06-15',
+                        termino: '2028-06-14',
+                        ativo: true,
+                        participacoes: 98,
+                        relatorias: 18,
+                        favoravel: 94,
+                        desfavoravel: 2,
+                        vista: 2
+                    }
+                ],
+                stats: {
+                    diretoresAtivos: 3,
+                    participacoesColegiadas: 443,
+                    taxaConsenso: 96,
+                    deliberacoes: 234
+                },
+                votos: {
+                    favoravel: 422,
+                    desfavoravel: 13,
+                    vista: 8,
+                    relator: 0
+                },
+                setores: [
+                    { nome: 'Telecomunicacoes', valor: 120, cor: '#10b981' },
+                    { nome: 'Radiodifusao', valor: 58, cor: '#10b981' },
+                    { nome: 'Espectro', valor: 34, cor: '#10b981' },
+                    { nome: 'Fiscalizacao', valor: 22, cor: '#10b981' }
+                ]
+            },
+            aneel: {
+                nome: 'ANEEL',
+                cor: '#F59E0B',
+                diretores: [
+                    {
+                        nome: 'Agnes Maria de Aragao da Costa',
+                        cargo: 'Diretora-Presidente',
+                        iniciais: 'AC',
+                        inicio: '2024-01-10',
+                        termino: '2029-01-09',
+                        ativo: true,
+                        participacoes: 87,
+                        relatorias: 15,
+                        favoravel: 82,
+                        desfavoravel: 3,
+                        vista: 2
+                    },
+                    {
+                        nome: 'Ricardo Lavorato',
+                        cargo: 'Diretor',
+                        iniciais: 'RL',
+                        inicio: '2022-08-20',
+                        termino: '2027-08-19',
+                        ativo: true,
+                        participacoes: 145,
+                        relatorias: 25,
+                        favoravel: 138,
+                        desfavoravel: 4,
+                        vista: 3
+                    },
+                    {
+                        nome: 'Fernando Mosna',
+                        cargo: 'Diretor',
+                        iniciais: 'FM',
+                        inicio: '2023-03-15',
+                        termino: '2028-03-14',
+                        ativo: true,
+                        participacoes: 112,
+                        relatorias: 20,
+                        favoravel: 108,
+                        desfavoravel: 2,
+                        vista: 2
+                    }
+                ],
+                stats: {
+                    diretoresAtivos: 3,
+                    participacoesColegiadas: 344,
+                    taxaConsenso: 97,
+                    deliberacoes: 198
+                },
+                votos: {
+                    favoravel: 328,
+                    desfavoravel: 9,
+                    vista: 7,
+                    relator: 0
+                },
+                setores: [
+                    { nome: 'Tarifas', valor: 85, cor: '#f59e0b' },
+                    { nome: 'Regulacao', valor: 62, cor: '#f59e0b' },
+                    { nome: 'Fiscalizacao', valor: 31, cor: '#f59e0b' },
+                    { nome: 'Outorga', valor: 20, cor: '#f59e0b' }
+                ]
+            }
+        },
 
         init() {
             const page = document.getElementById('page-diretores');
             page.classList.add('active');
+
+            this.setupAgencyTabs();
+            this.renderAll();
+        },
+
+        setupAgencyTabs() {
+            const tabs = document.querySelectorAll('#diretores-agency-tabs .agency-tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    const agency = e.currentTarget.dataset.agency;
+                    this.switchAgency(agency);
+                });
+            });
+        },
+
+        switchAgency(agency) {
+            this.selectedAgency = agency;
+
+            document.querySelectorAll('#diretores-agency-tabs .agency-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.agency === agency);
+            });
+
+            this.renderAll();
+        },
+
+        renderAll() {
+            this.renderStats();
             this.renderCards();
             this.renderGantt();
+            this.renderVotingMatrix();
+            this.renderSetoresChart();
+            this.renderParticipationList();
+        },
+
+        renderStats() {
+            const data = this.agenciasData[this.selectedAgency];
+            if (!data) return;
+
+            document.getElementById('diretores-total').textContent = data.stats.diretoresAtivos;
+            document.getElementById('diretores-participacoes').textContent = data.stats.participacoesColegiadas;
+            document.getElementById('diretores-consenso').textContent = data.stats.taxaConsenso + '%';
+            document.getElementById('diretores-deliberacoes').textContent = data.stats.deliberacoes;
+
+            document.getElementById('diretores-favoravel').textContent = data.votos.favoravel;
+            document.getElementById('diretores-desfavoravel').textContent = data.votos.desfavoravel;
+            document.getElementById('diretores-vista').textContent = data.votos.vista;
+            document.getElementById('diretores-relator').textContent = data.votos.relator;
+            document.getElementById('diretores-votos-total').textContent = data.votos.favoravel;
+
+            document.getElementById('diretores-nominais').textContent = '0 (0%)';
+            document.getElementById('diretores-colegiadas').textContent = `${data.stats.participacoesColegiadas} (100%)`;
+            document.getElementById('diretores-confianca').textContent = '0';
+            document.getElementById('diretores-inferidos').textContent = data.stats.participacoesColegiadas;
         },
 
         renderCards() {
             const grid = document.getElementById('diretores-grid');
+            if (!grid) return;
 
-            grid.innerHTML = this.diretores.map(d => {
-                const statusClass = d.ativo ? 'status-active' : 'status-inactive';
-                const statusLabel = d.ativo ? 'Ativo' : 'Encerrado';
-                const periodo = d.fim ? Utils.formatDateShort(d.inicio) + ' - ' + Utils.formatDateShort(d.fim) : Utils.formatDateShort(d.inicio) + ' - Atual';
+            const data = this.agenciasData[this.selectedAgency];
+            if (!data) return;
 
-                return `<div class="director-card">
-                    <div class="director-header">
-                        <div class="director-avatar">${d.iniciais}</div>
-                        <div class="director-info">
-                            <h3>${d.nome}</h3>
-                            <div class="role">${d.cargo}</div>
-                            <div class="period">${periodo}</div>
-                            <span class="director-status ${statusClass}">${statusLabel}</span>
+            grid.innerHTML = data.diretores.map(d => {
+                const inicio = new Date(d.inicio);
+                const termino = new Date(d.termino);
+                const agora = new Date();
+
+                const mesesDecorridos = Math.floor((agora - inicio) / (1000 * 60 * 60 * 24 * 30));
+                const anosDecorridos = Math.floor(mesesDecorridos / 12);
+                const mesesRestantes = mesesDecorridos % 12;
+
+                const totalMandato = termino - inicio;
+                const decorrido = agora - inicio;
+                const percentual = Math.min(100, Math.round((decorrido / totalMandato) * 100));
+
+                let tempoStr = '';
+                if (anosDecorridos > 0) {
+                    tempoStr = `${anosDecorridos}a ${mesesRestantes}m decorridos`;
+                } else {
+                    tempoStr = `${mesesDecorridos} meses decorridos`;
+                }
+
+                const inicioFormatado = this.formatDateBR(d.inicio);
+                const terminoFormatado = this.formatDateBR(d.termino);
+
+                return `
+                <div class="mandato-detailed-card">
+                    <div class="mandato-card-header">
+                        <div class="mandato-avatar" style="background: ${data.cor};">${d.iniciais}</div>
+                        <div class="mandato-info">
+                            <div class="mandato-name">${d.nome}</div>
+                            <div class="mandato-role">${d.cargo}</div>
+                        </div>
+                        <span class="mandato-status ${d.ativo ? 'ativo' : 'inativo'}">${d.ativo ? 'Ativo' : 'Inativo'}</span>
+                    </div>
+                    <div class="mandato-card-body">
+                        <div class="mandato-dates">
+                            <div class="mandato-date-item">
+                                <div class="mandato-date-label">Inicio</div>
+                                <div class="mandato-date-value">${inicioFormatado}</div>
+                            </div>
+                            <div class="mandato-date-item">
+                                <div class="mandato-date-label">Termino</div>
+                                <div class="mandato-date-value">${terminoFormatado}</div>
+                            </div>
+                        </div>
+                        <div class="mandato-progress">
+                            <div class="mandato-progress-text">${tempoStr}<span style="float: right; color: var(--primary);">${percentual}% do mandato</span></div>
+                            <div class="mandato-progress-bar">
+                                <div class="mandato-progress-fill" style="width: ${percentual}%;"></div>
+                            </div>
+                        </div>
+                        <div class="mandato-stats">
+                            <div class="mandato-stat">
+                                <div class="mandato-stat-value" style="color: ${data.cor};">${d.participacoes}</div>
+                                <div class="mandato-stat-label">Participacoes</div>
+                            </div>
+                            <div class="mandato-stat">
+                                <div class="mandato-stat-value">${d.relatorias}</div>
+                                <div class="mandato-stat-label">Relatorias</div>
+                            </div>
                         </div>
                     </div>
-                    <div class="director-body">
-                        <div class="director-stats">
-                            <div class="stat-item"><div class="value">${d.reunioes}</div><div class="label">Reunioes</div></div>
-                            <div class="stat-item"><div class="value">${d.votos}</div><div class="label">Votos</div></div>
-                            <div class="stat-item"><div class="value green">${d.favoravel}%</div><div class="label">Favoravel</div></div>
-                            <div class="stat-item"><div class="value red">${d.contrario}%</div><div class="label">Contrario</div></div>
-                        </div>
-                        <div class="director-bar">
-                            <div class="director-bar-label"><span>Taxa de Aprovacao</span><span>${d.favoravel}%</span></div>
-                            <div class="bar-track"><div class="bar-fill green" style="width: ${d.favoravel}%;"></div></div>
-                        </div>
-                    </div>
-                </div>`;
+                </div>
+                `;
             }).join('');
         },
 
         renderGantt() {
-            const container = document.getElementById('gantt-chart');
-            const startYear = 2019;
-            const endYear = 2026;
+            const container = document.getElementById('diretores-gantt-chart');
+            if (!container) return;
+
+            const data = this.agenciasData[this.selectedAgency];
+            if (!data) return;
+
+            const startYear = 2024;
+            const endYear = 2031;
             const totalMonths = (endYear - startYear) * 12;
 
-            container.innerHTML = this.diretores.map(d => {
+            container.innerHTML = data.diretores.map(d => {
                 const startDate = new Date(d.inicio);
-                const endDate = d.fim ? new Date(d.fim) : new Date();
-                const startOffset = ((startDate.getFullYear() - startYear) * 12 + startDate.getMonth()) / totalMonths * 100;
+                const endDate = new Date(d.termino);
+                const startOffset = Math.max(0, ((startDate.getFullYear() - startYear) * 12 + startDate.getMonth()) / totalMonths * 100);
                 const duration = ((endDate - startDate) / (1000 * 60 * 60 * 24 * 30)) / totalMonths * 100;
                 const barClass = d.ativo ? '' : 'ended';
 
                 return `<div class="gantt-row">
-                    <div class="gantt-label">${d.nome}</div>
+                    <div class="gantt-label">${d.nome.split(' ')[0]} ${d.nome.split(' ').slice(-1)[0]}</div>
                     <div class="gantt-bars">
-                        <div class="gantt-bar ${barClass}" style="left: ${startOffset}%; width: ${Math.min(duration, 100 - startOffset)}%;">
+                        <div class="gantt-bar ${barClass}" style="left: ${startOffset}%; width: ${Math.min(duration, 100 - startOffset)}%; background: ${data.cor};">
                             ${d.cargo.split(' ')[0]}
                         </div>
                     </div>
                 </div>`;
             }).join('');
+        },
+
+        renderVotingMatrix() {
+            const tbody = document.getElementById('diretores-voting-matrix-body');
+            if (!tbody) return;
+
+            const data = this.agenciasData[this.selectedAgency];
+            if (!data) return;
+
+            tbody.innerHTML = data.diretores.map(d => {
+                const total = d.participacoes;
+                return `
+                <tr>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div class="mandato-avatar small" style="background: ${data.cor}; width: 32px; height: 32px; font-size: 11px;">${d.iniciais}</div>
+                            <div>
+                                <div style="font-weight: 600;">${d.nome}</div>
+                                <div style="font-size: 11px; color: var(--text-muted);">${d.cargo}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td><span class="vote-badge green">${d.favoravel}</span></td>
+                    <td><span class="vote-badge red">${d.desfavoravel}</span></td>
+                    <td><span class="vote-badge orange">${d.vista}</span></td>
+                    <td><span class="vote-badge purple">${d.relatorias}</span></td>
+                    <td><span class="vote-badge blue">${d.favoravel}</span></td>
+                    <td><span class="vote-badge pink">0</span></td>
+                    <td><span class="vote-badge">0</span></td>
+                    <td><span class="vote-badge">${total}</span></td>
+                    <td><strong>${total}</strong></td>
+                </tr>
+                `;
+            }).join('');
+        },
+
+        renderSetoresChart() {
+            const container = document.getElementById('diretores-setores-chart');
+            if (!container) return;
+
+            const data = this.agenciasData[this.selectedAgency];
+            if (!data) return;
+
+            const maxVal = Math.max(...data.setores.map(s => s.valor));
+
+            container.innerHTML = data.setores.map(s => `
+                <div class="h-bar-item">
+                    <span class="h-bar-label">${s.nome}</span>
+                    <div class="h-bar-track">
+                        <div class="h-bar-fill" style="width: ${(s.valor / maxVal * 100)}%; background: ${s.cor};"></div>
+                    </div>
+                    <span style="width: 30px; text-align: right; font-weight: 600;">${s.valor}</span>
+                </div>
+            `).join('');
+        },
+
+        renderParticipationList() {
+            const container = document.getElementById('diretores-participation-list');
+            if (!container) return;
+
+            const data = this.agenciasData[this.selectedAgency];
+            if (!data) return;
+
+            const sortedDiretores = [...data.diretores].sort((a, b) => b.participacoes - a.participacoes);
+
+            container.innerHTML = sortedDiretores.map((d, i) => `
+                <div class="participation-item">
+                    <div class="participation-rank">${i + 1}</div>
+                    <div class="participation-info">
+                        <div class="participation-name">${d.nome}</div>
+                        <div class="participation-count">${d.participacoes} participacoes</div>
+                    </div>
+                    <span class="relatorias-badge">${d.relatorias} relatorias</span>
+                </div>
+            `).join('');
+        },
+
+        formatDateBR(dateStr) {
+            const date = new Date(dateStr);
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
+    };
+
+    // ============================================
+    // PAGE: Setores
+    // ============================================
+    const PageSetores = {
+        init() {
+            const page = document.getElementById('page-setores');
+            page.classList.add('active');
+        }
+    };
+
+    // ============================================
+    // PAGE: Microtemas
+    // ============================================
+    const PageMicrotemas = {
+        init() {
+            const page = document.getElementById('page-microtemas');
+            page.classList.add('active');
+        }
+    };
+
+    // ============================================
+    // PAGE: Empresas
+    // ============================================
+    const PageEmpresas = {
+        init() {
+            const page = document.getElementById('page-empresas');
+            page.classList.add('active');
+        }
+    };
+
+    // ============================================
+    // PAGE: Historico
+    // ============================================
+    const PageHistorico = {
+        init() {
+            const page = document.getElementById('page-historico');
+            page.classList.add('active');
         }
     };
 
@@ -3316,6 +3824,10 @@
         PageHub,
         PageAgencias,
         PageMapa,
+        PageSetores,
+        PageMicrotemas,
+        PageEmpresas,
+        PageHistorico,
 
         init() {
             // Register routes
@@ -3367,6 +3879,22 @@
             Router.register('/mapa', () => {
                 PageMonitor.destroy();
                 PageMapa.init();
+            });
+            Router.register('/setores', () => {
+                PageMonitor.destroy();
+                PageSetores.init();
+            });
+            Router.register('/microtemas', () => {
+                PageMonitor.destroy();
+                PageMicrotemas.init();
+            });
+            Router.register('/empresas', () => {
+                PageMonitor.destroy();
+                PageEmpresas.init();
+            });
+            Router.register('/historico', () => {
+                PageMonitor.destroy();
+                PageHistorico.init();
             });
             Router.register('/', () => {
                 PageMonitor.destroy();

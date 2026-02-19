@@ -74,6 +74,26 @@
                 </div>
 
                 <div class="nav-section">
+                    <div class="nav-section-title">Temas Regulados</div>
+                    <a data-route="/setores" class="nav-item">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                        Setores
+                    </a>
+                    <a data-route="/microtemas" class="nav-item">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
+                        Microtemas
+                    </a>
+                    <a data-route="/empresas" class="nav-item">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                        Empresas
+                    </a>
+                    <a data-route="/historico" class="nav-item">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        Historico
+                    </a>
+                </div>
+
+                <div class="nav-section">
                     <div class="nav-section-title">Documentos</div>
                     <a data-route="/upload" class="nav-item">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
@@ -576,45 +596,444 @@
                 </div>
 
                 <!-- ============================================
-                     PAGE: Diretores
+                     PAGE: Diretores/Mandatos
                      ============================================ -->
                 <div id="page-diretores" class="page-view">
                     <div class="page-header">
                         <div class="page-title-section">
-                            <h1 class="page-title">Diretores e Mandatos</h1>
-                            <p class="page-subtitle">Composicao atual e historico do Conselho Diretor da ARTESP</p>
+                            <h1 class="page-title">Mandatos</h1>
+                            <p class="page-subtitle">Composicao atual e analise dos diretores das agencias reguladoras</p>
                         </div>
                     </div>
 
-                    <div class="stats-grid">
+                    <!-- Seletor de Agencia -->
+                    <div class="agency-selector-bar">
+                        <div class="agency-tabs" id="diretores-agency-tabs">
+                            <button class="agency-tab active" data-agency="artesp">
+                                <span class="agency-tab-icon">🚌</span>
+                                <span>ARTESP</span>
+                            </button>
+                            <button class="agency-tab" data-agency="anm">
+                                <span class="agency-tab-icon">⛏️</span>
+                                <span>ANM</span>
+                            </button>
+                            <button class="agency-tab" data-agency="anatel">
+                                <span class="agency-tab-icon">📡</span>
+                                <span>ANATEL</span>
+                            </button>
+                            <button class="agency-tab" data-agency="aneel">
+                                <span class="agency-tab-icon">⚡</span>
+                                <span>ANEEL</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Stats Cards -->
+                    <div class="stats-grid" id="diretores-stats">
                         <div class="stat-card">
                             <div class="stat-card-header">
                                 <span class="stat-card-title">Diretores Ativos</span>
                             </div>
-                            <div class="stat-card-value primary">4</div>
+                            <div class="stat-card-value primary" id="diretores-total">4</div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-card-header">
-                                <span class="stat-card-title">Total de Mandatos</span>
+                                <span class="stat-card-title">Participacoes Colegiadas</span>
                             </div>
-                            <div class="stat-card-value">5</div>
+                            <div class="stat-card-value" id="diretores-participacoes">161</div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-card-header">
-                                <span class="stat-card-title">Media de Votos</span>
+                                <span class="stat-card-title">Taxa de Consenso</span>
                             </div>
-                            <div class="stat-card-value">210</div>
+                            <div class="stat-card-value success" id="diretores-consenso">100%</div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-card-header">
-                                <span class="stat-card-title">Taxa Media Aprovacao</span>
+                                <span class="stat-card-title">Deliberacoes</span>
                             </div>
-                            <div class="stat-card-value success">74.2%</div>
+                            <div class="stat-card-value" id="diretores-deliberacoes">89</div>
                         </div>
                     </div>
 
-                    <div class="director-grid" id="diretores-grid">
-                        <!-- Cards de diretores serao renderizados via JavaScript -->
+                    <!-- Timeline Visual dos Mandatos -->
+                    <div class="card" style="margin-bottom: 24px;">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                Linha do Tempo dos Mandatos
+                            </h2>
+                        </div>
+                        <div class="card-body">
+                            <div class="gantt-years" id="diretores-gantt-years">
+                                <span class="gantt-year">2024</span>
+                                <span class="gantt-year">2025</span>
+                                <span class="gantt-year">2026</span>
+                                <span class="gantt-year">2027</span>
+                                <span class="gantt-year">2028</span>
+                                <span class="gantt-year">2029</span>
+                                <span class="gantt-year">2030</span>
+                            </div>
+                            <div id="diretores-gantt-chart" class="gantt-chart">
+                                <!-- Gantt sera renderizado via JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cards de Diretores -->
+                    <div class="mandatos-detailed-grid" id="diretores-grid">
+                        <!-- Cards serao renderizados via JavaScript -->
+                    </div>
+
+                    <!-- Dashboards lado a lado -->
+                    <div class="charts-row" style="margin-top: 24px;">
+                        <!-- Distribuicao de Votos -->
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <h2 class="card-title">Distribuicao de Votos</h2>
+                                    <p class="card-subtitle">Por tipo de posicionamento</p>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div style="display: flex; align-items: center; justify-content: center; min-height: 250px; gap: 40px;">
+                                    <div class="donut-chart" id="diretores-chart-votos">
+                                        <svg width="180" height="180" viewBox="0 0 200 200">
+                                            <circle class="donut-bg" cx="100" cy="100" r="70"/>
+                                            <circle cx="100" cy="100" r="70" fill="none" stroke="#4ade80" stroke-width="28" stroke-dasharray="440" stroke-dashoffset="0" style="transform: rotate(-90deg); transform-origin: center;"/>
+                                        </svg>
+                                        <div class="donut-center">
+                                            <div class="donut-value" id="diretores-votos-total">161</div>
+                                            <div class="donut-label">Favoravel</div>
+                                        </div>
+                                    </div>
+                                    <div class="chart-legend" id="diretores-votos-legend">
+                                        <div class="legend-item"><div class="legend-dot green"></div><span>Favoravel: <strong id="diretores-favoravel">161</strong></span></div>
+                                        <div class="legend-item"><div class="legend-dot red"></div><span>Desfavoravel: <strong id="diretores-desfavoravel">0</strong></span></div>
+                                        <div class="legend-item"><div class="legend-dot orange"></div><span>Pediu Vista: <strong id="diretores-vista">0</strong></span></div>
+                                        <div class="legend-item"><div class="legend-dot purple"></div><span>Relator: <strong id="diretores-relator">0</strong></span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Votos por Setor -->
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <h2 class="card-title">Votos por Setor</h2>
+                                    <p class="card-subtitle">Classificacao de assuntos</p>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="horizontal-bar-chart" id="diretores-setores-chart">
+                                    <div class="h-bar-item">
+                                        <span class="h-bar-label">Rodovias</span>
+                                        <div class="h-bar-track"><div class="h-bar-fill" style="width: 85%; background: #c9a227;"></div></div>
+                                        <span style="width: 30px; text-align: right; font-weight: 600;">48</span>
+                                    </div>
+                                    <div class="h-bar-item">
+                                        <span class="h-bar-label">Onibus</span>
+                                        <div class="h-bar-track"><div class="h-bar-fill" style="width: 37%; background: #c9a227;"></div></div>
+                                        <span style="width: 30px; text-align: right; font-weight: 600;">21</span>
+                                    </div>
+                                    <div class="h-bar-item">
+                                        <span class="h-bar-label">Regulacao</span>
+                                        <div class="h-bar-track"><div class="h-bar-fill" style="width: 21%; background: #c9a227;"></div></div>
+                                        <span style="width: 30px; text-align: right; font-weight: 600;">12</span>
+                                    </div>
+                                    <div class="h-bar-item">
+                                        <span class="h-bar-label">Marcos Legais</span>
+                                        <div class="h-bar-track"><div class="h-bar-fill" style="width: 9%; background: #c9a227;"></div></div>
+                                        <span style="width: 30px; text-align: right; font-weight: 600;">5</span>
+                                    </div>
+                                    <div class="h-bar-item">
+                                        <span class="h-bar-label">Ferrovias</span>
+                                        <div class="h-bar-track"><div class="h-bar-fill" style="width: 2%; background: #c9a227;"></div></div>
+                                        <span style="width: 30px; text-align: right; font-weight: 600;">1</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Matriz de Votacao por Diretor -->
+                    <div class="voting-matrix-card" style="margin-top: 24px;">
+                        <div class="voting-matrix-header">
+                            <h3>Matriz de Votacao por Diretor</h3>
+                            <span class="fidelity-badge">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                                Visao Institucional
+                            </span>
+                        </div>
+                        <div class="voting-matrix-stats">
+                            <div class="matrix-stat">
+                                <div class="matrix-stat-icon pink">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                                </div>
+                                <div class="matrix-stat-text">
+                                    <span class="matrix-stat-label">Votos Nominais Explicitos</span>
+                                    <span class="matrix-stat-value" id="diretores-nominais">0 (0%)</span>
+                                </div>
+                            </div>
+                            <div class="matrix-stat">
+                                <div class="matrix-stat-icon blue">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                </div>
+                                <div class="matrix-stat-text">
+                                    <span class="matrix-stat-label">Participacoes Colegiadas</span>
+                                    <span class="matrix-stat-value" id="diretores-colegiadas">161 (100%)</span>
+                                </div>
+                            </div>
+                            <div class="matrix-stat">
+                                <div class="matrix-stat-icon green">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                </div>
+                                <div class="matrix-stat-text">
+                                    <span class="matrix-stat-label">Alta Confianca</span>
+                                    <span class="matrix-stat-value" id="diretores-confianca">0</span>
+                                </div>
+                            </div>
+                            <div class="matrix-stat">
+                                <div class="matrix-stat-icon orange">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                </div>
+                                <div class="matrix-stat-text">
+                                    <span class="matrix-stat-label">Dados Inferidos</span>
+                                    <span class="matrix-stat-value" id="diretores-inferidos">161</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="overflow-x: auto;">
+                            <table class="voting-table" id="diretores-voting-matrix">
+                                <thead>
+                                    <tr>
+                                        <th>DIRETOR</th>
+                                        <th>FAVORAVEL</th>
+                                        <th>DESFAVORAVEL</th>
+                                        <th>VISTA</th>
+                                        <th>RELATOR</th>
+                                        <th>ACOMPANHOU</th>
+                                        <th>DIVERGENTE</th>
+                                        <th>NOMINAL</th>
+                                        <th>COLEGIADO</th>
+                                        <th>TOTAL</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="diretores-voting-matrix-body">
+                                    <!-- Dados serao renderizados via JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="voting-legend">
+                            <div class="legend-item"><div class="legend-dot green"></div> Favoravel</div>
+                            <div class="legend-item"><div class="legend-dot red"></div> Desfavoravel</div>
+                            <div class="legend-item"><div class="legend-dot orange"></div> Vista</div>
+                            <div class="legend-item"><div class="legend-dot purple"></div> Relator / Nominal</div>
+                            <div class="legend-item"><div class="legend-dot blue"></div> Acompanhou</div>
+                            <div class="legend-item"><div class="legend-dot pink"></div> Divergente</div>
+                        </div>
+                    </div>
+
+                    <!-- Analise Avancada -->
+                    <h2 class="section-title" style="margin-top: 32px; margin-bottom: 16px;">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                        Analise Avancada
+                    </h2>
+
+                    <!-- Graficos Distribuicao e Consenso -->
+                    <div class="charts-row">
+                        <!-- Distribuicao por Tipo de Decisao -->
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <h2 class="card-title">
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path></svg>
+                                        Distribuicao por Tipo de Decisao
+                                    </h2>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div style="display: flex; align-items: center; justify-content: center; min-height: 250px; gap: 40px;">
+                                    <div class="donut-chart" id="diretores-tipo-decisao">
+                                        <svg width="200" height="200" viewBox="0 0 200 200">
+                                            <circle class="donut-bg" cx="100" cy="100" r="70"/>
+                                            <!-- Decisao Tecnica 33% -->
+                                            <circle cx="100" cy="100" r="70" fill="none" stroke="#0f172a" stroke-width="30" stroke-dasharray="145 295" stroke-dashoffset="0" style="transform: rotate(-90deg); transform-origin: center;"/>
+                                            <!-- Contrato 31% -->
+                                            <circle cx="100" cy="100" r="70" fill="none" stroke="#f472b6" stroke-width="30" stroke-dasharray="136 304" stroke-dashoffset="-145" style="transform: rotate(-90deg); transform-origin: center;"/>
+                                            <!-- Regulacao 16% -->
+                                            <circle cx="100" cy="100" r="70" fill="none" stroke="#c9a227" stroke-width="30" stroke-dasharray="70 370" stroke-dashoffset="-281" style="transform: rotate(-90deg); transform-origin: center;"/>
+                                            <!-- Sancao 10% -->
+                                            <circle cx="100" cy="100" r="70" fill="none" stroke="#4ade80" stroke-width="30" stroke-dasharray="44 396" stroke-dashoffset="-351" style="transform: rotate(-90deg); transform-origin: center;"/>
+                                            <!-- Marcos Legais 9% -->
+                                            <circle cx="100" cy="100" r="70" fill="none" stroke="#60a5fa" stroke-width="30" stroke-dasharray="40 400" stroke-dashoffset="-395" style="transform: rotate(-90deg); transform-origin: center;"/>
+                                        </svg>
+                                        <div class="donut-center">
+                                            <div class="donut-value" id="diretores-total-decisoes">89</div>
+                                            <div class="donut-label">Total</div>
+                                        </div>
+                                    </div>
+                                    <div class="chart-legend">
+                                        <div class="legend-item"><div class="legend-color" style="background: #0f172a;"></div>Decisao Tecnica (33%)</div>
+                                        <div class="legend-item"><div class="legend-color" style="background: #f472b6;"></div>Contrato (31%)</div>
+                                        <div class="legend-item"><div class="legend-color" style="background: #c9a227;"></div>Regulacao (16%)</div>
+                                        <div class="legend-item"><div class="legend-color" style="background: #4ade80;"></div>Sancao (10%)</div>
+                                        <div class="legend-item"><div class="legend-color" style="background: #60a5fa;"></div>Marcos Legais (9%)</div>
+                                        <div class="legend-item"><div class="legend-color" style="background: #f87171;"></div>Fiscalizacao (1%)</div>
+                                    </div>
+                                </div>
+                                <div class="decision-tags" id="diretores-decision-tags">
+                                    <span class="decision-tag">Decisao Tecnica: 29</span>
+                                    <span class="decision-tag">Contrato: 28</span>
+                                    <span class="decision-tag">Regulacao: 14</span>
+                                    <span class="decision-tag">Sancao: 9</span>
+                                    <span class="decision-tag">Marcos Legais: 8</span>
+                                    <span class="decision-tag">Fiscalizacao: 1</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Consenso vs Divergencia -->
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <h2 class="card-title">
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                        Consenso vs Divergencia
+                                    </h2>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div style="display: flex; align-items: center; justify-content: center; min-height: 250px; gap: 40px;">
+                                    <div class="donut-chart" id="diretores-consenso-chart">
+                                        <svg width="200" height="200" viewBox="0 0 200 200">
+                                            <circle class="donut-bg" cx="100" cy="100" r="70"/>
+                                            <circle cx="100" cy="100" r="70" fill="none" stroke="#4ade80" stroke-width="30" stroke-dasharray="440" stroke-dashoffset="0" style="transform: rotate(-90deg); transform-origin: center;"/>
+                                        </svg>
+                                        <div class="donut-center">
+                                            <div class="donut-value" style="color: #4ade80;" id="diretores-unanimes">42</div>
+                                            <div class="donut-label">Unanimes</div>
+                                        </div>
+                                    </div>
+                                    <div class="chart-legend">
+                                        <div class="legend-item"><div class="legend-color" style="background: #4ade80;"></div>Unanimes: <span id="diretores-unanimes-legenda">42</span></div>
+                                        <div class="legend-item"><div class="legend-color" style="background: #f87171;"></div>Divergentes: <span id="diretores-divergentes-legenda">0</span></div>
+                                        <div class="legend-item"><div class="legend-color" style="background: #fbbf24;"></div>Com Vista: <span id="diretores-vista-legenda">0</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Deliberacoes por Setor e Participacao -->
+                    <div class="charts-row" style="margin-top: 24px;">
+                        <!-- Deliberacoes por Setor -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">Deliberacoes por Setor</h2>
+                            </div>
+                            <div class="card-body">
+                                <div class="horizontal-bar-chart" id="diretores-deliberacoes-setor">
+                                    <div class="h-bar-item">
+                                        <span class="h-bar-label">Rodovias</span>
+                                        <div class="h-bar-track">
+                                            <div class="h-bar-fill" style="width: 85%; background: #c9a227;"></div>
+                                        </div>
+                                        <span style="width: 30px; text-align: right; font-weight: 600;">48</span>
+                                    </div>
+                                    <div class="h-bar-item">
+                                        <span class="h-bar-label">Onibus</span>
+                                        <div class="h-bar-track">
+                                            <div class="h-bar-fill" style="width: 37%; background: #c9a227;"></div>
+                                        </div>
+                                        <span style="width: 30px; text-align: right; font-weight: 600;">21</span>
+                                    </div>
+                                    <div class="h-bar-item">
+                                        <span class="h-bar-label">Regulacao</span>
+                                        <div class="h-bar-track">
+                                            <div class="h-bar-fill" style="width: 21%; background: #c9a227;"></div>
+                                        </div>
+                                        <span style="width: 30px; text-align: right; font-weight: 600;">12</span>
+                                    </div>
+                                    <div class="h-bar-item">
+                                        <span class="h-bar-label">Marcos Legais</span>
+                                        <div class="h-bar-track">
+                                            <div class="h-bar-fill" style="width: 9%; background: #c9a227;"></div>
+                                        </div>
+                                        <span style="width: 30px; text-align: right; font-weight: 600;">5</span>
+                                    </div>
+                                    <div class="h-bar-item">
+                                        <span class="h-bar-label">Aeroportos</span>
+                                        <div class="h-bar-track">
+                                            <div class="h-bar-fill" style="width: 4%; background: #c9a227;"></div>
+                                        </div>
+                                        <span style="width: 30px; text-align: right; font-weight: 600;">2</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Participacao em Decisoes Colegiadas -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                    Participacao em Decisoes Colegiadas
+                                </h2>
+                            </div>
+                            <div class="card-body">
+                                <div class="participation-list" id="diretores-participation-list">
+                                    <!-- Sera renderizado via JavaScript -->
+                                </div>
+                                <div class="info-alert warning" style="margin-top: 16px;">
+                                    <svg class="info-alert-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    <div class="info-alert-content">
+                                        <p><strong>Nota:</strong> Taxas de divergencia individual nao sao exibidas pois as atas de 2025 registram apenas decisoes colegiadas unanimes, sem identificacao de votos nominais.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Evolucao Mensal -->
+                    <div class="card" style="margin-top: 24px;">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                                Evolucao Mensal de Decisoes
+                            </h2>
+                        </div>
+                        <div class="card-body">
+                            <div id="diretores-evolucao-chart" class="line-chart-container">
+                                <svg id="diretores-evolucao-svg" width="100%" height="300" viewBox="0 0 800 300">
+                                    <!-- Eixo Y -->
+                                    <line x1="50" y1="20" x2="50" y2="250" stroke="#374151" stroke-width="1"/>
+                                    <!-- Eixo X -->
+                                    <line x1="50" y1="250" x2="780" y2="250" stroke="#374151" stroke-width="1"/>
+                                    <!-- Labels Y -->
+                                    <text x="40" y="25" text-anchor="end" fill="#9ca3af" font-size="12">100</text>
+                                    <text x="40" y="82" text-anchor="end" fill="#9ca3af" font-size="12">75</text>
+                                    <text x="40" y="139" text-anchor="end" fill="#9ca3af" font-size="12">50</text>
+                                    <text x="40" y="196" text-anchor="end" fill="#9ca3af" font-size="12">25</text>
+                                    <text x="40" y="253" text-anchor="end" fill="#9ca3af" font-size="12">0</text>
+                                    <!-- Label X -->
+                                    <text x="720" y="275" text-anchor="middle" fill="#9ca3af" font-size="12">Dez/25</text>
+                                    <!-- Pontos -->
+                                    <circle cx="720" cy="35" r="6" fill="#c9a227"/>
+                                    <circle cx="720" cy="93" r="6" fill="#4ade80"/>
+                                    <circle cx="720" cy="150" r="6" fill="#60a5fa"/>
+                                    <circle cx="720" cy="235" r="6" fill="#f87171"/>
+                                </svg>
+                                <div class="chart-legend" style="justify-content: center; margin-top: 16px;">
+                                    <div class="legend-item"><div class="legend-color" style="background: #c9a227;"></div>Total</div>
+                                    <div class="legend-item"><div class="legend-color" style="background: #4ade80;"></div>Contratos</div>
+                                    <div class="legend-item"><div class="legend-color" style="background: #60a5fa;"></div>Regulacao</div>
+                                    <div class="legend-item"><div class="legend-color" style="background: #f87171;"></div>Litigios</div>
+                                    <div class="legend-item"><div class="legend-color" style="background: #fbbf24;"></div>Sancoes</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -1298,6 +1717,613 @@
                                 <!-- Perfil do Diretor -->
                                 <div class="director-profile" id="director-profile">
                                     <!-- Sera renderizado via JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================
+                     PAGE: Setores
+                     ============================================ -->
+                <div id="page-setores" class="page-view">
+                    <div class="page-header">
+                        <div class="page-title-section">
+                            <h1 class="page-title">Setores Regulados</h1>
+                            <p class="page-subtitle">Classificacao e analise por setor de atuacao regulatoria</p>
+                        </div>
+                        <div class="page-actions">
+                            <div class="filter-group">
+                                <select class="filter-select" id="setores-filter-agencia">
+                                    <option value="">Todas Agencias</option>
+                                    <option value="artesp">ARTESP</option>
+                                    <option value="anm">ANM</option>
+                                    <option value="anatel">ANATEL</option>
+                                    <option value="aneel">ANEEL</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Total de Setores</span>
+                            </div>
+                            <div class="stat-card-value primary" id="setores-total">12</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Deliberacoes</span>
+                            </div>
+                            <div class="stat-card-value" id="setores-deliberacoes">89</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Setor Mais Ativo</span>
+                            </div>
+                            <div class="stat-card-value success" id="setores-mais-ativo">Rodovias</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Empresas Reguladas</span>
+                            </div>
+                            <div class="stat-card-value" id="setores-empresas">45</div>
+                        </div>
+                    </div>
+
+                    <div class="grid-2">
+                        <!-- Grafico de Setores -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path></svg>
+                                    Distribuicao por Setor
+                                </h2>
+                            </div>
+                            <div class="card-body">
+                                <div style="display: flex; align-items: center; justify-content: center; min-height: 300px; gap: 40px;">
+                                    <div class="donut-chart">
+                                        <svg width="200" height="200" viewBox="0 0 200 200">
+                                            <circle class="donut-bg" cx="100" cy="100" r="70"/>
+                                            <circle cx="100" cy="100" r="70" fill="none" stroke="#c9a227" stroke-width="30" stroke-dasharray="200 240" stroke-dashoffset="0" style="transform: rotate(-90deg); transform-origin: center;"/>
+                                            <circle cx="100" cy="100" r="70" fill="none" stroke="#4ade80" stroke-width="30" stroke-dasharray="100 340" stroke-dashoffset="-200" style="transform: rotate(-90deg); transform-origin: center;"/>
+                                            <circle cx="100" cy="100" r="70" fill="none" stroke="#60a5fa" stroke-width="30" stroke-dasharray="80 360" stroke-dashoffset="-300" style="transform: rotate(-90deg); transform-origin: center;"/>
+                                            <circle cx="100" cy="100" r="70" fill="none" stroke="#f472b6" stroke-width="30" stroke-dasharray="60 380" stroke-dashoffset="-380" style="transform: rotate(-90deg); transform-origin: center;"/>
+                                        </svg>
+                                        <div class="donut-center">
+                                            <div class="donut-value">12</div>
+                                            <div class="donut-label">Setores</div>
+                                        </div>
+                                    </div>
+                                    <div class="chart-legend">
+                                        <div class="legend-item"><div class="legend-color" style="background: #c9a227;"></div>Rodovias (45%)</div>
+                                        <div class="legend-item"><div class="legend-color" style="background: #4ade80;"></div>Onibus (23%)</div>
+                                        <div class="legend-item"><div class="legend-color" style="background: #60a5fa;"></div>Regulacao (18%)</div>
+                                        <div class="legend-item"><div class="legend-color" style="background: #f472b6;"></div>Outros (14%)</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Lista de Setores -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">Setores Ativos</h2>
+                            </div>
+                            <div class="card-body">
+                                <div class="setores-list" id="setores-list">
+                                    <div class="setor-item">
+                                        <div class="setor-icon" style="background: #c9a227;">🛣️</div>
+                                        <div class="setor-info">
+                                            <div class="setor-nome">Rodovias</div>
+                                            <div class="setor-stats">48 deliberacoes | 12 empresas</div>
+                                        </div>
+                                        <div class="setor-badge">54%</div>
+                                    </div>
+                                    <div class="setor-item">
+                                        <div class="setor-icon" style="background: #4ade80;">🚌</div>
+                                        <div class="setor-info">
+                                            <div class="setor-nome">Onibus</div>
+                                            <div class="setor-stats">21 deliberacoes | 8 empresas</div>
+                                        </div>
+                                        <div class="setor-badge">24%</div>
+                                    </div>
+                                    <div class="setor-item">
+                                        <div class="setor-icon" style="background: #60a5fa;">📋</div>
+                                        <div class="setor-info">
+                                            <div class="setor-nome">Regulacao</div>
+                                            <div class="setor-stats">12 deliberacoes | 5 empresas</div>
+                                        </div>
+                                        <div class="setor-badge">13%</div>
+                                    </div>
+                                    <div class="setor-item">
+                                        <div class="setor-icon" style="background: #a855f7;">⚖️</div>
+                                        <div class="setor-info">
+                                            <div class="setor-nome">Marcos Legais</div>
+                                            <div class="setor-stats">5 deliberacoes | 0 empresas</div>
+                                        </div>
+                                        <div class="setor-badge">6%</div>
+                                    </div>
+                                    <div class="setor-item">
+                                        <div class="setor-icon" style="background: #f472b6;">🚂</div>
+                                        <div class="setor-info">
+                                            <div class="setor-nome">Ferrovias</div>
+                                            <div class="setor-stats">2 deliberacoes | 3 empresas</div>
+                                        </div>
+                                        <div class="setor-badge">2%</div>
+                                    </div>
+                                    <div class="setor-item">
+                                        <div class="setor-icon" style="background: #fbbf24;">✈️</div>
+                                        <div class="setor-info">
+                                            <div class="setor-nome">Aeroportos</div>
+                                            <div class="setor-stats">1 deliberacao | 2 empresas</div>
+                                        </div>
+                                        <div class="setor-badge">1%</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================
+                     PAGE: Microtemas
+                     ============================================ -->
+                <div id="page-microtemas" class="page-view">
+                    <div class="page-header">
+                        <div class="page-title-section">
+                            <h1 class="page-title">Microtemas</h1>
+                            <p class="page-subtitle">Classificacao detalhada de assuntos regulatorios</p>
+                        </div>
+                        <div class="page-actions">
+                            <div class="filter-group">
+                                <select class="filter-select" id="microtemas-filter-setor">
+                                    <option value="">Todos Setores</option>
+                                    <option value="rodovias">Rodovias</option>
+                                    <option value="onibus">Onibus</option>
+                                    <option value="ferrovias">Ferrovias</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Total Microtemas</span>
+                            </div>
+                            <div class="stat-card-value primary" id="microtemas-total">34</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Mais Frequente</span>
+                            </div>
+                            <div class="stat-card-value success" id="microtemas-frequente">Reajuste Tarifario</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Novos (30 dias)</span>
+                            </div>
+                            <div class="stat-card-value" id="microtemas-novos">5</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Em Monitoramento</span>
+                            </div>
+                            <div class="stat-card-value warning" id="microtemas-monitoramento">12</div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
+                                Microtemas por Categoria
+                            </h2>
+                        </div>
+                        <div class="card-body">
+                            <div class="microtemas-grid" id="microtemas-grid">
+                                <div class="microtema-category">
+                                    <h4 class="microtema-category-title">Tarifario</h4>
+                                    <div class="microtema-tags">
+                                        <span class="microtema-tag primary">Reajuste Tarifario <span class="count">15</span></span>
+                                        <span class="microtema-tag">Revisao Extraordinaria <span class="count">8</span></span>
+                                        <span class="microtema-tag">Subsidio <span class="count">4</span></span>
+                                    </div>
+                                </div>
+                                <div class="microtema-category">
+                                    <h4 class="microtema-category-title">Contratual</h4>
+                                    <div class="microtema-tags">
+                                        <span class="microtema-tag">Aditivo Contratual <span class="count">12</span></span>
+                                        <span class="microtema-tag">Prorrogacao <span class="count">6</span></span>
+                                        <span class="microtema-tag">Rescisao <span class="count">2</span></span>
+                                    </div>
+                                </div>
+                                <div class="microtema-category">
+                                    <h4 class="microtema-category-title">Fiscalizacao</h4>
+                                    <div class="microtema-tags">
+                                        <span class="microtema-tag">Multa <span class="count">9</span></span>
+                                        <span class="microtema-tag">Advertencia <span class="count">5</span></span>
+                                        <span class="microtema-tag">Notificacao <span class="count">3</span></span>
+                                    </div>
+                                </div>
+                                <div class="microtema-category">
+                                    <h4 class="microtema-category-title">Investimento</h4>
+                                    <div class="microtema-tags">
+                                        <span class="microtema-tag">Obra Nova <span class="count">7</span></span>
+                                        <span class="microtema-tag">Manutencao <span class="count">11</span></span>
+                                        <span class="microtema-tag">Equipamento <span class="count">4</span></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tabela de Microtemas -->
+                    <div class="card" style="margin-top: 24px;">
+                        <div class="card-header">
+                            <h2 class="card-title">Lista Completa de Microtemas</h2>
+                        </div>
+                        <div class="card-body">
+                            <div style="overflow-x: auto;">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Microtema</th>
+                                            <th>Categoria</th>
+                                            <th>Setor</th>
+                                            <th>Deliberacoes</th>
+                                            <th>Ultima Atualizacao</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="microtemas-table-body">
+                                        <tr>
+                                            <td><strong>Reajuste Tarifario</strong></td>
+                                            <td><span class="tag tag-blue">Tarifario</span></td>
+                                            <td>Rodovias, Onibus</td>
+                                            <td>15</td>
+                                            <td>Dez 2025</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Aditivo Contratual</strong></td>
+                                            <td><span class="tag tag-green">Contratual</span></td>
+                                            <td>Rodovias</td>
+                                            <td>12</td>
+                                            <td>Dez 2025</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Manutencao</strong></td>
+                                            <td><span class="tag tag-purple">Investimento</span></td>
+                                            <td>Rodovias, Ferrovias</td>
+                                            <td>11</td>
+                                            <td>Nov 2025</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Multa</strong></td>
+                                            <td><span class="tag tag-red">Fiscalizacao</span></td>
+                                            <td>Onibus</td>
+                                            <td>9</td>
+                                            <td>Dez 2025</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Revisao Extraordinaria</strong></td>
+                                            <td><span class="tag tag-blue">Tarifario</span></td>
+                                            <td>Rodovias</td>
+                                            <td>8</td>
+                                            <td>Out 2025</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================
+                     PAGE: Empresas
+                     ============================================ -->
+                <div id="page-empresas" class="page-view">
+                    <div class="page-header">
+                        <div class="page-title-section">
+                            <h1 class="page-title">Empresas Reguladas</h1>
+                            <p class="page-subtitle">Empresas e concessionarias sob supervisao regulatoria</p>
+                        </div>
+                        <div class="page-actions">
+                            <input type="text" class="search-input" placeholder="Buscar empresa..." id="empresas-search">
+                        </div>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Total Empresas</span>
+                            </div>
+                            <div class="stat-card-value primary" id="empresas-total">45</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Concessionarias</span>
+                            </div>
+                            <div class="stat-card-value" id="empresas-concessionarias">28</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Com Pendencias</span>
+                            </div>
+                            <div class="stat-card-value warning" id="empresas-pendencias">7</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Contratos Ativos</span>
+                            </div>
+                            <div class="stat-card-value success" id="empresas-contratos">38</div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                                Empresas por Setor
+                            </h2>
+                        </div>
+                        <div class="card-body">
+                            <div class="empresas-grid" id="empresas-grid">
+                                <div class="empresa-card">
+                                    <div class="empresa-header">
+                                        <div class="empresa-logo">AR</div>
+                                        <div class="empresa-info">
+                                            <div class="empresa-nome">AutoBAn</div>
+                                            <div class="empresa-setor">Rodovias | SP-330</div>
+                                        </div>
+                                        <span class="empresa-status ativo">Ativo</span>
+                                    </div>
+                                    <div class="empresa-stats">
+                                        <div class="empresa-stat">
+                                            <span class="stat-value">12</span>
+                                            <span class="stat-label">Deliberacoes</span>
+                                        </div>
+                                        <div class="empresa-stat">
+                                            <span class="stat-value">2031</span>
+                                            <span class="stat-label">Fim Contrato</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="empresa-card">
+                                    <div class="empresa-header">
+                                        <div class="empresa-logo">CC</div>
+                                        <div class="empresa-info">
+                                            <div class="empresa-nome">CCR ViaOeste</div>
+                                            <div class="empresa-setor">Rodovias | SP-270</div>
+                                        </div>
+                                        <span class="empresa-status ativo">Ativo</span>
+                                    </div>
+                                    <div class="empresa-stats">
+                                        <div class="empresa-stat">
+                                            <span class="stat-value">8</span>
+                                            <span class="stat-label">Deliberacoes</span>
+                                        </div>
+                                        <div class="empresa-stat">
+                                            <span class="stat-value">2028</span>
+                                            <span class="stat-label">Fim Contrato</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="empresa-card">
+                                    <div class="empresa-header">
+                                        <div class="empresa-logo">EC</div>
+                                        <div class="empresa-info">
+                                            <div class="empresa-nome">EcoRodovias</div>
+                                            <div class="empresa-setor">Rodovias | SP-150</div>
+                                        </div>
+                                        <span class="empresa-status ativo">Ativo</span>
+                                    </div>
+                                    <div class="empresa-stats">
+                                        <div class="empresa-stat">
+                                            <span class="stat-value">15</span>
+                                            <span class="stat-label">Deliberacoes</span>
+                                        </div>
+                                        <div class="empresa-stat">
+                                            <span class="stat-value">2033</span>
+                                            <span class="stat-label">Fim Contrato</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="empresa-card">
+                                    <div class="empresa-header">
+                                        <div class="empresa-logo">VB</div>
+                                        <div class="empresa-info">
+                                            <div class="empresa-nome">Viacao Barretos</div>
+                                            <div class="empresa-setor">Onibus | Intermunicipal</div>
+                                        </div>
+                                        <span class="empresa-status pendente">Pendente</span>
+                                    </div>
+                                    <div class="empresa-stats">
+                                        <div class="empresa-stat">
+                                            <span class="stat-value">5</span>
+                                            <span class="stat-label">Deliberacoes</span>
+                                        </div>
+                                        <div class="empresa-stat">
+                                            <span class="stat-value">2026</span>
+                                            <span class="stat-label">Fim Contrato</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="empresa-card">
+                                    <div class="empresa-header">
+                                        <div class="empresa-logo">RL</div>
+                                        <div class="empresa-info">
+                                            <div class="empresa-nome">Rumo Logistica</div>
+                                            <div class="empresa-setor">Ferrovias | Malha Paulista</div>
+                                        </div>
+                                        <span class="empresa-status ativo">Ativo</span>
+                                    </div>
+                                    <div class="empresa-stats">
+                                        <div class="empresa-stat">
+                                            <span class="stat-value">2</span>
+                                            <span class="stat-label">Deliberacoes</span>
+                                        </div>
+                                        <div class="empresa-stat">
+                                            <span class="stat-value">2058</span>
+                                            <span class="stat-label">Fim Contrato</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="empresa-card">
+                                    <div class="empresa-header">
+                                        <div class="empresa-logo">CP</div>
+                                        <div class="empresa-info">
+                                            <div class="empresa-nome">CPTM</div>
+                                            <div class="empresa-setor">Ferrovias | Metropolitano</div>
+                                        </div>
+                                        <span class="empresa-status ativo">Ativo</span>
+                                    </div>
+                                    <div class="empresa-stats">
+                                        <div class="empresa-stat">
+                                            <span class="stat-value">3</span>
+                                            <span class="stat-label">Deliberacoes</span>
+                                        </div>
+                                        <div class="empresa-stat">
+                                            <span class="stat-value">-</span>
+                                            <span class="stat-label">Publico</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================
+                     PAGE: Historico
+                     ============================================ -->
+                <div id="page-historico" class="page-view">
+                    <div class="page-header">
+                        <div class="page-title-section">
+                            <h1 class="page-title">Historico Regulatorio</h1>
+                            <p class="page-subtitle">Timeline de eventos e marcos regulatorios importantes</p>
+                        </div>
+                        <div class="page-actions">
+                            <div class="filter-group">
+                                <select class="filter-select" id="historico-filter-ano">
+                                    <option value="">Todos Anos</option>
+                                    <option value="2025">2025</option>
+                                    <option value="2024">2024</option>
+                                    <option value="2023">2023</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <select class="filter-select" id="historico-filter-tipo">
+                                    <option value="">Todos Tipos</option>
+                                    <option value="deliberacao">Deliberacao</option>
+                                    <option value="marco">Marco Legal</option>
+                                    <option value="contrato">Contrato</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Eventos Registrados</span>
+                            </div>
+                            <div class="stat-card-value primary" id="historico-eventos">156</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Marcos Legais</span>
+                            </div>
+                            <div class="stat-card-value" id="historico-marcos">12</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Contratos Assinados</span>
+                            </div>
+                            <div class="stat-card-value success" id="historico-contratos">28</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Ultimo Evento</span>
+                            </div>
+                            <div class="stat-card-value" id="historico-ultimo">Dez/25</div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                Timeline de Eventos
+                            </h2>
+                        </div>
+                        <div class="card-body">
+                            <div class="timeline" id="historico-timeline">
+                                <div class="timeline-item">
+                                    <div class="timeline-marker success"></div>
+                                    <div class="timeline-content">
+                                        <div class="timeline-date">Dezembro 2025</div>
+                                        <div class="timeline-title">89 Deliberacoes Processadas</div>
+                                        <div class="timeline-description">Atas de reunioes ordinarias da ARTESP processadas e classificadas pelo sistema IRIS.</div>
+                                        <div class="timeline-tags">
+                                            <span class="timeline-tag">ARTESP</span>
+                                            <span class="timeline-tag">Deliberacao</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-marker primary"></div>
+                                    <div class="timeline-content">
+                                        <div class="timeline-date">Outubro 2025</div>
+                                        <div class="timeline-title">Nova Composicao do Colegiado</div>
+                                        <div class="timeline-description">Nomeacao de novos diretores para a ARTESP com mandatos ate 2030.</div>
+                                        <div class="timeline-tags">
+                                            <span class="timeline-tag">ARTESP</span>
+                                            <span class="timeline-tag">Marco</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-marker warning"></div>
+                                    <div class="timeline-content">
+                                        <div class="timeline-date">Agosto 2025</div>
+                                        <div class="timeline-title">Reajuste Tarifario Aprovado</div>
+                                        <div class="timeline-description">Aprovacao de reajuste tarifario para pedagios do sistema rodoviario.</div>
+                                        <div class="timeline-tags">
+                                            <span class="timeline-tag">Rodovias</span>
+                                            <span class="timeline-tag">Tarifario</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-marker info"></div>
+                                    <div class="timeline-content">
+                                        <div class="timeline-date">Junho 2025</div>
+                                        <div class="timeline-title">Renovacao de Concessao</div>
+                                        <div class="timeline-description">Renovacao do contrato de concessao da CCR ViaOeste por mais 3 anos.</div>
+                                        <div class="timeline-tags">
+                                            <span class="timeline-tag">CCR</span>
+                                            <span class="timeline-tag">Contrato</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-marker danger"></div>
+                                    <div class="timeline-content">
+                                        <div class="timeline-date">Marco 2025</div>
+                                        <div class="timeline-title">Multa por Descumprimento</div>
+                                        <div class="timeline-description">Aplicacao de multa a concessionaria por descumprimento de indicadores de qualidade.</div>
+                                        <div class="timeline-tags">
+                                            <span class="timeline-tag">Fiscalizacao</span>
+                                            <span class="timeline-tag">Sancao</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
