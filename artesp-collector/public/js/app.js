@@ -38,8 +38,8 @@
         },
 
         handleRoute() {
-            const path = window.location.pathname || '/metricas';
-            const handler = this.routes[path] || this.routes['/metricas'];
+            const path = window.location.pathname || '/hub';
+            const handler = this.routes[path] || this.routes['/hub'];
 
             // Update active nav
             document.querySelectorAll('.nav-item').forEach(item => {
@@ -51,6 +51,7 @@
 
             // Update breadcrumb
             const pageNames = {
+                '/hub': 'Hub de Inteligencia Regulatoria',
                 '/metricas': 'Dashboard Geral',
                 '/deliberacoes': 'Deliberacoes',
                 '/monitor': 'Monitor de Reunioes',
@@ -2358,6 +2359,392 @@
     };
 
     // ============================================
+    // PAGE: Hub de Noticias e Analise
+    // ============================================
+    const PageHub = {
+        // Agencias Federais completas
+        agenciasFederais: [
+            { sigla: 'ANA', nome: 'Agencia Nacional de Aguas', setor: 'saneamento', diretores: 5, mandato: 4, fonte: 'API SNIRH + RSS', rss: 'gov.br/ana/pt-br/noticias', viabilidade: 'alta', cor: '#60A5FA' },
+            { sigla: 'ANEEL', nome: 'Agencia Nacional de Energia Eletrica', setor: 'energia', diretores: 5, mandato: 5, fonte: 'API aberta + RSS', rss: 'gov.br/aneel/pt-br/noticias', viabilidade: 'alta', cor: '#FFEF4D' },
+            { sigla: 'ANATEL', nome: 'Agencia Nacional de Telecomunicacoes', setor: 'telecom', diretores: 5, mandato: 5, fonte: 'API dados.anatel.gov.br', rss: 'gov.br/anatel/pt-br/noticias', viabilidade: 'alta', cor: '#4ADE80' },
+            { sigla: 'ANP', nome: 'Agencia Nacional do Petroleo', setor: 'petroleo', diretores: 4, mandato: 4, fonte: 'API + dados abertos', rss: 'gov.br/anp/pt-br/noticias', viabilidade: 'alta', cor: '#F472B6' },
+            { sigla: 'ANVISA', nome: 'Agencia Nacional de Vigilancia Sanitaria', setor: 'saude', diretores: 5, mandato: 5, fonte: 'API + RSS', rss: 'gov.br/anvisa/pt-br/noticias', viabilidade: 'alta', cor: '#A78BFA' },
+            { sigla: 'ANS', nome: 'Agencia Nacional de Saude Suplementar', setor: 'saude', diretores: 5, mandato: 5, fonte: 'API dados.ans.gov.br', rss: 'gov.br/ans/pt-br/noticias', viabilidade: 'alta', cor: '#F97316' },
+            { sigla: 'ANTT', nome: 'Agencia Nacional de Transportes Terrestres', setor: 'transporte', diretores: 5, mandato: 5, fonte: 'API + PNCP', rss: 'gov.br/antt/pt-br/noticias', viabilidade: 'alta', cor: '#14B8A6' },
+            { sigla: 'ANTAQ', nome: 'Agencia Nacional de Transportes Aquaviarios', setor: 'transporte', diretores: 3, mandato: 4, fonte: 'Dados abertos', rss: 'gov.br/antaq/pt-br/noticias', viabilidade: 'media', cor: '#06B6D4' },
+            { sigla: 'ANAC', nome: 'Agencia Nacional de Aviacao Civil', setor: 'aviacao', diretores: 5, mandato: 5, fonte: 'API + dados abertos', rss: 'gov.br/anac/pt-br/noticias', viabilidade: 'alta', cor: '#8B5CF6' },
+            { sigla: 'ANM', nome: 'Agencia Nacional de Mineracao', setor: 'mineracao', diretores: 5, mandato: 4, fonte: 'API SIGMINE', rss: 'gov.br/anm/pt-br/noticias', viabilidade: 'alta', cor: '#EF4444' },
+            { sigla: 'ANCINE', nome: 'Agencia Nacional do Cinema', setor: 'cinema', diretores: 4, mandato: 4, fonte: 'RSS', rss: 'gov.br/ancine/pt-br/noticias', viabilidade: 'media', cor: '#EC4899' }
+        ],
+
+        // Orgaos complementares
+        orgaosComplementares: [
+            { sigla: 'TCU', nome: 'Tribunal de Contas da Uniao', fonte: 'RSS', rss: 'portal.tcu.gov.br/imprensa/noticias' },
+            { sigla: 'CGU', nome: 'Controladoria-Geral da Uniao', fonte: 'RSS', rss: 'gov.br/cgu/pt-br/noticias' },
+            { sigla: 'DOU', nome: 'Diario Oficial da Uniao', fonte: 'API REST', rss: 'in.gov.br/servicos/api' },
+            { sigla: 'PNCP', nome: 'Portal Nacional de Contratacoes', fonte: 'API REST', rss: 'pncp.gov.br/api' }
+        ],
+
+        // Agencias Estaduais
+        agenciasEstaduais: [
+            { sigla: 'ARTESP', nome: 'Agencia de Transporte do Estado de Sao Paulo', estado: 'SP', setor: 'transporte' },
+            { sigla: 'ARSESP', nome: 'Agencia Reguladora de Servicos Publicos de SP', estado: 'SP', setor: 'saneamento' },
+            { sigla: 'ARSAE-MG', nome: 'Agencia Reguladora de Servicos de Abast. de Agua de MG', estado: 'MG', setor: 'saneamento' },
+            { sigla: 'AGEPAR', nome: 'Agencia Reguladora do Parana', estado: 'PR', setor: 'multisetorial' },
+            { sigla: 'ARCE', nome: 'Agencia Reguladora do Ceara', estado: 'CE', setor: 'multisetorial' },
+            { sigla: 'AGERBA', nome: 'Agencia de Regulacao da Bahia', estado: 'BA', setor: 'multisetorial' },
+            { sigla: 'ARPE', nome: 'Agencia de Regulacao de Pernambuco', estado: 'PE', setor: 'multisetorial' },
+            { sigla: 'ADASA', nome: 'Agencia Reguladora de Aguas do DF', estado: 'DF', setor: 'saneamento' },
+            { sigla: 'AGENERSA', nome: 'Agencia Reguladora de Energia e Saneamento do RJ', estado: 'RJ', setor: 'energia' },
+            { sigla: 'AGERGS', nome: 'Agencia Estadual de Regulacao do RS', estado: 'RS', setor: 'multisetorial' },
+            { sigla: 'ARSAM', nome: 'Agencia Reguladora dos Servicos do Amazonas', estado: 'AM', setor: 'multisetorial' },
+            { sigla: 'ARSAL', nome: 'Agencia Reguladora de Servicos de Alagoas', estado: 'AL', setor: 'multisetorial' },
+            { sigla: 'AGRESPI', nome: 'Agencia de Regulacao do Piaui', estado: 'PI', setor: 'multisetorial' },
+            { sigla: 'AGR', nome: 'Agencia Goiana de Regulacao', estado: 'GO', setor: 'multisetorial' },
+            { sigla: 'AGEPAN', nome: 'Agencia de Regulacao do Mato Grosso do Sul', estado: 'MS', setor: 'multisetorial' },
+            { sigla: 'AGER-MT', nome: 'Agencia de Regulacao do Mato Grosso', estado: 'MT', setor: 'multisetorial' },
+            { sigla: 'ARESC', nome: 'Agencia de Regulacao de Santa Catarina', estado: 'SC', setor: 'multisetorial' },
+            { sigla: 'AGEAC', nome: 'Agencia Reguladora do Acre', estado: 'AC', setor: 'multisetorial' },
+            { sigla: 'ATR', nome: 'Agencia Tocantinense de Regulacao', estado: 'TO', setor: 'multisetorial' },
+            { sigla: 'ARSEP', nome: 'Agencia Reguladora do Rio Grande do Norte', estado: 'RN', setor: 'multisetorial' },
+            { sigla: 'ARPB', nome: 'Agencia de Regulacao da Paraiba', estado: 'PB', setor: 'multisetorial' },
+            { sigla: 'AGRESE', nome: 'Agencia Reguladora de Sergipe', estado: 'SE', setor: 'multisetorial' },
+            { sigla: 'MOB', nome: 'Agencia de Mobilidade de Recife', estado: 'PE', setor: 'transporte' }
+        ],
+
+        // Noticias simuladas (placeholder para RSS/API real)
+        noticias: [
+            { agencia: 'ANEEL', tipo: 'resolucao', titulo: 'ANEEL aprova revisao tarifaria extraordinaria para distribuidoras do Nordeste', resumo: 'A diretoria colegiada da ANEEL aprovou nesta terca-feira a revisao tarifaria extraordinaria que afeta 8 distribuidoras de energia da regiao Nordeste, com impacto medio de 5,2% nas tarifas residenciais.', data: '2026-02-18', esfera: 'federal', fonte: 'RSS gov.br' },
+            { agencia: 'ANVISA', tipo: 'noticia', titulo: 'ANVISA publica novas regras para rotulagem de alimentos ultraprocessados', resumo: 'Resolucao da Diretoria Colegiada estabelece novos criterios para advertencias frontais em embalagens, com prazo de adequacao ate dezembro de 2026.', data: '2026-02-17', esfera: 'federal', fonte: 'Portal ANVISA' },
+            { agencia: 'ANATEL', tipo: 'consulta', titulo: 'ANATEL abre consulta publica sobre regulamentacao do 6G', resumo: 'Consulta Publica n. 12/2026 visa colher contribuicoes da sociedade sobre o marco regulatorio para tecnologias de sexta geracao de telecomunicacoes.', data: '2026-02-17', esfera: 'federal', fonte: 'RSS gov.br' },
+            { agencia: 'ARTESP', tipo: 'deliberacao', titulo: 'ARTESP delibera sobre reajuste de pedagio na Rodovia Anhanguera', resumo: 'A 1178a Reuniao Ordinaria da Diretoria analisou o pleito da concessionaria para reajuste anual do pedágio com base no IPCA acumulado.', data: '2026-02-16', esfera: 'estadual', fonte: 'ARTESP Transparencia' },
+            { agencia: 'ANA', tipo: 'resolucao', titulo: 'ANA estabelece novas regras para outorga de uso de recursos hidricos', resumo: 'Resolucao define criterios atualizados para concessao de outorga em bacias hidrograficas criticas, priorizando abastecimento humano.', data: '2026-02-15', esfera: 'federal', fonte: 'RSS gov.br' },
+            { agencia: 'ANP', tipo: 'noticia', titulo: 'ANP divulga resultado do 4o Ciclo de Oferta Permanente', resumo: 'Leilao arrecadou R$ 1,2 bilhao em bonus de assinatura, com 15 blocos arrematados por 8 empresas nacionais e internacionais.', data: '2026-02-15', esfera: 'federal', fonte: 'Portal ANP' },
+            { agencia: 'ANTT', tipo: 'resolucao', titulo: 'ANTT regulamenta servico de transporte rodoviario interestadual por aplicativo', resumo: 'Nova resolucao cria categoria especifica para transporte por plataformas digitais, com requisitos de seguranca e qualidade.', data: '2026-02-14', esfera: 'federal', fonte: 'RSS gov.br' },
+            { agencia: 'ARSESP', tipo: 'deliberacao', titulo: 'ARSESP aprova revisao tarifaria da SABESP para ciclo 2026-2030', resumo: 'Agencia estadual concluiu processo de revisao tarifaria periodica da SABESP, definindo novo nivel de receita requerida.', data: '2026-02-14', esfera: 'estadual', fonte: 'ARSESP' },
+            { agencia: 'ANAC', tipo: 'noticia', titulo: 'ANAC autoriza operacao de drones autonomos para entregas urbanas', resumo: 'Regulamentacao permite operacoes BVLOS (alem da linha de visada) em areas urbanas especificas, mediante certificacao.', data: '2026-02-13', esfera: 'federal', fonte: 'Portal ANAC' },
+            { agencia: 'ANS', tipo: 'resolucao', titulo: 'ANS atualiza Rol de Procedimentos com 12 novas coberturas obrigatorias', resumo: 'Atualizacao inclui terapias genicas, novos medicamentos oncologicos e procedimentos de saude mental no rol obrigatorio.', data: '2026-02-13', esfera: 'federal', fonte: 'RSS gov.br' },
+            { agencia: 'TCU', tipo: 'auditoria', titulo: 'TCU identifica irregularidades em contratos de concessao rodoviaria', resumo: 'Relatorio de auditoria aponta sobrepreco de R$ 340 milhoes em obras de duplicacao previstas em contratos de concessao federal.', data: '2026-02-12', esfera: 'federal', fonte: 'Portal TCU' },
+            { agencia: 'ANM', tipo: 'noticia', titulo: 'ANM intensifica fiscalizacao de barragens com potencial de dano alto', resumo: 'Agencia anuncia plano de fiscalizacao emergencial para 47 barragens classificadas com Nivel de Emergencia 1 e 2.', data: '2026-02-12', esfera: 'federal', fonte: 'RSS gov.br' },
+            { agencia: 'DOU', tipo: 'decreto', titulo: 'Governo nomeia dois novos diretores para a ANATEL', resumo: 'Decreto presidencial publicado no DOU nomeia novos integrantes para a diretoria colegiada da agencia de telecomunicacoes.', data: '2026-02-11', esfera: 'federal', fonte: 'API DOU' },
+            { agencia: 'AGERGS', tipo: 'deliberacao', titulo: 'AGERGS homologa tarifas do transporte metropolitano de Porto Alegre', resumo: 'Diretoria colegiada homologou o reajuste de 8,3% nas tarifas do sistema de transporte metropolitano do RS.', data: '2026-02-10', esfera: 'estadual', fonte: 'AGERGS' }
+        ],
+
+        // Mandatos de diretores (dados publicos do DOU)
+        mandatos: [
+            { nome: 'Sandoval Feitosa Neto', cargo: 'Diretor-Presidente', agencia: 'ANATEL', fim: '2026-11-05', cor: '#4ADE80' },
+            { nome: 'Agnes Maria de Aragao da Costa', cargo: 'Diretora', agencia: 'ANEEL', fim: '2026-07-15', cor: '#FFEF4D' },
+            { nome: 'Cristiana Fortini', cargo: 'Diretora', agencia: 'ANTT', fim: '2026-09-20', cor: '#14B8A6' },
+            { nome: 'Alex Machado Campos', cargo: 'Diretor', agencia: 'ANVISA', fim: '2027-01-10', cor: '#A78BFA' },
+            { nome: 'Fernando Saraiva Fernandes', cargo: 'Diretor', agencia: 'ANP', fim: '2026-12-30', cor: '#F472B6' },
+            { nome: 'Paulo Roberto Vanderlei Rebello', cargo: 'Diretor-Presidente', agencia: 'ANS', fim: '2027-03-15', cor: '#F97316' },
+            { nome: 'Andre Isper Rodrigues Barnabe', cargo: 'Diretor-Presidente', agencia: 'ARTESP', fim: '2027-06-01', cor: '#FFEF4D' },
+            { nome: 'Tiago Pereira Lima', cargo: 'Diretor-Presidente', agencia: 'ANAC', fim: '2027-08-22', cor: '#8B5CF6' }
+        ],
+
+        currentTab: 'todas',
+
+        init() {
+            const page = document.getElementById('page-hub');
+            page.classList.add('active');
+            this.renderNews();
+            this.renderMandatos();
+            this.renderFontes();
+            this.renderTabelaFederais();
+            this.renderEstaduais();
+            this.renderRoadmap();
+            this.updateStats();
+            this.bindEvents();
+        },
+
+        bindEvents() {
+            // Tabs de noticias
+            document.querySelectorAll('#page-hub .hub-tab').forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    document.querySelectorAll('#page-hub .hub-tab').forEach(t => t.classList.remove('active'));
+                    e.target.classList.add('active');
+                    this.currentTab = e.target.dataset.tab;
+                    this.renderNews();
+                });
+            });
+
+            // Filtros
+            const filtroSetor = document.getElementById('hub-filtro-setor');
+            const filtroEsfera = document.getElementById('hub-filtro-esfera');
+            if (filtroSetor) filtroSetor.addEventListener('change', () => this.renderNews());
+            if (filtroEsfera) filtroEsfera.addEventListener('change', () => this.renderNews());
+        },
+
+        updateStats() {
+            const totalFederais = this.agenciasFederais.length;
+            const totalEstaduais = this.agenciasEstaduais.length;
+            const totalDiretores = this.agenciasFederais.reduce((s, a) => s + a.diretores, 0);
+            const totalAlta = this.agenciasFederais.filter(a => a.viabilidade === 'alta').length;
+            const totalFontes = this.agenciasFederais.length + this.orgaosComplementares.length;
+
+            const elAgencias = document.querySelector('.hub-stat-agencias');
+            const elFontes = document.querySelector('.hub-stat-fontes');
+            const elDiretores = document.querySelector('.hub-stat-diretores');
+            const elViabilidade = document.querySelector('.hub-stat-viabilidade');
+
+            if (elAgencias) elAgencias.textContent = totalFederais + totalEstaduais;
+            if (elFontes) elFontes.textContent = totalFontes;
+            if (elDiretores) elDiretores.textContent = totalDiretores;
+            if (elViabilidade) elViabilidade.textContent = totalAlta + '/' + totalFederais;
+        },
+
+        getFilteredNews() {
+            let news = [...this.noticias];
+            const tab = this.currentTab;
+            const setor = document.getElementById('hub-filtro-setor')?.value || '';
+            const esfera = document.getElementById('hub-filtro-esfera')?.value || '';
+
+            if (tab === 'federal') news = news.filter(n => n.esfera === 'federal');
+            if (tab === 'estadual') news = news.filter(n => n.esfera === 'estadual');
+            if (tab === 'resolucoes') news = news.filter(n => n.tipo === 'resolucao' || n.tipo === 'deliberacao' || n.tipo === 'decreto');
+
+            if (setor) {
+                const agenciasSiglas = this.agenciasFederais.filter(a => a.setor === setor).map(a => a.sigla);
+                news = news.filter(n => agenciasSiglas.includes(n.agencia));
+            }
+            if (esfera) {
+                news = news.filter(n => n.esfera === esfera);
+            }
+
+            return news;
+        },
+
+        getAgenciaColor(sigla) {
+            const ag = this.agenciasFederais.find(a => a.sigla === sigla);
+            return ag ? ag.cor : '#FFEF4D';
+        },
+
+        getTipoBadge(tipo) {
+            const tipos = {
+                resolucao: { label: 'Resolucao', bg: 'rgba(74,222,128,0.2)', color: '#4ADE80' },
+                noticia: { label: 'Noticia', bg: 'rgba(96,165,250,0.2)', color: '#60A5FA' },
+                consulta: { label: 'Consulta Publica', bg: 'rgba(251,191,36,0.2)', color: '#FBBF24' },
+                deliberacao: { label: 'Deliberacao', bg: 'rgba(255,239,77,0.2)', color: '#FFEF4D' },
+                decreto: { label: 'Decreto', bg: 'rgba(167,139,250,0.2)', color: '#A78BFA' },
+                auditoria: { label: 'Auditoria', bg: 'rgba(248,113,113,0.2)', color: '#F87171' }
+            };
+            return tipos[tipo] || tipos.noticia;
+        },
+
+        renderNews() {
+            const container = document.getElementById('hub-news-container');
+            if (!container) return;
+
+            const news = this.getFilteredNews();
+
+            if (news.length === 0) {
+                container.innerHTML = '<div class="empty-state"><p>Nenhuma noticia encontrada para os filtros selecionados.</p></div>';
+                return;
+            }
+
+            container.innerHTML = '<div class="hub-news-list">' + news.map(n => {
+                const cor = this.getAgenciaColor(n.agencia);
+                const tipo = this.getTipoBadge(n.tipo);
+                const dataFormatada = new Date(n.data + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+
+                return `
+                    <div class="hub-news-item">
+                        <div class="hub-news-badge" style="background: ${cor}20; color: ${cor};">
+                            ${n.agencia}
+                        </div>
+                        <div class="hub-news-content">
+                            <div class="hub-news-meta">
+                                <span class="hub-news-agency" style="color: ${cor};">${n.agencia}</span>
+                                <span class="hub-news-type" style="background: ${tipo.bg}; color: ${tipo.color};">${tipo.label}</span>
+                                <span class="hub-news-date">${dataFormatada}</span>
+                            </div>
+                            <div class="hub-news-title">${n.titulo}</div>
+                            <div class="hub-news-excerpt">${n.resumo}</div>
+                            <div class="hub-news-source">
+                                <span class="hub-news-source-dot"></span>
+                                ${n.fonte}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('') + '</div>';
+        },
+
+        renderMandatos() {
+            const container = document.getElementById('hub-mandatos-container');
+            if (!container) return;
+
+            const hoje = new Date();
+            const mandatosOrdenados = [...this.mandatos].sort((a, b) => new Date(a.fim) - new Date(b.fim));
+
+            container.innerHTML = mandatosOrdenados.map(m => {
+                const fim = new Date(m.fim + 'T12:00:00');
+                const diffMs = fim - hoje;
+                const diffDias = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+                const diffMeses = Math.ceil(diffDias / 30);
+
+                let classe = 'expiring-far';
+                let restanteColor = 'var(--success)';
+                let restanteText = diffMeses + ' meses';
+
+                if (diffDias < 0) {
+                    classe = 'expiring-soon';
+                    restanteColor = 'var(--danger)';
+                    restanteText = 'Expirado';
+                } else if (diffDias <= 180) {
+                    classe = 'expiring-soon';
+                    restanteColor = 'var(--danger)';
+                    restanteText = diffDias + ' dias';
+                } else if (diffDias <= 365) {
+                    classe = 'expiring-medium';
+                    restanteColor = 'var(--warning)';
+                }
+
+                const iniciais = m.nome.split(' ').filter((_, i, arr) => i === 0 || i === arr.length - 1).map(p => p[0]).join('');
+
+                return `
+                    <div class="hub-mandato-item ${classe}">
+                        <div class="hub-mandato-avatar" style="background: ${m.cor};">${iniciais}</div>
+                        <div class="hub-mandato-info">
+                            <div class="hub-mandato-nome">${m.nome}</div>
+                            <div class="hub-mandato-cargo">${m.cargo} - ${m.agencia}</div>
+                        </div>
+                        <div class="hub-mandato-prazo">
+                            <div class="hub-mandato-data">${fim.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' })}</div>
+                            <div class="hub-mandato-restante" style="color: ${restanteColor};">${restanteText}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        },
+
+        renderFontes() {
+            const container = document.getElementById('hub-fontes-container');
+            if (!container) return;
+
+            const fontes = [
+                { nome: 'DOU - Diario Oficial', tipo: 'API REST', status: 'online', cor: '#A78BFA' },
+                { nome: 'PNCP - Contratacoes', tipo: 'API REST', status: 'online', cor: '#4ADE80' },
+                { nome: 'Gov.br RSS', tipo: 'RSS Feed', status: 'online', cor: '#60A5FA' },
+                { nome: 'ANEEL Dados Abertos', tipo: 'API REST', status: 'online', cor: '#FFEF4D' },
+                { nome: 'ANATEL Dados', tipo: 'API REST', status: 'online', cor: '#14B8A6' },
+                { nome: 'ANS Dados Abertos', tipo: 'API REST', status: 'online', cor: '#F97316' },
+                { nome: 'ANA SNIRH', tipo: 'API', status: 'online', cor: '#06B6D4' },
+                { nome: 'ANM SIGMINE', tipo: 'API', status: 'online', cor: '#EF4444' }
+            ];
+
+            container.innerHTML = fontes.map(f => `
+                <div class="hub-fonte-item">
+                    <div class="hub-fonte-icon" style="background: ${f.cor}20; color: ${f.cor};">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"></path></svg>
+                    </div>
+                    <div class="hub-fonte-info">
+                        <div class="hub-fonte-nome">${f.nome}</div>
+                        <div class="hub-fonte-tipo">${f.tipo}</div>
+                    </div>
+                    <div class="hub-fonte-status ${f.status}"></div>
+                </div>
+            `).join('');
+        },
+
+        renderTabelaFederais() {
+            const container = document.getElementById('hub-tabela-federais');
+            if (!container) return;
+
+            container.innerHTML = this.agenciasFederais.map(a => {
+                const viabClasse = a.viabilidade === 'alta' ? 'viabilidade-alta' : 'viabilidade-media';
+                const viabTexto = a.viabilidade === 'alta' ? 'Alta' : 'Media';
+
+                return `
+                    <tr>
+                        <td><strong style="color: ${a.cor};">${a.sigla}</strong><br><span style="font-size:11px; color: var(--text-muted);">${a.nome}</span></td>
+                        <td>${this.formatSetor(a.setor)}</td>
+                        <td><span style="font-size:12px;">${a.fonte}</span></td>
+                        <td style="text-align:center;">${a.diretores}</td>
+                        <td style="text-align:center;">${a.mandato} anos</td>
+                        <td><span class="badge ${viabClasse}" style="padding:4px 10px; border-radius:12px; font-size:11px; font-weight:600;">${viabTexto}</span></td>
+                    </tr>
+                `;
+            }).join('');
+        },
+
+        formatSetor(setor) {
+            const setores = {
+                energia: 'Energia',
+                telecom: 'Telecomunicacoes',
+                transporte: 'Transportes',
+                saude: 'Saude',
+                saneamento: 'Saneamento',
+                petroleo: 'Petroleo e Gas',
+                mineracao: 'Mineracao',
+                aviacao: 'Aviacao Civil',
+                cinema: 'Cinema/Audiovisual',
+                multisetorial: 'Multisetorial'
+            };
+            return setores[setor] || setor;
+        },
+
+        renderEstaduais() {
+            const container = document.getElementById('hub-estaduais-container');
+            if (!container) return;
+
+            container.innerHTML = this.agenciasEstaduais.map(a => `
+                <div class="hub-estadual-card">
+                    <div class="hub-estadual-sigla">${a.sigla}</div>
+                    <div class="hub-estadual-info">
+                        <div class="hub-estadual-nome">${a.nome}</div>
+                        <div class="hub-estadual-estado">${a.estado} - ${this.formatSetor(a.setor)}</div>
+                    </div>
+                </div>
+            `).join('');
+        },
+
+        renderRoadmap() {
+            const container = document.getElementById('hub-roadmap-container');
+            if (!container) return;
+
+            const fases = [
+                {
+                    numero: 1,
+                    titulo: 'Noticias das Agencias',
+                    desc: 'Criar scrapers e RSS readers para cada agencia. A maioria publica noticias via RSS ou tem pagina paginavel. Armazenar em Supabase.',
+                    status: 'active',
+                    items: ['RSS Readers', 'Web Scrapers', 'Supabase Storage', 'Feed Aggregator']
+                },
+                {
+                    numero: 2,
+                    titulo: 'Mandatos dos Diretores',
+                    desc: 'Dados publicos do Diario Oficial da Uniao (DOU). Criar tabela de diretores com mandatos e alertas automaticos de troca.',
+                    status: 'pending',
+                    items: ['API DOU', 'Tabela Diretores', 'Alertas Automaticos', 'Decretos']
+                },
+                {
+                    numero: 3,
+                    titulo: 'Decisoes e Resolucoes',
+                    desc: 'Scraping do DOU para resolucoes. ANEEL/ANA publicam em formato estruturado. Classificar por setor regulatorio.',
+                    status: 'pending',
+                    items: ['Scraping DOU', 'Classificacao por Setor', 'Dados Estruturados', 'Timeline']
+                }
+            ];
+
+            container.innerHTML = '<div class="hub-roadmap">' + fases.map(f => `
+                <div class="hub-roadmap-fase">
+                    <div class="hub-roadmap-marker ${f.status}">
+                        ${f.status === 'done' ? '&#10003;' : f.numero}
+                    </div>
+                    <div class="hub-roadmap-content">
+                        <div class="hub-roadmap-title">Fase ${f.numero} — ${f.titulo}</div>
+                        <div class="hub-roadmap-desc">${f.desc}</div>
+                        <div class="hub-roadmap-items">
+                            ${f.items.map(i => '<span class="hub-roadmap-tag">' + i + '</span>').join('')}
+                        </div>
+                    </div>
+                </div>
+            `).join('') + '</div>';
+        }
+    };
+
+    // ============================================
     // PAGE: Agencias (Visualizacao Isometrica 3D)
     // ============================================
     const PageAgencias = {
@@ -2926,11 +3313,16 @@
         PageAuditoria,
         PageUpload,
         PageAnalise,
+        PageHub,
         PageAgencias,
         PageMapa,
 
         init() {
             // Register routes
+            Router.register('/hub', () => {
+                PageMonitor.destroy();
+                PageHub.init();
+            });
             Router.register('/deliberacoes', () => {
                 PageMonitor.destroy();
                 PageDeliberacoes.init();
@@ -2978,11 +3370,11 @@
             });
             Router.register('/', () => {
                 PageMonitor.destroy();
-                PageMetricas.init();
+                PageHub.init();
             });
             Router.register('/app', () => {
                 PageMonitor.destroy();
-                PageMetricas.init();
+                PageHub.init();
             });
 
             // Initialize router

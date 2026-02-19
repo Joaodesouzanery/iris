@@ -39,6 +39,13 @@
 
             <div class="sidebar-nav">
                 <div class="nav-section">
+                    <div class="nav-section-title">Inicio</div>
+                    <a data-route="/hub" class="nav-item">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                        Hub de Noticias
+                    </a>
+                </div>
+                <div class="nav-section">
                     <div class="nav-section-title">Decisoes</div>
                     <a data-route="/deliberacoes" class="nav-item">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
@@ -2378,6 +2385,177 @@
                                     <div class="region-percent">2%</div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================
+                     PAGE: Hub de Noticias e Analise
+                     ============================================ -->
+                <div id="page-hub" class="page-view">
+                    <div class="page-header">
+                        <div class="page-title-section">
+                            <h1 class="page-title">Hub de Inteligencia Regulatoria</h1>
+                            <p class="page-subtitle">Noticias, analises e monitoramento das agencias reguladoras do Brasil</p>
+                        </div>
+                        <div class="page-actions">
+                            <select class="filter-select" id="hub-filtro-setor">
+                                <option value="">Todos os Setores</option>
+                                <option value="energia">Energia</option>
+                                <option value="telecom">Telecomunicacoes</option>
+                                <option value="transporte">Transportes</option>
+                                <option value="saude">Saude</option>
+                                <option value="saneamento">Saneamento</option>
+                                <option value="petroleo">Petroleo e Gas</option>
+                                <option value="mineracao">Mineracao</option>
+                                <option value="aviacao">Aviacao</option>
+                                <option value="cinema">Cinema</option>
+                            </select>
+                            <select class="filter-select" id="hub-filtro-esfera">
+                                <option value="">Todas as Esferas</option>
+                                <option value="federal">Federal</option>
+                                <option value="estadual">Estadual</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Stats Cards -->
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Agencias Mapeadas</span>
+                            </div>
+                            <div class="stat-card-value hub-stat-agencias">34</div>
+                            <div class="stat-card-subtitle">11 federais + 23 estaduais</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Fontes de Dados</span>
+                            </div>
+                            <div class="stat-card-value hub-stat-fontes">28</div>
+                            <div class="stat-card-subtitle">APIs, RSS e dados abertos</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Diretores Monitorados</span>
+                            </div>
+                            <div class="stat-card-value hub-stat-diretores">0</div>
+                            <div class="stat-card-subtitle">Mandatos ativos</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Viabilidade Alta</span>
+                            </div>
+                            <div class="stat-card-value success hub-stat-viabilidade">0</div>
+                            <div class="stat-card-subtitle">Agencias com API/RSS</div>
+                        </div>
+                    </div>
+
+                    <!-- Main Grid: News Feed + Sidebar -->
+                    <div class="hub-main-grid">
+                        <!-- Left: News Feed -->
+                        <div class="hub-news-section">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h2 class="card-title">
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path></svg>
+                                        Ultimas Noticias das Agencias
+                                    </h2>
+                                    <div class="hub-news-tabs">
+                                        <button class="hub-tab active" data-tab="todas">Todas</button>
+                                        <button class="hub-tab" data-tab="federal">Federais</button>
+                                        <button class="hub-tab" data-tab="estadual">Estaduais</button>
+                                        <button class="hub-tab" data-tab="resolucoes">Resolucoes</button>
+                                    </div>
+                                </div>
+                                <div class="card-body" id="hub-news-container">
+                                    <!-- Noticias serao renderizadas via JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right: Sidebar -->
+                        <div class="hub-sidebar-section">
+                            <!-- Mandatos Expirando -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <h2 class="card-title">
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                        Mandatos Expirando
+                                    </h2>
+                                </div>
+                                <div class="card-body" id="hub-mandatos-container">
+                                    <!-- Mandatos serao renderizados via JavaScript -->
+                                </div>
+                            </div>
+
+                            <!-- Fontes de Dados -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <h2 class="card-title">
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>
+                                        Fontes de Dados
+                                    </h2>
+                                </div>
+                                <div class="card-body" id="hub-fontes-container">
+                                    <!-- Fontes serao renderizadas via JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Agencias Federais -->
+                    <div class="card" style="margin-top: 24px;">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                                Agencias Reguladoras Federais
+                            </h2>
+                        </div>
+                        <div class="card-body" style="padding: 0;">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Agencia</th>
+                                        <th>Setor</th>
+                                        <th>Fonte de Dados</th>
+                                        <th>Diretores</th>
+                                        <th>Mandato</th>
+                                        <th>Viabilidade</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="hub-tabela-federais">
+                                    <!-- Renderizado via JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Agencias Estaduais -->
+                    <div class="card" style="margin-top: 24px;">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm0 0h12"></path></svg>
+                                Agencias Estaduais Mapeadas
+                            </h2>
+                        </div>
+                        <div class="card-body">
+                            <div class="hub-estaduais-grid" id="hub-estaduais-container">
+                                <!-- Renderizado via JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Roadmap -->
+                    <div class="card" style="margin-top: 24px;">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                                Roadmap de Implementacao
+                            </h2>
+                        </div>
+                        <div class="card-body" id="hub-roadmap-container">
+                            <!-- Renderizado via JavaScript -->
                         </div>
                     </div>
                 </div>
