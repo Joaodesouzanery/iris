@@ -2556,18 +2556,139 @@
     };
 
     // ============================================
-    // PAGE: Grafo de Conexoes
+    // PAGE: Grafo de Conexoes - Interactive Force Graph
     // ============================================
     const PageGrafo = {
         nodes: [],
         links: [],
+        svg: null,
+        simulation: null,
         zoom: 1,
+        panX: 0,
+        panY: 0,
+        selectedNode: null,
+        dragging: null,
+        width: 800,
+        height: 500,
 
         init() {
             const page = document.getElementById('page-grafo');
             page.classList.add('active');
+            this.initData();
             this.renderGraph();
             this.setupFilters();
+        },
+
+        initData() {
+            this.nodes = [
+                { id: 1, name: 'CCR S.A.', type: 'empresa', deliberacoes: 45, alertas: 2 },
+                { id: 2, name: 'Ecovias', type: 'empresa', deliberacoes: 38, alertas: 3 },
+                { id: 3, name: 'Patricia Vanzolini', type: 'diretor', deliberacoes: 156, alertas: 0 },
+                { id: 4, name: 'Carlos Andrade', type: 'diretor', deliberacoes: 89, alertas: 1 },
+                { id: 5, name: 'Marcos Ribeiro', type: 'diretor', deliberacoes: 112, alertas: 2 },
+                { id: 6, name: 'ViaOeste', type: 'empresa', deliberacoes: 52, alertas: 1 },
+                { id: 7, name: 'AutoBAn', type: 'empresa', deliberacoes: 28, alertas: 0 },
+                { id: 8, name: 'Proc. Judicial A', type: 'interessado', deliberacoes: 5, alertas: 0 },
+                { id: 9, name: 'Proc. Judicial B', type: 'interessado', deliberacoes: 3, alertas: 0 },
+                { id: 10, name: 'Holding XYZ', type: 'empresa', deliberacoes: 15, alertas: 1 }
+            ];
+
+            this.links = [
+                { source: 1, target: 6, type: 'controle', label: 'Controla' },
+                { source: 1, target: 2, type: 'participacao', label: 'Participa' },
+                { source: 3, target: 1, type: 'direcao', label: 'Dirige' },
+                { source: 4, target: 2, type: 'direcao', label: 'Dirige' },
+                { source: 5, target: 1, type: 'direcao', label: 'Dirige' },
+                { source: 6, target: 7, type: 'participacao', label: 'Participa' },
+                { source: 8, target: 2, type: 'interesse', label: 'Processo' },
+                { source: 9, target: 6, type: 'interesse', label: 'Processo' },
+                { source: 10, target: 1, type: 'participacao', label: 'Participa' },
+                { source: 10, target: 7, type: 'controle', label: 'Controla' },
+                { source: 4, target: 10, type: 'vinculo', label: 'Vinculo Oculto', hidden: true }
+            ];
+
+            // Initialize positions using force simulation
+            const centerX = this.width / 2;
+            const centerY = this.height / 2;
+            this.nodes.forEach((node, i) => {
+                const angle = (i / this.nodes.length) * 2 * Math.PI;
+                const radius = 150 + Math.random() * 50;
+                node.x = centerX + Math.cos(angle) * radius;
+                node.y = centerY + Math.sin(angle) * radius;
+                node.vx = 0;
+                node.vy = 0;
+            });
+
+            // Run force simulation
+            this.runSimulation();
+        },
+
+        runSimulation() {
+            const iterations = 300;
+            for (let i = 0; i < iterations; i++) {
+                this.simulationStep();
+            }
+        },
+
+        simulationStep() {
+            const alpha = 0.1;
+            const repulsion = 3000;
+            const attraction = 0.05;
+            const centerForce = 0.01;
+
+            // Repulsion between all nodes
+            for (let i = 0; i < this.nodes.length; i++) {
+                for (let j = i + 1; j < this.nodes.length; j++) {
+                    const dx = this.nodes[j].x - this.nodes[i].x;
+                    const dy = this.nodes[j].y - this.nodes[i].y;
+                    const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+                    const force = repulsion / (dist * dist);
+                    const fx = (dx / dist) * force;
+                    const fy = (dy / dist) * force;
+                    this.nodes[i].vx -= fx;
+                    this.nodes[i].vy -= fy;
+                    this.nodes[j].vx += fx;
+                    this.nodes[j].vy += fy;
+                }
+            }
+
+            // Attraction along links
+            this.links.forEach(link => {
+                const source = this.nodes.find(n => n.id === link.source);
+                const target = this.nodes.find(n => n.id === link.target);
+                if (source && target) {
+                    const dx = target.x - source.x;
+                    const dy = target.y - source.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+                    const force = (dist - 120) * attraction;
+                    const fx = (dx / dist) * force;
+                    const fy = (dy / dist) * force;
+                    source.vx += fx;
+                    source.vy += fy;
+                    target.vx -= fx;
+                    target.vy -= fy;
+                }
+            });
+
+            // Center gravity
+            const centerX = this.width / 2;
+            const centerY = this.height / 2;
+            this.nodes.forEach(node => {
+                node.vx += (centerX - node.x) * centerForce;
+                node.vy += (centerY - node.y) * centerForce;
+            });
+
+            // Apply velocities
+            this.nodes.forEach(node => {
+                node.x += node.vx * alpha;
+                node.y += node.vy * alpha;
+                node.vx *= 0.9;
+                node.vy *= 0.9;
+
+                // Bounds
+                node.x = Math.max(50, Math.min(this.width - 50, node.x));
+                node.y = Math.max(50, Math.min(this.height - 50, node.y));
+            });
         },
 
         setupFilters() {
@@ -2581,90 +2702,325 @@
             const container = document.getElementById('grafo-container');
             if (!container) return;
 
-            // Dados de exemplo para o grafo
-            const nodes = [
-                { id: 1, name: 'CCR S.A.', type: 'empresa', x: 300, y: 250, size: 50 },
-                { id: 2, name: 'Ecovias', type: 'empresa', x: 500, y: 150, size: 40 },
-                { id: 3, name: 'Patricia Vanzolini', type: 'diretor', x: 200, y: 100, size: 35 },
-                { id: 4, name: 'Carlos Andrade', type: 'diretor', x: 400, y: 350, size: 35 },
-                { id: 5, name: 'Marcos Ribeiro', type: 'diretor', x: 150, y: 300, size: 35 },
-                { id: 6, name: 'ViaOeste', type: 'empresa', x: 450, y: 250, size: 45 },
-                { id: 7, name: 'AutoBAn', type: 'empresa', x: 550, y: 300, size: 38 },
-                { id: 8, name: 'Interessado A', type: 'interessado', x: 250, y: 400, size: 25 },
-                { id: 9, name: 'Interessado B', type: 'interessado', x: 350, y: 450, size: 25 },
-                { id: 10, name: 'Holding XYZ', type: 'empresa', x: 600, y: 200, size: 30 }
-            ];
-
-            const links = [
-                { source: 1, target: 6, type: 'controle' },
-                { source: 1, target: 2, type: 'participacao' },
-                { source: 3, target: 1, type: 'direcao' },
-                { source: 4, target: 2, type: 'direcao' },
-                { source: 5, target: 1, type: 'direcao' },
-                { source: 6, target: 7, type: 'participacao' },
-                { source: 8, target: 2, type: 'interesse' },
-                { source: 9, target: 6, type: 'interesse' },
-                { source: 10, target: 1, type: 'participacao' },
-                { source: 10, target: 7, type: 'controle' },
-                { source: 4, target: 10, type: 'vinculo', hidden: true }
-            ];
-
             const colors = {
-                empresa: '#FFEF4D',
-                diretor: '#60a5fa',
-                interessado: '#34d399'
+                empresa: { fill: '#FFEF4D', glow: 'rgba(255, 239, 77, 0.4)' },
+                diretor: { fill: '#60a5fa', glow: 'rgba(96, 165, 250, 0.4)' },
+                interessado: { fill: '#34d399', glow: 'rgba(52, 211, 153, 0.4)' }
             };
 
             const linkColors = {
                 controle: '#FFEF4D',
-                participacao: '#94a3b8',
+                participacao: '#64748b',
                 direcao: '#60a5fa',
                 interesse: '#34d399',
                 vinculo: '#ef4444'
             };
 
-            let svg = `<svg width="100%" height="100%" viewBox="0 0 700 500" style="transform: scale(${this.zoom});">`;
-            svg += '<defs><marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#64748b"/></marker></defs>';
+            const filter = document.getElementById('grafo-tipo-filter');
+            const filterValue = filter ? filter.value : 'todos';
 
-            // Desenhar links
-            links.forEach(link => {
-                const source = nodes.find(n => n.id === link.source);
-                const target = nodes.find(n => n.id === link.target);
+            const filteredNodes = filterValue === 'todos'
+                ? this.nodes
+                : this.nodes.filter(n => n.type === filterValue ||
+                    this.links.some(l =>
+                        (l.source === n.id || l.target === n.id) &&
+                        this.nodes.find(nn => nn.id === (l.source === n.id ? l.target : l.source))?.type === filterValue
+                    ));
+
+            const visibleNodeIds = new Set(filteredNodes.map(n => n.id));
+            const filteredLinks = this.links.filter(l => visibleNodeIds.has(l.source) && visibleNodeIds.has(l.target));
+
+            let html = `
+                <svg id="grafo-svg" width="100%" height="100%" viewBox="0 0 ${this.width} ${this.height}"
+                     style="cursor: grab; background: radial-gradient(ellipse at center, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 1) 100%);">
+                    <defs>
+                        <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+                            <feGaussianBlur stdDeviation="4" result="blur"/>
+                            <feMerge>
+                                <feMergeNode in="blur"/>
+                                <feMergeNode in="SourceGraphic"/>
+                            </feMerge>
+                        </filter>
+                        <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+                            <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.3"/>
+                        </filter>
+                        <marker id="arrow-controle" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+                            <polygon points="0 0, 8 3, 0 6" fill="${linkColors.controle}"/>
+                        </marker>
+                        <marker id="arrow-participacao" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+                            <polygon points="0 0, 8 3, 0 6" fill="${linkColors.participacao}"/>
+                        </marker>
+                        <marker id="arrow-direcao" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+                            <polygon points="0 0, 8 3, 0 6" fill="${linkColors.direcao}"/>
+                        </marker>
+                        <marker id="arrow-interesse" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+                            <polygon points="0 0, 8 3, 0 6" fill="${linkColors.interesse}"/>
+                        </marker>
+                        <marker id="arrow-vinculo" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+                            <polygon points="0 0, 8 3, 0 6" fill="${linkColors.vinculo}"/>
+                        </marker>
+                    </defs>
+                    <g id="grafo-transform" transform="translate(${this.panX}, ${this.panY}) scale(${this.zoom})">
+                        <g id="links-layer">`;
+
+            // Draw links with curves
+            filteredLinks.forEach((link, idx) => {
+                const source = this.nodes.find(n => n.id === link.source);
+                const target = this.nodes.find(n => n.id === link.target);
                 if (source && target) {
                     const color = linkColors[link.type] || '#64748b';
-                    const dashArray = link.hidden ? '5,5' : 'none';
-                    const opacity = link.hidden ? '0.5' : '0.7';
-                    svg += `<line x1="${source.x}" y1="${source.y}" x2="${target.x}" y2="${target.y}"
-                            stroke="${color}" stroke-width="2" stroke-dasharray="${dashArray}" opacity="${opacity}"
-                            marker-end="url(#arrowhead)"/>`;
+                    const dashArray = link.hidden ? '6,4' : 'none';
+                    const opacity = link.hidden ? '0.6' : '0.8';
+                    const strokeWidth = link.hidden ? '2' : '2';
+
+                    // Calculate curve
+                    const dx = target.x - source.x;
+                    const dy = target.y - source.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    // Offset for arrow
+                    const nodeRadius = 24;
+                    const ratio = (dist - nodeRadius) / dist;
+                    const endX = source.x + dx * ratio;
+                    const endY = source.y + dy * ratio;
+
+                    html += `<line class="graph-link" data-link-id="${idx}"
+                                x1="${source.x}" y1="${source.y}"
+                                x2="${endX}" y2="${endY}"
+                                stroke="${color}" stroke-width="${strokeWidth}"
+                                stroke-dasharray="${dashArray}" opacity="${opacity}"
+                                marker-end="url(#arrow-${link.type})"
+                                style="transition: all 0.2s ease;"/>`;
                 }
             });
 
-            // Desenhar nodes
-            nodes.forEach(node => {
-                const color = colors[node.type] || '#94a3b8';
-                svg += `<g class="graph-node" onclick="PageGrafo.selectNode(${node.id})" style="cursor: pointer;">
-                    <circle cx="${node.x}" cy="${node.y}" r="${node.size / 2}" fill="${color}" opacity="0.8"/>
-                    <circle cx="${node.x}" cy="${node.y}" r="${node.size / 2 + 3}" fill="none" stroke="${color}" stroke-width="2" opacity="0.3"/>
-                    <text x="${node.x}" y="${node.y + node.size / 2 + 15}" text-anchor="middle" fill="#e2e8f0" font-size="11">${node.name}</text>
-                </g>`;
+            html += `</g><g id="nodes-layer">`;
+
+            // Draw nodes
+            filteredNodes.forEach(node => {
+                const color = colors[node.type] || colors.empresa;
+                const isSelected = this.selectedNode === node.id;
+                const radius = node.type === 'empresa' ? 28 : (node.type === 'diretor' ? 24 : 20);
+                const iconSize = radius * 0.7;
+
+                html += `
+                    <g class="graph-node-group" data-node-id="${node.id}"
+                       transform="translate(${node.x}, ${node.y})"
+                       style="cursor: pointer;">
+                        <!-- Glow effect -->
+                        <circle r="${radius + 8}" fill="${color.glow}" opacity="${isSelected ? '0.6' : '0.2'}"
+                                class="node-glow" style="transition: all 0.3s ease;"/>
+                        <!-- Main circle -->
+                        <circle r="${radius}" fill="${color.fill}" filter="url(#shadow)"
+                                class="node-main" style="transition: all 0.2s ease;"/>
+                        <!-- Inner highlight -->
+                        <circle r="${radius - 4}" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+                        <!-- Icon -->
+                        <g transform="translate(${-iconSize/2}, ${-iconSize/2})">
+                            ${this.getNodeIcon(node.type, iconSize)}
+                        </g>
+                        <!-- Label background -->
+                        <rect x="${-node.name.length * 3.5}" y="${radius + 8}"
+                              width="${node.name.length * 7}" height="18" rx="4"
+                              fill="rgba(15, 23, 42, 0.9)"/>
+                        <!-- Label -->
+                        <text y="${radius + 21}" text-anchor="middle"
+                              fill="#e2e8f0" font-size="11" font-weight="500"
+                              style="pointer-events: none;">${node.name}</text>
+                        ${node.alertas > 0 ? `
+                            <circle cx="${radius - 5}" cy="${-radius + 5}" r="8" fill="#ef4444"/>
+                            <text x="${radius - 5}" y="${-radius + 9}" text-anchor="middle"
+                                  fill="white" font-size="10" font-weight="bold">${node.alertas}</text>
+                        ` : ''}
+                    </g>`;
             });
 
-            svg += '</svg>';
+            html += `</g></g></svg>`;
 
-            // Legenda
-            svg += `<div style="position: absolute; bottom: 16px; left: 16px; background: rgba(15, 23, 42, 0.9); padding: 12px; border-radius: 8px; font-size: 12px;">
-                <div style="display: flex; gap: 16px;">
-                    <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 12px; height: 12px; border-radius: 50%; background: ${colors.empresa};"></span> Empresa</div>
-                    <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 12px; height: 12px; border-radius: 50%; background: ${colors.diretor};"></span> Diretor</div>
-                    <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 12px; height: 12px; border-radius: 50%; background: ${colors.interessado};"></span> Interessado</div>
+            // Legend
+            html += `
+                <div class="grafo-legend">
+                    <div class="legend-title">Legenda</div>
+                    <div class="legend-items">
+                        <div class="legend-item"><span class="legend-dot" style="background: ${colors.empresa.fill};"></span> Empresa</div>
+                        <div class="legend-item"><span class="legend-dot" style="background: ${colors.diretor.fill};"></span> Diretor</div>
+                        <div class="legend-item"><span class="legend-dot" style="background: ${colors.interessado.fill};"></span> Interessado</div>
+                    </div>
+                    <div class="legend-links">
+                        <div class="legend-item"><span class="legend-line" style="background: ${linkColors.controle};"></span> Controle</div>
+                        <div class="legend-item"><span class="legend-line" style="background: ${linkColors.direcao};"></span> Direcao</div>
+                        <div class="legend-item"><span class="legend-line dashed" style="background: ${linkColors.vinculo};"></span> Oculto</div>
+                    </div>
                 </div>
-            </div>`;
+                <div class="grafo-instructions">
+                    <span>Arraste os nos para reorganizar</span>
+                    <span>Scroll para zoom</span>
+                    <span>Clique para detalhes</span>
+                </div>`;
 
-            container.innerHTML = svg;
+            container.innerHTML = html;
+            this.setupInteractions();
+        },
+
+        getNodeIcon(type, size) {
+            const icons = {
+                empresa: `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="#0f172a" stroke-width="2">
+                    <path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                </svg>`,
+                diretor: `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="#0f172a" stroke-width="2">
+                    <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                </svg>`,
+                interessado: `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="#0f172a" stroke-width="2">
+                    <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>`
+            };
+            return icons[type] || icons.empresa;
+        },
+
+        setupInteractions() {
+            const svg = document.getElementById('grafo-svg');
+            const container = document.getElementById('grafo-container');
+            if (!svg || !container) return;
+
+            let isDragging = false;
+            let dragNode = null;
+            let isPanning = false;
+            let startX, startY;
+
+            // Node interactions
+            const nodeGroups = svg.querySelectorAll('.graph-node-group');
+            nodeGroups.forEach(group => {
+                const nodeId = parseInt(group.dataset.nodeId);
+
+                group.addEventListener('mouseenter', () => {
+                    if (!isDragging) {
+                        group.querySelector('.node-glow').style.opacity = '0.5';
+                        group.querySelector('.node-main').style.transform = 'scale(1.1)';
+                        this.highlightConnections(nodeId, true);
+                    }
+                });
+
+                group.addEventListener('mouseleave', () => {
+                    if (!isDragging) {
+                        const isSelected = this.selectedNode === nodeId;
+                        group.querySelector('.node-glow').style.opacity = isSelected ? '0.6' : '0.2';
+                        group.querySelector('.node-main').style.transform = 'scale(1)';
+                        this.highlightConnections(nodeId, false);
+                    }
+                });
+
+                group.addEventListener('mousedown', (e) => {
+                    e.stopPropagation();
+                    isDragging = true;
+                    dragNode = this.nodes.find(n => n.id === nodeId);
+                    svg.style.cursor = 'grabbing';
+                });
+
+                group.addEventListener('click', (e) => {
+                    if (!isDragging || (Math.abs(e.clientX - startX) < 5 && Math.abs(e.clientY - startY) < 5)) {
+                        this.selectNode(nodeId);
+                    }
+                });
+            });
+
+            // Mouse move for dragging
+            svg.addEventListener('mousemove', (e) => {
+                if (isDragging && dragNode) {
+                    const rect = svg.getBoundingClientRect();
+                    const svgX = (e.clientX - rect.left - this.panX) / this.zoom;
+                    const svgY = (e.clientY - rect.top - this.panY) / this.zoom;
+
+                    dragNode.x = Math.max(50, Math.min(this.width - 50, svgX));
+                    dragNode.y = Math.max(50, Math.min(this.height - 50, svgY));
+
+                    this.updateNodePosition(dragNode);
+                } else if (isPanning) {
+                    const dx = e.clientX - startX;
+                    const dy = e.clientY - startY;
+                    this.panX += dx;
+                    this.panY += dy;
+                    startX = e.clientX;
+                    startY = e.clientY;
+                    this.updateTransform();
+                }
+            });
+
+            // Mouse up
+            document.addEventListener('mouseup', () => {
+                isDragging = false;
+                isPanning = false;
+                dragNode = null;
+                svg.style.cursor = 'grab';
+            });
+
+            // Pan
+            svg.addEventListener('mousedown', (e) => {
+                if (e.target === svg || e.target.tagName === 'rect') {
+                    isPanning = true;
+                    startX = e.clientX;
+                    startY = e.clientY;
+                    svg.style.cursor = 'grabbing';
+                }
+            });
+
+            // Zoom with scroll
+            container.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const delta = e.deltaY > 0 ? 0.9 : 1.1;
+                this.zoom = Math.max(0.3, Math.min(3, this.zoom * delta));
+                this.updateTransform();
+            });
+        },
+
+        updateNodePosition(node) {
+            const group = document.querySelector(`[data-node-id="${node.id}"]`);
+            if (group) {
+                group.setAttribute('transform', `translate(${node.x}, ${node.y})`);
+            }
+
+            // Update connected links
+            const links = document.querySelectorAll('.graph-link');
+            links.forEach(link => {
+                const linkData = this.links[parseInt(link.dataset.linkId)];
+                if (linkData && (linkData.source === node.id || linkData.target === node.id)) {
+                    const source = this.nodes.find(n => n.id === linkData.source);
+                    const target = this.nodes.find(n => n.id === linkData.target);
+                    if (source && target) {
+                        const dx = target.x - source.x;
+                        const dy = target.y - source.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        const nodeRadius = 24;
+                        const ratio = (dist - nodeRadius) / dist;
+
+                        link.setAttribute('x1', source.x);
+                        link.setAttribute('y1', source.y);
+                        link.setAttribute('x2', source.x + dx * ratio);
+                        link.setAttribute('y2', source.y + dy * ratio);
+                    }
+                }
+            });
+        },
+
+        updateTransform() {
+            const transform = document.getElementById('grafo-transform');
+            if (transform) {
+                transform.setAttribute('transform', `translate(${this.panX}, ${this.panY}) scale(${this.zoom})`);
+            }
+        },
+
+        highlightConnections(nodeId, highlight) {
+            const links = document.querySelectorAll('.graph-link');
+            links.forEach(link => {
+                const linkData = this.links[parseInt(link.dataset.linkId)];
+                if (linkData && (linkData.source === nodeId || linkData.target === nodeId)) {
+                    link.style.strokeWidth = highlight ? '4' : '2';
+                    link.style.opacity = highlight ? '1' : '0.8';
+                }
+            });
         },
 
         selectNode(nodeId) {
+            this.selectedNode = nodeId;
             const detalhes = document.getElementById('grafo-detalhes');
             if (!detalhes) return;
 
@@ -2673,59 +3029,75 @@
                 2: { name: 'Ecovias dos Imigrantes', type: 'Empresa', cnpj: '03.158.863/0001-92', deliberacoes: 38, conexoes: 5, alertas: 3 },
                 3: { name: 'Patricia Vanzolini', type: 'Diretora', cargo: 'Diretora Presidente', deliberacoes: 156, conexoes: 4, alertas: 0 },
                 4: { name: 'Carlos Henrique Andrade', type: 'Diretor', cargo: 'Diretor de Fiscalizacao', deliberacoes: 89, conexoes: 6, alertas: 1 },
-                5: { name: 'Marcos Ribeiro', type: 'Diretor', cargo: 'Diretor de Regulacao', deliberacoes: 112, conexoes: 5, alertas: 2 }
+                5: { name: 'Marcos Ribeiro', type: 'Diretor', cargo: 'Diretor de Regulacao', deliberacoes: 112, conexoes: 5, alertas: 2 },
+                6: { name: 'ViaOeste', type: 'Empresa', cnpj: '02.748.567/0001-45', deliberacoes: 52, conexoes: 4, alertas: 1 },
+                7: { name: 'AutoBAn', type: 'Empresa', cnpj: '02.695.324/0001-89', deliberacoes: 28, conexoes: 3, alertas: 0 },
+                8: { name: 'Processo Judicial A', type: 'Processo', numero: '0001234-56.2024.8.26.0000', deliberacoes: 5, conexoes: 2, alertas: 0 },
+                9: { name: 'Processo Judicial B', type: 'Processo', numero: '0005678-90.2024.8.26.0000', deliberacoes: 3, conexoes: 2, alertas: 0 },
+                10: { name: 'Holding XYZ', type: 'Empresa', cnpj: '12.345.678/0001-90', deliberacoes: 15, conexoes: 3, alertas: 1 }
             };
 
             const data = nodeData[nodeId] || { name: 'Entidade', type: 'Desconhecido', deliberacoes: 0, conexoes: 0, alertas: 0 };
+            const isEmpresa = data.type === 'Empresa';
 
             detalhes.innerHTML = `
-                <div style="text-align: center; margin-bottom: 20px;">
-                    <div style="width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), #60a5fa); margin: 0 auto 12px; display: flex; align-items: center; justify-content: center;">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="32" height="32"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${data.type === 'Empresa' ? 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4' : 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z'}"></path></svg>
+                <div class="node-details-header">
+                    <div class="node-avatar ${isEmpresa ? 'empresa' : 'pessoa'}">
+                        ${this.getNodeIcon(isEmpresa ? 'empresa' : 'diretor', 32)}
                     </div>
-                    <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 4px;">${data.name}</h3>
-                    <span class="badge ${data.type === 'Empresa' ? 'badge-secondary' : 'badge-primary'}">${data.type}</span>
-                </div>
-                ${data.cnpj ? `<div style="padding: 8px 0; border-bottom: 1px solid var(--border);"><span style="color: var(--text-muted); font-size: 12px;">CNPJ</span><div style="font-weight: 500;">${data.cnpj}</div></div>` : ''}
-                ${data.cargo ? `<div style="padding: 8px 0; border-bottom: 1px solid var(--border);"><span style="color: var(--text-muted); font-size: 12px;">Cargo</span><div style="font-weight: 500;">${data.cargo}</div></div>` : ''}
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 16px;">
-                    <div style="text-align: center; padding: 12px; background: var(--background); border-radius: 8px;">
-                        <div style="font-size: 20px; font-weight: 700; color: var(--primary);">${data.deliberacoes}</div>
-                        <div style="font-size: 11px; color: var(--text-muted);">Deliberacoes</div>
-                    </div>
-                    <div style="text-align: center; padding: 12px; background: var(--background); border-radius: 8px;">
-                        <div style="font-size: 20px; font-weight: 700; color: #60a5fa;">${data.conexoes}</div>
-                        <div style="font-size: 11px; color: var(--text-muted);">Conexoes</div>
-                    </div>
-                    <div style="text-align: center; padding: 12px; background: var(--background); border-radius: 8px;">
-                        <div style="font-size: 20px; font-weight: 700; color: ${data.alertas > 0 ? '#f59e0b' : '#22c55e'};">${data.alertas}</div>
-                        <div style="font-size: 11px; color: var(--text-muted);">Alertas</div>
+                    <div class="node-info">
+                        <h3>${data.name}</h3>
+                        <span class="badge ${isEmpresa ? 'badge-warning' : 'badge-primary'}">${data.type}</span>
                     </div>
                 </div>
-                <button class="btn btn-primary" style="width: 100%; margin-top: 16px;" onclick="PageDossie.visualizar('${data.name.toLowerCase().replace(/ /g, '-')}')">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                <div class="node-details-body">
+                    ${data.cnpj ? `<div class="detail-row"><span class="detail-label">CNPJ</span><span class="detail-value">${data.cnpj}</span></div>` : ''}
+                    ${data.cargo ? `<div class="detail-row"><span class="detail-label">Cargo</span><span class="detail-value">${data.cargo}</span></div>` : ''}
+                    ${data.numero ? `<div class="detail-row"><span class="detail-label">Numero</span><span class="detail-value">${data.numero}</span></div>` : ''}
+                </div>
+                <div class="node-stats">
+                    <div class="node-stat">
+                        <div class="node-stat-value">${data.deliberacoes}</div>
+                        <div class="node-stat-label">Deliberacoes</div>
+                    </div>
+                    <div class="node-stat">
+                        <div class="node-stat-value">${data.conexoes}</div>
+                        <div class="node-stat-label">Conexoes</div>
+                    </div>
+                    <div class="node-stat ${data.alertas > 0 ? 'warning' : ''}">
+                        <div class="node-stat-value">${data.alertas}</div>
+                        <div class="node-stat-label">Alertas</div>
+                    </div>
+                </div>
+                <button class="btn btn-primary btn-block" onclick="PageDossie.visualizar('${data.name.toLowerCase().replace(/ /g, '-')}')">
                     Ver Dossie Completo
                 </button>
             `;
+
+            this.renderGraph();
         },
 
         zoomIn() {
-            this.zoom = Math.min(this.zoom + 0.2, 2);
-            this.renderGraph();
+            this.zoom = Math.min(this.zoom * 1.2, 3);
+            this.updateTransform();
         },
 
         zoomOut() {
-            this.zoom = Math.max(this.zoom - 0.2, 0.5);
-            this.renderGraph();
+            this.zoom = Math.max(this.zoom / 1.2, 0.3);
+            this.updateTransform();
         },
 
         resetView() {
             this.zoom = 1;
+            this.panX = 0;
+            this.panY = 0;
+            this.selectedNode = null;
+            this.initData();
             this.renderGraph();
         },
 
         exportar() {
-            alert('Funcionalidade de exportacao em desenvolvimento');
+            alert('Exportando grafo como imagem...');
         }
     };
 
