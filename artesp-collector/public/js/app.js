@@ -1036,12 +1036,51 @@
             }
         },
 
-        init() {
+        async init() {
             const page = document.getElementById('page-diretores');
             page.classList.add('active');
 
+            // Try loading real director data from API
+            await this.loadRealData();
+
             this.setupAgencyTabs();
             this.renderAll();
+        },
+
+        async loadRealData() {
+            try {
+                const response = await fetch('/api/metricas/por-diretor');
+                const data = await response.json();
+
+                if (data.success && data.diretores && data.diretores.length > 0) {
+                    // Merge real data into ARTESP section
+                    const artesp = this.agenciasData.artesp;
+                    artesp.diretores = data.diretores.map(d => ({
+                        nome: d.nome,
+                        cargo: d.cargo || 'Diretor(a)',
+                        iniciais: d.nome.split(' ').filter(w => w.length > 2).map(w => w[0]).join('').substring(0, 2).toUpperCase(),
+                        inicio: d.inicio || '',
+                        termino: d.termino || '',
+                        ativo: true,
+                        participacoes: d.totalVotos || 0,
+                        relatorias: d.relatorias || 0,
+                        favoravel: d.favoraveis || 0,
+                        desfavoravel: d.contrarios || 0,
+                        vista: d.vistas || 0
+                    }));
+                    artesp.stats.diretoresAtivos = artesp.diretores.length;
+                    artesp.stats.participacoesColegiadas = artesp.diretores.reduce((s, d) => s + d.participacoes, 0);
+                    artesp.stats.deliberacoes = data.totalDeliberacoes || artesp.stats.deliberacoes;
+
+                    // Hide demo banner
+                    const demoBanner = document.querySelector('#page-diretores .demo-banner');
+                    if (demoBanner) demoBanner.style.display = 'none';
+
+                    console.log(`[Diretores] ${artesp.diretores.length} diretores carregados dos PDFs reais`);
+                }
+            } catch (error) {
+                console.warn('[Diretores] API indisponível, exibindo dados base:', error.message);
+            }
         },
 
         setupAgencyTabs() {
@@ -2567,64 +2606,59 @@
         dragging: null, hovering: null, selected: null,
         mouse: { x: 0, y: 0 }, camera: { x: 0, y: 0, zoom: 1 },
         width: 0, height: 0, time: 0, currentCategory: 'all',
-        // ----------- Full data catalog -----------
-        catalog: {
-            directors: [
-                { id:'d1',label:'André Isper',full:'André Isper Rodrigues Barnabé',role:'Diretor-Presidente',initials:'AI',agency:'a1' },
-                { id:'d2',label:'Diego Zanatto',full:'Diego Albert Zanatto',role:'Diretor de Fiscalização',initials:'DZ',agency:'a1' },
-                { id:'d3',label:'Fernanda Rudnik',full:'Fernanda Esbizaro Rodrigues Rudnik',role:'Diretora de Planejamento',initials:'FR',agency:'a1' },
-                { id:'d4',label:'Raquel Carneiro',full:'Raquel França Carneiro',role:'Diretora de Investimentos',initials:'RC',agency:'a1' }
-            ],
-            companies: [
-                { id:'c1',label:'Ecovias',full:'Ecovias dos Imigrantes S.A.',sector:'Rodovias',contracts:12 },
-                { id:'c2',label:'CCR AutoBAn',full:'CCR AutoBAn S.A.',sector:'Rodovias',contracts:8 },
-                { id:'c3',label:'EcoRodovias',full:'EcoRodovias Infraestrutura',sector:'Rodovias',contracts:6 },
-                { id:'c4',label:'Arteris',full:'Arteris S.A.',sector:'Rodovias',contracts:9 },
-                { id:'c5',label:'ViaQuatro',full:'ViaQuatro - Metrô Linha 4',sector:'Metroviário',contracts:5 },
-                { id:'c6',label:'ViaMobilidade',full:'ViaMobilidade Linhas 8 e 9',sector:'Ferroviário',contracts:7 },
-                { id:'c7',label:'Tamoios',full:'Concessionária Tamoios',sector:'Rodovias',contracts:4 },
-                { id:'c8',label:'CART',full:'Conc. Auto Raposo Tavares',sector:'Rodovias',contracts:5 }
-            ],
-            themes: [
-                { id:'t1',label:'Revisão Tarifária',count:45,category:'financeiro' },
-                { id:'t2',label:'Obras/Investimentos',count:67,category:'infraestrutura' },
-                { id:'t3',label:'Reequilíbrio Econômico',count:34,category:'financeiro' },
-                { id:'t4',label:'Fiscalização',count:56,category:'regulação' },
-                { id:'t5',label:'Multas e Sanções',count:28,category:'regulação' },
-                { id:'t6',label:'Contrato/Aditivo',count:23,category:'contratual' },
-                { id:'t7',label:'Qualidade de Serviço',count:19,category:'operacional' },
-                { id:'t8',label:'Segurança Viária',count:15,category:'operacional' }
-            ],
-            agencies: [
-                { id:'a1',label:'ARTESP',full:'Agência de Transporte do Estado de SP',deliberations:1247 },
-                { id:'a2',label:'ANTT',full:'Agência Nacional de Transportes Terrestres',deliberations:3456 }
-            ],
-            connections: [
-                {source:'d1',target:'c1',strength:0.9,label:'23 deliberações'},{source:'d1',target:'c2',strength:0.7,label:'15 deliberações'},
-                {source:'d1',target:'c4',strength:0.6,label:'11 deliberações'},{source:'d1',target:'c6',strength:0.4,label:'7 deliberações'},
-                {source:'d2',target:'c1',strength:0.8,label:'19 deliberações'},{source:'d2',target:'c3',strength:0.7,label:'14 deliberações'},
-                {source:'d2',target:'c5',strength:0.5,label:'9 deliberações'},{source:'d2',target:'c7',strength:0.4,label:'6 deliberações'},
-                {source:'d3',target:'c2',strength:0.8,label:'18 deliberações'},{source:'d3',target:'c4',strength:0.6,label:'12 deliberações'},
-                {source:'d3',target:'c8',strength:0.5,label:'8 deliberações'},{source:'d3',target:'c6',strength:0.3,label:'5 deliberações'},
-                {source:'d4',target:'c1',strength:0.7,label:'16 deliberações'},{source:'d4',target:'c3',strength:0.6,label:'10 deliberações'},
-                {source:'d4',target:'c5',strength:0.5,label:'8 deliberações'},{source:'d4',target:'c8',strength:0.4,label:'6 deliberações'},
-                {source:'d1',target:'t1',strength:0.8,label:'34 votos'},{source:'d1',target:'t2',strength:0.9,label:'41 votos'},
-                {source:'d2',target:'t4',strength:0.9,label:'48 votos'},{source:'d2',target:'t5',strength:0.7,label:'22 votos'},
-                {source:'d3',target:'t2',strength:0.8,label:'35 votos'},{source:'d3',target:'t6',strength:0.6,label:'14 votos'},
-                {source:'d4',target:'t3',strength:0.8,label:'28 votos'},{source:'d4',target:'t1',strength:0.7,label:'20 votos'},
-                {source:'c1',target:'t1',strength:0.7,label:'18 processos'},{source:'c1',target:'t2',strength:0.8,label:'24 processos'},
-                {source:'c2',target:'t3',strength:0.6,label:'9 processos'},{source:'c4',target:'t4',strength:0.5,label:'7 processos'},
-                {source:'c5',target:'t7',strength:0.7,label:'12 processos'},{source:'c3',target:'t5',strength:0.6,label:'8 processos'},
-                {source:'c6',target:'t8',strength:0.5,label:'6 processos'},{source:'c7',target:'t2',strength:0.4,label:'5 processos'},
-                {source:'a1',target:'d1',strength:1.0,label:'Presidente'},{source:'a1',target:'d2',strength:0.9,label:'Diretor'},
-                {source:'a1',target:'d3',strength:0.9,label:'Diretora'},{source:'a1',target:'d4',strength:0.9,label:'Diretora'}
-            ]
+        dataLoaded: false,
+        // ----------- Catalog loaded from API (real data) -----------
+        catalog: { directors: [], companies: [], themes: [], agencies: [], connections: [] },
+
+        // ========== INIT: Load real data then show selection screen ==========
+        async init() {
+            document.getElementById('page-grafo').classList.add('active');
+            if (!this.dataLoaded) {
+                await this.loadRealData();
+            }
+            this.showSelectionScreen();
         },
 
-        // ========== INIT: Show selection screen ==========
-        init() {
-            document.getElementById('page-grafo').classList.add('active');
-            this.showSelectionScreen();
+        async loadRealData() {
+            try {
+                const grid = document.getElementById('grafo-entity-grid');
+                if (grid) grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:48px 0;color:var(--text-muted);">Carregando dados dos PDFs analisados...</div>';
+
+                const response = await fetch('/api/grafo-data');
+                const data = await response.json();
+
+                if (data.success && data.nodes && data.nodes.length > 0) {
+                    // Convert API nodes/edges into catalog format
+                    const directors = [], companies = [], themes = [], agencies = [], connections = [];
+
+                    data.nodes.forEach(n => {
+                        if (n.type === 'agency') agencies.push({ id: n.id, label: n.label, full: n.full || n.label, deliberations: n.deliberations || 0 });
+                        else if (n.type === 'director') directors.push({ id: n.id, label: n.label, full: n.full || n.label, role: n.role || 'Diretor(a)', initials: n.initials || n.label.split(' ').map(w=>w[0]).join('').substring(0,2), agency: n.agency || 'a1' });
+                        else if (n.type === 'company') companies.push({ id: n.id, label: n.label, full: n.full || n.label, sector: n.sector || 'Rodovias', contracts: n.contracts || 0 });
+                        else if (n.type === 'theme') themes.push({ id: n.id, label: n.label, count: n.count || 0, category: n.category || 'regulação' });
+                    });
+
+                    data.edges.forEach(e => {
+                        connections.push({ source: e.source, target: e.target, strength: e.strength || 0.5, label: e.label || '' });
+                    });
+
+                    this.catalog = { directors, companies, themes, agencies, connections };
+                    this.dataLoaded = true;
+                    console.log(`[Grafo] Dados reais carregados: ${data.nodes.length} nós, ${data.edges.length} conexões`);
+
+                    // Hide demo banner if real data loaded
+                    const demoBanner = document.querySelector('#page-grafo .demo-banner');
+                    if (demoBanner && data.nodes.length > 1) demoBanner.style.display = 'none';
+                } else {
+                    console.warn('[Grafo] Nenhum dado real disponível — faça upload de PDFs para alimentar o grafo');
+                    this.catalog = { directors: [], companies: [], themes: [], agencies: [], connections: [] };
+                    this.dataLoaded = true;
+                }
+            } catch (error) {
+                console.warn('[Grafo] Erro ao carregar dados reais:', error.message);
+                this.catalog = { directors: [], companies: [], themes: [], agencies: [], connections: [] };
+                this.dataLoaded = true;
+            }
         },
         destroy() {
             if (this.animFrame) { cancelAnimationFrame(this.animFrame); this.animFrame = null; }
@@ -2665,7 +2699,13 @@
             if (this.currentCategory !== 'all') entities = entities.filter(e => e.type === this.currentCategory);
             if (filter) { const q = filter.toLowerCase(); entities = entities.filter(e => e.label.toLowerCase().includes(q) || (e.full || '').toLowerCase().includes(q) || (e.subtitle || '').toLowerCase().includes(q)); }
             const grid = document.getElementById('grafo-entity-grid');
-            if (!entities.length) { grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:48px 0;color:var(--text-muted);">Nenhuma entidade encontrada.</div>'; return; }
+            if (!entities.length) {
+                const isSearch = !!filter;
+                grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:48px 0;color:var(--text-muted);">
+                    ${isSearch ? 'Nenhuma entidade encontrada para esta busca.' : 'Nenhum dado disponível. Faça <a href="/upload" data-route="/upload" style="color:var(--primary);text-decoration:underline;">upload de PDFs</a> para alimentar o grafo com dados reais.'}
+                </div>`;
+                return;
+            }
             const typeLabel = { agency: 'Agência', director: 'Diretor(a)', company: 'Empresa', theme: 'Tema' };
             grid.innerHTML = entities.map(e => `
                 <div class="grafo-entity-card" onclick="App.PageGrafo.selectEntity('${e.id}')" data-type="${e.type}">
@@ -3006,26 +3046,38 @@
     // PAGE: Monitoramento 24/7
     // ============================================
     const PageMonitoramento = {
-        init() {
+        async init() {
             const page = document.getElementById('page-monitoramento');
             page.classList.add('active');
-            this.startPolling();
+            await this.loadRealStatus();
         },
 
-        startPolling() {
-            // Simular atualizacao em tempo real
-            this.updateLastCheck();
-        },
+        async loadRealStatus() {
+            try {
+                const response = await fetch('/api/monitoramento/status');
+                const data = await response.json();
 
-        updateLastCheck() {
-            const elemento = document.getElementById('monitor-ultima');
-            if (elemento) {
-                elemento.textContent = 'há 2 min';
+                const elemento = document.getElementById('monitor-ultima');
+                if (elemento && data.ultimaVerificacao) {
+                    const diff = Math.round((Date.now() - new Date(data.ultimaVerificacao).getTime()) / 60000);
+                    elemento.textContent = diff < 1 ? 'agora' : `há ${diff} min`;
+                } else if (elemento) {
+                    elemento.textContent = 'nunca';
+                }
+
+                const statusEl = document.getElementById('monitor-status');
+                if (statusEl) {
+                    statusEl.textContent = data.ativo ? 'Ativo' : 'Inativo';
+                }
+            } catch (error) {
+                console.warn('[Monitor] API indisponível:', error.message);
+                const elemento = document.getElementById('monitor-ultima');
+                if (elemento) elemento.textContent = 'indisponível';
             }
         },
 
-        configurar() {
-            alert('Configuração de alertas em desenvolvimento');
+        async configurar() {
+            alert('Configure o monitoramento via API: POST /api/monitoramento/iniciar');
         }
     };
 
@@ -3061,11 +3113,11 @@
         },
 
         sincronizar() {
-            alert('Sincronizacao de bases em desenvolvimento');
+            alert('Sincronização de bases em desenvolvimento. Use a API /api/scrape-and-extract para coletar dados da ARTESP.');
         },
 
         resolver(id) {
-            alert(`Resolvendo divergencia #${id}`);
+            alert(`Resolvendo divergência #${id}`);
         }
     };
 
@@ -3893,7 +3945,7 @@
             this.carregandoNoticias = true;
             const container = document.getElementById('hub-news-container');
             if (container) {
-                container.innerHTML = '<div class="hub-loading"><div class="loading-spinner"></div><span>Carregando noticias das agencias...</span></div>';
+                container.innerHTML = '<div class="hub-loading"><div class="loading-spinner"></div><span>Carregando notícias das agências reguladoras...</span></div>';
             }
 
             try {
@@ -3920,7 +3972,7 @@
                     console.log(`[Hub] Carregadas ${this.noticiasReais.length} noticias reais`);
                 }
             } catch (error) {
-                console.warn('[Hub] Erro ao carregar noticias reais, usando dados de demonstracao:', error.message);
+                console.warn('[Hub] Erro ao carregar notícias reais:', error.message);
                 this.noticiasReais = [];
             }
 
@@ -3964,8 +4016,8 @@
         },
 
         getFilteredNews() {
-            // Usa notícias reais se disponíveis, senão usa mock
-            let news = this.noticiasReais.length > 0 ? [...this.noticiasReais] : [...this.noticias];
+            // Usa apenas notícias reais da API — sem fallback para mock
+            let news = [...this.noticiasReais];
             const tab = this.currentTab;
             const setor = document.getElementById('hub-filtro-setor')?.value || '';
             const esfera = document.getElementById('hub-filtro-esfera')?.value || '';
@@ -4009,7 +4061,7 @@
             const news = this.getFilteredNews();
 
             if (news.length === 0) {
-                container.innerHTML = '<div class="empty-state"><p>Nenhuma notícia encontrada para os filtros selecionados.</p></div>';
+                container.innerHTML = '<div class="empty-state"><p>Nenhuma notícia disponível. As notícias são buscadas em tempo real dos RSS das agências reguladoras. Verifique sua conexão ou tente novamente.</p></div>';
                 return;
             }
 

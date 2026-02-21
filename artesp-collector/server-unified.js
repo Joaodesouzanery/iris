@@ -28,6 +28,7 @@ const syncManager = require('./src/services/sync-manager');
 
 // Importa serviços do IRIS Core
 const irisCore = require('../iris-core/processador');
+const newsFetcher = require('../iris-core/services/news-fetcher');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -173,6 +174,50 @@ app.use((req, res, next) => {
 
 // Servir arquivos estáticos (CSS, JS, imagens)
 app.use(express.static(path.join(__dirname, 'public')));
+
+// ============================================================================
+// API - NOTÍCIAS REAIS (RSS das Agências Reguladoras)
+// ============================================================================
+
+app.get('/api/noticias', async (req, res) => {
+    try {
+        const limite = parseInt(req.query.limite) || 50;
+        const forceRefresh = req.query.forceRefresh === 'true';
+        const setor = req.query.setor || '';
+        const esfera = req.query.esfera || '';
+
+        console.log(`[Notícias] Buscando notícias reais (limite=${limite}, refresh=${forceRefresh})`);
+
+        let noticias;
+
+        if (setor) {
+            noticias = await newsFetcher.fetchNoticiasPorSetor(setor, limite);
+        } else if (esfera) {
+            noticias = await newsFetcher.fetchNoticiasPorEsfera(esfera, limite);
+        } else {
+            noticias = await newsFetcher.fetchNoticiasComCache(forceRefresh);
+            noticias = noticias.slice(0, limite);
+        }
+
+        console.log(`[Notícias] ${noticias.length} notícias obtidas de fontes oficiais`);
+
+        res.json({
+            success: true,
+            noticias: noticias,
+            total: noticias.length,
+            fontes: Object.keys(newsFetcher.FONTES_RSS).length,
+            cache: !forceRefresh,
+            atualizadoEm: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error('[Notícias] Erro:', error.message);
+        res.status(500).json({
+            success: false,
+            noticias: [],
+            erro: error.message
+        });
+    }
+});
 
 // ============================================================================
 // API - COLETA DE PDFs
