@@ -842,23 +842,668 @@ function extrairDeliberacoesMultiAgencia(texto, agenciaFornecida = null) {
     return resultado;
 }
 
+// ============================================
+// EXTRAÇÃO DE PRAZOS E DATAS LIMITE
+// ============================================
+const PADROES_PRAZOS = [
+    // Prazos em dias
+    /(?:prazo|no prazo)\s*(?:de|máximo de)?\s*(\d+)\s*(?:dias?\s*(?:úteis|corridos)?)/gi,
+    /(?:no prazo de|em até)\s*(\d+)\s*dias?/gi,
+    // Prazos em meses/anos
+    /(?:prazo de|em)\s*(\d+)\s*(?:meses?|anos?)/gi,
+    // Datas específicas
+    /(?:até|data limite|prazo final|vencimento em|vigência até)\s*[:\s]*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})/gi,
+    /(?:até|data limite)\s*[:\s]*(\d{1,2}\s*(?:de\s*)?\w+\s*(?:de\s*)?\d{2,4})/gi,
+    // Prazos relativos
+    /(?:dentro de|no período de)\s*(\d+)\s*(?:dias?|meses?|anos?)/gi
+];
+
+/**
+ * Extrai prazos e datas limite do texto
+ */
+function extrairPrazos(texto) {
+    const prazos = [];
+
+    for (const padrao of PADROES_PRAZOS) {
+        let match;
+        const regex = new RegExp(padrao.source, padrao.flags);
+        while ((match = regex.exec(texto)) !== null) {
+            const contexto = texto.substring(
+                Math.max(0, match.index - 50),
+                Math.min(texto.length, match.index + match[0].length + 50)
+            ).replace(/\s+/g, ' ').trim();
+
+            // Determina tipo do prazo
+            let tipo = 'indefinido';
+            const textoMatch = match[0].toLowerCase();
+            if (/dias?\s*úteis/i.test(textoMatch)) tipo = 'dias_uteis';
+            else if (/dias?(?:\s*corridos)?/i.test(textoMatch)) tipo = 'dias_corridos';
+            else if (/meses?/i.test(textoMatch)) tipo = 'meses';
+            else if (/anos?/i.test(textoMatch)) tipo = 'anos';
+            else if (/\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}/.test(match[1] || '')) tipo = 'data_especifica';
+
+            // Extrai valor numérico se existir
+            const valorNumerico = parseInt(match[1]) || null;
+
+            // Calcula data estimada se possível
+            let dataEstimada = null;
+            if (valorNumerico && tipo !== 'data_especifica' && tipo !== 'indefinido') {
+                const hoje = new Date();
+                if (tipo === 'dias_corridos' || tipo === 'dias_uteis') {
+                    hoje.setDate(hoje.getDate() + valorNumerico);
+                } else if (tipo === 'meses') {
+                    hoje.setMonth(hoje.getMonth() + valorNumerico);
+                } else if (tipo === 'anos') {
+                    hoje.setFullYear(hoje.getFullYear() + valorNumerico);
+                }
+                dataEstimada = hoje.toISOString().split('T')[0];
+            }
+
+            prazos.push({
+                texto_original: match[0].trim(),
+                valor: valorNumerico,
+                tipo: tipo,
+                data_estimada: dataEstimada,
+                contexto: contexto
+            });
+        }
+    }
+
+    // Remove duplicatas
+    const unicos = prazos.filter((p, idx, arr) =>
+        arr.findIndex(x => x.texto_original === p.texto_original) === idx
+    );
+
+    return unicos;
+}
+
+// ============================================
+// EXTRAÇÃO DE RODOVIAS E TRECHOS
+// ============================================
+const PADROES_RODOVIAS = {
+    // Rodovias estaduais
+    estaduais: [
+        /\b(SP[-\s]?\d{3})/gi,           // SP-XXX
+        /\b(PR[-\s]?\d{3})/gi,           // PR-XXX
+        /\b(MG[-\s]?\d{3})/gi,           // MG-XXX
+        /\b(RJ[-\s]?\d{3})/gi,           // RJ-XXX
+        /\b(RS[-\s]?\d{3})/gi,           // RS-XXX
+        /\b(BA[-\s]?\d{3})/gi,           // BA-XXX
+        /\b(SC[-\s]?\d{3})/gi,           // SC-XXX
+        /\b(GO[-\s]?\d{3})/gi,           // GO-XXX
+        /\b(MT[-\s]?\d{3})/gi,           // MT-XXX
+        /\b(MS[-\s]?\d{3})/gi,           // MS-XXX
+        /\b(PE[-\s]?\d{3})/gi,           // PE-XXX
+        /\b(CE[-\s]?\d{3})/gi,           // CE-XXX
+    ],
+    // Rodovias federais
+    federais: [
+        /\b(BR[-\s]?\d{3})/gi,           // BR-XXX
+    ],
+    // Trechos específicos
+    trechos: [
+        /(?:km|quilômetro)\s*(\d+(?:[,\.]\d+)?)\s*(?:ao?\s*(?:km|quilômetro)\s*(\d+(?:[,\.]\d+)?))?/gi,
+        /(?:entre\s*(?:os?\s*)?(?:km|quilômetros?)\s*)(\d+(?:[,\.]\d+)?)\s*(?:e|a)\s*(\d+(?:[,\.]\d+)?)/gi
+    ],
+    // Nomes de rodovias conhecidas
+    nomes: [
+        /\b(Anhanguera)\b/gi,
+        /\b(Bandeirantes)\b/gi,
+        /\b(Imigrantes)\b/gi,
+        /\b(Anchieta)\b/gi,
+        /\b(Raposo Tavares)\b/gi,
+        /\b(Castelo Branco)\b/gi,
+        /\b(Presidente Dutra)\b/gi,
+        /\b(Fernão Dias)\b/gi,
+        /\b(Régis Bittencourt)\b/gi,
+        /\b(Via Dutra)\b/gi,
+        /\b(Ayrton Senna)\b/gi,
+        /\b(Carvalho Pinto)\b/gi,
+        /\b(Dom Pedro I)\b/gi,
+        /\b(Washington Luís)\b/gi,
+        /\b(Marechal Rondon)\b/gi
+    ]
+};
+
+/**
+ * Extrai rodovias e trechos mencionados no texto
+ */
+function extrairRodovias(texto) {
+    const rodovias = [];
+
+    // Extrai rodovias estaduais
+    for (const padrao of PADROES_RODOVIAS.estaduais) {
+        let match;
+        const regex = new RegExp(padrao.source, padrao.flags);
+        while ((match = regex.exec(texto)) !== null) {
+            const codigo = match[1].replace(/\s+/g, '-').toUpperCase();
+            if (!rodovias.find(r => r.codigo === codigo)) {
+                rodovias.push({
+                    codigo: codigo,
+                    tipo: 'estadual',
+                    estado: codigo.substring(0, 2)
+                });
+            }
+        }
+    }
+
+    // Extrai rodovias federais
+    for (const padrao of PADROES_RODOVIAS.federais) {
+        let match;
+        const regex = new RegExp(padrao.source, padrao.flags);
+        while ((match = regex.exec(texto)) !== null) {
+            const codigo = match[1].replace(/\s+/g, '-').toUpperCase();
+            if (!rodovias.find(r => r.codigo === codigo)) {
+                rodovias.push({
+                    codigo: codigo,
+                    tipo: 'federal',
+                    estado: null
+                });
+            }
+        }
+    }
+
+    // Extrai nomes de rodovias conhecidas
+    for (const padrao of PADROES_RODOVIAS.nomes) {
+        let match;
+        const regex = new RegExp(padrao.source, padrao.flags);
+        while ((match = regex.exec(texto)) !== null) {
+            const nome = match[1];
+            if (!rodovias.find(r => r.nome === nome)) {
+                rodovias.push({
+                    nome: nome,
+                    tipo: 'rodovia_nomeada',
+                    codigo: null
+                });
+            }
+        }
+    }
+
+    // Extrai trechos (km inicial a km final)
+    const trechos = [];
+    for (const padrao of PADROES_RODOVIAS.trechos) {
+        let match;
+        const regex = new RegExp(padrao.source, padrao.flags);
+        while ((match = regex.exec(texto)) !== null) {
+            const kmInicial = parseFloat((match[1] || '').replace(',', '.'));
+            const kmFinal = match[2] ? parseFloat(match[2].replace(',', '.')) : null;
+
+            if (!isNaN(kmInicial)) {
+                trechos.push({
+                    km_inicial: kmInicial,
+                    km_final: kmFinal,
+                    extensao: kmFinal ? Math.abs(kmFinal - kmInicial) : null
+                });
+            }
+        }
+    }
+
+    return {
+        rodovias: rodovias,
+        trechos: trechos,
+        total_rodovias: rodovias.length,
+        total_trechos: trechos.length
+    };
+}
+
+// ============================================
+// ANÁLISE DE SENTIMENTO DA DECISÃO
+// ============================================
+const DICIONARIO_SENTIMENTO = {
+    // Palavras positivas (favoráveis)
+    positivo: [
+        'aprovado', 'aprovada', 'deferido', 'deferida', 'homologado', 'homologada',
+        'autorizado', 'autorizada', 'concedido', 'concedida', 'aceito', 'aceita',
+        'procedente', 'favorável', 'acolhido', 'acolhida', 'validado', 'validada',
+        'ratificado', 'ratificada', 'confirmado', 'confirmada', 'reconhecido',
+        'benefício', 'beneficia', 'ganho', 'êxito', 'sucesso', 'adequado',
+        'regular', 'conforme', 'atendido', 'satisfatório', 'cumprido'
+    ],
+    // Palavras negativas (desfavoráveis)
+    negativo: [
+        'indeferido', 'indeferida', 'negado', 'negada', 'rejeitado', 'rejeitada',
+        'arquivado', 'arquivada', 'improcedente', 'desfavorável', 'cassado', 'cassada',
+        'revogado', 'revogada', 'anulado', 'anulada', 'cancelado', 'cancelada',
+        'multa', 'penalidade', 'sanção', 'infração', 'irregularidade', 'descumprimento',
+        'violação', 'inadimplência', 'falha', 'deficiência', 'irregularidades',
+        'advertência', 'notificação', 'intimação', 'autuação', 'embargo'
+    ],
+    // Palavras neutras/procedimentais
+    neutro: [
+        'encaminhado', 'encaminhada', 'remetido', 'remetida', 'informado', 'informada',
+        'comunicado', 'comunicada', 'notificado', 'notificada', 'publicado', 'publicada',
+        'registrado', 'registrada', 'protocolado', 'protocolada', 'autuado', 'autuada',
+        'juntado', 'juntada', 'anexado', 'anexada', 'sobrestado', 'sobrestada',
+        'suspenso', 'suspensa', 'adiado', 'adiada', 'prorrogado', 'prorrogada'
+    ],
+    // Intensificadores
+    intensificadores: [
+        'muito', 'extremamente', 'totalmente', 'completamente', 'integralmente',
+        'parcialmente', 'em parte', 'significativamente', 'gravemente'
+    ]
+};
+
+/**
+ * Analisa o sentimento/tom da deliberação
+ */
+function analisarSentimento(texto) {
+    const textoLower = texto.toLowerCase();
+    const palavrasTexto = textoLower.split(/\s+/);
+
+    let scorePositivo = 0;
+    let scoreNegativo = 0;
+    let scoreNeutro = 0;
+
+    const palavrasEncontradas = {
+        positivas: [],
+        negativas: [],
+        neutras: []
+    };
+
+    // Conta ocorrências de cada categoria
+    for (const palavra of DICIONARIO_SENTIMENTO.positivo) {
+        const regex = new RegExp(`\\b${palavra}\\b`, 'gi');
+        const matches = textoLower.match(regex);
+        if (matches) {
+            scorePositivo += matches.length;
+            if (!palavrasEncontradas.positivas.includes(palavra)) {
+                palavrasEncontradas.positivas.push(palavra);
+            }
+        }
+    }
+
+    for (const palavra of DICIONARIO_SENTIMENTO.negativo) {
+        const regex = new RegExp(`\\b${palavra}\\b`, 'gi');
+        const matches = textoLower.match(regex);
+        if (matches) {
+            scoreNegativo += matches.length;
+            if (!palavrasEncontradas.negativas.includes(palavra)) {
+                palavrasEncontradas.negativas.push(palavra);
+            }
+        }
+    }
+
+    for (const palavra of DICIONARIO_SENTIMENTO.neutro) {
+        const regex = new RegExp(`\\b${palavra}\\b`, 'gi');
+        const matches = textoLower.match(regex);
+        if (matches) {
+            scoreNeutro += matches.length;
+            if (!palavrasEncontradas.neutras.includes(palavra)) {
+                palavrasEncontradas.neutras.push(palavra);
+            }
+        }
+    }
+
+    // Verifica intensificadores
+    let multiplicador = 1;
+    for (const intensificador of DICIONARIO_SENTIMENTO.intensificadores) {
+        if (textoLower.includes(intensificador)) {
+            multiplicador = 1.2;
+            break;
+        }
+    }
+
+    // Calcula scores finais
+    const totalScore = (scorePositivo + scoreNegativo + scoreNeutro) || 1;
+    const percentPositivo = Math.round((scorePositivo / totalScore) * 100);
+    const percentNegativo = Math.round((scoreNegativo / totalScore) * 100);
+    const percentNeutro = Math.round((scoreNeutro / totalScore) * 100);
+
+    // Determina classificação
+    let classificacao = 'neutro';
+    let confiancaSentimento = 'baixa';
+
+    if (scorePositivo > scoreNegativo && scorePositivo > scoreNeutro) {
+        classificacao = 'favoravel';
+        confiancaSentimento = scorePositivo > 3 ? 'alta' : 'media';
+    } else if (scoreNegativo > scorePositivo && scoreNegativo > scoreNeutro) {
+        classificacao = 'desfavoravel';
+        confiancaSentimento = scoreNegativo > 3 ? 'alta' : 'media';
+    } else if (scoreNeutro > scorePositivo && scoreNeutro > scoreNegativo) {
+        classificacao = 'neutro';
+        confiancaSentimento = 'media';
+    } else {
+        classificacao = 'misto';
+        confiancaSentimento = 'baixa';
+    }
+
+    return {
+        classificacao: classificacao,
+        confianca: confiancaSentimento,
+        scores: {
+            positivo: scorePositivo,
+            negativo: scoreNegativo,
+            neutro: scoreNeutro
+        },
+        percentuais: {
+            positivo: percentPositivo,
+            negativo: percentNegativo,
+            neutro: percentNeutro
+        },
+        palavras_chave: palavrasEncontradas,
+        resumo: classificacao === 'favoravel' ? 'Decisão predominantemente favorável ao interessado' :
+                classificacao === 'desfavoravel' ? 'Decisão predominantemente desfavorável ao interessado' :
+                classificacao === 'misto' ? 'Decisão com elementos favoráveis e desfavoráveis' :
+                'Decisão de caráter procedimental/informativo'
+    };
+}
+
+// ============================================
+// RELACIONAMENTOS EMPRESA-DIRETOR-PROCESSO
+// ============================================
+
+/**
+ * Extrai e vincula relacionamentos entre entidades
+ */
+function extrairRelacionamentos(texto, deliberacoes = []) {
+    const relacionamentos = [];
+    const entidades = {
+        empresas: new Set(),
+        diretores: new Set(),
+        processos: new Set()
+    };
+
+    // Extrai empresas do texto
+    const empresasTexto = extrairEmpresas(texto);
+    empresasTexto.forEach(e => entidades.empresas.add(e));
+
+    // Extrai CNPJs e associa a empresas
+    const cnpjs = extrairCNPJs(texto);
+
+    // Extrai diretores conhecidos
+    for (const [agencia, config] of Object.entries(AGENCIAS_CONFIG)) {
+        for (const diretor of config.diretores) {
+            if (texto.toLowerCase().includes(diretor.toLowerCase())) {
+                entidades.diretores.add(diretor);
+            }
+        }
+    }
+
+    // Extrai nomes de diretores do texto (padrão: Nome Sobrenome com título)
+    const padroesDiretores = [
+        /(?:Diretor[a]?(?:-Presidente)?|Conselheiro[a]?)\s+([A-ZÀ-Ú][a-zà-ú]+(?:\s+[A-ZÀ-Ú][a-zà-ú]+)+)/g,
+        /(?:Relator[a]?|Presidente)\s+([A-ZÀ-Ú][a-zà-ú]+(?:\s+[A-ZÀ-Ú][a-zà-ú]+)+)/g
+    ];
+
+    for (const padrao of padroesDiretores) {
+        let match;
+        const regex = new RegExp(padrao.source, padrao.flags);
+        while ((match = regex.exec(texto)) !== null) {
+            entidades.diretores.add(match[1].trim());
+        }
+    }
+
+    // Extrai números de processos
+    const padroesProcesso = [
+        /\b(\d{4,}[-\/]\d{4,}[-\/]?\d*)\b/g,
+        /(?:Processo|PRC|SEI)\s*(?:n[°ºo]?)?\s*([\d\-\/\.]+)/gi,
+        /\b(ARTESP-PRC-\d+[-\/]\d+)\b/gi
+    ];
+
+    for (const padrao of padroesProcesso) {
+        let match;
+        const regex = new RegExp(padrao.source, padrao.flags);
+        while ((match = regex.exec(texto)) !== null) {
+            entidades.processos.add(match[1].trim());
+        }
+    }
+
+    // Cria relacionamentos baseados nas deliberações
+    deliberacoes.forEach(delib => {
+        // Empresa -> Processo
+        if (delib.interessado && delib.processo) {
+            relacionamentos.push({
+                tipo: 'EMPRESA_INTERESSADA_PROCESSO',
+                origem: normalizarEmpresa(delib.interessado),
+                destino: delib.processo,
+                atributos: {
+                    resultado: delib.resultado,
+                    data: delib.data_reuniao
+                }
+            });
+        }
+
+        // Diretor -> Processo (votação)
+        if (delib.votos_a_favor) {
+            delib.votos_a_favor.forEach(diretor => {
+                relacionamentos.push({
+                    tipo: 'DIRETOR_VOTOU_PROCESSO',
+                    origem: diretor,
+                    destino: delib.processo || delib.numero_deliberacao,
+                    atributos: {
+                        voto: 'favoravel',
+                        data: delib.data_reuniao
+                    }
+                });
+            });
+        }
+
+        if (delib.votos_contra) {
+            delib.votos_contra.forEach(diretor => {
+                relacionamentos.push({
+                    tipo: 'DIRETOR_VOTOU_PROCESSO',
+                    origem: diretor,
+                    destino: delib.processo || delib.numero_deliberacao,
+                    atributos: {
+                        voto: 'contrario',
+                        data: delib.data_reuniao
+                    }
+                });
+            });
+        }
+    });
+
+    // Identifica relações de controle societário mencionadas
+    const padroesControle = [
+        /([A-Z][A-Za-z\s]+)\s*(?:,\s*)?(?:controlada|subsidiária|coligada)\s*(?:da|do|de)\s*([A-Z][A-Za-z\s]+)/gi,
+        /([A-Z][A-Za-z\s]+)\s*(?:,\s*)?(?:controla|possui)\s*(?:a|o)?\s*([A-Z][A-Za-z\s]+)/gi
+    ];
+
+    for (const padrao of padroesControle) {
+        let match;
+        const regex = new RegExp(padrao.source, padrao.flags);
+        while ((match = regex.exec(texto)) !== null) {
+            const empresa1 = normalizarEmpresa(match[1].trim());
+            const empresa2 = normalizarEmpresa(match[2].trim());
+
+            if (empresa1 && empresa2 && empresa1 !== empresa2) {
+                relacionamentos.push({
+                    tipo: 'CONTROLE_SOCIETARIO',
+                    origem: empresa2,
+                    destino: empresa1,
+                    atributos: {
+                        detectado_automaticamente: true
+                    }
+                });
+            }
+        }
+    }
+
+    return {
+        entidades: {
+            empresas: Array.from(entidades.empresas),
+            diretores: Array.from(entidades.diretores),
+            processos: Array.from(entidades.processos)
+        },
+        relacionamentos: relacionamentos,
+        estatisticas: {
+            total_empresas: entidades.empresas.size,
+            total_diretores: entidades.diretores.size,
+            total_processos: entidades.processos.size,
+            total_relacionamentos: relacionamentos.length
+        }
+    };
+}
+
+// ============================================
+// OCR - INTEGRAÇÃO PARA PDFs ESCANEADOS
+// ============================================
+
+/**
+ * Verifica se o texto parece ser de um PDF escaneado (pouco texto extraído)
+ */
+function verificarNecessidadeOCR(texto, tamanhoPDF = 0) {
+    // Heurísticas para detectar PDFs escaneados
+    const caracteresTexto = texto.replace(/\s+/g, '').length;
+    const palavras = texto.split(/\s+/).filter(p => p.length > 2).length;
+
+    // Se o PDF é grande mas tem pouco texto, provavelmente é escaneado
+    const densidadeTexto = tamanhoPDF > 0 ? caracteresTexto / tamanhoPDF : 0;
+
+    // Verifica padrões de texto corrompido/ilegível comuns em OCR ruim
+    const caracteresEspeciais = (texto.match(/[^\w\sÀ-ÿ.,;:!?()[\]{}"-]/g) || []).length;
+    const proporcaoEspeciais = caracteresEspeciais / (caracteresTexto || 1);
+
+    const indicadores = {
+        poucas_palavras: palavras < 50,
+        baixa_densidade: densidadeTexto < 0.01,
+        muitos_caracteres_especiais: proporcaoEspeciais > 0.1,
+        texto_muito_curto: caracteresTexto < 200
+    };
+
+    const necessitaOCR = indicadores.poucas_palavras ||
+                         indicadores.texto_muito_curto ||
+                         (indicadores.baixa_densidade && tamanhoPDF > 50000);
+
+    return {
+        necessita_ocr: necessitaOCR,
+        indicadores: indicadores,
+        estatisticas: {
+            caracteres: caracteresTexto,
+            palavras: palavras,
+            densidade: densidadeTexto.toFixed(4),
+            proporcao_especiais: proporcaoEspeciais.toFixed(4)
+        },
+        recomendacao: necessitaOCR ?
+            'Recomendado processar com OCR (Tesseract ou Google Vision API)' :
+            'Texto extraído parece adequado para análise'
+    };
+}
+
+/**
+ * Placeholder para integração com Tesseract OCR
+ * Em produção, conectar com tesseract.js ou API externa
+ */
+async function processarComOCR(imagemBuffer, opcoes = {}) {
+    // Esta função seria implementada com tesseract.js:
+    // const Tesseract = require('tesseract.js');
+    // const resultado = await Tesseract.recognize(imagemBuffer, 'por', opcoes);
+    // return resultado.data.text;
+
+    return {
+        sucesso: false,
+        mensagem: 'OCR não configurado. Instale tesseract.js: npm install tesseract.js',
+        instrucoes: [
+            '1. npm install tesseract.js',
+            '2. Importar: const Tesseract = require("tesseract.js")',
+            '3. Usar: await Tesseract.recognize(imagem, "por")',
+            '4. Alternativa cloud: Google Cloud Vision API'
+        ],
+        configuracao_sugerida: {
+            biblioteca: 'tesseract.js',
+            idioma: 'por', // Português
+            oem: 1, // LSTM neural net
+            psm: 3  // Fully automatic page segmentation
+        }
+    };
+}
+
+// ============================================
+// VERSÃO COMPLETA COM TODAS AS MELHORIAS
+// ============================================
+
+/**
+ * Extração completa com todas as melhorias implementadas
+ */
+function extrairDeliberacoesCompleto(texto, agenciaFornecida = null, opcoes = {}) {
+    const agencia = agenciaFornecida || detectarAgencia(texto);
+    const resultado = extrairDeliberacoesMultiAgencia(texto, agencia);
+
+    // Verifica necessidade de OCR
+    const analiseOCR = verificarNecessidadeOCR(texto, opcoes.tamanhoPDF || 0);
+
+    // Extrai prazos
+    const prazos = extrairPrazos(texto);
+
+    // Extrai rodovias
+    const rodovias = extrairRodovias(texto);
+
+    // Analisa sentimento
+    const sentimento = analisarSentimento(texto);
+
+    // Extrai relacionamentos
+    const relacionamentos = extrairRelacionamentos(texto, resultado.deliberations);
+
+    // Enriquece cada deliberação
+    resultado.deliberations = resultado.deliberations.map(delib => {
+        // Analisa sentimento específico da deliberação
+        const textoDelib = [
+            delib.ementa,
+            delib.resultado,
+            delib.objeto
+        ].filter(Boolean).join(' ');
+
+        delib.sentimento = analisarSentimento(textoDelib);
+
+        return delib;
+    });
+
+    // Adiciona novos metadados
+    resultado.analise_ocr = analiseOCR;
+    resultado.prazos = prazos;
+    resultado.rodovias = rodovias;
+    resultado.sentimento_geral = sentimento;
+    resultado.relacionamentos = relacionamentos;
+
+    // Atualiza metadados gerais
+    resultado.metadados = {
+        ...resultado.metadados,
+        total_prazos: prazos.length,
+        total_rodovias: rodovias.total_rodovias,
+        total_trechos: rodovias.total_trechos,
+        sentimento: sentimento.classificacao,
+        total_relacionamentos: relacionamentos.estatisticas.total_relacionamentos,
+        necessita_ocr: analiseOCR.necessita_ocr
+    };
+
+    return resultado;
+}
+
 module.exports = {
+    // Funções principais de extração
     extrairDeliberacoes,
     extrairDeliberacoesMultiAgencia,
+    extrairDeliberacoesCompleto,  // NOVA: versão com todas as melhorias
     analisarTexto,
+
+    // Extração de dados específicos
     extrairDadosDeliberacao,
     extrairVotos,
     extrairDataReuniao,
-    detectarAgencia,
-    normalizarEmpresa,
-    extrairEmpresas,
     extrairValoresMonetarios,
     extrairCNPJs,
     extrairCPFs,
+
+    // NOVAS funcionalidades
+    extrairPrazos,           // Extrai prazos e datas limite
+    extrairRodovias,         // Extrai rodovias e trechos (SP-330, BR-116)
+    analisarSentimento,      // Análise de sentimento da decisão
+    extrairRelacionamentos,  // Vincula empresa-diretor-processo
+    verificarNecessidadeOCR, // Detecta se precisa OCR
+    processarComOCR,         // Placeholder para integração OCR
+
+    // Funções auxiliares
+    detectarAgencia,
+    normalizarEmpresa,
+    extrairEmpresas,
     identificarTodosMicrotemas,
     calcularConfianca,
+
+    // Constantes exportadas
     DIRETORES,
     MICROTEMAS,
     AGENCIAS_CONFIG,
-    EMPRESAS_NORMALIZADAS
+    EMPRESAS_NORMALIZADAS,
+    DICIONARIO_SENTIMENTO,   // NOVO: dicionário para análise de sentimento
+    PADROES_RODOVIAS         // NOVO: padrões para extração de rodovias
 };
