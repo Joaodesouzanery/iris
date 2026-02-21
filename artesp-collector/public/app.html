@@ -288,6 +288,26 @@
                         Auditoria Forense
                     </a>
                 </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Investigacao</div>
+                    <a data-route="/grafo" class="nav-item">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                        Grafo de Conexoes
+                    </a>
+                    <a data-route="/monitoramento" class="nav-item">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                        Monitoramento 24/7
+                    </a>
+                    <a data-route="/dossie" class="nav-item">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        Dossies Automaticos
+                    </a>
+                    <a data-route="/cruzamento" class="nav-item">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>
+                        Cruzamento de Dados
+                    </a>
+                </div>
             </div>
 
             <div class="sidebar-footer">
@@ -4599,6 +4619,688 @@
                         </div>
                         <div class="card-body" id="hub-roadmap-container">
                             <!-- Renderizado via JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================
+                     PAGE: Grafo de Conexoes
+                     ============================================ -->
+                <div id="page-grafo" class="page-view">
+                    <div class="page-header">
+                        <div class="page-title-section">
+                            <h1 class="page-title">Grafo de Conexoes</h1>
+                            <p class="page-subtitle">Visualizacao de relacionamentos entre empresas, diretores e interessados</p>
+                        </div>
+                        <div class="page-actions">
+                            <select id="grafo-tipo-filter" class="form-select">
+                                <option value="todos">Todos os Vinculos</option>
+                                <option value="empresas">Empresas</option>
+                                <option value="diretores">Diretores</option>
+                                <option value="interessados">Interessados</option>
+                            </select>
+                            <button class="btn btn-primary" onclick="PageGrafo.exportar()">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                Exportar
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Entidades Mapeadas</span>
+                            </div>
+                            <div class="stat-card-value" id="grafo-entidades">247</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Conexoes Identificadas</span>
+                            </div>
+                            <div class="stat-card-value" id="grafo-conexoes">1.842</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Clusters Detectados</span>
+                            </div>
+                            <div class="stat-card-value" id="grafo-clusters">12</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Conexoes Ocultas</span>
+                            </div>
+                            <div class="stat-card-value warning" id="grafo-ocultas">8</div>
+                        </div>
+                    </div>
+
+                    <div class="grid-3-1">
+                        <div class="card" style="grid-column: span 2;">
+                            <div class="card-header">
+                                <h2 class="card-title">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                                    Visualizacao do Grafo
+                                </h2>
+                                <div class="card-actions">
+                                    <button class="btn btn-secondary btn-sm" onclick="PageGrafo.zoomIn()">+</button>
+                                    <button class="btn btn-secondary btn-sm" onclick="PageGrafo.zoomOut()">-</button>
+                                    <button class="btn btn-secondary btn-sm" onclick="PageGrafo.resetView()">Reset</button>
+                                </div>
+                            </div>
+                            <div class="card-body" style="min-height: 500px; position: relative;">
+                                <div id="grafo-container" style="width: 100%; height: 500px; background: var(--background); border-radius: var(--radius); position: relative; overflow: hidden;">
+                                    <!-- SVG do Grafo renderizado via JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">Detalhes da Entidade</h2>
+                            </div>
+                            <div class="card-body" id="grafo-detalhes">
+                                <div class="empty-state">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="48" height="48" style="opacity: 0.3;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"></path></svg>
+                                    <p>Selecione uma entidade no grafo para ver detalhes</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card" style="margin-top: 24px;">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                Conexoes Suspeitas Detectadas
+                            </h2>
+                            <span class="badge badge-warning">8 alertas</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert-list" id="grafo-alertas">
+                                <div class="alert-item warning">
+                                    <div class="alert-header">
+                                        <div class="alert-title">Vinculo societario indireto detectado</div>
+                                        <span class="alert-severity severity-medium">MEDIA</span>
+                                    </div>
+                                    <div class="alert-body">Empresa CCR S.A. possui vinculo com diretor Carlos Henrique Andrade atraves de holding intermediaria (Investimentos ABC Ltda.) nao declarada no processo.</div>
+                                    <div class="alert-meta">
+                                        <span>Detectado: 19/02/2026</span>
+                                        <span>Processo: RO-251/2026</span>
+                                        <span>Confianca: 78%</span>
+                                    </div>
+                                </div>
+                                <div class="alert-item warning">
+                                    <div class="alert-header">
+                                        <div class="alert-title">Ex-funcionario em cargo de decisao</div>
+                                        <span class="alert-severity severity-medium">MEDIA</span>
+                                    </div>
+                                    <div class="alert-body">Diretor Marcos Ribeiro trabalhou na Ecovias entre 2018-2020. Periodo de quarentena pode estar comprometido em deliberacoes recentes.</div>
+                                    <div class="alert-meta">
+                                        <span>Detectado: 18/02/2026</span>
+                                        <span>Deliberacoes: 12</span>
+                                        <span>Confianca: 92%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================
+                     PAGE: Monitoramento 24/7
+                     ============================================ -->
+                <div id="page-monitoramento" class="page-view">
+                    <div class="page-header">
+                        <div class="page-title-section">
+                            <h1 class="page-title">Monitoramento 24/7</h1>
+                            <p class="page-subtitle">Alertas em tempo real sobre eventos regulatorios criticos</p>
+                        </div>
+                        <div class="page-actions">
+                            <button class="btn btn-secondary" onclick="PageMonitoramento.configurar()">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                Configurar Alertas
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Alertas Criticos</span>
+                            </div>
+                            <div class="stat-card-value danger" id="monitor-criticos">3</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Alertas Pendentes</span>
+                            </div>
+                            <div class="stat-card-value warning" id="monitor-pendentes">12</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Entidades Monitoradas</span>
+                            </div>
+                            <div class="stat-card-value" id="monitor-entidades">47</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Ultima Verificacao</span>
+                            </div>
+                            <div class="stat-card-value success" id="monitor-ultima" style="font-size: 18px;">ha 2 min</div>
+                        </div>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    Vencimento de Mandatos
+                                </h2>
+                                <span class="badge badge-danger">2 proximos</span>
+                            </div>
+                            <div class="card-body">
+                                <div class="monitor-list" id="monitor-mandatos">
+                                    <div class="monitor-item danger">
+                                        <div class="monitor-icon">
+                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                        </div>
+                                        <div class="monitor-content">
+                                            <div class="monitor-title">Patricia Vanzolini - Diretora Presidente</div>
+                                            <div class="monitor-meta">Vence em 15 dias (08/03/2026)</div>
+                                        </div>
+                                        <span class="badge badge-danger">Urgente</span>
+                                    </div>
+                                    <div class="monitor-item warning">
+                                        <div class="monitor-icon">
+                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                        </div>
+                                        <div class="monitor-content">
+                                            <div class="monitor-title">Carlos Henrique Andrade - Diretor de Fiscalizacao</div>
+                                            <div class="monitor-meta">Vence em 45 dias (07/04/2026)</div>
+                                        </div>
+                                        <span class="badge badge-warning">Atencao</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                    Novas Deliberacoes
+                                </h2>
+                                <span class="badge badge-primary">3 novas</span>
+                            </div>
+                            <div class="card-body">
+                                <div class="monitor-list" id="monitor-deliberacoes">
+                                    <div class="monitor-item">
+                                        <div class="monitor-icon">
+                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                        </div>
+                                        <div class="monitor-content">
+                                            <div class="monitor-title">Deliberacao 045/2026 - Reajuste Tarifario</div>
+                                            <div class="monitor-meta">CCR ViaOeste - Publicada ha 2 horas</div>
+                                        </div>
+                                        <span class="badge badge-secondary">Nova</span>
+                                    </div>
+                                    <div class="monitor-item">
+                                        <div class="monitor-icon">
+                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                        </div>
+                                        <div class="monitor-content">
+                                            <div class="monitor-title">Deliberacao 044/2026 - Penalidade</div>
+                                            <div class="monitor-meta">Ecovias - Publicada ha 5 horas</div>
+                                        </div>
+                                        <span class="badge badge-secondary">Nova</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card" style="margin-top: 24px;">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                                Alteracoes Societarias
+                            </h2>
+                            <span class="badge badge-warning">5 detectadas</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="monitor-list" id="monitor-societarias">
+                                <div class="monitor-item warning">
+                                    <div class="monitor-icon">
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                                    </div>
+                                    <div class="monitor-content">
+                                        <div class="monitor-title">CCR S.A. - Alteracao de Diretoria</div>
+                                        <div class="monitor-meta">Novo diretor financeiro nomeado - Detectado via JUCESP</div>
+                                    </div>
+                                    <span class="badge badge-warning">Verificar</span>
+                                </div>
+                                <div class="monitor-item">
+                                    <div class="monitor-icon">
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                                    </div>
+                                    <div class="monitor-content">
+                                        <div class="monitor-title">Ecovias dos Imigrantes - Aumento de Capital</div>
+                                        <div class="monitor-meta">Capital social aumentado em R$ 50M - Detectado via Receita Federal</div>
+                                    </div>
+                                    <span class="badge badge-secondary">Info</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================
+                     PAGE: Dossies Automaticos
+                     ============================================ -->
+                <div id="page-dossie" class="page-view">
+                    <div class="page-header">
+                        <div class="page-title-section">
+                            <h1 class="page-title">Dossies Automaticos</h1>
+                            <p class="page-subtitle">Geracao automatica de relatorios consolidados sobre entidades</p>
+                        </div>
+                        <div class="page-actions">
+                            <button class="btn btn-primary" onclick="PageDossie.novo()">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                Novo Dossie
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Dossies Gerados</span>
+                            </div>
+                            <div class="stat-card-value" id="dossie-total">34</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Em Processamento</span>
+                            </div>
+                            <div class="stat-card-value warning" id="dossie-processando">2</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Empresas Cobertas</span>
+                            </div>
+                            <div class="stat-card-value" id="dossie-empresas">28</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Diretores Mapeados</span>
+                            </div>
+                            <div class="stat-card-value" id="dossie-diretores">15</div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                Dossies Recentes
+                            </h2>
+                            <div class="card-actions">
+                                <select class="form-select" id="dossie-tipo-filter">
+                                    <option value="todos">Todos</option>
+                                    <option value="empresa">Empresas</option>
+                                    <option value="diretor">Diretores</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-wrapper">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Entidade</th>
+                                            <th>Tipo</th>
+                                            <th>Deliberacoes</th>
+                                            <th>Alertas</th>
+                                            <th>Gerado em</th>
+                                            <th>Status</th>
+                                            <th>Acoes</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="dossie-table-body">
+                                        <tr>
+                                            <td><strong>CCR ViaOeste S.A.</strong></td>
+                                            <td><span class="badge badge-secondary">Empresa</span></td>
+                                            <td>45</td>
+                                            <td><span class="badge badge-warning">3</span></td>
+                                            <td>21/02/2026</td>
+                                            <td><span class="badge badge-success">Completo</span></td>
+                                            <td>
+                                                <button class="btn btn-secondary btn-sm" onclick="PageDossie.visualizar('ccr-viaoeste')">Ver</button>
+                                                <button class="btn btn-secondary btn-sm" onclick="PageDossie.exportar('ccr-viaoeste')">PDF</button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Ecovias dos Imigrantes</strong></td>
+                                            <td><span class="badge badge-secondary">Empresa</span></td>
+                                            <td>38</td>
+                                            <td><span class="badge badge-danger">5</span></td>
+                                            <td>20/02/2026</td>
+                                            <td><span class="badge badge-success">Completo</span></td>
+                                            <td>
+                                                <button class="btn btn-secondary btn-sm" onclick="PageDossie.visualizar('ecovias')">Ver</button>
+                                                <button class="btn btn-secondary btn-sm" onclick="PageDossie.exportar('ecovias')">PDF</button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Patricia Vanzolini</strong></td>
+                                            <td><span class="badge badge-primary">Diretor</span></td>
+                                            <td>156</td>
+                                            <td><span class="badge badge-secondary">0</span></td>
+                                            <td>19/02/2026</td>
+                                            <td><span class="badge badge-success">Completo</span></td>
+                                            <td>
+                                                <button class="btn btn-secondary btn-sm" onclick="PageDossie.visualizar('patricia-vanzolini')">Ver</button>
+                                                <button class="btn btn-secondary btn-sm" onclick="PageDossie.exportar('patricia-vanzolini')">PDF</button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>AutoBAn Concessionaria</strong></td>
+                                            <td><span class="badge badge-secondary">Empresa</span></td>
+                                            <td>32</td>
+                                            <td><span class="badge badge-warning">2</span></td>
+                                            <td>18/02/2026</td>
+                                            <td><span class="badge badge-warning">Processando</span></td>
+                                            <td>
+                                                <button class="btn btn-secondary btn-sm" disabled>Ver</button>
+                                                <button class="btn btn-secondary btn-sm" disabled>PDF</button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid-2" style="margin-top: 24px;">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">Conteudo do Dossie</h2>
+                            </div>
+                            <div class="card-body">
+                                <div class="dossie-sections">
+                                    <div class="dossie-section-item">
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                                        <div>
+                                            <strong>Dados Cadastrais</strong>
+                                            <p>CNPJ, endereco, socios, capital social</p>
+                                        </div>
+                                    </div>
+                                    <div class="dossie-section-item">
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                        <div>
+                                            <strong>Historico de Deliberacoes</strong>
+                                            <p>Todas as decisoes envolvendo a entidade</p>
+                                        </div>
+                                    </div>
+                                    <div class="dossie-section-item">
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                                        <div>
+                                            <strong>Grafo de Conexoes</strong>
+                                            <p>Relacionamentos com outras entidades</p>
+                                        </div>
+                                    </div>
+                                    <div class="dossie-section-item">
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                        <div>
+                                            <strong>Alertas e Riscos</strong>
+                                            <p>Anomalias e padroes suspeitos</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">Fontes de Dados</h2>
+                            </div>
+                            <div class="card-body">
+                                <div class="fontes-grid">
+                                    <div class="fonte-item active">
+                                        <div class="fonte-icon">RF</div>
+                                        <div class="fonte-name">Receita Federal</div>
+                                        <span class="fonte-status active"></span>
+                                    </div>
+                                    <div class="fonte-item active">
+                                        <div class="fonte-icon">JC</div>
+                                        <div class="fonte-name">JUCESP</div>
+                                        <span class="fonte-status active"></span>
+                                    </div>
+                                    <div class="fonte-item active">
+                                        <div class="fonte-icon">AR</div>
+                                        <div class="fonte-name">ARTESP</div>
+                                        <span class="fonte-status active"></span>
+                                    </div>
+                                    <div class="fonte-item">
+                                        <div class="fonte-icon">TJ</div>
+                                        <div class="fonte-name">Tribunais</div>
+                                        <span class="fonte-status"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================
+                     PAGE: Cruzamento de Dados
+                     ============================================ -->
+                <div id="page-cruzamento" class="page-view">
+                    <div class="page-header">
+                        <div class="page-title-section">
+                            <h1 class="page-title">Cruzamento de Dados</h1>
+                            <p class="page-subtitle">Integracao com bases de dados externas para enriquecimento de informacoes</p>
+                        </div>
+                        <div class="page-actions">
+                            <button class="btn btn-primary" onclick="PageCruzamento.sincronizar()">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                Sincronizar Bases
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Bases Conectadas</span>
+                            </div>
+                            <div class="stat-card-value success" id="cruzamento-bases">4</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Registros Cruzados</span>
+                            </div>
+                            <div class="stat-card-value" id="cruzamento-registros">12.847</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Divergencias</span>
+                            </div>
+                            <div class="stat-card-value warning" id="cruzamento-divergencias">23</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Ultima Sinc.</span>
+                            </div>
+                            <div class="stat-card-value" id="cruzamento-sync" style="font-size: 16px;">21/02 08:00</div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>
+                                Bases de Dados Integradas
+                            </h2>
+                        </div>
+                        <div class="card-body">
+                            <div class="bases-grid" id="cruzamento-bases-grid">
+                                <div class="base-card active">
+                                    <div class="base-header">
+                                        <div class="base-icon">
+                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="32" height="32"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                                        </div>
+                                        <div class="base-status active">
+                                            <span class="status-dot"></span>
+                                            Conectada
+                                        </div>
+                                    </div>
+                                    <h3 class="base-title">Receita Federal</h3>
+                                    <p class="base-desc">CNPJ, QSA, situacao cadastral</p>
+                                    <div class="base-meta">
+                                        <span>4.823 registros</span>
+                                        <span>Atualizado: 21/02</span>
+                                    </div>
+                                </div>
+                                <div class="base-card active">
+                                    <div class="base-header">
+                                        <div class="base-icon">
+                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="32" height="32"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                        </div>
+                                        <div class="base-status active">
+                                            <span class="status-dot"></span>
+                                            Conectada
+                                        </div>
+                                    </div>
+                                    <h3 class="base-title">JUCESP</h3>
+                                    <p class="base-desc">Alteracoes societarias, atos</p>
+                                    <div class="base-meta">
+                                        <span>2.156 registros</span>
+                                        <span>Atualizado: 20/02</span>
+                                    </div>
+                                </div>
+                                <div class="base-card active">
+                                    <div class="base-header">
+                                        <div class="base-icon">
+                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="32" height="32"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"></path></svg>
+                                        </div>
+                                        <div class="base-status active">
+                                            <span class="status-dot"></span>
+                                            Conectada
+                                        </div>
+                                    </div>
+                                    <h3 class="base-title">Tribunais</h3>
+                                    <p class="base-desc">Processos judiciais, andamentos</p>
+                                    <div class="base-meta">
+                                        <span>1.892 registros</span>
+                                        <span>Atualizado: 19/02</span>
+                                    </div>
+                                </div>
+                                <div class="base-card active">
+                                    <div class="base-header">
+                                        <div class="base-icon">
+                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="32" height="32"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                                        </div>
+                                        <div class="base-status active">
+                                            <span class="status-dot"></span>
+                                            Conectada
+                                        </div>
+                                    </div>
+                                    <h3 class="base-title">ARTESP Oficial</h3>
+                                    <p class="base-desc">Deliberacoes, atas, PDFs</p>
+                                    <div class="base-meta">
+                                        <span>3.976 registros</span>
+                                        <span>Atualizado: 21/02</span>
+                                    </div>
+                                </div>
+                                <div class="base-card inactive">
+                                    <div class="base-header">
+                                        <div class="base-icon">
+                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="32" height="32"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                                        </div>
+                                        <div class="base-status inactive">
+                                            <span class="status-dot"></span>
+                                            Pendente
+                                        </div>
+                                    </div>
+                                    <h3 class="base-title">Portal Transparencia</h3>
+                                    <p class="base-desc">Contratos, licitacoes</p>
+                                    <div class="base-meta">
+                                        <span>Em implementacao</span>
+                                    </div>
+                                </div>
+                                <div class="base-card inactive">
+                                    <div class="base-header">
+                                        <div class="base-icon">
+                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="32" height="32"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+                                        </div>
+                                        <div class="base-status inactive">
+                                            <span class="status-dot"></span>
+                                            Pendente
+                                        </div>
+                                    </div>
+                                    <h3 class="base-title">Sancoes</h3>
+                                    <p class="base-desc">CEIS, CNEP, CEPIM</p>
+                                    <div class="base-meta">
+                                        <span>Em implementacao</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card" style="margin-top: 24px;">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                Divergencias Encontradas
+                            </h2>
+                            <span class="badge badge-warning">23 pendentes</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-wrapper">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Entidade</th>
+                                            <th>Campo</th>
+                                            <th>Valor IRIS</th>
+                                            <th>Valor Externo</th>
+                                            <th>Fonte</th>
+                                            <th>Acao</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="cruzamento-divergencias-body">
+                                        <tr>
+                                            <td><strong>CCR ViaOeste</strong></td>
+                                            <td>Capital Social</td>
+                                            <td>R$ 450.000.000</td>
+                                            <td class="text-warning">R$ 500.000.000</td>
+                                            <td><span class="badge badge-secondary">Receita Federal</span></td>
+                                            <td>
+                                                <button class="btn btn-secondary btn-sm" onclick="PageCruzamento.resolver(1)">Resolver</button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Ecovias</strong></td>
+                                            <td>Diretor Presidente</td>
+                                            <td>Joao Silva</td>
+                                            <td class="text-warning">Maria Santos</td>
+                                            <td><span class="badge badge-secondary">JUCESP</span></td>
+                                            <td>
+                                                <button class="btn btn-secondary btn-sm" onclick="PageCruzamento.resolver(2)">Resolver</button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>AutoBAn</strong></td>
+                                            <td>Situacao Cadastral</td>
+                                            <td>Ativa</td>
+                                            <td class="text-success">Ativa</td>
+                                            <td><span class="badge badge-secondary">Receita Federal</span></td>
+                                            <td>
+                                                <span class="badge badge-success">OK</span>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>

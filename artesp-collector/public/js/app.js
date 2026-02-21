@@ -69,7 +69,11 @@
                 '/setores': 'Setores Regulados',
                 '/microtemas': 'Microtemas',
                 '/empresas': 'Empresas',
-                '/historico': 'Historico'
+                '/historico': 'Historico',
+                '/grafo': 'Grafo de Conexoes',
+                '/monitoramento': 'Monitoramento 24/7',
+                '/dossie': 'Dossies Automaticos',
+                '/cruzamento': 'Cruzamento de Dados'
             };
             const breadcrumb = document.getElementById('breadcrumb-page');
             if (breadcrumb) {
@@ -2552,6 +2556,247 @@
     };
 
     // ============================================
+    // PAGE: Grafo de Conexoes
+    // ============================================
+    const PageGrafo = {
+        nodes: [],
+        links: [],
+        zoom: 1,
+
+        init() {
+            const page = document.getElementById('page-grafo');
+            page.classList.add('active');
+            this.renderGraph();
+            this.setupFilters();
+        },
+
+        setupFilters() {
+            const filter = document.getElementById('grafo-tipo-filter');
+            if (filter) {
+                filter.addEventListener('change', () => this.renderGraph());
+            }
+        },
+
+        renderGraph() {
+            const container = document.getElementById('grafo-container');
+            if (!container) return;
+
+            // Dados de exemplo para o grafo
+            const nodes = [
+                { id: 1, name: 'CCR S.A.', type: 'empresa', x: 300, y: 250, size: 50 },
+                { id: 2, name: 'Ecovias', type: 'empresa', x: 500, y: 150, size: 40 },
+                { id: 3, name: 'Patricia Vanzolini', type: 'diretor', x: 200, y: 100, size: 35 },
+                { id: 4, name: 'Carlos Andrade', type: 'diretor', x: 400, y: 350, size: 35 },
+                { id: 5, name: 'Marcos Ribeiro', type: 'diretor', x: 150, y: 300, size: 35 },
+                { id: 6, name: 'ViaOeste', type: 'empresa', x: 450, y: 250, size: 45 },
+                { id: 7, name: 'AutoBAn', type: 'empresa', x: 550, y: 300, size: 38 },
+                { id: 8, name: 'Interessado A', type: 'interessado', x: 250, y: 400, size: 25 },
+                { id: 9, name: 'Interessado B', type: 'interessado', x: 350, y: 450, size: 25 },
+                { id: 10, name: 'Holding XYZ', type: 'empresa', x: 600, y: 200, size: 30 }
+            ];
+
+            const links = [
+                { source: 1, target: 6, type: 'controle' },
+                { source: 1, target: 2, type: 'participacao' },
+                { source: 3, target: 1, type: 'direcao' },
+                { source: 4, target: 2, type: 'direcao' },
+                { source: 5, target: 1, type: 'direcao' },
+                { source: 6, target: 7, type: 'participacao' },
+                { source: 8, target: 2, type: 'interesse' },
+                { source: 9, target: 6, type: 'interesse' },
+                { source: 10, target: 1, type: 'participacao' },
+                { source: 10, target: 7, type: 'controle' },
+                { source: 4, target: 10, type: 'vinculo', hidden: true }
+            ];
+
+            const colors = {
+                empresa: '#FFEF4D',
+                diretor: '#60a5fa',
+                interessado: '#34d399'
+            };
+
+            const linkColors = {
+                controle: '#FFEF4D',
+                participacao: '#94a3b8',
+                direcao: '#60a5fa',
+                interesse: '#34d399',
+                vinculo: '#ef4444'
+            };
+
+            let svg = `<svg width="100%" height="100%" viewBox="0 0 700 500" style="transform: scale(${this.zoom});">`;
+            svg += '<defs><marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#64748b"/></marker></defs>';
+
+            // Desenhar links
+            links.forEach(link => {
+                const source = nodes.find(n => n.id === link.source);
+                const target = nodes.find(n => n.id === link.target);
+                if (source && target) {
+                    const color = linkColors[link.type] || '#64748b';
+                    const dashArray = link.hidden ? '5,5' : 'none';
+                    const opacity = link.hidden ? '0.5' : '0.7';
+                    svg += `<line x1="${source.x}" y1="${source.y}" x2="${target.x}" y2="${target.y}"
+                            stroke="${color}" stroke-width="2" stroke-dasharray="${dashArray}" opacity="${opacity}"
+                            marker-end="url(#arrowhead)"/>`;
+                }
+            });
+
+            // Desenhar nodes
+            nodes.forEach(node => {
+                const color = colors[node.type] || '#94a3b8';
+                svg += `<g class="graph-node" onclick="PageGrafo.selectNode(${node.id})" style="cursor: pointer;">
+                    <circle cx="${node.x}" cy="${node.y}" r="${node.size / 2}" fill="${color}" opacity="0.8"/>
+                    <circle cx="${node.x}" cy="${node.y}" r="${node.size / 2 + 3}" fill="none" stroke="${color}" stroke-width="2" opacity="0.3"/>
+                    <text x="${node.x}" y="${node.y + node.size / 2 + 15}" text-anchor="middle" fill="#e2e8f0" font-size="11">${node.name}</text>
+                </g>`;
+            });
+
+            svg += '</svg>';
+
+            // Legenda
+            svg += `<div style="position: absolute; bottom: 16px; left: 16px; background: rgba(15, 23, 42, 0.9); padding: 12px; border-radius: 8px; font-size: 12px;">
+                <div style="display: flex; gap: 16px;">
+                    <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 12px; height: 12px; border-radius: 50%; background: ${colors.empresa};"></span> Empresa</div>
+                    <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 12px; height: 12px; border-radius: 50%; background: ${colors.diretor};"></span> Diretor</div>
+                    <div style="display: flex; align-items: center; gap: 6px;"><span style="width: 12px; height: 12px; border-radius: 50%; background: ${colors.interessado};"></span> Interessado</div>
+                </div>
+            </div>`;
+
+            container.innerHTML = svg;
+        },
+
+        selectNode(nodeId) {
+            const detalhes = document.getElementById('grafo-detalhes');
+            if (!detalhes) return;
+
+            const nodeData = {
+                1: { name: 'CCR S.A.', type: 'Empresa', cnpj: '02.846.056/0001-97', deliberacoes: 45, conexoes: 8, alertas: 2 },
+                2: { name: 'Ecovias dos Imigrantes', type: 'Empresa', cnpj: '03.158.863/0001-92', deliberacoes: 38, conexoes: 5, alertas: 3 },
+                3: { name: 'Patricia Vanzolini', type: 'Diretora', cargo: 'Diretora Presidente', deliberacoes: 156, conexoes: 4, alertas: 0 },
+                4: { name: 'Carlos Henrique Andrade', type: 'Diretor', cargo: 'Diretor de Fiscalizacao', deliberacoes: 89, conexoes: 6, alertas: 1 },
+                5: { name: 'Marcos Ribeiro', type: 'Diretor', cargo: 'Diretor de Regulacao', deliberacoes: 112, conexoes: 5, alertas: 2 }
+            };
+
+            const data = nodeData[nodeId] || { name: 'Entidade', type: 'Desconhecido', deliberacoes: 0, conexoes: 0, alertas: 0 };
+
+            detalhes.innerHTML = `
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <div style="width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), #60a5fa); margin: 0 auto 12px; display: flex; align-items: center; justify-content: center;">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="32" height="32"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${data.type === 'Empresa' ? 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4' : 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z'}"></path></svg>
+                    </div>
+                    <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 4px;">${data.name}</h3>
+                    <span class="badge ${data.type === 'Empresa' ? 'badge-secondary' : 'badge-primary'}">${data.type}</span>
+                </div>
+                ${data.cnpj ? `<div style="padding: 8px 0; border-bottom: 1px solid var(--border);"><span style="color: var(--text-muted); font-size: 12px;">CNPJ</span><div style="font-weight: 500;">${data.cnpj}</div></div>` : ''}
+                ${data.cargo ? `<div style="padding: 8px 0; border-bottom: 1px solid var(--border);"><span style="color: var(--text-muted); font-size: 12px;">Cargo</span><div style="font-weight: 500;">${data.cargo}</div></div>` : ''}
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 16px;">
+                    <div style="text-align: center; padding: 12px; background: var(--background); border-radius: 8px;">
+                        <div style="font-size: 20px; font-weight: 700; color: var(--primary);">${data.deliberacoes}</div>
+                        <div style="font-size: 11px; color: var(--text-muted);">Deliberacoes</div>
+                    </div>
+                    <div style="text-align: center; padding: 12px; background: var(--background); border-radius: 8px;">
+                        <div style="font-size: 20px; font-weight: 700; color: #60a5fa;">${data.conexoes}</div>
+                        <div style="font-size: 11px; color: var(--text-muted);">Conexoes</div>
+                    </div>
+                    <div style="text-align: center; padding: 12px; background: var(--background); border-radius: 8px;">
+                        <div style="font-size: 20px; font-weight: 700; color: ${data.alertas > 0 ? '#f59e0b' : '#22c55e'};">${data.alertas}</div>
+                        <div style="font-size: 11px; color: var(--text-muted);">Alertas</div>
+                    </div>
+                </div>
+                <button class="btn btn-primary" style="width: 100%; margin-top: 16px;" onclick="PageDossie.visualizar('${data.name.toLowerCase().replace(/ /g, '-')}')">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    Ver Dossie Completo
+                </button>
+            `;
+        },
+
+        zoomIn() {
+            this.zoom = Math.min(this.zoom + 0.2, 2);
+            this.renderGraph();
+        },
+
+        zoomOut() {
+            this.zoom = Math.max(this.zoom - 0.2, 0.5);
+            this.renderGraph();
+        },
+
+        resetView() {
+            this.zoom = 1;
+            this.renderGraph();
+        },
+
+        exportar() {
+            alert('Funcionalidade de exportacao em desenvolvimento');
+        }
+    };
+
+    // ============================================
+    // PAGE: Monitoramento 24/7
+    // ============================================
+    const PageMonitoramento = {
+        init() {
+            const page = document.getElementById('page-monitoramento');
+            page.classList.add('active');
+            this.startPolling();
+        },
+
+        startPolling() {
+            // Simular atualizacao em tempo real
+            this.updateLastCheck();
+        },
+
+        updateLastCheck() {
+            const elemento = document.getElementById('monitor-ultima');
+            if (elemento) {
+                elemento.textContent = 'ha 2 min';
+            }
+        },
+
+        configurar() {
+            alert('Configuracao de alertas em desenvolvimento');
+        }
+    };
+
+    // ============================================
+    // PAGE: Dossies Automaticos
+    // ============================================
+    const PageDossie = {
+        init() {
+            const page = document.getElementById('page-dossie');
+            page.classList.add('active');
+        },
+
+        novo() {
+            alert('Criacao de novo dossie em desenvolvimento');
+        },
+
+        visualizar(id) {
+            alert(`Visualizando dossie: ${id}`);
+        },
+
+        exportar(id) {
+            alert(`Exportando dossie ${id} como PDF`);
+        }
+    };
+
+    // ============================================
+    // PAGE: Cruzamento de Dados
+    // ============================================
+    const PageCruzamento = {
+        init() {
+            const page = document.getElementById('page-cruzamento');
+            page.classList.add('active');
+        },
+
+        sincronizar() {
+            alert('Sincronizacao de bases em desenvolvimento');
+        },
+
+        resolver(id) {
+            alert(`Resolvendo divergencia #${id}`);
+        }
+    };
+
+    // ============================================
     // PAGE: Upload de PDFs
     // ============================================
     const PageUpload = {
@@ -4262,6 +4507,22 @@
             Router.register('/historico', () => {
                 PageMonitor.destroy();
                 PageHistorico.init();
+            });
+            Router.register('/grafo', () => {
+                PageMonitor.destroy();
+                PageGrafo.init();
+            });
+            Router.register('/monitoramento', () => {
+                PageMonitor.destroy();
+                PageMonitoramento.init();
+            });
+            Router.register('/dossie', () => {
+                PageMonitor.destroy();
+                PageDossie.init();
+            });
+            Router.register('/cruzamento', () => {
+                PageMonitor.destroy();
+                PageCruzamento.init();
             });
             Router.register('/', () => {
                 PageMonitor.destroy();

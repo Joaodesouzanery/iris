@@ -8036,3 +8036,286 @@ tr:hover {
         min-width: auto;
     }
 }
+
+/* ============================================
+   INVESTIGACAO MODULE - Grafo, Monitoramento, Dossie, Cruzamento
+   ============================================ */
+
+/* Grid 3-1 Layout */
+.grid-3-1 {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 24px;
+}
+
+@media (max-width: 1024px) {
+    .grid-3-1 {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Monitor List */
+.monitor-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.monitor-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    background: var(--background);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    transition: all var(--transition-base);
+}
+
+.monitor-item:hover {
+    border-color: var(--border-light);
+    background: var(--surface-hover);
+}
+
+.monitor-item.danger {
+    border-color: var(--danger-border);
+    background: var(--danger-bg);
+}
+
+.monitor-item.warning {
+    border-color: var(--warning-border);
+    background: var(--warning-bg);
+}
+
+.monitor-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius);
+    background: var(--surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    flex-shrink: 0;
+}
+
+.monitor-item.danger .monitor-icon {
+    background: var(--danger-bg);
+    color: var(--danger);
+}
+
+.monitor-item.warning .monitor-icon {
+    background: var(--warning-bg);
+    color: var(--warning);
+}
+
+.monitor-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.monitor-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.monitor-meta {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+/* Dossie Sections */
+.dossie-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.dossie-section-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px;
+    background: var(--background);
+    border-radius: var(--radius);
+}
+
+.dossie-section-item svg {
+    color: var(--primary);
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.dossie-section-item strong {
+    display: block;
+    margin-bottom: 2px;
+}
+
+.dossie-section-item p {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+/* Fontes Grid */
+.fontes-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.fonte-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: var(--background);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+}
+
+.fonte-item.active {
+    border-color: var(--success-border);
+}
+
+.fonte-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius);
+    background: var(--primary-bg);
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 12px;
+}
+
+.fonte-name {
+    flex: 1;
+    font-weight: 500;
+}
+
+.fonte-status {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--text-muted);
+}
+
+.fonte-status.active {
+    background: var(--success);
+    box-shadow: 0 0 8px var(--success);
+}
+
+/* Bases Grid for Cruzamento */
+.bases-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.base-card {
+    padding: 20px;
+    background: var(--background);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    transition: all var(--transition-base);
+}
+
+.base-card:hover {
+    border-color: var(--border-light);
+    transform: translateY(-2px);
+}
+
+.base-card.active {
+    border-color: var(--success-border);
+}
+
+.base-card.inactive {
+    opacity: 0.6;
+}
+
+.base-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+}
+
+.base-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius);
+    background: var(--primary-bg);
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.base-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.base-status.active {
+    color: var(--success);
+}
+
+.base-status .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.base-status.active .status-dot {
+    box-shadow: 0 0 8px var(--success);
+}
+
+.base-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: var(--text-primary);
+}
+
+.base-desc {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+}
+
+.base-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--text-muted);
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+}
+
+/* Graph Node Styles */
+.graph-node circle {
+    transition: all var(--transition-fast);
+}
+
+.graph-node:hover circle {
+    filter: brightness(1.2);
+}
+
+/* Text Warning Color */
+.text-warning {
+    color: var(--warning);
+    font-weight: 500;
+}
+
+.text-success {
+    color: var(--success);
+}
