@@ -196,18 +196,51 @@ const PADROES = {
     }
 };
 
-// Microtemas conhecidos
+// Microtemas conhecidos (expandidos para múltiplas agências)
 const MICROTEMAS = {
-    'reequilibrio': ['reequilíbrio', 'reequilibrio', 'equilíbrio econômico', 'revisão tarifária', 'reequilíbrio econômico-financeiro'],
-    'tarifa': ['tarifa', 'pedágio', 'cobrança', 'isenção', 'desconto', 'reajuste tarifário'],
-    'obras': ['obra', 'construção', 'duplicação', 'pavimentação', 'manutenção', 'conservação'],
-    'contrato': ['contrato', 'aditivo', 'prorrogação', 'rescisão', 'termo aditivo', 'autorização'],
-    'multa': ['multa', 'penalidade', 'sanção', 'advertência', 'infração', 'auto de infração'],
-    'fiscalizacao': ['fiscalização', 'vistoria', 'inspeção', 'auditoria', 'monitoramento'],
-    'seguranca': ['segurança', 'acidente', 'atendimento', 'guincho', 'ambulância', 'socorro'],
-    'ambiental': ['ambiental', 'licença', 'compensação', 'fauna', 'flora', 'meio ambiente'],
-    'desapropriacao': ['desapropriação', 'faixa de domínio', 'invasão', 'ocupação', 'área non aedificandi'],
-    'usuario': ['usuário', 'reclamação', 'ouvidoria', 'ressarcimento', 'indenização', 'dano']
+    // Transporte/Rodovias
+    'reequilibrio': ['reequilíbrio', 'reequilibrio', 'equilíbrio econômico', 'revisão tarifária', 'reequilíbrio econômico-financeiro', 'revisão extraordinária'],
+    'tarifa': ['tarifa', 'pedágio', 'cobrança', 'isenção', 'desconto', 'reajuste tarifário', 'preço público'],
+    'obras': ['obra', 'construção', 'duplicação', 'pavimentação', 'manutenção', 'conservação', 'implantação', 'ampliação'],
+    'contrato': ['contrato', 'aditivo', 'prorrogação', 'rescisão', 'termo aditivo', 'autorização', 'concessão', 'permissão'],
+    'multa': ['multa', 'penalidade', 'sanção', 'advertência', 'infração', 'auto de infração', 'TAC', 'termo de ajustamento'],
+    'fiscalizacao': ['fiscalização', 'vistoria', 'inspeção', 'auditoria', 'monitoramento', 'supervisão'],
+    'seguranca': ['segurança', 'acidente', 'atendimento', 'guincho', 'ambulância', 'socorro', 'emergência'],
+    'ambiental': ['ambiental', 'licença', 'compensação', 'fauna', 'flora', 'meio ambiente', 'impacto ambiental', 'EIA', 'RIMA'],
+    'desapropriacao': ['desapropriação', 'faixa de domínio', 'invasão', 'ocupação', 'área non aedificandi', 'servidão'],
+    'usuario': ['usuário', 'reclamação', 'ouvidoria', 'ressarcimento', 'indenização', 'dano', 'consumidor'],
+    // Energia
+    'energia_tarifa': ['tarifa de energia', 'reajuste tarifário', 'revisão tarifária', 'bandeira tarifária', 'encargo setorial'],
+    'energia_geracao': ['geração distribuída', 'micro e minigeração', 'fonte renovável', 'solar', 'eólica', 'hidrelétrica'],
+    'energia_distribuicao': ['distribuição de energia', 'concessionária', 'permissionária', 'rede elétrica'],
+    'energia_qualidade': ['qualidade do fornecimento', 'DEC', 'FEC', 'interrupção', 'compensação'],
+    // Telecom
+    'telecom_espectro': ['espectro', 'radiofrequência', 'banda', 'MHz', 'GHz', '5G', '4G'],
+    'telecom_qualidade': ['qualidade do serviço', 'velocidade', 'banda larga', 'cobertura'],
+    'telecom_outorga': ['outorga', 'autorização', 'licença de estação', 'SCM', 'SMP'],
+    // Petróleo/Gás
+    'petroleo_exploracao': ['exploração', 'produção', 'campo', 'poço', 'bacia sedimentar'],
+    'petroleo_refino': ['refino', 'refinaria', 'derivados', 'gasolina', 'diesel', 'GLP'],
+    'petroleo_distribuicao': ['distribuição', 'revenda', 'posto', 'combustível', 'preço'],
+    // Saúde
+    'saude_plano': ['plano de saúde', 'operadora', 'beneficiário', 'cobertura', 'carência'],
+    'saude_reajuste': ['reajuste de plano', 'mensalidade', 'sinistralidade', 'ANS'],
+    'saude_medicamento': ['medicamento', 'registro', 'genérico', 'similar', 'referência'],
+    // Saneamento
+    'saneamento_tarifa': ['tarifa de água', 'tarifa de esgoto', 'universalização'],
+    'saneamento_qualidade': ['qualidade da água', 'tratamento', 'abastecimento', 'coleta']
+};
+
+// Padrões para extração de valores monetários
+const PADROES_VALORES = {
+    reais: [
+        /R\$\s*([\d.,]+)\s*(?:mil|milhão|milhões|bilhão|bilhões)?/gi,
+        /(?:valor|montante|quantia|importância)\s*(?:de)?\s*R\$\s*([\d.,]+)/gi
+    ],
+    porcentagem: [
+        /([\d.,]+)\s*%/g,
+        /(?:alíquota|taxa|índice)\s*(?:de)?\s*([\d.,]+)\s*%/gi
+    ]
 };
 
 // Meses em português para conversão de data
@@ -663,11 +696,107 @@ function calcularConfianca(delib) {
 }
 
 /**
+ * Extrai valores monetários do texto
+ */
+function extrairValoresMonetarios(texto) {
+    const valores = [];
+
+    for (const padrao of PADROES_VALORES.reais) {
+        let match;
+        const regex = new RegExp(padrao.source, padrao.flags);
+        while ((match = regex.exec(texto)) !== null) {
+            let valor = match[1] || match[0];
+            valor = valor.replace(/R\$\s*/gi, '').trim();
+
+            // Converte para número
+            let numerico = parseFloat(valor.replace(/\./g, '').replace(',', '.'));
+
+            // Multiplica se tiver sufixo
+            const textoAoRedor = texto.substring(Math.max(0, match.index - 10), match.index + match[0].length + 20).toLowerCase();
+            if (/bilh[ãõo]/i.test(textoAoRedor)) numerico *= 1000000000;
+            else if (/milh[ãõo]/i.test(textoAoRedor)) numerico *= 1000000;
+            else if (/mil\b/i.test(textoAoRedor)) numerico *= 1000;
+
+            if (!isNaN(numerico) && numerico > 0) {
+                valores.push({
+                    original: match[0],
+                    numerico: numerico,
+                    formatado: numerico.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+                });
+            }
+        }
+    }
+
+    // Remove duplicatas e ordena por valor
+    const unicos = [...new Map(valores.map(v => [v.numerico, v])).values()];
+    return unicos.sort((a, b) => b.numerico - a.numerico);
+}
+
+/**
+ * Extrai CNPJs do texto
+ */
+function extrairCNPJs(texto) {
+    const cnpjs = [];
+    const regex = /\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}/g;
+    let match;
+    while ((match = regex.exec(texto)) !== null) {
+        if (!cnpjs.includes(match[0])) {
+            cnpjs.push(match[0]);
+        }
+    }
+    return cnpjs;
+}
+
+/**
+ * Extrai CPFs do texto (mascarados para LGPD)
+ */
+function extrairCPFs(texto) {
+    const cpfs = [];
+    const regex = /\d{3}\.\d{3}\.\d{3}-\d{2}/g;
+    let match;
+    while ((match = regex.exec(texto)) !== null) {
+        // Mascara os dígitos centrais para LGPD
+        const mascarado = match[0].replace(/(\d{3})\.\d{3}\.\d{3}(-\d{2})/, '$1.***.***$2');
+        if (!cpfs.includes(mascarado)) {
+            cpfs.push(mascarado);
+        }
+    }
+    return cpfs;
+}
+
+/**
+ * Identifica todos os microtemas presentes no texto
+ */
+function identificarTodosMicrotemas(texto) {
+    const encontrados = [];
+    const textoLower = texto.toLowerCase();
+
+    for (const [tema, palavras] of Object.entries(MICROTEMAS)) {
+        for (const palavra of palavras) {
+            if (textoLower.includes(palavra.toLowerCase())) {
+                if (!encontrados.includes(tema)) {
+                    encontrados.push(tema);
+                }
+                break;
+            }
+        }
+    }
+
+    return encontrados;
+}
+
+/**
  * Versão aprimorada da extração com suporte multi-agência
  */
 function extrairDeliberacoesMultiAgencia(texto, agenciaFornecida = null) {
     const agencia = agenciaFornecida || detectarAgencia(texto);
     const resultado = extrairDeliberacoes(texto, agencia);
+
+    // Extrai dados globais do texto
+    const valoresMonetarios = extrairValoresMonetarios(texto);
+    const cnpjs = extrairCNPJs(texto);
+    const cpfs = extrairCPFs(texto);
+    const todosMicrotemas = identificarTodosMicrotemas(texto);
 
     // Enriquece com dados adicionais
     resultado.deliberations = resultado.deliberations.map(delib => {
@@ -688,10 +817,28 @@ function extrairDeliberacoesMultiAgencia(texto, agenciaFornecida = null) {
             nome: AGENCIAS_CONFIG[agencia]?.nome || agencia
         };
 
+        // Adiciona valores monetários encontrados
+        delib.valores_monetarios = valoresMonetarios;
+
+        // Adiciona CNPJs e CPFs (mascarados)
+        delib.cnpjs_mencionados = cnpjs;
+        delib.cpfs_mencionados = cpfs;
+
+        // Adiciona todos os microtemas identificados
+        delib.microtemas_identificados = todosMicrotemas;
+
         return delib;
     });
 
     resultado.agencia_detectada = agencia;
+    resultado.metadados = {
+        total_valores: valoresMonetarios.length,
+        valor_total: valoresMonetarios.reduce((sum, v) => sum + v.numerico, 0),
+        total_cnpjs: cnpjs.length,
+        total_cpfs: cpfs.length,
+        microtemas: todosMicrotemas
+    };
+
     return resultado;
 }
 
@@ -705,6 +852,10 @@ module.exports = {
     detectarAgencia,
     normalizarEmpresa,
     extrairEmpresas,
+    extrairValoresMonetarios,
+    extrairCNPJs,
+    extrairCPFs,
+    identificarTodosMicrotemas,
     calcularConfianca,
     DIRETORES,
     MICROTEMAS,

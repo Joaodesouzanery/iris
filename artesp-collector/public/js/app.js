@@ -2556,20 +2556,17 @@
     };
 
     // ============================================
-    // PAGE: Grafo de Conexoes - Interactive Force Graph
+    // PAGE: Grafo de Conexoes - Card-based Network Graph
     // ============================================
     const PageGrafo = {
         nodes: [],
         links: [],
-        svg: null,
-        simulation: null,
         zoom: 1,
         panX: 0,
         panY: 0,
         selectedNode: null,
-        dragging: null,
-        width: 800,
-        height: 500,
+        containerWidth: 1200,
+        containerHeight: 700,
 
         init() {
             const page = document.getElementById('page-grafo');
@@ -2580,115 +2577,84 @@
         },
 
         initData() {
+            // Node data with detailed information
             this.nodes = [
-                { id: 1, name: 'CCR S.A.', type: 'empresa', deliberacoes: 45, alertas: 2 },
-                { id: 2, name: 'Ecovias', type: 'empresa', deliberacoes: 38, alertas: 3 },
-                { id: 3, name: 'Patricia Vanzolini', type: 'diretor', deliberacoes: 156, alertas: 0 },
-                { id: 4, name: 'Carlos Andrade', type: 'diretor', deliberacoes: 89, alertas: 1 },
-                { id: 5, name: 'Marcos Ribeiro', type: 'diretor', deliberacoes: 112, alertas: 2 },
-                { id: 6, name: 'ViaOeste', type: 'empresa', deliberacoes: 52, alertas: 1 },
-                { id: 7, name: 'AutoBAn', type: 'empresa', deliberacoes: 28, alertas: 0 },
-                { id: 8, name: 'Proc. Judicial A', type: 'interessado', deliberacoes: 5, alertas: 0 },
-                { id: 9, name: 'Proc. Judicial B', type: 'interessado', deliberacoes: 3, alertas: 0 },
-                { id: 10, name: 'Holding XYZ', type: 'empresa', deliberacoes: 15, alertas: 1 }
+                {
+                    id: 1, name: 'CCR S.A.', type: 'empresa',
+                    cnpj: '02.846.056/0001-97', status: 'Ativo',
+                    capital: 'R$ 8.500.000.000', abertura: '12/05/1998',
+                    cidade: 'Sao Paulo/SP', cnae: '52.21-4-00',
+                    deliberacoes: 45, alertas: 2,
+                    img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/CCR_logo.svg/200px-CCR_logo.svg.png'
+                },
+                {
+                    id: 2, name: 'Ecovias', type: 'empresa',
+                    cnpj: '03.158.863/0001-92', status: 'Ativo',
+                    capital: 'R$ 500.000.000', abertura: '08/02/2000',
+                    cidade: 'Sao Paulo/SP', cnae: '52.21-4-00',
+                    deliberacoes: 38, alertas: 3
+                },
+                {
+                    id: 3, name: 'Andre Isper R. Barnabe', type: 'diretor',
+                    cpf: '687.***.***-08', status: 'Ativo',
+                    cargo: 'Diretor-Presidente', desde: '2023',
+                    deliberacoes: 156, alertas: 0
+                },
+                {
+                    id: 4, name: 'ViaOeste', type: 'empresa',
+                    cnpj: '02.748.567/0001-45', status: 'Ativo',
+                    capital: 'R$ 320.000.000', abertura: '15/03/1999',
+                    cidade: 'Osasco/SP', cnae: '52.21-4-00',
+                    deliberacoes: 52, alertas: 1
+                },
+                {
+                    id: 5, name: 'AutoBAn', type: 'empresa',
+                    cnpj: '02.695.324/0001-89', status: 'Ativo',
+                    capital: 'R$ 450.000.000', abertura: '22/07/1998',
+                    cidade: 'Jundiai/SP', cnae: '52.21-4-00',
+                    deliberacoes: 28, alertas: 0
+                },
+                {
+                    id: 6, name: 'Diego A. Zanatto', type: 'diretor',
+                    cpf: '345.***.***-12', status: 'Ativo',
+                    cargo: 'Diretor de Fiscalizacao', desde: '2022',
+                    deliberacoes: 89, alertas: 1
+                },
+                {
+                    id: 7, name: 'Veiculo Oficial', type: 'veiculo',
+                    placa: 'GQO8155', renavam: 'FWT-2D85',
+                    modelo: 'UNO MILLE SX', categoria: 'Veiculo',
+                    deliberacoes: 0, alertas: 0
+                }
             ];
 
+            // Position nodes manually for better visual layout
+            const positions = {
+                1: { x: 600, y: 350 },   // CCR central
+                2: { x: 900, y: 200 },   // Ecovias
+                3: { x: 250, y: 350 },   // Andre Isper
+                4: { x: 400, y: 550 },   // ViaOeste
+                5: { x: 850, y: 500 },   // AutoBAn
+                6: { x: 150, y: 550 },   // Diego
+                7: { x: 500, y: 120 }    // Veiculo
+            };
+
+            this.nodes.forEach(node => {
+                const pos = positions[node.id] || { x: 400 + Math.random() * 400, y: 200 + Math.random() * 300 };
+                node.x = pos.x;
+                node.y = pos.y;
+            });
+
+            // Links with relationship types
             this.links = [
-                { source: 1, target: 6, type: 'controle', label: 'Controla' },
-                { source: 1, target: 2, type: 'participacao', label: 'Participa' },
-                { source: 3, target: 1, type: 'direcao', label: 'Dirige' },
-                { source: 4, target: 2, type: 'direcao', label: 'Dirige' },
-                { source: 5, target: 1, type: 'direcao', label: 'Dirige' },
-                { source: 6, target: 7, type: 'participacao', label: 'Participa' },
-                { source: 8, target: 2, type: 'interesse', label: 'Processo' },
-                { source: 9, target: 6, type: 'interesse', label: 'Processo' },
-                { source: 10, target: 1, type: 'participacao', label: 'Participa' },
-                { source: 10, target: 7, type: 'controle', label: 'Controla' },
-                { source: 4, target: 10, type: 'vinculo', label: 'Vinculo Oculto', hidden: true }
+                { source: 1, target: 2, type: 'controle', label: 'Controla' },
+                { source: 1, target: 4, type: 'controle', label: 'Controla' },
+                { source: 1, target: 5, type: 'participacao', label: 'Participa' },
+                { source: 3, target: 1, type: 'direcao', label: 'Diretor' },
+                { source: 6, target: 4, type: 'direcao', label: 'Fiscaliza' },
+                { source: 7, target: 3, type: 'vinculo', label: 'Patrimonio' },
+                { source: 3, target: 6, type: 'socio', label: 'Socio', hidden: true }
             ];
-
-            // Initialize positions using force simulation
-            const centerX = this.width / 2;
-            const centerY = this.height / 2;
-            this.nodes.forEach((node, i) => {
-                const angle = (i / this.nodes.length) * 2 * Math.PI;
-                const radius = 150 + Math.random() * 50;
-                node.x = centerX + Math.cos(angle) * radius;
-                node.y = centerY + Math.sin(angle) * radius;
-                node.vx = 0;
-                node.vy = 0;
-            });
-
-            // Run force simulation
-            this.runSimulation();
-        },
-
-        runSimulation() {
-            const iterations = 300;
-            for (let i = 0; i < iterations; i++) {
-                this.simulationStep();
-            }
-        },
-
-        simulationStep() {
-            const alpha = 0.1;
-            const repulsion = 3000;
-            const attraction = 0.05;
-            const centerForce = 0.01;
-
-            // Repulsion between all nodes
-            for (let i = 0; i < this.nodes.length; i++) {
-                for (let j = i + 1; j < this.nodes.length; j++) {
-                    const dx = this.nodes[j].x - this.nodes[i].x;
-                    const dy = this.nodes[j].y - this.nodes[i].y;
-                    const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-                    const force = repulsion / (dist * dist);
-                    const fx = (dx / dist) * force;
-                    const fy = (dy / dist) * force;
-                    this.nodes[i].vx -= fx;
-                    this.nodes[i].vy -= fy;
-                    this.nodes[j].vx += fx;
-                    this.nodes[j].vy += fy;
-                }
-            }
-
-            // Attraction along links
-            this.links.forEach(link => {
-                const source = this.nodes.find(n => n.id === link.source);
-                const target = this.nodes.find(n => n.id === link.target);
-                if (source && target) {
-                    const dx = target.x - source.x;
-                    const dy = target.y - source.y;
-                    const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-                    const force = (dist - 120) * attraction;
-                    const fx = (dx / dist) * force;
-                    const fy = (dy / dist) * force;
-                    source.vx += fx;
-                    source.vy += fy;
-                    target.vx -= fx;
-                    target.vy -= fy;
-                }
-            });
-
-            // Center gravity
-            const centerX = this.width / 2;
-            const centerY = this.height / 2;
-            this.nodes.forEach(node => {
-                node.vx += (centerX - node.x) * centerForce;
-                node.vy += (centerY - node.y) * centerForce;
-            });
-
-            // Apply velocities
-            this.nodes.forEach(node => {
-                node.x += node.vx * alpha;
-                node.y += node.vy * alpha;
-                node.vx *= 0.9;
-                node.vy *= 0.9;
-
-                // Bounds
-                node.x = Math.max(50, Math.min(this.width - 50, node.x));
-                node.y = Math.max(50, Math.min(this.height - 50, node.y));
-            });
         },
 
         setupFilters() {
@@ -2702,321 +2668,312 @@
             const container = document.getElementById('grafo-container');
             if (!container) return;
 
-            const colors = {
-                empresa: { fill: '#FFEF4D', glow: 'rgba(255, 239, 77, 0.4)' },
-                diretor: { fill: '#60a5fa', glow: 'rgba(96, 165, 250, 0.4)' },
-                interessado: { fill: '#34d399', glow: 'rgba(52, 211, 153, 0.4)' }
-            };
-
             const linkColors = {
-                controle: '#FFEF4D',
-                participacao: '#64748b',
-                direcao: '#60a5fa',
-                interesse: '#34d399',
-                vinculo: '#ef4444'
+                controle: { color: '#FFEF4D', label: 'Controle' },
+                participacao: { color: '#64748b', label: 'Participacao' },
+                direcao: { color: '#60a5fa', label: 'Direcao' },
+                vinculo: { color: '#a855f7', label: 'Vinculo' },
+                socio: { color: '#4ade80', label: 'Socio' }
             };
 
-            const filter = document.getElementById('grafo-tipo-filter');
-            const filterValue = filter ? filter.value : 'todos';
-
-            const filteredNodes = filterValue === 'todos'
-                ? this.nodes
-                : this.nodes.filter(n => n.type === filterValue ||
-                    this.links.some(l =>
-                        (l.source === n.id || l.target === n.id) &&
-                        this.nodes.find(nn => nn.id === (l.source === n.id ? l.target : l.source))?.type === filterValue
-                    ));
-
-            const visibleNodeIds = new Set(filteredNodes.map(n => n.id));
-            const filteredLinks = this.links.filter(l => visibleNodeIds.has(l.source) && visibleNodeIds.has(l.target));
-
+            // Build HTML
             let html = `
-                <svg id="grafo-svg" width="100%" height="100%" viewBox="0 0 ${this.width} ${this.height}"
-                     style="cursor: grab; background: radial-gradient(ellipse at center, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 1) 100%);">
-                    <defs>
-                        <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-                            <feGaussianBlur stdDeviation="4" result="blur"/>
-                            <feMerge>
-                                <feMergeNode in="blur"/>
-                                <feMergeNode in="SourceGraphic"/>
-                            </feMerge>
-                        </filter>
-                        <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
-                            <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.3"/>
-                        </filter>
-                        <marker id="arrow-controle" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
-                            <polygon points="0 0, 8 3, 0 6" fill="${linkColors.controle}"/>
-                        </marker>
-                        <marker id="arrow-participacao" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
-                            <polygon points="0 0, 8 3, 0 6" fill="${linkColors.participacao}"/>
-                        </marker>
-                        <marker id="arrow-direcao" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
-                            <polygon points="0 0, 8 3, 0 6" fill="${linkColors.direcao}"/>
-                        </marker>
-                        <marker id="arrow-interesse" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
-                            <polygon points="0 0, 8 3, 0 6" fill="${linkColors.interesse}"/>
-                        </marker>
-                        <marker id="arrow-vinculo" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
-                            <polygon points="0 0, 8 3, 0 6" fill="${linkColors.vinculo}"/>
-                        </marker>
-                    </defs>
-                    <g id="grafo-transform" transform="translate(${this.panX}, ${this.panY}) scale(${this.zoom})">
-                        <g id="links-layer">`;
+                <div class="grafo-canvas" id="grafo-canvas">
+                    <!-- SVG for connection lines -->
+                    <svg class="grafo-svg-lines" viewBox="0 0 ${this.containerWidth} ${this.containerHeight}">
+                        <defs>
+                            <marker id="arrow-gold" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                                <polygon points="0 0, 10 3.5, 0 7" fill="#FFEF4D"/>
+                            </marker>
+                            <marker id="arrow-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                                <polygon points="0 0, 10 3.5, 0 7" fill="#60a5fa"/>
+                            </marker>
+                            <marker id="arrow-purple" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                                <polygon points="0 0, 10 3.5, 0 7" fill="#a855f7"/>
+                            </marker>
+                            <marker id="arrow-green" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                                <polygon points="0 0, 10 3.5, 0 7" fill="#4ade80"/>
+                            </marker>
+                            <marker id="arrow-gray" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                                <polygon points="0 0, 10 3.5, 0 7" fill="#64748b"/>
+                            </marker>
+                        </defs>
+                        <g id="links-group">`;
 
-            // Draw links with curves
-            filteredLinks.forEach((link, idx) => {
+            // Draw links
+            this.links.forEach((link, idx) => {
                 const source = this.nodes.find(n => n.id === link.source);
                 const target = this.nodes.find(n => n.id === link.target);
-                if (source && target) {
-                    const color = linkColors[link.type] || '#64748b';
-                    const dashArray = link.hidden ? '6,4' : 'none';
-                    const opacity = link.hidden ? '0.6' : '0.8';
-                    const strokeWidth = link.hidden ? '2' : '2';
+                if (!source || !target) return;
 
-                    // Calculate curve
-                    const dx = target.x - source.x;
-                    const dy = target.y - source.y;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
+                const linkStyle = linkColors[link.type] || linkColors.participacao;
+                const dashArray = link.hidden ? '8,4' : 'none';
+                const markerColor = link.type === 'controle' ? 'gold' :
+                                   link.type === 'direcao' ? 'blue' :
+                                   link.type === 'vinculo' ? 'purple' :
+                                   link.type === 'socio' ? 'green' : 'gray';
 
-                    // Offset for arrow
-                    const nodeRadius = 24;
-                    const ratio = (dist - nodeRadius) / dist;
-                    const endX = source.x + dx * ratio;
-                    const endY = source.y + dy * ratio;
+                // Calculate control point for curved line
+                const midX = (source.x + target.x) / 2;
+                const midY = (source.y + target.y) / 2;
+                const dx = target.x - source.x;
+                const dy = target.y - source.y;
+                const len = Math.sqrt(dx * dx + dy * dy);
+                const offset = len * 0.15;
+                const perpX = -dy / len * offset;
+                const perpY = dx / len * offset;
+                const ctrlX = midX + perpX;
+                const ctrlY = midY + perpY;
 
-                    html += `<line class="graph-link" data-link-id="${idx}"
-                                x1="${source.x}" y1="${source.y}"
-                                x2="${endX}" y2="${endY}"
-                                stroke="${color}" stroke-width="${strokeWidth}"
-                                stroke-dasharray="${dashArray}" opacity="${opacity}"
-                                marker-end="url(#arrow-${link.type})"
-                                style="transition: all 0.2s ease;"/>`;
-                }
-            });
-
-            html += `</g><g id="nodes-layer">`;
-
-            // Draw nodes
-            filteredNodes.forEach(node => {
-                const color = colors[node.type] || colors.empresa;
-                const isSelected = this.selectedNode === node.id;
-                const radius = node.type === 'empresa' ? 28 : (node.type === 'diretor' ? 24 : 20);
-                const iconSize = radius * 0.7;
+                // Offset end point to not overlap card
+                const cardOffset = 100;
+                const ratio = (len - cardOffset) / len;
+                const endX = source.x + dx * ratio;
+                const endY = source.y + dy * ratio;
 
                 html += `
-                    <g class="graph-node-group" data-node-id="${node.id}"
-                       transform="translate(${node.x}, ${node.y})"
-                       style="cursor: pointer;">
-                        <!-- Glow effect -->
-                        <circle r="${radius + 8}" fill="${color.glow}" opacity="${isSelected ? '0.6' : '0.2'}"
-                                class="node-glow" style="transition: all 0.3s ease;"/>
-                        <!-- Main circle -->
-                        <circle r="${radius}" fill="${color.fill}" filter="url(#shadow)"
-                                class="node-main" style="transition: all 0.2s ease;"/>
-                        <!-- Inner highlight -->
-                        <circle r="${radius - 4}" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
-                        <!-- Icon -->
-                        <g transform="translate(${-iconSize/2}, ${-iconSize/2})">
-                            ${this.getNodeIcon(node.type, iconSize)}
-                        </g>
-                        <!-- Label background -->
-                        <rect x="${-node.name.length * 3.5}" y="${radius + 8}"
-                              width="${node.name.length * 7}" height="18" rx="4"
-                              fill="rgba(15, 23, 42, 0.9)"/>
-                        <!-- Label -->
-                        <text y="${radius + 21}" text-anchor="middle"
-                              fill="#e2e8f0" font-size="11" font-weight="500"
-                              style="pointer-events: none;">${node.name}</text>
-                        ${node.alertas > 0 ? `
-                            <circle cx="${radius - 5}" cy="${-radius + 5}" r="8" fill="#ef4444"/>
-                            <text x="${radius - 5}" y="${-radius + 9}" text-anchor="middle"
-                                  fill="white" font-size="10" font-weight="bold">${node.alertas}</text>
-                        ` : ''}
+                    <g class="link-group" data-link="${idx}">
+                        <path d="M ${source.x} ${source.y} Q ${ctrlX} ${ctrlY} ${endX} ${endY}"
+                              fill="none" stroke="${linkStyle.color}" stroke-width="2"
+                              stroke-dasharray="${dashArray}" opacity="0.8"
+                              marker-end="url(#arrow-${markerColor})"
+                              class="link-path"/>
+                        <circle cx="${midX + perpX * 0.5}" cy="${midY + perpY * 0.5}" r="28"
+                                fill="rgba(15, 23, 42, 0.95)" stroke="${linkStyle.color}" stroke-width="1.5"/>
+                        <text x="${midX + perpX * 0.5}" y="${midY + perpY * 0.5 + 4}"
+                              text-anchor="middle" fill="${linkStyle.color}" font-size="10" font-weight="600">
+                            ${link.label}
+                        </text>
                     </g>`;
             });
 
-            html += `</g></g></svg>`;
+            html += `</g></svg>`;
+
+            // Draw node cards
+            html += `<div class="grafo-nodes-layer" id="grafo-nodes">`;
+
+            this.nodes.forEach(node => {
+                const isSelected = this.selectedNode === node.id;
+                const cardClass = `grafo-card grafo-card-${node.type} ${isSelected ? 'selected' : ''}`;
+                const typeColors = {
+                    empresa: { bg: 'rgba(15, 23, 42, 0.95)', border: '#FFEF4D', icon: '#FFEF4D' },
+                    diretor: { bg: 'rgba(15, 23, 42, 0.95)', border: '#60a5fa', icon: '#60a5fa' },
+                    veiculo: { bg: 'rgba(15, 23, 42, 0.95)', border: '#a855f7', icon: '#a855f7' }
+                };
+                const style = typeColors[node.type] || typeColors.empresa;
+
+                html += `
+                    <div class="${cardClass}" data-node-id="${node.id}"
+                         style="left: ${node.x}px; top: ${node.y}px; --card-border: ${style.border};">
+                        <div class="grafo-card-header">
+                            <div class="grafo-card-icon" style="background: ${style.icon}20; color: ${style.icon};">
+                                ${this.getNodeIcon(node.type)}
+                            </div>
+                            <div class="grafo-card-title">
+                                <span class="card-name">${node.name}</span>
+                                <span class="card-id">${node.cnpj || node.cpf || node.placa || ''}</span>
+                            </div>
+                        </div>
+                        <div class="grafo-card-body">
+                            ${this.getCardContent(node)}
+                        </div>
+                        ${node.img ? `<div class="grafo-card-img"><img src="${node.img}" alt="${node.name}"/></div>` : ''}
+                        ${node.alertas > 0 ? `<div class="grafo-card-alert">${node.alertas}</div>` : ''}
+                    </div>`;
+            });
+
+            html += `</div>`;
 
             // Legend
             html += `
-                <div class="grafo-legend">
-                    <div class="legend-title">Legenda</div>
-                    <div class="legend-items">
-                        <div class="legend-item"><span class="legend-dot" style="background: ${colors.empresa.fill};"></span> Empresa</div>
-                        <div class="legend-item"><span class="legend-dot" style="background: ${colors.diretor.fill};"></span> Diretor</div>
-                        <div class="legend-item"><span class="legend-dot" style="background: ${colors.interessado.fill};"></span> Interessado</div>
+                <div class="grafo-legend-modern">
+                    <div class="legend-section">
+                        <span class="legend-title">Entidades</span>
+                        <div class="legend-row"><span class="legend-dot" style="background: #FFEF4D;"></span>Empresa</div>
+                        <div class="legend-row"><span class="legend-dot" style="background: #60a5fa;"></span>Pessoa</div>
+                        <div class="legend-row"><span class="legend-dot" style="background: #a855f7;"></span>Veiculo/Bem</div>
                     </div>
-                    <div class="legend-links">
-                        <div class="legend-item"><span class="legend-line" style="background: ${linkColors.controle};"></span> Controle</div>
-                        <div class="legend-item"><span class="legend-line" style="background: ${linkColors.direcao};"></span> Direcao</div>
-                        <div class="legend-item"><span class="legend-line dashed" style="background: ${linkColors.vinculo};"></span> Oculto</div>
+                    <div class="legend-section">
+                        <span class="legend-title">Vinculos</span>
+                        <div class="legend-row"><span class="legend-line" style="background: #FFEF4D;"></span>Controle</div>
+                        <div class="legend-row"><span class="legend-line" style="background: #60a5fa;"></span>Direcao</div>
+                        <div class="legend-row"><span class="legend-line" style="background: #4ade80;"></span>Sociedade</div>
+                        <div class="legend-row"><span class="legend-line dashed" style="background: #ef4444;"></span>Oculto</div>
                     </div>
                 </div>
-                <div class="grafo-instructions">
-                    <span>Arraste os nos para reorganizar</span>
-                    <span>Scroll para zoom</span>
-                    <span>Clique para detalhes</span>
+                <div class="grafo-controls-float">
+                    <button onclick="PageGrafo.zoomIn()" title="Zoom In">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35M8 11h6M11 8v6"/></svg>
+                    </button>
+                    <button onclick="PageGrafo.zoomOut()" title="Zoom Out">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35M8 11h6"/></svg>
+                    </button>
+                    <button onclick="PageGrafo.resetView()" title="Reset">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                    </button>
                 </div>`;
 
             container.innerHTML = html;
             this.setupInteractions();
         },
 
-        getNodeIcon(type, size) {
+        getNodeIcon(type) {
             const icons = {
-                empresa: `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="#0f172a" stroke-width="2">
-                    <path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-                </svg>`,
-                diretor: `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="#0f172a" stroke-width="2">
-                    <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                </svg>`,
-                interessado: `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="#0f172a" stroke-width="2">
-                    <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                </svg>`
+                empresa: `<svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>`,
+                diretor: `<svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>`,
+                veiculo: `<svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9L18 10l-2-5H8L6 10l-2.5 1.1C2.7 11.3 2 12.1 2 13v3c0 .6.4 1 1 1h2m4 0h6m-6 0a2 2 0 11-4 0 2 2 0 014 0zm10 0a2 2 0 11-4 0 2 2 0 014 0z"/></svg>`
             };
             return icons[type] || icons.empresa;
         },
 
+        getCardContent(node) {
+            if (node.type === 'empresa') {
+                return `
+                    <div class="card-row"><span class="row-label">Status CNPJ</span><span class="row-value status-active">${node.status}</span></div>
+                    <div class="card-row"><span class="row-label">Cap. Social</span><span class="row-value">${node.capital || 'N/D'}</span></div>
+                    <div class="card-row"><span class="row-label">Abertura</span><span class="row-value">${node.abertura || 'N/D'}</span></div>
+                    <div class="card-row"><span class="row-label">Cidade</span><span class="row-value">${node.cidade || 'N/D'}</span></div>
+                    <div class="card-row"><span class="row-label">CNAE</span><span class="row-value">${node.cnae || 'N/D'}</span></div>`;
+            } else if (node.type === 'diretor') {
+                return `
+                    <div class="card-row"><span class="row-label">Situacao</span><span class="row-value status-${node.status === 'Ativo' ? 'active' : 'inactive'}">${node.status}</span></div>
+                    <div class="card-row"><span class="row-label">Cargo</span><span class="row-value">${node.cargo || 'N/D'}</span></div>
+                    <div class="card-row"><span class="row-label">Desde</span><span class="row-value">${node.desde || 'N/D'}</span></div>
+                    <div class="card-row"><span class="row-label">Deliberacoes</span><span class="row-value">${node.deliberacoes}</span></div>`;
+            } else if (node.type === 'veiculo') {
+                return `
+                    <div class="card-row"><span class="row-label">Categoria</span><span class="row-value badge-category">${node.categoria}</span></div>
+                    <div class="card-row"><span class="row-label">Placa</span><span class="row-value">${node.placa}</span></div>
+                    <div class="card-row"><span class="row-label">Renavam</span><span class="row-value">${node.renavam}</span></div>`;
+            }
+            return '';
+        },
+
         setupInteractions() {
-            const svg = document.getElementById('grafo-svg');
-            const container = document.getElementById('grafo-container');
-            if (!svg || !container) return;
+            const canvas = document.getElementById('grafo-canvas');
+            const nodesLayer = document.getElementById('grafo-nodes');
+            if (!canvas) return;
 
             let isDragging = false;
             let dragNode = null;
-            let isPanning = false;
-            let startX, startY;
+            let offsetX = 0, offsetY = 0;
 
-            // Node interactions
-            const nodeGroups = svg.querySelectorAll('.graph-node-group');
-            nodeGroups.forEach(group => {
-                const nodeId = parseInt(group.dataset.nodeId);
+            // Card drag interactions
+            document.querySelectorAll('.grafo-card').forEach(card => {
+                const nodeId = parseInt(card.dataset.nodeId);
 
-                group.addEventListener('mouseenter', () => {
-                    if (!isDragging) {
-                        group.querySelector('.node-glow').style.opacity = '0.5';
-                        group.querySelector('.node-main').style.transform = 'scale(1.1)';
-                        this.highlightConnections(nodeId, true);
-                    }
-                });
-
-                group.addEventListener('mouseleave', () => {
-                    if (!isDragging) {
-                        const isSelected = this.selectedNode === nodeId;
-                        group.querySelector('.node-glow').style.opacity = isSelected ? '0.6' : '0.2';
-                        group.querySelector('.node-main').style.transform = 'scale(1)';
-                        this.highlightConnections(nodeId, false);
-                    }
-                });
-
-                group.addEventListener('mousedown', (e) => {
-                    e.stopPropagation();
+                card.addEventListener('mousedown', (e) => {
+                    if (e.target.closest('button')) return;
                     isDragging = true;
                     dragNode = this.nodes.find(n => n.id === nodeId);
-                    svg.style.cursor = 'grabbing';
+                    const rect = card.getBoundingClientRect();
+                    offsetX = e.clientX - rect.left;
+                    offsetY = e.clientY - rect.top;
+                    card.style.zIndex = '1000';
+                    card.classList.add('dragging');
+                    e.preventDefault();
                 });
 
-                group.addEventListener('click', (e) => {
-                    if (!isDragging || (Math.abs(e.clientX - startX) < 5 && Math.abs(e.clientY - startY) < 5)) {
+                card.addEventListener('click', (e) => {
+                    if (!isDragging || !dragNode) {
                         this.selectNode(nodeId);
                     }
                 });
             });
 
-            // Mouse move for dragging
-            svg.addEventListener('mousemove', (e) => {
+            document.addEventListener('mousemove', (e) => {
                 if (isDragging && dragNode) {
-                    const rect = svg.getBoundingClientRect();
-                    const svgX = (e.clientX - rect.left - this.panX) / this.zoom;
-                    const svgY = (e.clientY - rect.top - this.panY) / this.zoom;
+                    const canvasRect = canvas.getBoundingClientRect();
+                    const newX = (e.clientX - canvasRect.left - offsetX + canvas.scrollLeft) / this.zoom;
+                    const newY = (e.clientY - canvasRect.top - offsetY + canvas.scrollTop) / this.zoom;
 
-                    dragNode.x = Math.max(50, Math.min(this.width - 50, svgX));
-                    dragNode.y = Math.max(50, Math.min(this.height - 50, svgY));
+                    dragNode.x = Math.max(0, Math.min(this.containerWidth - 200, newX));
+                    dragNode.y = Math.max(0, Math.min(this.containerHeight - 150, newY));
 
-                    this.updateNodePosition(dragNode);
-                } else if (isPanning) {
-                    const dx = e.clientX - startX;
-                    const dy = e.clientY - startY;
-                    this.panX += dx;
-                    this.panY += dy;
-                    startX = e.clientX;
-                    startY = e.clientY;
-                    this.updateTransform();
+                    this.updatePositions();
                 }
             });
 
-            // Mouse up
             document.addEventListener('mouseup', () => {
-                isDragging = false;
-                isPanning = false;
-                dragNode = null;
-                svg.style.cursor = 'grab';
-            });
-
-            // Pan
-            svg.addEventListener('mousedown', (e) => {
-                if (e.target === svg || e.target.tagName === 'rect') {
-                    isPanning = true;
-                    startX = e.clientX;
-                    startY = e.clientY;
-                    svg.style.cursor = 'grabbing';
+                if (dragNode) {
+                    const card = document.querySelector(`[data-node-id="${dragNode.id}"]`);
+                    if (card) {
+                        card.style.zIndex = '';
+                        card.classList.remove('dragging');
+                    }
                 }
+                isDragging = false;
+                dragNode = null;
             });
 
             // Zoom with scroll
-            container.addEventListener('wheel', (e) => {
+            canvas.addEventListener('wheel', (e) => {
                 e.preventDefault();
-                const delta = e.deltaY > 0 ? 0.9 : 1.1;
-                this.zoom = Math.max(0.3, Math.min(3, this.zoom * delta));
-                this.updateTransform();
+                const delta = e.deltaY > 0 ? 0.95 : 1.05;
+                this.zoom = Math.max(0.5, Math.min(2, this.zoom * delta));
+                canvas.style.transform = `scale(${this.zoom})`;
             });
         },
 
-        updateNodePosition(node) {
-            const group = document.querySelector(`[data-node-id="${node.id}"]`);
-            if (group) {
-                group.setAttribute('transform', `translate(${node.x}, ${node.y})`);
-            }
-
-            // Update connected links
-            const links = document.querySelectorAll('.graph-link');
-            links.forEach(link => {
-                const linkData = this.links[parseInt(link.dataset.linkId)];
-                if (linkData && (linkData.source === node.id || linkData.target === node.id)) {
-                    const source = this.nodes.find(n => n.id === linkData.source);
-                    const target = this.nodes.find(n => n.id === linkData.target);
-                    if (source && target) {
-                        const dx = target.x - source.x;
-                        const dy = target.y - source.y;
-                        const dist = Math.sqrt(dx * dx + dy * dy);
-                        const nodeRadius = 24;
-                        const ratio = (dist - nodeRadius) / dist;
-
-                        link.setAttribute('x1', source.x);
-                        link.setAttribute('y1', source.y);
-                        link.setAttribute('x2', source.x + dx * ratio);
-                        link.setAttribute('y2', source.y + dy * ratio);
-                    }
+        updatePositions() {
+            // Update card positions
+            this.nodes.forEach(node => {
+                const card = document.querySelector(`[data-node-id="${node.id}"]`);
+                if (card) {
+                    card.style.left = `${node.x}px`;
+                    card.style.top = `${node.y}px`;
                 }
             });
-        },
 
-        updateTransform() {
-            const transform = document.getElementById('grafo-transform');
-            if (transform) {
-                transform.setAttribute('transform', `translate(${this.panX}, ${this.panY}) scale(${this.zoom})`);
+            // Update SVG lines
+            const linksGroup = document.getElementById('links-group');
+            if (linksGroup) {
+                let svgContent = '';
+                this.links.forEach((link, idx) => {
+                    const source = this.nodes.find(n => n.id === link.source);
+                    const target = this.nodes.find(n => n.id === link.target);
+                    if (!source || !target) return;
+
+                    const linkColors = {
+                        controle: '#FFEF4D', participacao: '#64748b',
+                        direcao: '#60a5fa', vinculo: '#a855f7', socio: '#4ade80'
+                    };
+                    const color = linkColors[link.type] || '#64748b';
+                    const dashArray = link.hidden ? '8,4' : 'none';
+                    const markerColor = link.type === 'controle' ? 'gold' :
+                                       link.type === 'direcao' ? 'blue' :
+                                       link.type === 'vinculo' ? 'purple' :
+                                       link.type === 'socio' ? 'green' : 'gray';
+
+                    const midX = (source.x + target.x) / 2;
+                    const midY = (source.y + target.y) / 2;
+                    const dx = target.x - source.x;
+                    const dy = target.y - source.y;
+                    const len = Math.sqrt(dx * dx + dy * dy) || 1;
+                    const offset = len * 0.15;
+                    const perpX = -dy / len * offset;
+                    const perpY = dx / len * offset;
+                    const ctrlX = midX + perpX;
+                    const ctrlY = midY + perpY;
+                    const cardOffset = 100;
+                    const ratio = (len - cardOffset) / len;
+                    const endX = source.x + dx * ratio;
+                    const endY = source.y + dy * ratio;
+
+                    svgContent += `
+                        <g class="link-group" data-link="${idx}">
+                            <path d="M ${source.x} ${source.y} Q ${ctrlX} ${ctrlY} ${endX} ${endY}"
+                                  fill="none" stroke="${color}" stroke-width="2"
+                                  stroke-dasharray="${dashArray}" opacity="0.8"
+                                  marker-end="url(#arrow-${markerColor})" class="link-path"/>
+                            <circle cx="${midX + perpX * 0.5}" cy="${midY + perpY * 0.5}" r="28"
+                                    fill="rgba(15, 23, 42, 0.95)" stroke="${color}" stroke-width="1.5"/>
+                            <text x="${midX + perpX * 0.5}" y="${midY + perpY * 0.5 + 4}"
+                                  text-anchor="middle" fill="${color}" font-size="10" font-weight="600">${link.label}</text>
+                        </g>`;
+                });
+                linksGroup.innerHTML = svgContent;
             }
-        },
-
-        highlightConnections(nodeId, highlight) {
-            const links = document.querySelectorAll('.graph-link');
-            links.forEach(link => {
-                const linkData = this.links[parseInt(link.dataset.linkId)];
-                if (linkData && (linkData.source === nodeId || linkData.target === nodeId)) {
-                    link.style.strokeWidth = highlight ? '4' : '2';
-                    link.style.opacity = highlight ? '1' : '0.8';
-                }
-            });
         },
 
         selectNode(nodeId) {
@@ -3024,74 +2981,53 @@
             const detalhes = document.getElementById('grafo-detalhes');
             if (!detalhes) return;
 
-            const nodeData = {
-                1: { name: 'CCR S.A.', type: 'Empresa', cnpj: '02.846.056/0001-97', deliberacoes: 45, conexoes: 8, alertas: 2 },
-                2: { name: 'Ecovias dos Imigrantes', type: 'Empresa', cnpj: '03.158.863/0001-92', deliberacoes: 38, conexoes: 5, alertas: 3 },
-                3: { name: 'Patricia Vanzolini', type: 'Diretora', cargo: 'Diretora Presidente', deliberacoes: 156, conexoes: 4, alertas: 0 },
-                4: { name: 'Carlos Henrique Andrade', type: 'Diretor', cargo: 'Diretor de Fiscalizacao', deliberacoes: 89, conexoes: 6, alertas: 1 },
-                5: { name: 'Marcos Ribeiro', type: 'Diretor', cargo: 'Diretor de Regulacao', deliberacoes: 112, conexoes: 5, alertas: 2 },
-                6: { name: 'ViaOeste', type: 'Empresa', cnpj: '02.748.567/0001-45', deliberacoes: 52, conexoes: 4, alertas: 1 },
-                7: { name: 'AutoBAn', type: 'Empresa', cnpj: '02.695.324/0001-89', deliberacoes: 28, conexoes: 3, alertas: 0 },
-                8: { name: 'Processo Judicial A', type: 'Processo', numero: '0001234-56.2024.8.26.0000', deliberacoes: 5, conexoes: 2, alertas: 0 },
-                9: { name: 'Processo Judicial B', type: 'Processo', numero: '0005678-90.2024.8.26.0000', deliberacoes: 3, conexoes: 2, alertas: 0 },
-                10: { name: 'Holding XYZ', type: 'Empresa', cnpj: '12.345.678/0001-90', deliberacoes: 15, conexoes: 3, alertas: 1 }
-            };
+            const node = this.nodes.find(n => n.id === nodeId);
+            if (!node) return;
 
-            const data = nodeData[nodeId] || { name: 'Entidade', type: 'Desconhecido', deliberacoes: 0, conexoes: 0, alertas: 0 };
-            const isEmpresa = data.type === 'Empresa';
+            const conexoes = this.links.filter(l => l.source === nodeId || l.target === nodeId).length;
 
             detalhes.innerHTML = `
                 <div class="node-details-header">
-                    <div class="node-avatar ${isEmpresa ? 'empresa' : 'pessoa'}">
-                        ${this.getNodeIcon(isEmpresa ? 'empresa' : 'diretor', 32)}
+                    <div class="node-avatar ${node.type}">
+                        ${this.getNodeIcon(node.type)}
                     </div>
                     <div class="node-info">
-                        <h3>${data.name}</h3>
-                        <span class="badge ${isEmpresa ? 'badge-warning' : 'badge-primary'}">${data.type}</span>
+                        <h3>${node.name}</h3>
+                        <span class="badge badge-${node.type === 'empresa' ? 'warning' : 'primary'}">${node.type}</span>
                     </div>
                 </div>
                 <div class="node-details-body">
-                    ${data.cnpj ? `<div class="detail-row"><span class="detail-label">CNPJ</span><span class="detail-value">${data.cnpj}</span></div>` : ''}
-                    ${data.cargo ? `<div class="detail-row"><span class="detail-label">Cargo</span><span class="detail-value">${data.cargo}</span></div>` : ''}
-                    ${data.numero ? `<div class="detail-row"><span class="detail-label">Numero</span><span class="detail-value">${data.numero}</span></div>` : ''}
+                    ${node.cnpj ? `<div class="detail-row"><span class="detail-label">CNPJ</span><span class="detail-value">${node.cnpj}</span></div>` : ''}
+                    ${node.cpf ? `<div class="detail-row"><span class="detail-label">CPF</span><span class="detail-value">${node.cpf}</span></div>` : ''}
+                    ${node.cargo ? `<div class="detail-row"><span class="detail-label">Cargo</span><span class="detail-value">${node.cargo}</span></div>` : ''}
+                    ${node.cidade ? `<div class="detail-row"><span class="detail-label">Cidade</span><span class="detail-value">${node.cidade}</span></div>` : ''}
                 </div>
                 <div class="node-stats">
-                    <div class="node-stat">
-                        <div class="node-stat-value">${data.deliberacoes}</div>
-                        <div class="node-stat-label">Deliberacoes</div>
-                    </div>
-                    <div class="node-stat">
-                        <div class="node-stat-value">${data.conexoes}</div>
-                        <div class="node-stat-label">Conexoes</div>
-                    </div>
-                    <div class="node-stat ${data.alertas > 0 ? 'warning' : ''}">
-                        <div class="node-stat-value">${data.alertas}</div>
-                        <div class="node-stat-label">Alertas</div>
-                    </div>
+                    <div class="node-stat"><div class="node-stat-value">${node.deliberacoes}</div><div class="node-stat-label">Deliberacoes</div></div>
+                    <div class="node-stat"><div class="node-stat-value">${conexoes}</div><div class="node-stat-label">Conexoes</div></div>
+                    <div class="node-stat ${node.alertas > 0 ? 'warning' : ''}"><div class="node-stat-value">${node.alertas}</div><div class="node-stat-label">Alertas</div></div>
                 </div>
-                <button class="btn btn-primary btn-block" onclick="PageDossie.visualizar('${data.name.toLowerCase().replace(/ /g, '-')}')">
-                    Ver Dossie Completo
-                </button>
-            `;
+                <button class="btn btn-primary btn-block" onclick="PageDossie.visualizar('${node.name.toLowerCase().replace(/ /g, '-')}')">Ver Dossie Completo</button>`;
 
-            this.renderGraph();
+            // Highlight selected card
+            document.querySelectorAll('.grafo-card').forEach(c => c.classList.remove('selected'));
+            document.querySelector(`[data-node-id="${nodeId}"]`)?.classList.add('selected');
         },
 
         zoomIn() {
-            this.zoom = Math.min(this.zoom * 1.2, 3);
-            this.updateTransform();
+            this.zoom = Math.min(this.zoom * 1.2, 2);
+            document.getElementById('grafo-canvas').style.transform = `scale(${this.zoom})`;
         },
 
         zoomOut() {
-            this.zoom = Math.max(this.zoom / 1.2, 0.3);
-            this.updateTransform();
+            this.zoom = Math.max(this.zoom / 1.2, 0.5);
+            document.getElementById('grafo-canvas').style.transform = `scale(${this.zoom})`;
         },
 
         resetView() {
             this.zoom = 1;
-            this.panX = 0;
-            this.panY = 0;
             this.selectedNode = null;
+            document.getElementById('grafo-canvas').style.transform = 'scale(1)';
             this.initData();
             this.renderGraph();
         },
@@ -4473,89 +4409,48 @@
     };
 
     // ============================================
-    // PAGE: Mapa do Brasil (SVG com Estados Reais)
+    // PAGE: Mapa do Brasil (Leaflet)
     // ============================================
     const PageMapa = {
-        estados: {
-            'SP': { nome: 'Sao Paulo', decisoes: 4521, taxa: 78.5, regiao: 'Sudeste' },
-            'RJ': { nome: 'Rio de Janeiro', decisoes: 2134, taxa: 72.3, regiao: 'Sudeste' },
-            'MG': { nome: 'Minas Gerais', decisoes: 1876, taxa: 81.2, regiao: 'Sudeste' },
-            'RS': { nome: 'Rio Grande do Sul', decisoes: 1245, taxa: 75.8, regiao: 'Sul' },
-            'PR': { nome: 'Parana', decisoes: 1123, taxa: 79.4, regiao: 'Sul' },
-            'BA': { nome: 'Bahia', decisoes: 987, taxa: 68.9, regiao: 'Nordeste' },
-            'SC': { nome: 'Santa Catarina', decisoes: 876, taxa: 82.1, regiao: 'Sul' },
-            'GO': { nome: 'Goias', decisoes: 654, taxa: 71.5, regiao: 'Centro-Oeste' },
-            'PE': { nome: 'Pernambuco', decisoes: 543, taxa: 65.7, regiao: 'Nordeste' },
-            'CE': { nome: 'Ceara', decisoes: 432, taxa: 69.2, regiao: 'Nordeste' },
-            'DF': { nome: 'Distrito Federal', decisoes: 398, taxa: 84.3, regiao: 'Centro-Oeste' },
-            'PA': { nome: 'Para', decisoes: 321, taxa: 62.8, regiao: 'Norte' },
-            'MT': { nome: 'Mato Grosso', decisoes: 287, taxa: 73.4, regiao: 'Centro-Oeste' },
-            'ES': { nome: 'Espirito Santo', decisoes: 265, taxa: 77.1, regiao: 'Sudeste' },
-            'MS': { nome: 'Mato Grosso do Sul', decisoes: 234, taxa: 74.6, regiao: 'Centro-Oeste' },
-            'MA': { nome: 'Maranhao', decisoes: 198, taxa: 61.3, regiao: 'Nordeste' },
-            'AM': { nome: 'Amazonas', decisoes: 176, taxa: 58.9, regiao: 'Norte' },
-            'RN': { nome: 'Rio Grande do Norte', decisoes: 154, taxa: 66.4, regiao: 'Nordeste' },
-            'PB': { nome: 'Paraiba', decisoes: 143, taxa: 64.8, regiao: 'Nordeste' },
-            'AL': { nome: 'Alagoas', decisoes: 121, taxa: 63.2, regiao: 'Nordeste' },
-            'PI': { nome: 'Piaui', decisoes: 98, taxa: 59.7, regiao: 'Nordeste' },
-            'SE': { nome: 'Sergipe', decisoes: 87, taxa: 67.3, regiao: 'Nordeste' },
-            'RO': { nome: 'Rondonia', decisoes: 76, taxa: 71.2, regiao: 'Norte' },
-            'TO': { nome: 'Tocantins', decisoes: 65, taxa: 68.5, regiao: 'Norte' },
-            'AC': { nome: 'Acre', decisoes: 43, taxa: 55.8, regiao: 'Norte' },
-            'AP': { nome: 'Amapa', decisoes: 32, taxa: 53.1, regiao: 'Norte' },
-            'RR': { nome: 'Roraima', decisoes: 21, taxa: 52.4, regiao: 'Norte' }
-        },
-
-        // SVG paths reais dos estados brasileiros (simplificados)
-        statePaths: {
-            'AC': 'M45,195 L95,178 L105,195 L95,215 L45,220 Z',
-            'AM': 'M50,95 L180,80 L200,130 L180,175 L95,180 L45,195 L45,140 Z',
-            'RR': 'M145,20 L185,25 L200,70 L175,85 L140,70 Z',
-            'AP': 'M260,35 L295,25 L310,65 L280,95 L250,70 Z',
-            'PA': 'M175,85 L280,95 L320,140 L310,195 L250,210 L200,195 L180,175 L200,130 Z',
-            'MA': 'M310,140 L355,130 L375,175 L350,210 L310,195 Z',
-            'TO': 'M280,195 L320,195 L330,280 L290,290 L270,250 Z',
-            'PI': 'M330,160 L365,150 L375,220 L355,250 L330,230 Z',
-            'CE': 'M365,120 L400,115 L410,160 L380,175 L365,150 Z',
-            'RN': 'M400,120 L430,125 L425,155 L400,150 Z',
-            'PB': 'M390,155 L430,155 L425,175 L390,175 Z',
-            'PE': 'M365,175 L430,175 L425,200 L365,205 Z',
-            'AL': 'M395,200 L425,200 L420,225 L395,225 Z',
-            'SE': 'M385,225 L405,225 L400,245 L380,245 Z',
-            'BA': 'M330,215 L395,225 L410,320 L340,340 L310,290 Z',
-            'GO': 'M270,280 L330,280 L350,350 L310,380 L260,360 Z',
-            'DF': 'M310,300 L330,300 L328,320 L308,320 Z',
-            'MT': 'M140,195 L260,195 L270,280 L260,360 L180,350 L140,280 Z',
-            'MS': 'M180,350 L260,360 L270,440 L210,460 L170,420 Z',
-            'MG': 'M310,310 L395,315 L410,395 L350,420 L300,400 L290,350 Z',
-            'ES': 'M395,350 L420,345 L425,395 L400,400 Z',
-            'RJ': 'M375,395 L415,390 L420,425 L380,435 Z',
-            'SP': 'M265,390 L355,395 L375,450 L300,470 L255,440 Z',
-            'PR': 'M250,450 L330,455 L340,510 L270,520 L240,490 Z',
-            'SC': 'M275,515 L340,510 L345,555 L290,565 Z',
-            'RS': 'M235,530 L295,535 L310,610 L250,640 L210,590 Z',
-            'RO': 'M95,215 L140,200 L150,280 L105,290 L75,255 Z'
-        },
-
-        // Centros dos estados para labels
-        labelCenters: {
-            'AC': { x: 75, y: 200 }, 'AM': { x: 125, y: 130 }, 'RR': { x: 165, y: 55 },
-            'AP': { x: 275, y: 60 }, 'PA': { x: 245, y: 155 }, 'MA': { x: 340, y: 170 },
-            'TO': { x: 300, y: 240 }, 'PI': { x: 350, y: 195 }, 'CE': { x: 385, y: 140 },
-            'RN': { x: 415, y: 138 }, 'PB': { x: 410, y: 165 }, 'PE': { x: 395, y: 188 },
-            'AL': { x: 410, y: 212 }, 'SE': { x: 392, y: 235 }, 'BA': { x: 365, y: 280 },
-            'GO': { x: 305, y: 330 }, 'DF': { x: 319, y: 310 }, 'MT': { x: 205, y: 275 },
-            'MS': { x: 220, y: 405 }, 'MG': { x: 355, y: 365 }, 'ES': { x: 408, y: 370 },
-            'RJ': { x: 397, y: 412 }, 'SP': { x: 310, y: 430 }, 'PR': { x: 290, y: 485 },
-            'SC': { x: 310, y: 540 }, 'RS': { x: 265, y: 585 }, 'RO': { x: 115, y: 250 }
-        },
-
+        map: null,
+        markers: [],
         selectedState: null,
+
+        // Dados dos estados com coordenadas
+        estados: {
+            'SP': { nome: 'Sao Paulo', lat: -23.5505, lng: -46.6333, decisoes: 4521, taxa: 78.5, regiao: 'Sudeste', agencias: ['ARTESP', 'ARSESP'] },
+            'RJ': { nome: 'Rio de Janeiro', lat: -22.9068, lng: -43.1729, decisoes: 2134, taxa: 72.3, regiao: 'Sudeste', agencias: ['AGENERSA'] },
+            'MG': { nome: 'Minas Gerais', lat: -19.9167, lng: -43.9345, decisoes: 1876, taxa: 81.2, regiao: 'Sudeste', agencias: ['ARSAE-MG'] },
+            'RS': { nome: 'Rio Grande do Sul', lat: -30.0346, lng: -51.2177, decisoes: 1245, taxa: 75.8, regiao: 'Sul', agencias: ['AGERGS'] },
+            'PR': { nome: 'Parana', lat: -25.4284, lng: -49.2733, decisoes: 1123, taxa: 79.4, regiao: 'Sul', agencias: ['AGEPAR'] },
+            'BA': { nome: 'Bahia', lat: -12.9714, lng: -38.5014, decisoes: 987, taxa: 68.9, regiao: 'Nordeste', agencias: ['AGERBA'] },
+            'SC': { nome: 'Santa Catarina', lat: -27.5954, lng: -48.5480, decisoes: 876, taxa: 82.1, regiao: 'Sul', agencias: ['ARESC'] },
+            'GO': { nome: 'Goias', lat: -16.6869, lng: -49.2648, decisoes: 654, taxa: 71.5, regiao: 'Centro-Oeste', agencias: ['AGR'] },
+            'PE': { nome: 'Pernambuco', lat: -8.0476, lng: -34.8770, decisoes: 543, taxa: 65.7, regiao: 'Nordeste', agencias: ['ARPE'] },
+            'CE': { nome: 'Ceara', lat: -3.7172, lng: -38.5433, decisoes: 432, taxa: 69.2, regiao: 'Nordeste', agencias: ['ARCE'] },
+            'DF': { nome: 'Distrito Federal', lat: -15.7942, lng: -47.8822, decisoes: 398, taxa: 84.3, regiao: 'Centro-Oeste', agencias: ['ADASA'] },
+            'PA': { nome: 'Para', lat: -1.4558, lng: -48.4902, decisoes: 321, taxa: 62.8, regiao: 'Norte', agencias: [] },
+            'MT': { nome: 'Mato Grosso', lat: -15.6010, lng: -56.0979, decisoes: 287, taxa: 73.4, regiao: 'Centro-Oeste', agencias: ['AGER-MT'] },
+            'ES': { nome: 'Espirito Santo', lat: -20.3155, lng: -40.3128, decisoes: 265, taxa: 77.1, regiao: 'Sudeste', agencias: [] },
+            'MS': { nome: 'Mato Grosso do Sul', lat: -20.4697, lng: -54.6201, decisoes: 234, taxa: 74.6, regiao: 'Centro-Oeste', agencias: ['AGEPAN'] },
+            'MA': { nome: 'Maranhao', lat: -2.5297, lng: -44.3028, decisoes: 198, taxa: 61.3, regiao: 'Nordeste', agencias: [] },
+            'AM': { nome: 'Amazonas', lat: -3.1190, lng: -60.0217, decisoes: 176, taxa: 58.9, regiao: 'Norte', agencias: ['ARSAM'] },
+            'RN': { nome: 'Rio Grande do Norte', lat: -5.7945, lng: -35.2110, decisoes: 154, taxa: 66.4, regiao: 'Nordeste', agencias: ['ARSEP'] },
+            'PB': { nome: 'Paraiba', lat: -7.1195, lng: -34.8450, decisoes: 143, taxa: 64.8, regiao: 'Nordeste', agencias: ['ARPB'] },
+            'AL': { nome: 'Alagoas', lat: -9.6658, lng: -35.7350, decisoes: 121, taxa: 63.2, regiao: 'Nordeste', agencias: ['ARSAL'] },
+            'PI': { nome: 'Piaui', lat: -5.0892, lng: -42.8019, decisoes: 98, taxa: 59.7, regiao: 'Nordeste', agencias: ['AGRESPI'] },
+            'SE': { nome: 'Sergipe', lat: -10.9472, lng: -37.0731, decisoes: 87, taxa: 67.3, regiao: 'Nordeste', agencias: ['AGRESE'] },
+            'RO': { nome: 'Rondonia', lat: -8.7619, lng: -63.9039, decisoes: 76, taxa: 71.2, regiao: 'Norte', agencias: [] },
+            'TO': { nome: 'Tocantins', lat: -10.1753, lng: -48.2982, decisoes: 65, taxa: 68.5, regiao: 'Norte', agencias: ['ATR'] },
+            'AC': { nome: 'Acre', lat: -9.9753, lng: -67.8243, decisoes: 43, taxa: 55.8, regiao: 'Norte', agencias: ['AGEAC'] },
+            'AP': { nome: 'Amapa', lat: 0.0349, lng: -51.0694, decisoes: 32, taxa: 53.1, regiao: 'Norte', agencias: [] },
+            'RR': { nome: 'Roraima', lat: 2.8198, lng: -60.6719, decisoes: 21, taxa: 52.4, regiao: 'Norte', agencias: [] }
+        },
 
         init() {
             const page = document.getElementById('page-mapa');
             page.classList.add('active');
-            this.renderBrazilMap();
+            this.renderLeafletMap();
             this.renderTopStates();
         },
 
@@ -4569,143 +4464,122 @@
             return '#6b7280';
         },
 
-        renderBrazilMap() {
+        getMarkerRadius(decisoes) {
+            const maxDecisoes = 4521;
+            const minRadius = 15;
+            const maxRadius = 45;
+            const ratio = decisoes / maxDecisoes;
+            return minRadius + (maxRadius - minRadius) * Math.sqrt(ratio);
+        },
+
+        renderLeafletMap() {
             const container = document.getElementById('mapa-brasil-container');
             if (!container) return;
 
-            let svgHTML = `
-                <svg viewBox="0 0 450 680" class="brazil-svg-map">
-                    <defs>
-                        <filter id="state-glow">
-                            <feGaussianBlur stdDeviation="3" result="blur"/>
-                            <feMerge>
-                                <feMergeNode in="blur"/>
-                                <feMergeNode in="SourceGraphic"/>
-                            </feMerge>
-                        </filter>
-                        <linearGradient id="map-bg" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" style="stop-color:#0f172a"/>
-                            <stop offset="100%" style="stop-color:#1e293b"/>
-                        </linearGradient>
-                    </defs>
-                    <rect width="450" height="680" fill="url(#map-bg)"/>
-                    <g class="states-group">`;
+            // Create map container div
+            container.innerHTML = '<div id="leaflet-map" style="width: 100%; height: 100%; min-height: 500px; border-radius: 12px;"></div>';
 
-            // Render each state
-            Object.entries(this.statePaths).forEach(([code, path]) => {
-                const estado = this.estados[code];
-                const color = this.getStateColor(estado?.decisoes || 0);
-                const center = this.labelCenters[code];
+            // Initialize Leaflet map
+            if (this.map) {
+                this.map.remove();
+            }
 
-                svgHTML += `
-                    <g class="state-group" data-state="${code}">
-                        <path d="${path}"
-                              fill="${color}"
-                              fill-opacity="0.85"
-                              stroke="#1e293b"
-                              stroke-width="1.5"
-                              class="state-path"
-                              style="cursor: pointer; transition: all 0.2s ease;"/>
-                        <text x="${center.x}" y="${center.y + 4}"
-                              text-anchor="middle"
-                              fill="#0f172a"
-                              font-size="10"
-                              font-weight="700"
-                              style="pointer-events: none;">
-                            ${code}
-                        </text>
-                    </g>`;
+            this.map = L.map('leaflet-map', {
+                center: [-14.235, -51.9253],
+                zoom: 4,
+                minZoom: 3,
+                maxZoom: 8,
+                zoomControl: false
             });
 
-            svgHTML += `</g></svg>`;
+            // Add zoom control to top-right
+            L.control.zoom({ position: 'topright' }).addTo(this.map);
 
-            // Legend
-            svgHTML += `
-                <div class="map-legend">
-                    <div class="legend-title">Volume de Decisoes</div>
-                    <div class="legend-scale">
-                        <div class="legend-bar"></div>
-                        <div class="legend-labels">
-                            <span>Menor</span>
-                            <span>Maior</span>
+            // Dark tile layer (CartoDB Dark Matter)
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+                subdomains: 'abcd',
+                maxZoom: 19
+            }).addTo(this.map);
+
+            // Add markers for each state
+            this.markers = [];
+            Object.entries(this.estados).forEach(([code, estado]) => {
+                const color = this.getStateColor(estado.decisoes);
+                const radius = this.getMarkerRadius(estado.decisoes);
+
+                // Create circle marker
+                const marker = L.circleMarker([estado.lat, estado.lng], {
+                    radius: radius,
+                    fillColor: color,
+                    color: '#fff',
+                    weight: 2,
+                    opacity: 0.9,
+                    fillOpacity: 0.7
+                }).addTo(this.map);
+
+                // Add label
+                const label = L.divIcon({
+                    className: 'leaflet-state-label',
+                    html: `<span style="color: #0f172a; font-weight: 700; font-size: 11px; text-shadow: 0 0 3px rgba(255,255,255,0.8);">${code}</span>`,
+                    iconSize: [30, 20],
+                    iconAnchor: [15, 10]
+                });
+                L.marker([estado.lat, estado.lng], { icon: label, interactive: false }).addTo(this.map);
+
+                // Popup content
+                const popupContent = `
+                    <div class="leaflet-popup-custom">
+                        <div class="popup-header" style="background: ${color}; color: #0f172a;">
+                            <strong>${estado.nome}</strong>
                         </div>
-                    </div>
-                </div>`;
+                        <div class="popup-body">
+                            <div class="popup-row"><span>Decisoes:</span><strong>${estado.decisoes.toLocaleString('pt-BR')}</strong></div>
+                            <div class="popup-row"><span>Taxa:</span><strong>${estado.taxa}%</strong></div>
+                            <div class="popup-row"><span>Regiao:</span><strong>${estado.regiao}</strong></div>
+                            ${estado.agencias.length > 0 ? `<div class="popup-row"><span>Agencias:</span><strong>${estado.agencias.join(', ')}</strong></div>` : ''}
+                        </div>
+                    </div>`;
 
-            container.innerHTML = svgHTML;
-            this.bindMapEvents();
-        },
-
-        bindMapEvents() {
-            document.querySelectorAll('.state-group').forEach(group => {
-                const code = group.dataset.state;
-                const path = group.querySelector('.state-path');
-
-                group.addEventListener('mouseenter', () => {
-                    path.style.filter = 'url(#state-glow)';
-                    path.style.fillOpacity = '1';
-                    path.style.transform = 'scale(1.02)';
-                    path.style.transformOrigin = 'center';
-                    this.showTooltip(code, event);
+                marker.bindPopup(popupContent, {
+                    className: 'dark-popup',
+                    closeButton: true
                 });
 
-                group.addEventListener('mousemove', (e) => {
-                    this.moveTooltip(e);
+                // Events
+                marker.on('mouseover', function() {
+                    this.setStyle({ weight: 4, fillOpacity: 0.9 });
+                    this.openPopup();
                 });
 
-                group.addEventListener('mouseleave', () => {
-                    path.style.filter = 'none';
-                    path.style.fillOpacity = '0.85';
-                    path.style.transform = 'scale(1)';
-                    this.hideTooltip();
+                marker.on('mouseout', function() {
+                    this.setStyle({ weight: 2, fillOpacity: 0.7 });
                 });
 
-                group.addEventListener('click', () => {
+                marker.on('click', () => {
                     this.selectState(code);
                 });
+
+                marker.stateCode = code;
+                this.markers.push(marker);
             });
-        },
 
-        showTooltip(code, e) {
-            const estado = this.estados[code];
-            if (!estado) return;
-
-            let tooltip = document.getElementById('map-tooltip-dynamic');
-            if (!tooltip) {
-                tooltip = document.createElement('div');
-                tooltip.id = 'map-tooltip-dynamic';
-                tooltip.className = 'map-tooltip-floating';
-                document.body.appendChild(tooltip);
-            }
-
-            tooltip.innerHTML = `
-                <div class="tooltip-header">${estado.nome}</div>
-                <div class="tooltip-body">
-                    <div class="tooltip-row">
-                        <span>Decisoes:</span>
-                        <strong>${estado.decisoes.toLocaleString('pt-BR')}</strong>
-                    </div>
-                    <div class="tooltip-row">
-                        <span>Taxa:</span>
-                        <strong>${estado.taxa}%</strong>
-                    </div>
-                    <div class="tooltip-region">${estado.regiao}</div>
-                </div>`;
-            tooltip.style.display = 'block';
-            this.moveTooltip(e);
-        },
-
-        moveTooltip(e) {
-            const tooltip = document.getElementById('map-tooltip-dynamic');
-            if (tooltip) {
-                tooltip.style.left = (e.clientX + 15) + 'px';
-                tooltip.style.top = (e.clientY + 15) + 'px';
-            }
-        },
-
-        hideTooltip() {
-            const tooltip = document.getElementById('map-tooltip-dynamic');
-            if (tooltip) tooltip.style.display = 'none';
+            // Add legend
+            const legend = L.control({ position: 'bottomleft' });
+            legend.onAdd = () => {
+                const div = L.DomUtil.create('div', 'leaflet-legend');
+                div.innerHTML = `
+                    <div class="legend-title">Volume de Decisoes</div>
+                    <div class="legend-items">
+                        <div class="legend-item"><span class="legend-color" style="background: #FFEF4D;"></span> Alto (>2000)</div>
+                        <div class="legend-item"><span class="legend-color" style="background: #4ade80;"></span> Medio-Alto</div>
+                        <div class="legend-item"><span class="legend-color" style="background: #60a5fa;"></span> Medio</div>
+                        <div class="legend-item"><span class="legend-color" style="background: #a78bfa;"></span> Baixo</div>
+                        <div class="legend-item"><span class="legend-color" style="background: #6b7280;"></span> Muito Baixo</div>
+                    </div>`;
+                return div;
+            };
+            legend.addTo(this.map);
         },
 
         selectState(code) {
@@ -4713,21 +4587,25 @@
             const estado = this.estados[code];
             const panel = document.getElementById('mapa-info-panel');
 
-            // Highlight
-            document.querySelectorAll('.state-path').forEach(p => {
-                p.style.strokeWidth = '1.5';
-                p.style.stroke = '#1e293b';
-            });
-            const selected = document.querySelector(`[data-state="${code}"] .state-path`);
-            if (selected) {
-                selected.style.strokeWidth = '3';
-                selected.style.stroke = '#fff';
+            // Center map on state
+            if (this.map && estado) {
+                this.map.setView([estado.lat, estado.lng], 6, { animate: true });
             }
 
-            if (panel) {
+            // Highlight marker
+            this.markers.forEach(m => {
+                if (m.stateCode === code) {
+                    m.setStyle({ weight: 4, fillOpacity: 1 });
+                    m.openPopup();
+                } else {
+                    m.setStyle({ weight: 2, fillOpacity: 0.7 });
+                }
+            });
+
+            if (panel && estado) {
                 panel.innerHTML = `
                     <div class="info-header">
-                        <span class="state-badge">${code}</span>
+                        <span class="state-badge" style="background: ${this.getStateColor(estado.decisoes)}; color: #0f172a;">${code}</span>
                         <h3>${estado.nome}</h3>
                     </div>
                     <div class="info-stats">
@@ -4743,6 +4621,13 @@
                     <div class="info-region">
                         <span class="region-badge">${estado.regiao}</span>
                     </div>
+                    ${estado.agencias.length > 0 ? `
+                    <div class="info-agencias">
+                        <span class="agencias-label">Agencias Reguladoras:</span>
+                        <div class="agencias-list">
+                            ${estado.agencias.map(a => `<span class="agencia-badge">${a}</span>`).join('')}
+                        </div>
+                    </div>` : ''}
                     <div class="info-bar">
                         <div class="bar-label">Volume vs SP</div>
                         <div class="bar-track">
@@ -4764,11 +4649,18 @@
             container.innerHTML = sorted.map(([code, estado], index) => `
                 <div class="top-state-row" onclick="PageMapa.selectState('${code}')">
                     <span class="rank">${index + 1}</span>
-                    <span class="code" style="background: ${this.getStateColor(estado.decisoes)}">${code}</span>
+                    <span class="code" style="background: ${this.getStateColor(estado.decisoes)}; color: #0f172a;">${code}</span>
                     <span class="name">${estado.nome}</span>
                     <span class="value">${estado.decisoes.toLocaleString('pt-BR')}</span>
                 </div>
             `).join('');
+        },
+
+        destroy() {
+            if (this.map) {
+                this.map.remove();
+                this.map = null;
+            }
         }
     };
 
