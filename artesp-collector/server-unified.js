@@ -1461,6 +1461,74 @@ spaRoutes.forEach(route => {
 });
 
 // ============================================================================
+// API - GRAFO DE VÍNCULOS (dados reais dos PDFs)
+// ============================================================================
+app.get('/api/grafo-data', (req, res) => {
+    const deliberacoes = coletarTodasDeliberacoes();
+    const nodesMap = {};
+    const edgesMap = {};
+
+    // Central agency node
+    nodesMap['ARTESP'] = {
+        id: 'ARTESP', label: 'ARTESP', full: 'Agência de Transporte do Estado de SP',
+        type: 'agency', deliberations: deliberacoes.length
+    };
+
+    deliberacoes.forEach(d => {
+        const allVoters = [...(d.votos_a_favor || []), ...(d.votos_contra || [])];
+
+        // Directors
+        allVoters.forEach(dir => {
+            if (!nodesMap[dir]) {
+                nodesMap[dir] = { id: dir, label: dir, type: 'director', votesCount: 0, role: 'Diretor(a)' };
+            }
+            nodesMap[dir].votesCount++;
+            const ek = `ARTESP||${dir}`;
+            if (!edgesMap[ek]) edgesMap[ek] = { source: 'ARTESP', target: dir, label: 'Membro', count: 0, type: 'membro' };
+            edgesMap[ek].count++;
+        });
+
+        // Companies from interessado
+        if (d.interessado && d.interessado !== 'ARTESP' && d.interessado.length > 2) {
+            const comp = d.interessado;
+            if (!nodesMap[comp]) nodesMap[comp] = { id: comp, label: comp, type: 'company', mentions: 0 };
+            nodesMap[comp].mentions = (nodesMap[comp].mentions || 0) + 1;
+
+            allVoters.forEach(dir => {
+                const ek = `${dir}||${comp}`;
+                if (!edgesMap[ek]) edgesMap[ek] = { source: dir, target: comp, label: 'Deliberação', count: 0, type: 'deliberacao' };
+                edgesMap[ek].count++;
+            });
+        }
+
+        // Themes from microtema
+        if (d.microtema) {
+            const theme = d.microtema;
+            if (!nodesMap[theme]) nodesMap[theme] = { id: theme, label: theme, type: 'theme', count: 0 };
+            nodesMap[theme].count = (nodesMap[theme].count || 0) + 1;
+        }
+    });
+
+    // Add detected companies from PDFs
+    pdfsProcessados.forEach(pdf => {
+        (pdf.empresasDetectadas || []).forEach(emp => {
+            if (!nodesMap[emp.nome]) {
+                nodesMap[emp.nome] = { id: emp.nome, label: emp.nome, type: 'company', sector: emp.setor, companyType: emp.tipo, mentions: emp.mencoes };
+            } else {
+                nodesMap[emp.nome].sector = nodesMap[emp.nome].sector || emp.setor;
+                nodesMap[emp.nome].companyType = nodesMap[emp.nome].companyType || emp.tipo;
+            }
+        });
+    });
+
+    res.json({
+        nodes: Object.values(nodesMap),
+        edges: Object.values(edgesMap),
+        meta: { totalDeliberacoes: deliberacoes.length, totalPdfs: pdfsProcessados.length, pdfsAnalisados: pdfsProcessados.filter(p => p.analise).length }
+    });
+});
+
+// ============================================================================
 // APIs PARA DELIBERAÇÕES
 // ============================================================================
 
