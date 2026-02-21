@@ -5184,7 +5184,7 @@
                 .slice(0, 5);
 
             container.innerHTML = sorted.map(([code, estado], index) => `
-                <div class="top-state-row" onclick="PageMapa.selectState('${code}')">
+                <div class="top-state-row" onclick="App.PageMapa.selectState('${code}')">
                     <span class="rank">${index + 1}</span>
                     <span class="code" style="background: ${this.getStateColor(estado.decisoes)}; color: #0f172a;">${code}</span>
                     <span class="name">${estado.nome}</span>
