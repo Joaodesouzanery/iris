@@ -29,6 +29,14 @@ const PADROES = {
         /SESS[ÃA]O\s*(?:N[ºo°]?\s*)?(\d+)/gi
     ],
 
+    // Data da reunião
+    dataReuniao: [
+        /DATA[\s:]+(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})/gi,
+        /REALIZADA\s+(?:EM\s+)?(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})/gi,
+        /(?:DIA|EM)\s+(\d{1,2})\s+(?:DE\s+)?(JANEIRO|FEVEREIRO|MARÇO|MARCO|ABRIL|MAIO|JUNHO|JULHO|AGOSTO|SETEMBRO|OUTUBRO|NOVEMBRO|DEZEMBRO)\s+(?:DE\s+)?(\d{4})/gi,
+        /(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})/g
+    ],
+
     // Interessado/Requerente - padrões expandidos
     interessado: [
         /INTERESSAD[OA]S?[\s:]+([^\n]+)/gi,
@@ -52,7 +60,7 @@ const PADROES = {
         /N[ºo°]\s*DO\s*PROCESSO[\s:]+([^\n,]+)/gi
     ],
 
-    // Resultado/Decisão - padrões expandidos
+    // Resultado/Decisão - padrões expandidos (incluindo parcialmente deferido)
     resultado: {
         deferido: [
             /\bDEFERID[OA]\b/gi,
@@ -65,6 +73,13 @@ const PADROES = {
             /\bACOLHID[OA]\b/gi,
             /\bDEFERIMENTO\b/gi,
             /\bAPROVA[ÇC][ÃA]O\b/gi
+        ],
+        parcialmenteDeferido: [
+            /PARCIALMENTE\s+DEFERIDO/gi,
+            /DEFERIDO\s+EM\s+PARTE/gi,
+            /PARCIALMENTE\s+PROCEDENTE/gi,
+            /PARCIAL(?:MENTE)?\s+APROVAD[OA]/gi,
+            /DEFERIDO\s+PARCIALMENTE/gi
         ],
         indeferido: [
             /\bINDEFERID[OA]\b/gi,
@@ -82,56 +97,64 @@ const PADROES = {
 
 // Microtemas conhecidos
 const MICROTEMAS = {
-    'reequilibrio': ['reequilíbrio', 'reequilibrio', 'equilíbrio econômico', 'revisão tarifária'],
-    'tarifa': ['tarifa', 'pedágio', 'cobrança', 'isenção', 'desconto'],
-    'obras': ['obra', 'construção', 'duplicação', 'pavimentação', 'manutenção'],
-    'contrato': ['contrato', 'aditivo', 'prorrogação', 'rescisão', 'termo aditivo'],
-    'multa': ['multa', 'penalidade', 'sanção', 'advertência', 'infração'],
-    'fiscalizacao': ['fiscalização', 'vistoria', 'inspeção', 'auditoria'],
-    'seguranca': ['segurança', 'acidente', 'atendimento', 'guincho', 'ambulância'],
-    'ambiental': ['ambiental', 'licença', 'compensação', 'fauna', 'flora'],
-    'desapropriacao': ['desapropriação', 'faixa de domínio', 'invasão', 'ocupação'],
-    'usuario': ['usuário', 'reclamação', 'ouvidoria', 'ressarcimento', 'indenização']
+    'reequilibrio': ['reequilíbrio', 'reequilibrio', 'equilíbrio econômico', 'revisão tarifária', 'reequilíbrio econômico-financeiro'],
+    'tarifa': ['tarifa', 'pedágio', 'cobrança', 'isenção', 'desconto', 'reajuste tarifário'],
+    'obras': ['obra', 'construção', 'duplicação', 'pavimentação', 'manutenção', 'conservação'],
+    'contrato': ['contrato', 'aditivo', 'prorrogação', 'rescisão', 'termo aditivo', 'autorização'],
+    'multa': ['multa', 'penalidade', 'sanção', 'advertência', 'infração', 'auto de infração'],
+    'fiscalizacao': ['fiscalização', 'vistoria', 'inspeção', 'auditoria', 'monitoramento'],
+    'seguranca': ['segurança', 'acidente', 'atendimento', 'guincho', 'ambulância', 'socorro'],
+    'ambiental': ['ambiental', 'licença', 'compensação', 'fauna', 'flora', 'meio ambiente'],
+    'desapropriacao': ['desapropriação', 'faixa de domínio', 'invasão', 'ocupação', 'área non aedificandi'],
+    'usuario': ['usuário', 'reclamação', 'ouvidoria', 'ressarcimento', 'indenização', 'dano']
+};
+
+// Meses em português para conversão de data
+const MESES = {
+    'janeiro': '01', 'fevereiro': '02', 'março': '03', 'marco': '03',
+    'abril': '04', 'maio': '05', 'junho': '06',
+    'julho': '07', 'agosto': '08', 'setembro': '09',
+    'outubro': '10', 'novembro': '11', 'dezembro': '12'
 };
 
 // Diretores conhecidos da ARTESP (atualizados 2024-2025)
 const DIRETORES = [
     // Diretoria atual (2024-2025)
-    'André Isper Rodrigues Barnabé',
-    'Andre Isper Rodrigues Barnabe',
-    'Diego Albert Zanatto',
-    'Fernanda Esbizaro Rodrigues Rudnik',
-    'Raquel França Carneiro',
-    'Raquel Franca Carneiro',
+    { nome: 'André Isper Rodrigues Barnabé', aliases: ['Andre Isper', 'Isper', 'Barnabé', 'Barnabe'] },
+    { nome: 'Diego Albert Zanatto', aliases: ['Diego Zanatto', 'Zanatto', 'Diego Albert'] },
+    { nome: 'Fernanda Esbizaro Rodrigues Rudnik', aliases: ['Fernanda Esbizaro', 'Esbizaro', 'Rudnik'] },
+    { nome: 'Raquel França Carneiro', aliases: ['Raquel França', 'Raquel Franca', 'França', 'Carneiro'] },
     // Diretoria anterior (para PDFs históricos)
-    'Milton Persoli',
-    'Sergio Massaru Harada',
-    'Carlos Eduardo Simões',
-    'Carlos Eduardo Simoes',
-    'Antonio Carlos de Almeida',
-    'Flavio Augusto Trevisan Saes'
+    { nome: 'Milton Persoli', aliases: ['Persoli'] },
+    { nome: 'Sergio Massaru Harada', aliases: ['Sergio Harada', 'Harada', 'Massaru'] },
+    { nome: 'Carlos Eduardo Simões', aliases: ['Carlos Simões', 'Carlos Simoes', 'Simões'] },
+    { nome: 'Antonio Carlos de Almeida', aliases: ['Antonio Almeida', 'Almeida'] },
+    { nome: 'Flavio Augusto Trevisan Saes', aliases: ['Flavio Saes', 'Trevisan', 'Saes'] }
 ];
 
 /**
  * Extrai todas as deliberações do texto
  * IMPORTANTE: Cada PDF deve gerar pelo menos uma deliberação
  */
-function extrairDeliberacoes(texto) {
+function extrairDeliberacoes(texto, agencia = 'ARTESP') {
     if (!texto || texto.length < 50) {
         // Mesmo com texto curto, cria uma deliberação vazia para registrar
         return {
             deliberations: [{
                 numero_deliberacao: '',
                 reuniao_ordinaria: '',
+                data_reuniao: '',
                 interessado: '',
                 processo: '',
                 microtema: '',
                 resultado: '',
                 votos_a_favor: [],
                 votos_contra: [],
-                classificacao: '',
+                classificacao: null,
+                agencia: agencia,
                 observacao: 'Texto muito curto para análise completa'
-            }]
+            }],
+            total: 1
         };
     }
 
@@ -142,23 +165,26 @@ function extrairDeliberacoes(texto) {
 
     if (secoes.length === 0) {
         // Se não conseguiu dividir, trata como uma única deliberação
-        // SEMPRE adiciona, independente dos campos extraídos
-        const delib = extrairDadosDeliberacao(texto);
+        const delib = extrairDadosDeliberacao(texto, agencia);
         deliberacoes.push(delib);
     } else {
         for (const secao of secoes) {
-            const delib = extrairDadosDeliberacao(secao);
+            const delib = extrairDadosDeliberacao(secao, agencia);
             deliberacoes.push(delib);
         }
     }
 
     // GARANTIA: Se ainda não tem deliberações, cria uma com os dados disponíveis
     if (deliberacoes.length === 0) {
-        const delib = extrairDadosDeliberacao(texto);
+        const delib = extrairDadosDeliberacao(texto, agencia);
         deliberacoes.push(delib);
     }
 
-    return { deliberations: deliberacoes };
+    return {
+        deliberations: deliberacoes,
+        total: deliberacoes.length,
+        analisadoEm: new Date().toISOString()
+    };
 }
 
 /**
@@ -193,24 +219,28 @@ function dividirEmSecoes(texto) {
 /**
  * Extrai dados de uma seção de deliberação
  */
-function extrairDadosDeliberacao(texto) {
+function extrairDadosDeliberacao(texto, agencia = 'ARTESP') {
     const delib = {
         numero_deliberacao: '',
         reuniao_ordinaria: '',
+        data_reuniao: '',
         interessado: '',
         processo: '',
         microtema: '',
         resultado: '',
         votos_a_favor: [],
         votos_contra: [],
-        classificacao: ''
+        classificacao: null,
+        agencia: agencia
     };
 
     // Extrai número da deliberação
     for (const padrao of PADROES.numeroDeliberacao) {
         const match = texto.match(padrao);
         if (match) {
-            delib.numero_deliberacao = match[0].replace(/DELIBERA[ÇC][ÃA]O\s*N[ºo°]?\s*/i, '').trim();
+            let numero = match[0].replace(/DELIBERA[ÇC][ÃA]O\s*N[ºo°]?\s*/i, '').trim();
+            numero = numero.replace(/DEL[-\s]?/i, 'DEL-');
+            delib.numero_deliberacao = numero;
             break;
         }
     }
@@ -224,20 +254,37 @@ function extrairDadosDeliberacao(texto) {
         }
     }
 
+    // Extrai data da reunião
+    delib.data_reuniao = extrairDataReuniao(texto);
+
     // Extrai interessado
     for (const padrao of PADROES.interessado) {
         const match = texto.match(padrao);
-        if (match && match[1]) {
-            let interessado = match[1].trim();
+        if (match) {
+            let interessado = match[1] ? match[1].trim() : match[0].trim();
             // Limpa o texto
             interessado = interessado.split(/[\n\r]/)[0].trim();
             interessado = interessado.replace(/\s{2,}/g, ' ');
-            // Normaliza ARTESP
-            if (/ARTESP/i.test(interessado)) {
-                interessado = 'ARTESP';
+            // Remove pontuação final
+            interessado = interessado.replace(/[.:;,]+$/, '').trim();
+            // Se muito longo, trunca
+            if (interessado.length > 100) {
+                interessado = interessado.substring(0, 100) + '...';
+            }
+            // Normaliza ARTESP se for pauta interna
+            if (/^ARTESP$/i.test(interessado) || interessado === '') {
+                interessado = 'Sem interessado';
             }
             delib.interessado = interessado;
             break;
+        }
+    }
+
+    // Se não encontrou interessado, verifica se é pauta interna
+    if (!delib.interessado || delib.interessado === 'Sem interessado') {
+        if (/pauta\s+interna|ato\s+administrativo|portaria|designa[çc][ãa]o/i.test(texto)) {
+            delib.interessado = 'Sem interessado';
+            delib.classificacao = 'Pauta Interna da Agência';
         }
     }
 
@@ -245,8 +292,13 @@ function extrairDadosDeliberacao(texto) {
     for (const padrao of PADROES.processo) {
         const match = texto.match(padrao);
         if (match) {
-            delib.processo = match[0].replace(/PROCESSO[\s:]+/i, '').trim();
-            break;
+            let processo = match[1] ? match[1].trim() : match[0].replace(/PROCESSO[\s:]+/i, '').trim();
+            processo = processo.split(/[\n\r]/)[0].trim();
+            processo = processo.replace(/[.:;,]+$/, '').trim();
+            if (processo.length > 5) {
+                delib.processo = processo;
+                break;
+            }
         }
     }
 
@@ -254,7 +306,7 @@ function extrairDadosDeliberacao(texto) {
     const textoLower = texto.toLowerCase();
     for (const [tema, palavras] of Object.entries(MICROTEMAS)) {
         for (const palavra of palavras) {
-            if (textoLower.includes(palavra)) {
+            if (textoLower.includes(palavra.toLowerCase())) {
                 delib.microtema = tema;
                 break;
             }
@@ -262,9 +314,16 @@ function extrairDadosDeliberacao(texto) {
         if (delib.microtema) break;
     }
 
-    // Identifica resultado
+    // Identifica resultado (incluindo parcialmente deferido)
     let countDeferido = 0;
+    let countParcial = 0;
     let countIndeferido = 0;
+
+    // Verifica parcialmente deferido primeiro (mais específico)
+    for (const padrao of PADROES.resultado.parcialmenteDeferido) {
+        const matches = texto.match(padrao);
+        if (matches) countParcial += matches.length;
+    }
 
     for (const padrao of PADROES.resultado.deferido) {
         const matches = texto.match(padrao);
@@ -276,10 +335,15 @@ function extrairDadosDeliberacao(texto) {
         if (matches) countIndeferido += matches.length;
     }
 
-    if (countDeferido > countIndeferido) {
+    // Parcialmente deferido tem prioridade
+    if (countParcial > 0) {
+        delib.resultado = 'Parcialmente Deferido';
+    } else if (countDeferido > countIndeferido) {
         delib.resultado = 'Deferido';
     } else if (countIndeferido > countDeferido) {
         delib.resultado = 'Indeferido';
+    } else if (countDeferido > 0) {
+        delib.resultado = 'Deferido';
     }
 
     // Extrai votos
@@ -287,8 +351,8 @@ function extrairDadosDeliberacao(texto) {
     delib.votos_a_favor = votos.favor;
     delib.votos_contra = votos.contra;
 
-    // Classifica como pauta interna se interessado for ARTESP
-    if (delib.interessado === 'ARTESP' || textoLower.includes('pauta interna')) {
+    // Classifica como pauta interna se interessado for ARTESP ou vazio
+    if (delib.interessado === 'Sem interessado' || textoLower.includes('pauta interna')) {
         delib.classificacao = 'Pauta Interna da Agência';
     }
 
@@ -296,37 +360,86 @@ function extrairDadosDeliberacao(texto) {
 }
 
 /**
+ * Extrai data da reunião do texto
+ */
+function extrairDataReuniao(texto) {
+    // Tenta formato DD/MM/YYYY ou DD-MM-YYYY
+    const matchNumerico = texto.match(/(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})/);
+    if (matchNumerico) {
+        let dia = matchNumerico[1].padStart(2, '0');
+        let mes = matchNumerico[2].padStart(2, '0');
+        let ano = matchNumerico[3];
+        if (ano.length === 2) {
+            ano = '20' + ano;
+        }
+        return `${ano}-${mes}-${dia}`;
+    }
+
+    // Tenta formato "DD de MÊS de YYYY"
+    const matchExtenso = texto.match(/(\d{1,2})\s+(?:de\s+)?(janeiro|fevereiro|março|marco|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)\s+(?:de\s+)?(\d{4})/i);
+    if (matchExtenso) {
+        const dia = matchExtenso[1].padStart(2, '0');
+        const mes = MESES[matchExtenso[2].toLowerCase()];
+        const ano = matchExtenso[3];
+        return `${ano}-${mes}-${dia}`;
+    }
+
+    return '';
+}
+
+/**
  * Extrai votos dos diretores
  */
 function extrairVotos(texto) {
     const votos = { favor: [], contra: [] };
+    const textoUpper = texto.toUpperCase();
 
     // Verifica se é votação unânime
-    if (/un[âa]nime|unanimidade|por unanimidade/i.test(texto)) {
-        // Todos votaram a favor
-        for (const diretor of DIRETORES) {
-            if (texto.includes(diretor)) {
-                votos.favor.push(diretor);
+    const ehUnanimidade = /UN[ÂA]NIME|UNANIMIDADE|POR\s+UNANIMIDADE|VOTA[ÇC][ÃA]O\s+UN[ÂA]NIME/i.test(texto);
+
+    // Encontra diretores mencionados no texto
+    const diretoresMencionados = [];
+    for (const diretor of DIRETORES) {
+        // Verifica nome completo ou aliases
+        const nomeUpper = diretor.nome.toUpperCase();
+        if (textoUpper.includes(nomeUpper)) {
+            diretoresMencionados.push(diretor.nome);
+            continue;
+        }
+        // Verifica aliases
+        for (const alias of diretor.aliases) {
+            if (textoUpper.includes(alias.toUpperCase())) {
+                diretoresMencionados.push(diretor.nome);
+                break;
             }
         }
+    }
+
+    // Se unanimidade, todos a favor
+    if (ehUnanimidade) {
+        votos.favor = diretoresMencionados;
         return votos;
     }
 
     // Busca votos individuais
-    for (const diretor of DIRETORES) {
-        if (!texto.includes(diretor)) continue;
-
+    for (const nomeCompleto of diretoresMencionados) {
         // Pega contexto ao redor do nome
-        const idx = texto.indexOf(diretor);
-        const contexto = texto.substring(Math.max(0, idx - 100), Math.min(texto.length, idx + 100)).toLowerCase();
+        const idx = textoUpper.indexOf(nomeCompleto.toUpperCase());
+        if (idx === -1) continue;
 
-        if (/contr[áa]rio|contra|voto vencido|divergente/i.test(contexto)) {
-            votos.contra.push(diretor);
-        } else if (/favor[áa]vel|favor|aprovou|deferiu/i.test(contexto)) {
-            votos.favor.push(diretor);
-        } else {
-            // Se não encontrou indicação, assume a favor (mais comum)
-            votos.favor.push(diretor);
+        const contexto = texto.substring(Math.max(0, idx - 150), Math.min(texto.length, idx + 150)).toLowerCase();
+
+        // Padrões que indicam voto contra
+        if (/contr[áa]rio|voto\s+contra|voto\s+vencido|divergente|discordou|se\s+opôs|votou\s+contra/i.test(contexto)) {
+            votos.contra.push(nomeCompleto);
+        }
+        // Padrões que indicam voto a favor
+        else if (/favor[áa]vel|voto\s+a\s+favor|aprovou|deferiu|concordou|acompanhou|votou\s+(?:pela\s+)?aprova/i.test(contexto)) {
+            votos.favor.push(nomeCompleto);
+        }
+        // Se não encontrou indicação específica, assume a favor (mais comum em deliberações)
+        else {
+            votos.favor.push(nomeCompleto);
         }
     }
 
@@ -336,19 +449,16 @@ function extrairVotos(texto) {
 /**
  * Analisa texto e retorna JSON estruturado
  */
-function analisarTexto(texto) {
-    const resultado = extrairDeliberacoes(texto);
-
-    // Adiciona metadados
-    resultado.total = resultado.deliberations.length;
-    resultado.analisadoEm = new Date().toISOString();
-
-    return resultado;
+function analisarTexto(texto, agencia = 'ARTESP') {
+    return extrairDeliberacoes(texto, agencia);
 }
 
 module.exports = {
     extrairDeliberacoes,
     analisarTexto,
     extrairDadosDeliberacao,
-    extrairVotos
+    extrairVotos,
+    extrairDataReuniao,
+    DIRETORES,
+    MICROTEMAS
 };

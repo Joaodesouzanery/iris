@@ -3145,26 +3145,110 @@
 
             const deliberacoes = response.deliberacoes || [];
 
+            // Contagem por resultado
+            const deferidos = deliberacoes.filter(d => d.resultado === 'Deferido').length;
+            const indeferidos = deliberacoes.filter(d => d.resultado === 'Indeferido').length;
+            const parciais = deliberacoes.filter(d => d.resultado === 'Parcialmente Deferido').length;
+
             content.innerHTML = `
-                <div class="result-summary">
-                    <div class="result-stat">
-                        <div class="value">${deliberacoes.length}</div>
-                        <div class="label">Deliberacoes Extraidas</div>
+                <div class="deliberacoes-summary">
+                    <div class="summary-stats">
+                        <div class="summary-stat">
+                            <div class="summary-value">${deliberacoes.length}</div>
+                            <div class="summary-label">Total Extraidas</div>
+                        </div>
+                        <div class="summary-stat success">
+                            <div class="summary-value">${deferidos}</div>
+                            <div class="summary-label">Deferidas</div>
+                        </div>
+                        <div class="summary-stat warning">
+                            <div class="summary-value">${parciais}</div>
+                            <div class="summary-label">Parciais</div>
+                        </div>
+                        <div class="summary-stat danger">
+                            <div class="summary-value">${indeferidos}</div>
+                            <div class="summary-label">Indeferidas</div>
+                        </div>
                     </div>
                 </div>
                 ${deliberacoes.length > 0 ? `
-                <div class="result-list" style="margin-top: 16px; max-height: 400px; overflow-y: auto;">
-                    ${deliberacoes.slice(0, 10).map((d, i) => `
-                        <div class="result-item" style="padding: 12px; background: var(--background); border-radius: var(--radius); margin-bottom: 8px;">
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                                <strong>${d.processo || 'Processo ' + (i + 1)}</strong>
-                                <span class="badge ${d.decisao === 'Deferido' ? 'badge-success' : 'badge-danger'}">${d.decisao || '-'}</span>
+                <div class="deliberacoes-list">
+                    ${deliberacoes.map((d, i) => {
+                        const resultadoClass = d.resultado === 'Deferido' ? 'badge-success' :
+                                              d.resultado === 'Parcialmente Deferido' ? 'badge-warning' :
+                                              d.resultado === 'Indeferido' ? 'badge-danger' : 'badge-secondary';
+
+                        const votosAFavor = d.votos_a_favor || [];
+                        const votosContra = d.votos_contra || [];
+                        const totalVotos = votosAFavor.length + votosContra.length;
+
+                        return `
+                        <div class="deliberacao-card">
+                            <div class="deliberacao-header">
+                                <div class="deliberacao-info">
+                                    <span class="deliberacao-numero">${d.numero_deliberacao || 'Deliberacao ' + (i + 1)}</span>
+                                    <span class="deliberacao-reuniao">Reuniao ${d.reuniao_ordinaria || '-'}</span>
+                                    ${d.data_reuniao ? `<span class="deliberacao-data">${new Date(d.data_reuniao).toLocaleDateString('pt-BR')}</span>` : ''}
+                                </div>
+                                <span class="badge ${resultadoClass}">${d.resultado || '-'}</span>
                             </div>
-                            <div style="font-size: 13px; color: var(--text-secondary);">${d.interessado || '-'}</div>
-                            <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">${d.microtema || '-'}</div>
-                        </div>
-                    `).join('')}
-                    ${deliberacoes.length > 10 ? `<div style="text-align: center; padding: 12px; color: var(--text-secondary);">... e mais ${deliberacoes.length - 10} deliberacoes</div>` : ''}
+
+                            <div class="deliberacao-body">
+                                <div class="deliberacao-row">
+                                    <span class="deliberacao-label">Interessado:</span>
+                                    <span class="deliberacao-value">${d.interessado || '-'}</span>
+                                </div>
+                                <div class="deliberacao-row">
+                                    <span class="deliberacao-label">Processo:</span>
+                                    <span class="deliberacao-value processo">${d.processo || '-'}</span>
+                                </div>
+                                ${d.microtema ? `
+                                <div class="deliberacao-row">
+                                    <span class="deliberacao-label">Microtema:</span>
+                                    <span class="badge badge-outline">${d.microtema}</span>
+                                </div>` : ''}
+                                ${d.classificacao ? `
+                                <div class="deliberacao-row">
+                                    <span class="deliberacao-label">Classificacao:</span>
+                                    <span class="deliberacao-value">${d.classificacao}</span>
+                                </div>` : ''}
+                            </div>
+
+                            ${totalVotos > 0 ? `
+                            <div class="deliberacao-votos">
+                                <div class="votos-header">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                                    Votacao dos Diretores
+                                </div>
+                                <div class="votos-grid">
+                                    ${votosAFavor.length > 0 ? `
+                                    <div class="votos-column favor">
+                                        <div class="votos-title">
+                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="12" height="12"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                            A Favor (${votosAFavor.length})
+                                        </div>
+                                        <div class="votos-list">
+                                            ${votosAFavor.map(v => `<span class="voto-diretor">${v}</span>`).join('')}
+                                        </div>
+                                    </div>` : ''}
+                                    ${votosContra.length > 0 ? `
+                                    <div class="votos-column contra">
+                                        <div class="votos-title">
+                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="12" height="12"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                            Contra (${votosContra.length})
+                                        </div>
+                                        <div class="votos-list">
+                                            ${votosContra.map(v => `<span class="voto-diretor">${v}</span>`).join('')}
+                                        </div>
+                                    </div>` : ''}
+                                </div>
+                            </div>` : ''}
+
+                            <div class="deliberacao-footer">
+                                <span class="agencia-badge">${d.agencia || 'ARTESP'}</span>
+                            </div>
+                        </div>`;
+                    }).join('')}
                 </div>` : ''}
             `;
         },
