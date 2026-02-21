@@ -2858,7 +2858,7 @@
             const others = this.nodes.filter(n => n.id !== rootId);
             others.forEach((n, i) => {
                 const angle = (i / others.length) * Math.PI * 2 - Math.PI / 2;
-                const ring = 160 + (Math.random() - 0.5) * 60;
+                const ring = 240 + (Math.random() - 0.5) * 80;
                 n.x = cx + Math.cos(angle) * ring;
                 n.y = cy + Math.sin(angle) * ring;
             });
@@ -2885,10 +2885,10 @@
         simulateForces(alpha) {
             const cx=this.width/2,cy=this.height/2;
             for(let i=0;i<this.nodes.length;i++) for(let j=i+1;j<this.nodes.length;j++){
-                const a=this.nodes[i],b=this.nodes[j];let dx=b.x-a.x,dy=b.y-a.y,dist=Math.sqrt(dx*dx+dy*dy)||1,force=2000/(dist*dist),fx=(dx/dist)*force*alpha,fy=(dy/dist)*force*alpha;
+                const a=this.nodes[i],b=this.nodes[j];let dx=b.x-a.x,dy=b.y-a.y,dist=Math.sqrt(dx*dx+dy*dy)||1,force=5000/(dist*dist),fx=(dx/dist)*force*alpha,fy=(dy/dist)*force*alpha;
                 a.vx-=fx;a.vy-=fy;b.vx+=fx;b.vy+=fy;
             }
-            this.edges.forEach(e=>{let dx=e.target.x-e.source.x,dy=e.target.y-e.source.y,dist=Math.sqrt(dx*dx+dy*dy)||1,force=(dist-150)*0.005*e.strength*alpha,fx=(dx/dist)*force,fy=(dy/dist)*force;e.source.vx+=fx;e.source.vy+=fy;e.target.vx-=fx;e.target.vy-=fy;});
+            this.edges.forEach(e=>{let dx=e.target.x-e.source.x,dy=e.target.y-e.source.y,dist=Math.sqrt(dx*dx+dy*dy)||1,force=(dist-220)*0.004*e.strength*alpha,fx=(dx/dist)*force,fy=(dy/dist)*force;e.source.vx+=fx;e.source.vy+=fy;e.target.vx-=fx;e.target.vy-=fy;});
             this.nodes.forEach(n=>{n.vx+=(cx-n.x)*0.001*alpha;n.vy+=(cy-n.y)*0.001*alpha;n.x+=n.vx;n.y+=n.vy;n.vx*=0.9;n.vy*=0.9;});
         },
         setupEvents() {
@@ -2904,7 +2904,7 @@
                 this.mouse.y=(e.clientY-rect.top-this.camera.y+this.height/2)/this.camera.zoom;
                 if(this.dragging){this.dragging.x=this.mouse.x;this.dragging.y=this.mouse.y;return;}
                 let found=null;
-                for(let i=this.nodes.length-1;i>=0;i--){const n=this.nodes[i],dx=this.mouse.x-n.x,dy=this.mouse.y-n.y;if(Math.sqrt(dx*dx+dy*dy)<n.radius+5){found=n;break;}}
+                for(let i=this.nodes.length-1;i>=0;i--){const n=this.nodes[i];const cw=n._isRoot?70:60,ch=n._isRoot?26:22;if(Math.abs(this.mouse.x-n.x)<cw+5&&Math.abs(this.mouse.y-n.y)<ch+5){found=n;break;}}
                 if(found!==this.hovering){
                     this.hovering=found;clone.style.cursor=found?'pointer':'grab';
                     const tooltip=document.getElementById('intel-tooltip');
@@ -2996,6 +2996,8 @@
                 document.getElementById('intel-search-count').style.display = 'none';
             }
         },
+        showLabels: true,
+        toggleLabels() { this.showLabels = !this.showLabels; },
         zoomIn(){this.camera.zoom=Math.min(3,this.camera.zoom*1.2);},
         zoomOut(){this.camera.zoom=Math.max(0.3,this.camera.zoom/1.2);},
         resetView(){
@@ -3005,182 +3007,241 @@
             document.getElementById('intel-info-body').innerHTML='<p style="color:#475569">Clique em um nó para ver detalhes.</p>';
         },
         animate(){this.time+=0.016;this.simulateForces(0.01);this.draw();this.animFrame=requestAnimationFrame(()=>this.animate());},
+        // Sherlocker-style rounded rectangle helper
+        _roundRect(ctx, x, y, w, h, r) {
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.lineTo(x + w - r, y);
+            ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+            ctx.lineTo(x + w, y + h - r);
+            ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+            ctx.lineTo(x + r, y + h);
+            ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+            ctx.lineTo(x, y + r);
+            ctx.quadraticCurveTo(x, y, x + r, y);
+            ctx.closePath();
+        },
         draw() {
-            const ctx=this.ctx,w=this.width,h=this.height;
-            ctx.clearRect(0,0,w,h);
+            const ctx = this.ctx, w = this.width, h = this.height;
+            ctx.clearRect(0, 0, w, h);
+
+            // Sherlocker dark background
+            ctx.fillStyle = '#0d1117';
+            ctx.fillRect(0, 0, w, h);
+
+            // Subtle grid
             ctx.save();
-            ctx.translate(this.camera.x-w/2+(w/2)*(1-this.camera.zoom),this.camera.y-h/2+(h/2)*(1-this.camera.zoom));
-            ctx.scale(this.camera.zoom,this.camera.zoom);
+            ctx.globalAlpha = 0.06;
+            ctx.strokeStyle = '#30363d';
+            ctx.lineWidth = 0.5;
+            const gridSize = 40;
+            for (let gx = 0; gx < w; gx += gridSize) {
+                ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, h); ctx.stroke();
+            }
+            for (let gy = 0; gy < h; gy += gridSize) {
+                ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(w, gy); ctx.stroke();
+            }
+            ctx.restore();
 
-            // Draw edges with animated data flow particles
-            this.edges.forEach(edge=>{
-                if(edge.source._hidden||edge.target._hidden)return;
-                const dimmed=edge.source._dimmed&&edge.target._dimmed;
-                const hl=this.selected&&(edge.source===this.selected||edge.target===this.selected);
-                const hv=this.hovering&&(edge.source===this.hovering||edge.target===this.hovering);
-                const alpha=dimmed?0.03:hl?0.6:hv?0.4:0.12;
-                const dx=edge.target.x-edge.source.x,dy=edge.target.y-edge.source.y;
-                const dist=Math.sqrt(dx*dx+dy*dy)||1;
+            ctx.save();
+            ctx.translate(this.camera.x - w / 2 + (w / 2) * (1 - this.camera.zoom), this.camera.y - h / 2 + (h / 2) * (1 - this.camera.zoom));
+            ctx.scale(this.camera.zoom, this.camera.zoom);
 
-                // Edge line with gradient
-                if(hl||hv){
-                    const grad=ctx.createLinearGradient(edge.source.x,edge.source.y,edge.target.x,edge.target.y);
-                    const srcNum=parseInt(edge.source.color.slice(1),16);
-                    const tgtNum=parseInt(edge.target.color.slice(1),16);
-                    grad.addColorStop(0,`rgba(${(srcNum>>16)&255},${(srcNum>>8)&255},${srcNum&255},${alpha})`);
-                    grad.addColorStop(1,`rgba(${(tgtNum>>16)&255},${(tgtNum>>8)&255},${tgtNum&255},${alpha})`);
-                    ctx.beginPath();ctx.moveTo(edge.source.x,edge.source.y);ctx.lineTo(edge.target.x,edge.target.y);
-                    ctx.strokeStyle=grad;ctx.lineWidth=hl?2.5:1.5;ctx.stroke();
-                } else {
-                    ctx.beginPath();ctx.moveTo(edge.source.x,edge.source.y);ctx.lineTo(edge.target.x,edge.target.y);
-                    ctx.strokeStyle=`rgba(100,116,139,${alpha})`;ctx.lineWidth=0.8;ctx.stroke();
+            const typeLabels = { director: 'Diretor(a)', company: 'Empresa', theme: 'Tema', agency: 'Agência' };
+
+            // ── EDGES ──
+            this.edges.forEach(edge => {
+                if (edge.source._hidden || edge.target._hidden) return;
+                const dimmed = edge.source._dimmed && edge.target._dimmed;
+                const hl = this.selected && (edge.source === this.selected || edge.target === this.selected);
+                const hv = this.hovering && (edge.source === this.hovering || edge.target === this.hovering);
+                const active = hl || hv;
+                const alpha = dimmed ? 0.04 : active ? 0.7 : 0.2;
+                const lw = dimmed ? 0.5 : active ? 2 : 1;
+                const isTheme = edge.source.type === 'theme' || edge.target.type === 'theme';
+
+                ctx.beginPath();
+                ctx.moveTo(edge.source.x, edge.source.y);
+                ctx.lineTo(edge.target.x, edge.target.y);
+                ctx.strokeStyle = active ? `rgba(88,166,255,${alpha})` : `rgba(110,118,129,${alpha})`;
+                ctx.lineWidth = lw;
+                if (isTheme && !active) { ctx.setLineDash([4, 4]); }
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                // Arrow indicator at midpoint
+                if (active && !dimmed) {
+                    const mx = (edge.source.x + edge.target.x) / 2;
+                    const my = (edge.source.y + edge.target.y) / 2;
+                    const dx = edge.target.x - edge.source.x;
+                    const dy = edge.target.y - edge.source.y;
+                    const angle = Math.atan2(dy, dx);
+                    ctx.save();
+                    ctx.translate(mx, my);
+                    ctx.rotate(angle);
+                    ctx.beginPath();
+                    ctx.moveTo(5, 0); ctx.lineTo(-3, -3); ctx.lineTo(-3, 3); ctx.closePath();
+                    ctx.fillStyle = `rgba(88,166,255,${alpha * 0.8})`;
+                    ctx.fill();
+                    ctx.restore();
                 }
 
-                // Animated particles flowing along edge (2 particles per edge)
-                if(!dimmed){
-                    for(let p=0;p<2;p++){
-                        const t=((this.time*(0.3+edge.strength*0.3)+edge.phase+p*0.5)%1);
-                        const px=edge.source.x+dx*t,py=edge.source.y+dy*t;
-                        const pSize=hl?3:hv?2:1.2;
-                        const pAlpha=hl?0.9:hv?0.6:0.25;
-                        // Particle glow
-                        const pGlow=ctx.createRadialGradient(px,py,0,px,py,pSize*3);
-                        pGlow.addColorStop(0,`rgba(96,165,250,${pAlpha})`);
-                        pGlow.addColorStop(1,'rgba(96,165,250,0)');
-                        ctx.beginPath();ctx.arc(px,py,pSize*3,0,Math.PI*2);ctx.fillStyle=pGlow;ctx.fill();
-                        // Particle core
-                        ctx.beginPath();ctx.arc(px,py,pSize,0,Math.PI*2);
-                        ctx.fillStyle=`rgba(96,165,250,${pAlpha})`;ctx.fill();
+                // Edge labels — always shown when labels enabled, inline on the edge
+                if (this.showLabels && edge.label && !dimmed) {
+                    const mx = (edge.source.x + edge.target.x) / 2;
+                    const my = (edge.source.y + edge.target.y) / 2;
+                    const shortLabel = edge.label.length > 20 ? edge.label.substring(0, 18) + '…' : edge.label;
+                    ctx.font = '500 8px -apple-system,BlinkMacSystemFont,sans-serif';
+                    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                    const tw = ctx.measureText(shortLabel).width;
+                    // Background pill
+                    this._roundRect(ctx, mx - tw / 2 - 6, my - 8, tw + 12, 16, 4);
+                    ctx.fillStyle = active ? 'rgba(22,27,34,0.95)' : 'rgba(22,27,34,0.8)';
+                    ctx.fill();
+                    ctx.strokeStyle = active ? 'rgba(88,166,255,0.4)' : 'rgba(110,118,129,0.2)';
+                    ctx.lineWidth = 0.5; ctx.stroke();
+                    ctx.fillStyle = active ? 'rgba(200,215,230,0.95)' : 'rgba(139,148,158,0.7)';
+                    ctx.fillText(shortLabel, mx, my);
+                }
+
+                // Subtle data flow particles on active edges
+                if (active && !dimmed) {
+                    const dx = edge.target.x - edge.source.x, dy = edge.target.y - edge.source.y;
+                    for (let p = 0; p < 2; p++) {
+                        const t = ((this.time * (0.3 + (edge.strength || 0.5) * 0.3) + (edge.phase || 0) + p * 0.5) % 1);
+                        const px = edge.source.x + dx * t, py = edge.source.y + dy * t;
+                        ctx.beginPath(); ctx.arc(px, py, 2, 0, Math.PI * 2);
+                        ctx.fillStyle = 'rgba(88,166,255,0.6)'; ctx.fill();
                     }
-                }
-
-                // Edge label on hover/select
-                if((hl||hv)&&edge.label&&!dimmed){
-                    const mx=(edge.source.x+edge.target.x)/2,my=(edge.source.y+edge.target.y)/2;
-                    ctx.font='500 8px -apple-system,BlinkMacSystemFont,sans-serif';
-                    ctx.textAlign='center';ctx.textBaseline='middle';
-                    const tw=ctx.measureText(edge.label).width;
-                    ctx.fillStyle='rgba(6,10,20,0.85)';
-                    ctx.fillRect(mx-tw/2-4,my-7,tw+8,14);
-                    ctx.strokeStyle='rgba(96,165,250,0.3)';ctx.lineWidth=0.5;
-                    ctx.strokeRect(mx-tw/2-4,my-7,tw+8,14);
-                    ctx.fillStyle='rgba(148,163,184,0.9)';ctx.fillText(edge.label,mx,my);
                 }
             });
 
-            // Draw nodes with enhanced effects
-            this.nodes.forEach(node=>{
-                if(node._hidden)return;
-                const dimmed=node._dimmed,isSel=node===this.selected,isHov=node===this.hovering;
-                const isHl=node._highlighted,isRoot=node._isRoot;
-                const pulse=Math.sin(this.time*2+node.pulsePhase)*0.12+1;
-                const r=node.radius*(isHov?1.15:1)*(isHl?1.2:1)*(isRoot?1.15:1);
-                const alpha=dimmed?0.15:1;
-                const num=parseInt(node.color.slice(1),16);
-                const cr=(num>>16)&255,cg=(num>>8)&255,cb=num&255;
+            // ── NODES as Sherlocker-style cards ──
+            this.nodes.forEach(node => {
+                if (node._hidden) return;
+                const dimmed = node._dimmed, isSel = node === this.selected, isHov = node === this.hovering;
+                const isHl = node._highlighted, isRoot = node._isRoot;
+                const alpha = dimmed ? 0.15 : 1;
+                const num = parseInt(node.color.slice(1), 16);
+                const cr = (num >> 16) & 255, cg = (num >> 8) & 255, cb = num & 255;
 
-                // Root node: animated concentric rings
-                if(isRoot&&!dimmed){
-                    for(let ring=0;ring<3;ring++){
-                        const ringR=r*(1.6+ring*0.5)+Math.sin(this.time*1.5+ring)*3;
-                        const ringAlpha=0.08-ring*0.02;
-                        ctx.beginPath();ctx.arc(node.x,node.y,ringR,0,Math.PI*2);
-                        ctx.strokeStyle=`rgba(${cr},${cg},${cb},${ringAlpha})`;
-                        ctx.lineWidth=0.8;ctx.setLineDash([3+ring,5+ring*2]);ctx.stroke();ctx.setLineDash([]);
-                    }
+                // Card dimensions
+                const cardW = isRoot ? 140 : (isSel || isHov) ? 130 : 120;
+                const cardH = isRoot ? 52 : (isSel || isHov) ? 48 : 44;
+                const cardX = node.x - cardW / 2;
+                const cardY = node.y - cardH / 2;
+                const cornerR = 10;
+
+                // Drop shadow
+                if (!dimmed) {
+                    ctx.save();
+                    ctx.shadowColor = (isSel || isHov || isRoot) ? `rgba(${cr},${cg},${cb},0.3)` : 'rgba(0,0,0,0.3)';
+                    ctx.shadowBlur = (isSel || isHov) ? 16 : 8;
+                    ctx.shadowOffsetY = 2;
+                    this._roundRect(ctx, cardX, cardY, cardW, cardH, cornerR);
+                    ctx.fillStyle = 'rgba(22,27,34,0.01)'; ctx.fill();
+                    ctx.restore();
                 }
 
-                // Outer glow for active nodes
-                if((isSel||isHov||isHl||isRoot)&&!dimmed){
-                    const glR=r*2.8*pulse;
-                    const glow=ctx.createRadialGradient(node.x,node.y,r,node.x,node.y,glR);
-                    glow.addColorStop(0,`rgba(${cr},${cg},${cb},0.2)`);
-                    glow.addColorStop(0.5,`rgba(${cr},${cg},${cb},0.05)`);
-                    glow.addColorStop(1,`rgba(${cr},${cg},${cb},0)`);
-                    ctx.beginPath();ctx.arc(node.x,node.y,glR,0,Math.PI*2);ctx.fillStyle=glow;ctx.fill();
+                // Card background
+                this._roundRect(ctx, cardX, cardY, cardW, cardH, cornerR);
+                ctx.fillStyle = dimmed ? 'rgba(22,27,34,0.3)' :
+                    isSel ? 'rgba(30,38,50,0.98)' :
+                    isHov ? 'rgba(28,35,47,0.96)' : 'rgba(22,27,34,0.92)';
+                ctx.fill();
+
+                // Card border
+                ctx.strokeStyle = (isSel || isRoot) ? `rgba(${cr},${cg},${cb},${alpha * 0.8})` :
+                    isHov ? `rgba(${cr},${cg},${cb},${alpha * 0.5})` :
+                    isHl ? `rgba(${cr},${cg},${cb},${alpha * 0.6})` :
+                    `rgba(110,118,129,${alpha * 0.2})`;
+                ctx.lineWidth = (isSel || isRoot) ? 2 : isHov ? 1.5 : 1;
+                ctx.stroke();
+
+                // Color accent line on left side
+                this._roundRect(ctx, cardX, cardY, 4, cardH, 2);
+                ctx.fillStyle = `rgba(${cr},${cg},${cb},${alpha * (dimmed ? 0.3 : 0.8)})`;
+                ctx.fill();
+
+                // Avatar circle
+                const avatarR = cardH * 0.3;
+                const avatarX = cardX + 18;
+                const avatarY = node.y;
+                ctx.beginPath(); ctx.arc(avatarX, avatarY, avatarR, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(${cr},${cg},${cb},${alpha * 0.2})`;
+                ctx.fill();
+                ctx.strokeStyle = `rgba(${cr},${cg},${cb},${alpha * 0.5})`;
+                ctx.lineWidth = 1; ctx.stroke();
+
+                // Avatar initials
+                const initials = (node.initials || node.label.split(' ').map(w => w[0]).join('').substring(0, 2)).toUpperCase();
+                ctx.font = `700 ${avatarR * 0.9}px -apple-system,BlinkMacSystemFont,sans-serif`;
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillStyle = `rgba(${cr},${cg},${cb},${alpha * 0.9})`;
+                ctx.fillText(initials, avatarX, avatarY);
+
+                // Name text
+                if (!dimmed || isHl) {
+                    const textX = cardX + 34;
+                    const maxTextW = cardW - 42;
+                    const name = node.label.length > 16 ? node.label.substring(0, 15) + '…' : node.label;
+                    ctx.font = `600 10px -apple-system,BlinkMacSystemFont,sans-serif`;
+                    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+                    ctx.fillStyle = `rgba(230,237,243,${alpha})`;
+                    ctx.fillText(name, textX, node.y - 6, maxTextW);
+
+                    // Type badge
+                    const typeText = typeLabels[node.type] || node.type;
+                    ctx.font = `500 8px -apple-system,BlinkMacSystemFont,sans-serif`;
+                    ctx.fillStyle = `rgba(${cr},${cg},${cb},${alpha * 0.7})`;
+                    ctx.fillText(typeText, textX, node.y + 8, maxTextW);
                 }
 
-                // Ambient glow for all nodes
-                if(!dimmed){
-                    const ambR=r*1.6*pulse;
-                    const amb=ctx.createRadialGradient(node.x,node.y,r*0.3,node.x,node.y,ambR);
-                    amb.addColorStop(0,`rgba(${cr},${cg},${cb},0.08)`);
-                    amb.addColorStop(1,`rgba(${cr},${cg},${cb},0)`);
-                    ctx.beginPath();ctx.arc(node.x,node.y,ambR,0,Math.PI*2);ctx.fillStyle=amb;ctx.fill();
+                // Connection count badge (top-right)
+                if (!dimmed && node.connections > 0) {
+                    const bx = cardX + cardW - 14;
+                    const by = cardY + 10;
+                    ctx.beginPath(); ctx.arc(bx, by, 8, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(${cr},${cg},${cb},${alpha * 0.15})`;
+                    ctx.fill();
+                    ctx.font = 'bold 7px -apple-system,sans-serif';
+                    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                    ctx.fillStyle = `rgba(${cr},${cg},${cb},${alpha * 0.8})`;
+                    ctx.fillText(node.connections, bx, by);
                 }
 
-                // Node shape
-                ctx.beginPath();
-                if(node.type==='company'){
-                    for(let i=0;i<6;i++){const a=(Math.PI/3)*i-Math.PI/6;const px=node.x+r*Math.cos(a),py=node.y+r*Math.sin(a);i===0?ctx.moveTo(px,py):ctx.lineTo(px,py);}ctx.closePath();
-                } else if(node.type==='theme'){
-                    ctx.moveTo(node.x,node.y-r);ctx.lineTo(node.x+r*0.8,node.y);ctx.lineTo(node.x,node.y+r);ctx.lineTo(node.x-r*0.8,node.y);ctx.closePath();
-                } else {
-                    ctx.arc(node.x,node.y,r,0,Math.PI*2);
+                // Root indicator ring
+                if (isRoot && !dimmed) {
+                    const pulse = Math.sin(this.time * 2) * 0.1 + 1;
+                    this._roundRect(ctx, cardX - 4 * pulse, cardY - 4 * pulse, cardW + 8 * pulse, cardH + 8 * pulse, cornerR + 2);
+                    ctx.strokeStyle = `rgba(${cr},${cg},${cb},0.15)`;
+                    ctx.lineWidth = 1; ctx.setLineDash([4, 4]); ctx.stroke(); ctx.setLineDash([]);
                 }
 
-                // Fill with gradient
-                const bg=ctx.createRadialGradient(node.x-r*0.3,node.y-r*0.3,0,node.x,node.y,r);
-                bg.addColorStop(0,`rgba(${Math.min(255,cr+40)},${Math.min(255,cg+40)},${Math.min(255,cb+40)},${alpha*0.35})`);
-                bg.addColorStop(1,`rgba(${cr},${cg},${cb},${alpha*0.15})`);
-                ctx.fillStyle=bg;ctx.fill();
-
-                // Stroke
-                ctx.strokeStyle=`rgba(${cr},${cg},${cb},${alpha*(isSel||isRoot?1:isHov?0.85:0.6)})`;
-                ctx.lineWidth=isSel?3:isRoot?2.5:isHov?2:1;ctx.stroke();
-
-                // Connection count indicator (small arc)
-                if(!dimmed&&node.connections>2){
-                    const arcLen=(node.connections/10)*Math.PI*2;
-                    ctx.beginPath();ctx.arc(node.x,node.y,r+4,0,Math.min(arcLen,Math.PI*2));
-                    ctx.strokeStyle=`rgba(${cr},${cg},${cb},0.3)`;ctx.lineWidth=1.5;ctx.stroke();
+                // Expansion indicators
+                if (!dimmed && node._isExpanded && !isRoot) {
+                    const ix = cardX + cardW - 6, iy = cardY + cardH - 6;
+                    ctx.beginPath(); ctx.arc(ix, iy, 5, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(74,222,128,0.9)'; ctx.fill();
+                    ctx.font = 'bold 7px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                    ctx.fillStyle = '#0d1117'; ctx.fillText('✓', ix, iy);
+                }
+                if (!dimmed && !node._isExpanded && !isRoot && node.connections > 0 && isHov) {
+                    const ix = cardX + cardW - 6, iy = cardY + cardH - 6;
+                    ctx.beginPath(); ctx.arc(ix, iy, 6, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(88,166,255,0.8)'; ctx.fill();
+                    ctx.font = 'bold 9px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                    ctx.fillStyle = '#fff'; ctx.fillText('+', ix, iy + 0.5);
                 }
 
-                // Expansion flash effect
-                if(node._expandFlash && !dimmed){
+                // Expansion flash
+                if (node._expandFlash && !dimmed) {
                     const elapsed = this.time - node._expandFlash;
-                    if(elapsed < 1.5){
-                        const flashR = r * (1.5 + elapsed * 3);
-                        const flashAlpha = Math.max(0, 0.4 - elapsed * 0.27);
-                        ctx.beginPath();ctx.arc(node.x,node.y,flashR,0,Math.PI*2);
-                        ctx.strokeStyle=`rgba(${cr},${cg},${cb},${flashAlpha})`;ctx.lineWidth=2;ctx.stroke();
-                    }
-                }
-
-                // Expanded indicator (small "+" or checkmark at bottom-right)
-                if(!dimmed && node._isExpanded && !node._isRoot){
-                    const ix=node.x+r*0.7, iy=node.y-r*0.7;
-                    ctx.beginPath();ctx.arc(ix,iy,5,0,Math.PI*2);
-                    ctx.fillStyle='rgba(74,222,128,0.9)';ctx.fill();
-                    ctx.font='bold 7px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
-                    ctx.fillStyle='#0a0f1a';ctx.fillText('✓',ix,iy);
-                }
-                // Not-expanded hint (small "+" for nodes with more connections)
-                if(!dimmed && !node._isExpanded && !node._isRoot && node.connections > 0 && isHov){
-                    const ix=node.x+r*0.7, iy=node.y-r*0.7;
-                    ctx.beginPath();ctx.arc(ix,iy,6,0,Math.PI*2);
-                    ctx.fillStyle='rgba(96,165,250,0.8)';ctx.fill();
-                    ctx.font='bold 9px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
-                    ctx.fillStyle='#fff';ctx.fillText('+',ix,iy+0.5);
-                }
-
-                // Text label
-                if(!dimmed||isHl){
-                    const label=node.type==='director'?(node.initials||node.label.split(' ').map(w=>w[0]).join('').substring(0,2)):node.label;
-                    const fontSize=node.type==='agency'?11:node.type==='director'?10:9;
-                    ctx.font=`600 ${fontSize}px -apple-system,BlinkMacSystemFont,sans-serif`;
-                    ctx.textAlign='center';ctx.textBaseline='middle';
-                    // Text shadow
-                    ctx.fillStyle='rgba(0,0,0,0.7)';
-                    ctx.fillText(label,node.x+0.7,node.y+0.7);
-                    // Text
-                    ctx.fillStyle=`rgba(226,232,240,${alpha})`;
-                    ctx.fillText(label,node.x,node.y);
-                    // Sub-label for directors and agencies
-                    if(node.type==='director'||node.type==='agency'){
-                        ctx.font='500 9px -apple-system,BlinkMacSystemFont,sans-serif';
-                        ctx.fillStyle=`rgba(${cr},${cg},${cb},${alpha*0.8})`;
-                        ctx.fillText(node.label,node.x,node.y+r+14);
+                    if (elapsed < 1.5) {
+                        const flashAlpha = Math.max(0, 0.3 - elapsed * 0.2);
+                        this._roundRect(ctx, cardX - elapsed * 20, cardY - elapsed * 15, cardW + elapsed * 40, cardH + elapsed * 30, cornerR + 4);
+                        ctx.strokeStyle = `rgba(${cr},${cg},${cb},${flashAlpha})`;
+                        ctx.lineWidth = 1.5; ctx.stroke();
                     }
                 }
             });
