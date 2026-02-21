@@ -3896,175 +3896,143 @@
             const container = document.getElementById('mapa-brasil-container');
             if (!container) return;
 
-            container.innerHTML = '';
+            // Usar mapa estilizado com círculos posicionados geograficamente
+            // Este é mais confiável que SVG paths complexos
+            const width = 600;
+            const height = 700;
 
-            // Create SVG with Brazil map
-            const svgNS = 'http://www.w3.org/2000/svg';
-            const svg = document.createElementNS(svgNS, 'svg');
-            svg.setAttribute('viewBox', '0 0 550 650');
-            svg.setAttribute('class', 'brazil-map-svg');
-
-            // Add defs for gradients and filters
-            const defs = document.createElementNS(svgNS, 'defs');
-
-            // Glow filter
-            const filter = document.createElementNS(svgNS, 'filter');
-            filter.setAttribute('id', 'state-glow');
-            filter.innerHTML = `
-                <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-                <feMerge>
-                    <feMergeNode in="coloredBlur"/>
-                    <feMergeNode in="SourceGraphic"/>
-                </feMerge>
-            `;
-            defs.appendChild(filter);
-
-            // Background gradient
-            const bgGradient = document.createElementNS(svgNS, 'linearGradient');
-            bgGradient.setAttribute('id', 'bg-gradient');
-            bgGradient.setAttribute('x1', '0%');
-            bgGradient.setAttribute('y1', '0%');
-            bgGradient.setAttribute('x2', '100%');
-            bgGradient.setAttribute('y2', '100%');
-            bgGradient.innerHTML = `
-                <stop offset="0%" style="stop-color:#1a2f5a;stop-opacity:1" />
-                <stop offset="100%" style="stop-color:#233770;stop-opacity:1" />
-            `;
-            defs.appendChild(bgGradient);
-
-            svg.appendChild(defs);
-
-            // Background
-            const bg = document.createElementNS(svgNS, 'rect');
-            bg.setAttribute('width', '100%');
-            bg.setAttribute('height', '100%');
-            bg.setAttribute('fill', 'url(#bg-gradient)');
-            bg.setAttribute('rx', '12');
-            svg.appendChild(bg);
-
-            // States group
-            const statesGroup = document.createElementNS(svgNS, 'g');
-            statesGroup.setAttribute('class', 'states-group');
-
-            // Brazil outline approximation (simplified polygon coordinates)
-            const brazilStates = {
-                'RR': 'M175,40 L215,35 L230,75 L225,95 L185,100 L165,70 Z',
-                'AP': 'M295,25 L340,20 L360,60 L345,100 L295,95 L280,55 Z',
-                'AM': 'M60,100 L175,95 L225,95 L240,130 L250,185 L220,230 L170,245 L120,240 L80,200 L55,150 Z',
-                'PA': 'M225,95 L295,95 L345,100 L380,120 L395,170 L380,220 L330,245 L280,230 L250,185 L240,130 Z',
-                'RO': 'M120,240 L170,245 L180,290 L175,335 L130,340 L100,310 L95,265 Z',
-                'MT': 'M170,245 L220,230 L280,230 L310,250 L315,310 L305,370 L245,380 L180,360 L175,335 L180,290 Z',
-                'AC': 'M55,245 L95,240 L100,310 L70,320 L40,290 Z',
-                'TO': 'M310,200 L355,195 L375,230 L380,290 L355,330 L315,310 L310,250 Z',
-                'MA': 'M355,130 L410,120 L435,155 L425,210 L380,220 L375,170 Z',
-                'PI': 'M380,190 L425,175 L440,215 L445,280 L400,295 L380,250 Z',
-                'CE': 'M425,130 L475,125 L485,165 L465,195 L430,195 L425,160 Z',
-                'RN': 'M465,140 L510,140 L515,175 L475,180 L465,160 Z',
-                'PB': 'M460,180 L515,175 L512,210 L460,215 Z',
-                'PE': 'M420,215 L512,210 L508,250 L430,260 L410,240 Z',
-                'AL': 'M465,255 L508,250 L505,290 L470,295 Z',
-                'SE': 'M450,290 L475,290 L475,325 L455,330 Z',
-                'BA': 'M355,245 L430,260 L465,295 L475,325 L460,395 L395,420 L340,390 L330,320 L355,285 Z',
-                'GO': 'M295,310 L355,310 L355,340 L375,380 L360,430 L300,425 L275,385 L280,340 Z',
-                'DF': 'M335,340 L360,338 L362,365 L337,368 Z',
-                'MS': 'M215,375 L275,385 L290,430 L280,500 L215,495 L195,440 Z',
-                'MG': 'M330,365 L395,360 L445,390 L455,450 L415,490 L355,480 L320,440 L310,390 Z',
-                'ES': 'M445,390 L490,385 L495,445 L455,455 Z',
-                'RJ': 'M415,455 L480,445 L485,495 L430,505 L405,480 Z',
-                'SP': 'M275,440 L355,455 L405,480 L400,540 L335,550 L275,530 L255,490 Z',
-                'PR': 'M255,520 L335,535 L355,575 L335,620 L265,610 L240,560 Z',
-                'SC': 'M275,605 L345,615 L355,655 L310,670 L270,650 Z',
-                'RS': 'M240,640 L310,650 L340,700 L300,760 L235,750 L200,690 Z'
+            // Posições geográficas aproximadas dos estados no SVG
+            const statePositions = {
+                'AC': { x: 85, y: 340 }, 'AM': { x: 160, y: 220 }, 'RR': { x: 195, y: 95 },
+                'AP': { x: 320, y: 95 }, 'PA': { x: 310, y: 210 }, 'MA': { x: 405, y: 205 },
+                'PI': { x: 420, y: 280 }, 'CE': { x: 475, y: 225 }, 'RN': { x: 520, y: 230 },
+                'PB': { x: 525, y: 265 }, 'PE': { x: 495, y: 300 }, 'AL': { x: 520, y: 340 },
+                'SE': { x: 495, y: 365 }, 'BA': { x: 445, y: 400 }, 'TO': { x: 360, y: 320 },
+                'GO': { x: 350, y: 430 }, 'DF': { x: 380, y: 415 }, 'MT': { x: 255, y: 370 },
+                'MS': { x: 280, y: 490 }, 'MG': { x: 420, y: 485 }, 'ES': { x: 490, y: 490 },
+                'RJ': { x: 460, y: 540 }, 'SP': { x: 365, y: 535 }, 'PR': { x: 330, y: 595 },
+                'SC': { x: 350, y: 650 }, 'RS': { x: 310, y: 710 }, 'RO': { x: 150, y: 355 }
             };
 
-            // Draw each state
-            Object.entries(brazilStates).forEach(([code, pathD]) => {
+            const maxDecisoes = 4521;
+
+            // Criar HTML do mapa
+            let mapHTML = `
+                <div class="brazil-map-container" style="position: relative; width: 100%; height: ${height}px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 12px; overflow: hidden;">
+                    <svg viewBox="0 0 ${width} ${height + 50}" style="width: 100%; height: 100%;">
+                        <defs>
+                            <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+                                <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+                                <feMerge>
+                                    <feMergeNode in="coloredBlur"/>
+                                    <feMergeNode in="SourceGraphic"/>
+                                </feMerge>
+                            </filter>
+                            <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#0f172a"/>
+                                <stop offset="100%" style="stop-color:#1e293b"/>
+                            </linearGradient>
+                        </defs>
+
+                        <!-- Contorno simplificado do Brasil -->
+                        <path d="M85,340 Q60,300 85,260 Q100,200 160,180 Q195,60 320,70 Q380,80 420,150 Q500,180 540,250 Q560,320 530,400 Q510,500 460,540 Q400,580 350,620 Q320,680 310,750 Q280,720 250,680 Q200,600 220,520 Q200,450 150,400 Q100,380 85,340"
+                              fill="none" stroke="rgba(255,239,77,0.15)" stroke-width="2" stroke-dasharray="5,5"/>
+
+                        <!-- Estados como círculos -->
+                        ${Object.entries(statePositions).map(([code, pos]) => {
+                            const estado = this.estados[code];
+                            if (!estado) return '';
+
+                            const ratio = estado.decisoes / maxDecisoes;
+                            const minRadius = 18;
+                            const maxRadius = 50;
+                            const radius = minRadius + (maxRadius - minRadius) * Math.sqrt(ratio);
+
+                            const colorInfo = this.getStateColor(estado.decisoes);
+
+                            return `
+                                <g class="state-circle-group" data-state="${code}" style="cursor: pointer;">
+                                    <!-- Círculo de fundo com glow -->
+                                    <circle cx="${pos.x}" cy="${pos.y}" r="${radius + 4}"
+                                            fill="${colorInfo.fill}" fill-opacity="0.15"/>
+                                    <!-- Círculo principal -->
+                                    <circle cx="${pos.x}" cy="${pos.y}" r="${radius}"
+                                            fill="${colorInfo.fill}" fill-opacity="${colorInfo.opacity}"
+                                            stroke="${colorInfo.fill}" stroke-width="2" stroke-opacity="0.8"
+                                            class="state-main-circle"/>
+                                    <!-- Label do estado -->
+                                    <text x="${pos.x}" y="${pos.y + 4}"
+                                          text-anchor="middle" fill="#0f172a"
+                                          font-size="${radius > 30 ? 14 : 11}" font-weight="700"
+                                          style="pointer-events: none; text-shadow: 0 1px 2px rgba(255,255,255,0.3);">
+                                        ${code}
+                                    </text>
+                                </g>
+                            `;
+                        }).join('')}
+
+                        <!-- Linhas de conexão decorativas -->
+                        <g stroke="rgba(255,239,77,0.1)" stroke-width="1">
+                            <line x1="365" y1="535" x2="420" y2="485"/>
+                            <line x1="420" y1="485" x2="445" y2="400"/>
+                            <line x1="350" y1="430" x2="420" y2="485"/>
+                            <line x1="310" y1="210" x2="405" y2="205"/>
+                        </g>
+                    </svg>
+
+                    <!-- Tooltip -->
+                    <div id="map-tooltip-internal" class="map-tooltip-box" style="display: none; position: absolute; pointer-events: none; z-index: 100;"></div>
+                </div>
+            `;
+
+            container.innerHTML = mapHTML;
+
+            // Adicionar event listeners para interatividade
+            container.querySelectorAll('.state-circle-group').forEach(group => {
+                const code = group.dataset.state;
                 const estado = this.estados[code];
-                if (!estado) return;
+                const mainCircle = group.querySelector('.state-main-circle');
 
-                const colorInfo = this.getStateColor(estado.decisoes);
+                group.addEventListener('mouseenter', (e) => {
+                    mainCircle.style.filter = 'url(#glow)';
+                    mainCircle.style.transform = 'scale(1.1)';
+                    mainCircle.style.transformOrigin = 'center';
 
-                const g = document.createElementNS(svgNS, 'g');
-                g.setAttribute('class', 'state-group');
-                g.setAttribute('data-state', code);
+                    // Mostrar tooltip
+                    const tooltip = document.getElementById('mapa-tooltip');
+                    if (tooltip && estado) {
+                        tooltip.querySelector('.tooltip-state').textContent = estado.nome;
+                        tooltip.querySelector('.tooltip-badge').textContent = estado.regiao;
+                        tooltip.querySelector('.tooltip-stat-value').textContent = estado.decisoes.toLocaleString('pt-BR');
+                        tooltip.querySelector('.tooltip-stat-rate').textContent = estado.taxa + '%';
+                        tooltip.style.display = 'block';
+                        tooltip.style.left = (e.clientX + 15) + 'px';
+                        tooltip.style.top = (e.clientY + 15) + 'px';
+                    }
+                });
 
-                // State path
-                const path = document.createElementNS(svgNS, 'path');
-                path.setAttribute('d', pathD);
-                path.setAttribute('fill', colorInfo.fill);
-                path.setAttribute('fill-opacity', colorInfo.opacity);
-                path.setAttribute('stroke', '#ffffff');
-                path.setAttribute('stroke-width', '1.5');
-                path.setAttribute('stroke-opacity', '0.6');
-                path.setAttribute('class', 'state-path');
-                path.style.cursor = 'pointer';
-                path.style.transition = 'all 0.3s ease';
+                group.addEventListener('mousemove', (e) => {
+                    const tooltip = document.getElementById('mapa-tooltip');
+                    if (tooltip) {
+                        tooltip.style.left = (e.clientX + 15) + 'px';
+                        tooltip.style.top = (e.clientY + 15) + 'px';
+                    }
+                });
 
-                g.appendChild(path);
+                group.addEventListener('mouseleave', () => {
+                    mainCircle.style.filter = 'none';
+                    mainCircle.style.transform = 'scale(1)';
 
-                // State label
-                const labelPos = this.labelPositions[code];
-                if (labelPos) {
-                    const text = document.createElementNS(svgNS, 'text');
-                    text.setAttribute('x', labelPos.x);
-                    text.setAttribute('y', labelPos.y);
-                    text.setAttribute('text-anchor', 'middle');
-                    text.setAttribute('fill', '#ffffff');
-                    text.setAttribute('font-size', '11');
-                    text.setAttribute('font-weight', '600');
-                    text.setAttribute('class', 'state-label');
-                    text.style.pointerEvents = 'none';
-                    text.style.textShadow = '0 1px 3px rgba(0,0,0,0.5)';
-                    text.textContent = code;
-                    g.appendChild(text);
-                }
+                    const tooltip = document.getElementById('mapa-tooltip');
+                    if (tooltip) {
+                        tooltip.style.display = 'none';
+                    }
+                });
 
-                // Event listeners
-                g.addEventListener('mouseenter', (e) => this.handleStateHover(e, code, true));
-                g.addEventListener('mouseleave', (e) => this.handleStateHover(e, code, false));
-                g.addEventListener('mousemove', (e) => this.moveTooltip(e));
-                g.addEventListener('click', () => this.selectState(code));
-
-                statesGroup.appendChild(g);
+                group.addEventListener('click', () => {
+                    this.selectState(code);
+                });
             });
-
-            svg.appendChild(statesGroup);
-            container.appendChild(svg);
-        },
-
-        handleStateHover(event, code, isEntering) {
-            const tooltip = document.getElementById('mapa-tooltip');
-            const path = event.currentTarget.querySelector('.state-path');
-            const estado = this.estados[code];
-
-            if (isEntering) {
-                path.style.filter = 'url(#state-glow)';
-                path.style.strokeWidth = '2.5';
-                path.style.strokeOpacity = '1';
-                path.style.transform = 'scale(1.02)';
-                path.style.transformOrigin = 'center';
-
-                // Update and show tooltip
-                tooltip.querySelector('.tooltip-state').textContent = estado.nome;
-                tooltip.querySelector('.tooltip-badge').textContent = estado.regiao;
-                tooltip.querySelector('.tooltip-stat-value').textContent = estado.decisoes.toLocaleString('pt-BR');
-                tooltip.querySelector('.tooltip-stat-rate').textContent = estado.taxa + '%';
-                tooltip.style.display = 'block';
-            } else {
-                path.style.filter = 'none';
-                path.style.strokeWidth = '1.5';
-                path.style.strokeOpacity = '0.6';
-                path.style.transform = 'scale(1)';
-                tooltip.style.display = 'none';
-            }
-        },
-
-        moveTooltip(event) {
-            const tooltip = document.getElementById('mapa-tooltip');
-            const x = event.clientX + 15;
-            const y = event.clientY + 15;
-            tooltip.style.left = x + 'px';
-            tooltip.style.top = y + 'px';
         },
 
         selectState(code) {
@@ -4072,17 +4040,15 @@
             const estado = this.estados[code];
             const panel = document.getElementById('mapa-info-panel');
 
-            // Update all state visuals
-            document.querySelectorAll('.state-group').forEach(g => {
-                const statePath = g.querySelector('.state-path');
+            // Highlight selected state circle
+            document.querySelectorAll('.state-circle-group').forEach(g => {
+                const circle = g.querySelector('.state-main-circle');
                 if (g.dataset.state === code) {
-                    statePath.style.stroke = '#FFEF4D';
-                    statePath.style.strokeWidth = '3';
-                    statePath.style.strokeOpacity = '1';
+                    circle.style.strokeWidth = '4';
+                    circle.style.filter = 'url(#glow)';
                 } else {
-                    statePath.style.stroke = '#ffffff';
-                    statePath.style.strokeWidth = '1.5';
-                    statePath.style.strokeOpacity = '0.6';
+                    circle.style.strokeWidth = '2';
+                    circle.style.filter = 'none';
                 }
             });
 
