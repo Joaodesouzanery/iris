@@ -3,7 +3,108 @@
  *
  * Extrai TODAS as deliberações de um texto de PDF
  * e retorna dados estruturados em formato JSON
+ *
+ * Suporta múltiplas agências reguladoras:
+ * - ARTESP, ANEEL, ANATEL, ANP, ANTT, ANTAQ, ANS, ANVISA, ANA
  */
+
+// ============================================
+// CONFIGURAÇÃO POR AGÊNCIA
+// ============================================
+const AGENCIAS_CONFIG = {
+    'ARTESP': {
+        nome: 'Agência de Transporte do Estado de São Paulo',
+        tipoDocumento: ['DELIBERAÇÃO', 'ATA', 'PAUTA'],
+        prefixoProcesso: ['ARTESP-PRC', 'SEI'],
+        diretores: ['André Isper', 'Diego Zanatto', 'Fernanda Esbizaro', 'Raquel França'],
+        microtemas: ['reequilibrio', 'tarifa', 'obras', 'contrato', 'multa', 'fiscalizacao']
+    },
+    'ANEEL': {
+        nome: 'Agência Nacional de Energia Elétrica',
+        tipoDocumento: ['RESOLUÇÃO', 'DESPACHO', 'NOTA TÉCNICA'],
+        prefixoProcesso: ['REH', 'REN', 'RGE'],
+        diretores: ['Diretor-Geral', 'Diretor'],
+        microtemas: ['tarifa', 'reajuste', 'revisao', 'qualidade', 'outorga', 'geracao']
+    },
+    'ANATEL': {
+        nome: 'Agência Nacional de Telecomunicações',
+        tipoDocumento: ['RESOLUÇÃO', 'ATO', 'DESPACHO', 'SÚMULA'],
+        prefixoProcesso: ['SEI', 'ANATEL'],
+        diretores: ['Conselheiro', 'Presidente'],
+        microtemas: ['espectro', 'telefonia', 'internet', 'outorga', 'sanção', 'qualidade']
+    },
+    'ANP': {
+        nome: 'Agência Nacional do Petróleo',
+        tipoDocumento: ['RESOLUÇÃO', 'DESPACHO', 'AUTORIZAÇÃO'],
+        prefixoProcesso: ['ANP', 'SEI'],
+        diretores: ['Diretor-Geral', 'Diretor'],
+        microtemas: ['exploracao', 'producao', 'refino', 'combustivel', 'gas', 'preco']
+    },
+    'ANTT': {
+        nome: 'Agência Nacional de Transportes Terrestres',
+        tipoDocumento: ['DELIBERAÇÃO', 'RESOLUÇÃO', 'PORTARIA'],
+        prefixoProcesso: ['ANTT', 'SEI'],
+        diretores: ['Diretor-Geral', 'Diretor'],
+        microtemas: ['ferrovia', 'rodovia', 'transporte', 'concessao', 'tarifa', 'fiscalizacao']
+    },
+    'ANTAQ': {
+        nome: 'Agência Nacional de Transportes Aquaviários',
+        tipoDocumento: ['RESOLUÇÃO', 'DELIBERAÇÃO', 'PORTARIA'],
+        prefixoProcesso: ['ANTAQ', 'SEI'],
+        diretores: ['Diretor-Geral', 'Diretor'],
+        microtemas: ['porto', 'navegacao', 'afretamento', 'concessao', 'tarifa', 'arrendamento']
+    },
+    'ANS': {
+        nome: 'Agência Nacional de Saúde Suplementar',
+        tipoDocumento: ['RESOLUÇÃO NORMATIVA', 'RESOLUÇÃO OPERACIONAL', 'SÚMULA'],
+        prefixoProcesso: ['ANS', 'SEI'],
+        diretores: ['Diretor-Presidente', 'Diretor'],
+        microtemas: ['plano', 'cobertura', 'reajuste', 'operadora', 'beneficiario', 'fiscalizacao']
+    },
+    'ANVISA': {
+        nome: 'Agência Nacional de Vigilância Sanitária',
+        tipoDocumento: ['RESOLUÇÃO', 'RDC', 'INSTRUÇÃO NORMATIVA'],
+        prefixoProcesso: ['ANVISA', 'SEI'],
+        diretores: ['Diretor-Presidente', 'Diretor'],
+        microtemas: ['registro', 'medicamento', 'alimento', 'cosmetico', 'fiscalizacao', 'importacao']
+    },
+    'ANA': {
+        nome: 'Agência Nacional de Águas',
+        tipoDocumento: ['RESOLUÇÃO', 'DELIBERAÇÃO', 'PORTARIA'],
+        prefixoProcesso: ['ANA', 'SEI'],
+        diretores: ['Diretor-Presidente', 'Diretor'],
+        microtemas: ['outorga', 'recursos', 'bacia', 'cobranca', 'seguranca', 'barragem']
+    }
+};
+
+// ============================================
+// NORMALIZAÇÃO DE EMPRESAS (Fuzzy Matching)
+// ============================================
+const EMPRESAS_NORMALIZADAS = {
+    // Grupos de Concessionárias Rodoviárias
+    'CCR': ['CCR', 'C.C.R', 'GRUPO CCR', 'CCR S.A', 'CCR SA'],
+    'ECORODOVIAS': ['ECORODOVIAS', 'ECO RODOVIAS', 'ECOVIAS', 'ECOPISTAS'],
+    'ARTERIS': ['ARTERIS', 'ARTERIS S.A', 'ARTERIS SA'],
+    'AB CONCESSÕES': ['AB CONCESSÕES', 'AB CONCESSOES', 'ABERTIS', 'AB'],
+    'TRIUNFO': ['TRIUNFO', 'TPI', 'TRIUNFO PARTICIPAÇÕES'],
+    // Empresas de Energia
+    'CPFL': ['CPFL', 'CPFL ENERGIA', 'CPFL PAULISTA', 'CPFL PIRATININGA'],
+    'ENEL': ['ENEL', 'ELETROPAULO', 'ENEL SP', 'ENEL DISTRIBUIÇÃO'],
+    'ENERGISA': ['ENERGISA', 'ENERGISA SP', 'ENERGISA MT'],
+    'NEOENERGIA': ['NEOENERGIA', 'ELEKTRO', 'COELBA', 'CELPE'],
+    'EQUATORIAL': ['EQUATORIAL', 'EQUATORIAL ENERGIA'],
+    // Telecomunicações
+    'VIVO': ['VIVO', 'TELEFONICA', 'TELEFÔNICA', 'TELEFONICA BRASIL'],
+    'CLARO': ['CLARO', 'CLARO S.A', 'NET', 'EMBRATEL'],
+    'TIM': ['TIM', 'TIM CELULAR', 'TIM S.A'],
+    'OI': ['OI', 'OI S.A', 'OI MÓVEL', 'OI FIXO'],
+    // Petróleo e Gás
+    'PETROBRAS': ['PETROBRAS', 'PETROBRÁS', 'PETRÓLEO BRASILEIRO'],
+    'RAIZEN': ['RAÍZEN', 'RAIZEN', 'COSAN RAIZEN'],
+    'IPIRANGA': ['IPIRANGA', 'GRUPO ULTRA', 'ULTRAPAR'],
+    'SHELL': ['SHELL', 'SHELL BRASIL'],
+    'BR DISTRIBUIDORA': ['BR DISTRIBUIDORA', 'VIBRA', 'VIBRA ENERGIA']
+};
 
 // Padrões para identificar deliberações (expandidos)
 const PADROES = {
@@ -449,16 +550,164 @@ function extrairVotos(texto) {
 /**
  * Analisa texto e retorna JSON estruturado
  */
-function analisarTexto(texto, agencia = 'ARTESP') {
+function analisarTexto(texto, agencia = null) {
+    // Detecta agência automaticamente se não fornecida
+    if (!agencia) {
+        agencia = detectarAgencia(texto);
+    }
     return extrairDeliberacoes(texto, agencia);
+}
+
+/**
+ * Detecta automaticamente a agência reguladora do texto
+ */
+function detectarAgencia(texto) {
+    const textoUpper = texto.toUpperCase();
+
+    // Pontuação por agência
+    const scores = {};
+
+    for (const [sigla, config] of Object.entries(AGENCIAS_CONFIG)) {
+        scores[sigla] = 0;
+
+        // Verifica menção à sigla
+        const regexSigla = new RegExp(`\\b${sigla}\\b`, 'g');
+        const matchesSigla = textoUpper.match(regexSigla);
+        if (matchesSigla) {
+            scores[sigla] += matchesSigla.length * 10;
+        }
+
+        // Verifica tipos de documento
+        for (const tipo of config.tipoDocumento) {
+            if (textoUpper.includes(tipo.toUpperCase())) {
+                scores[sigla] += 5;
+            }
+        }
+
+        // Verifica prefixos de processo
+        for (const prefixo of config.prefixoProcesso) {
+            if (textoUpper.includes(prefixo.toUpperCase())) {
+                scores[sigla] += 8;
+            }
+        }
+    }
+
+    // Retorna a agência com maior pontuação
+    let melhorAgencia = 'ARTESP'; // Default
+    let melhorScore = 0;
+
+    for (const [sigla, score] of Object.entries(scores)) {
+        if (score > melhorScore) {
+            melhorScore = score;
+            melhorAgencia = sigla;
+        }
+    }
+
+    return melhorAgencia;
+}
+
+/**
+ * Normaliza nome de empresa usando fuzzy matching
+ */
+function normalizarEmpresa(nome) {
+    if (!nome) return nome;
+
+    const nomeUpper = nome.toUpperCase().trim();
+
+    for (const [normalizado, variacoes] of Object.entries(EMPRESAS_NORMALIZADAS)) {
+        for (const variacao of variacoes) {
+            if (nomeUpper.includes(variacao.toUpperCase())) {
+                return normalizado;
+            }
+        }
+    }
+
+    // Se não encontrou, retorna o nome original limpo
+    return nome.replace(/\s+/g, ' ').trim();
+}
+
+/**
+ * Extrai todas as empresas mencionadas no texto
+ */
+function extrairEmpresas(texto) {
+    const empresas = new Set();
+    const textoUpper = texto.toUpperCase();
+
+    for (const [normalizado, variacoes] of Object.entries(EMPRESAS_NORMALIZADAS)) {
+        for (const variacao of variacoes) {
+            if (textoUpper.includes(variacao.toUpperCase())) {
+                empresas.add(normalizado);
+                break;
+            }
+        }
+    }
+
+    return Array.from(empresas);
+}
+
+/**
+ * Calcula confiança da extração (0-100)
+ */
+function calcularConfianca(delib) {
+    let confianca = 0;
+
+    if (delib.numero_deliberacao) confianca += 20;
+    if (delib.data_reuniao) confianca += 15;
+    if (delib.interessado && delib.interessado !== 'Sem interessado') confianca += 20;
+    if (delib.processo) confianca += 15;
+    if (delib.microtema) confianca += 10;
+    if (delib.resultado) confianca += 15;
+    if (delib.votos_a_favor.length > 0 || delib.votos_contra.length > 0) confianca += 5;
+
+    return Math.min(100, confianca);
+}
+
+/**
+ * Versão aprimorada da extração com suporte multi-agência
+ */
+function extrairDeliberacoesMultiAgencia(texto, agenciaFornecida = null) {
+    const agencia = agenciaFornecida || detectarAgencia(texto);
+    const resultado = extrairDeliberacoes(texto, agencia);
+
+    // Enriquece com dados adicionais
+    resultado.deliberations = resultado.deliberations.map(delib => {
+        // Normaliza empresa interessada
+        if (delib.interessado) {
+            delib.interessado_normalizado = normalizarEmpresa(delib.interessado);
+        }
+
+        // Extrai empresas mencionadas
+        delib.empresas_mencionadas = extrairEmpresas(texto);
+
+        // Calcula confiança
+        delib.confianca = calcularConfianca(delib);
+
+        // Adiciona metadata da agência
+        delib.agencia_config = {
+            sigla: agencia,
+            nome: AGENCIAS_CONFIG[agencia]?.nome || agencia
+        };
+
+        return delib;
+    });
+
+    resultado.agencia_detectada = agencia;
+    return resultado;
 }
 
 module.exports = {
     extrairDeliberacoes,
+    extrairDeliberacoesMultiAgencia,
     analisarTexto,
     extrairDadosDeliberacao,
     extrairVotos,
     extrairDataReuniao,
+    detectarAgencia,
+    normalizarEmpresa,
+    extrairEmpresas,
+    calcularConfianca,
     DIRETORES,
-    MICROTEMAS
+    MICROTEMAS,
+    AGENCIAS_CONFIG,
+    EMPRESAS_NORMALIZADAS
 };
