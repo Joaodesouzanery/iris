@@ -2607,6 +2607,9 @@
         mouse: { x: 0, y: 0 }, camera: { x: 0, y: 0, zoom: 1 },
         width: 0, height: 0, time: 0, currentCategory: 'all',
         dataLoaded: false,
+        _settled: false, _settledFrames: 0,
+        _cachedRect: null, _gridCanvas: null,
+        _connIndex: null,
         // ----------- Catalog loaded from API (real data) -----------
         catalog: { directors: [], companies: [], themes: [], agencies: [], connections: [] },
 
@@ -2628,7 +2631,6 @@
                 const data = await response.json();
 
                 if (data.success && data.nodes && data.nodes.length > 0) {
-                    // Convert API nodes/edges into catalog format
                     const directors = [], companies = [], themes = [], agencies = [], connections = [];
 
                     data.nodes.forEach(n => {
@@ -2643,25 +2645,36 @@
                     });
 
                     this.catalog = { directors, companies, themes, agencies, connections };
+                    this._buildConnIndex();
                     this.dataLoaded = true;
                     console.log(`[Grafo] Dados reais carregados: ${data.nodes.length} nós, ${data.edges.length} conexões`);
 
-                    // Hide demo banner if real data loaded
                     const demoBanner = document.querySelector('#page-grafo .demo-banner');
                     if (demoBanner && data.nodes.length > 1) demoBanner.style.display = 'none';
                 } else {
                     console.warn('[Grafo] Nenhum dado real disponível — faça upload de PDFs para alimentar o grafo');
                     this.catalog = { directors: [], companies: [], themes: [], agencies: [], connections: [] };
+                    this._connIndex = {};
                     this.dataLoaded = true;
                 }
             } catch (error) {
                 console.warn('[Grafo] Erro ao carregar dados reais:', error.message);
                 this.catalog = { directors: [], companies: [], themes: [], agencies: [], connections: [] };
+                this._connIndex = {};
                 this.dataLoaded = true;
             }
         },
         destroy() {
             if (this.animFrame) { cancelAnimationFrame(this.animFrame); this.animFrame = null; }
+        },
+
+        // Pre-compute connection counts (avoids O(n²) in getAllEntities)
+        _buildConnIndex() {
+            this._connIndex = {};
+            this.catalog.connections.forEach(cn => {
+                this._connIndex[cn.source] = (this._connIndex[cn.source] || 0) + 1;
+                this._connIndex[cn.target] = (this._connIndex[cn.target] || 0) + 1;
+            });
         },
 
         // ========== SELECTION SCREEN ==========
@@ -2674,23 +2687,20 @@
         },
         getAllEntities() {
             const c = this.catalog;
+            const ci = this._connIndex || {};
             const entities = [];
             c.agencies.forEach(a => {
                 const dirCount = c.directors.filter(d => d.agency === a.id).length;
-                const connCount = c.connections.filter(cn => cn.source === a.id || cn.target === a.id).length;
-                entities.push({ ...a, type: 'agency', icon: 'A', color: '#a78bfa', subtitle: a.full, meta: `${a.deliberations} deliberações · ${dirCount} diretores`, connCount });
+                entities.push({ ...a, type: 'agency', icon: 'A', color: '#a78bfa', subtitle: a.full, meta: `${a.deliberations} deliberações · ${dirCount} diretores`, connCount: ci[a.id] || 0 });
             });
             c.directors.forEach(d => {
-                const connCount = c.connections.filter(cn => cn.source === d.id || cn.target === d.id).length;
-                entities.push({ ...d, type: 'director', icon: d.initials, color: '#60a5fa', subtitle: d.role, meta: `${connCount} vínculos`, connCount });
+                entities.push({ ...d, type: 'director', icon: d.initials, color: '#60a5fa', subtitle: d.role, meta: `${ci[d.id] || 0} vínculos`, connCount: ci[d.id] || 0 });
             });
             c.companies.forEach(co => {
-                const connCount = c.connections.filter(cn => cn.source === co.id || cn.target === co.id).length;
-                entities.push({ ...co, type: 'company', icon: co.label.charAt(0), color: '#fbbf24', subtitle: co.full, meta: `${co.sector} · ${co.contracts} contratos`, connCount });
+                entities.push({ ...co, type: 'company', icon: co.label.charAt(0), color: '#fbbf24', subtitle: co.full, meta: `${co.sector} · ${co.contracts} contratos`, connCount: ci[co.id] || 0 });
             });
             c.themes.forEach(t => {
-                const connCount = c.connections.filter(cn => cn.source === t.id || cn.target === t.id).length;
-                entities.push({ ...t, type: 'theme', icon: t.label.charAt(0), color: '#4ade80', subtitle: t.category, meta: `${t.count} ocorrências`, connCount });
+                entities.push({ ...t, type: 'theme', icon: t.label.charAt(0), color: '#4ade80', subtitle: t.category, meta: `${t.count} ocorrências`, connCount: ci[t.id] || 0 });
             });
             return entities;
         },
@@ -2780,7 +2790,6 @@
             // Build node/edge arrays
             const allItems = [...c.agencies, ...c.directors, ...c.companies, ...c.themes];
             const nodeMap = {};
-            // Keep existing positions for nodes that already exist
             const existingPos = {};
             this.nodes.forEach(n => { existingPos[n.id] = { x: n.x, y: n.y }; });
 
@@ -2789,8 +2798,11 @@
                 const type = this._getItemType(item);
                 const cfg = this._typeConfig[type];
                 const existing = existingPos[item.id];
+                // Pre-parse color to RGB (avoids parseInt every frame)
+                const num = parseInt(cfg.color.slice(1), 16);
                 nodeMap[item.id] = {
                     ...item, type, color: cfg.color, radius: cfg.radius,
+                    _cr: (num >> 16) & 255, _cg: (num >> 8) & 255, _cb: num & 255,
                     x: existing ? existing.x : 0, y: existing ? existing.y : 0,
                     vx: 0, vy: 0, pulsePhase: Math.random() * Math.PI * 2,
                     connections: 0, _isRoot: item.id === this.currentRootId,
@@ -2803,7 +2815,14 @@
             this.edges = [];
             c.connections.forEach(cn => {
                 const s = nodeMap[cn.source], t = nodeMap[cn.target];
-                if (s && t) { s.connections++; t.connections++; this.edges.push({ source: s, target: t, strength: cn.strength, label: cn.label, phase: Math.random() * Math.PI * 2 }); }
+                if (s && t) {
+                    s.connections++; t.connections++;
+                    this.edges.push({
+                        source: s, target: t, strength: cn.strength, label: cn.label,
+                        phase: Math.random() * Math.PI * 2,
+                        _particleSpeed: 0.3 + (cn.strength || 0.5) * 0.3
+                    });
+                }
             });
 
             // Update stats
@@ -2867,10 +2886,12 @@
             if (this.animFrame) { cancelAnimationFrame(this.animFrame); this.animFrame = null; }
             this.nodes = []; this.edges = [];
             this.dragging = null; this.hovering = null; this.selected = null;
+            this.expandedIds.clear();
+            this._gridCanvas = null;
             this.showSelectionScreen();
         },
 
-        // ========== GRAPH ENGINE (same proven rendering) ==========
+        // ========== GRAPH ENGINE (optimized rendering) ==========
         setupCanvas() {
             this.canvas = document.getElementById('intel-canvas');
             this.ctx = this.canvas.getContext('2d');
@@ -2881,15 +2902,69 @@
             this.ctx.setTransform(1,0,0,1,0,0);
             this.ctx.scale(2, 2);
             this.camera = { x: this.width / 2, y: this.height / 2, zoom: 1 };
+            this._cachedRect = this.canvas.getBoundingClientRect();
+            // Offscreen canvas for static grid (rendered once)
+            this._buildGridCanvas();
+        },
+        _buildGridCanvas() {
+            const w = this.width, h = this.height;
+            const offscreen = document.createElement('canvas');
+            offscreen.width = w * 2; offscreen.height = h * 2;
+            const octx = offscreen.getContext('2d');
+            octx.scale(2, 2);
+            octx.fillStyle = '#0d1117';
+            octx.fillRect(0, 0, w, h);
+            octx.globalAlpha = 0.06;
+            octx.strokeStyle = '#30363d';
+            octx.lineWidth = 0.5;
+            const gridSize = 40;
+            for (let gx = 0; gx < w; gx += gridSize) {
+                octx.beginPath(); octx.moveTo(gx, 0); octx.lineTo(gx, h); octx.stroke();
+            }
+            for (let gy = 0; gy < h; gy += gridSize) {
+                octx.beginPath(); octx.moveTo(0, gy); octx.lineTo(w, gy); octx.stroke();
+            }
+            this._gridCanvas = offscreen;
         },
         simulateForces(alpha) {
             const cx=this.width/2,cy=this.height/2;
-            for(let i=0;i<this.nodes.length;i++) for(let j=i+1;j<this.nodes.length;j++){
-                const a=this.nodes[i],b=this.nodes[j];let dx=b.x-a.x,dy=b.y-a.y,dist=Math.sqrt(dx*dx+dy*dy)||1,force=5000/(dist*dist),fx=(dx/dist)*force*alpha,fy=(dy/dist)*force*alpha;
-                a.vx-=fx;a.vy-=fy;b.vx+=fx;b.vy+=fy;
+            const nodes=this.nodes,len=nodes.length;
+            // Repulsive forces with distance threshold (skip pairs >800px apart)
+            for(let i=0;i<len;i++) {
+                const a=nodes[i];
+                for(let j=i+1;j<len;j++){
+                    const b=nodes[j];
+                    const dx=b.x-a.x,dy=b.y-a.y;
+                    const distSq=dx*dx+dy*dy;
+                    if(distSq>640000) continue; // Skip if >800px apart
+                    const dist=Math.sqrt(distSq)||1;
+                    const force=5000/distSq*alpha;
+                    const fx=(dx/dist)*force,fy=(dy/dist)*force;
+                    a.vx-=fx;a.vy-=fy;b.vx+=fx;b.vy+=fy;
+                }
             }
-            this.edges.forEach(e=>{let dx=e.target.x-e.source.x,dy=e.target.y-e.source.y,dist=Math.sqrt(dx*dx+dy*dy)||1,force=(dist-220)*0.004*e.strength*alpha,fx=(dx/dist)*force,fy=(dy/dist)*force;e.source.vx+=fx;e.source.vy+=fy;e.target.vx-=fx;e.target.vy-=fy;});
-            this.nodes.forEach(n=>{n.vx+=(cx-n.x)*0.001*alpha;n.vy+=(cy-n.y)*0.001*alpha;n.x+=n.vx;n.y+=n.vy;n.vx*=0.9;n.vy*=0.9;});
+            // Spring forces along edges
+            const edges=this.edges,elen=edges.length;
+            for(let i=0;i<elen;i++){
+                const e=edges[i];
+                const dx=e.target.x-e.source.x,dy=e.target.y-e.source.y;
+                const dist=Math.sqrt(dx*dx+dy*dy)||1;
+                const force=(dist-220)*0.004*e.strength*alpha;
+                const fx=(dx/dist)*force,fy=(dy/dist)*force;
+                e.source.vx+=fx;e.source.vy+=fy;e.target.vx-=fx;e.target.vy-=fy;
+            }
+            // Centering + damping + settle detection
+            let totalEnergy=0;
+            for(let i=0;i<len;i++){
+                const n=nodes[i];
+                n.vx+=(cx-n.x)*0.001*alpha;n.vy+=(cy-n.y)*0.001*alpha;
+                n.x+=n.vx;n.y+=n.vy;
+                n.vx*=0.9;n.vy*=0.9;
+                totalEnergy+=n.vx*n.vx+n.vy*n.vy;
+            }
+            // Track if simulation has settled
+            if(totalEnergy<0.01*len){this._settledFrames++;if(this._settledFrames>30)this._settled=true;}
+            else{this._settledFrames=0;this._settled=false;}
         },
         setupEvents() {
             const canvas=this.canvas;
@@ -2897,24 +2972,25 @@
             canvas.parentNode.replaceChild(clone, canvas);
             this.canvas = clone; this.ctx = clone.getContext('2d');
             this.ctx.setTransform(1,0,0,1,0,0); this.ctx.scale(2,2);
+            this._cachedRect = clone.getBoundingClientRect();
+            const tooltipEl=document.getElementById('intel-tooltip');
 
             clone.addEventListener('mousemove',(e)=>{
-                const rect=clone.getBoundingClientRect();
+                const rect=this._cachedRect;
                 this.mouse.x=(e.clientX-rect.left-this.camera.x+this.width/2)/this.camera.zoom;
                 this.mouse.y=(e.clientY-rect.top-this.camera.y+this.height/2)/this.camera.zoom;
-                if(this.dragging){this.dragging.x=this.mouse.x;this.dragging.y=this.mouse.y;return;}
+                if(this.dragging){this.dragging.x=this.mouse.x;this.dragging.y=this.mouse.y;this._settled=false;this._settledFrames=0;return;}
                 let found=null;
-                for(let i=this.nodes.length-1;i>=0;i--){const n=this.nodes[i];const cw=n._isRoot?70:60,ch=n._isRoot?26:22;if(Math.abs(this.mouse.x-n.x)<cw+5&&Math.abs(this.mouse.y-n.y)<ch+5){found=n;break;}}
+                for(let i=this.nodes.length-1;i>=0;i--){const n=this.nodes[i];if(n._hidden)continue;const cw=n._isRoot?70:60,ch=n._isRoot?26:22;if(Math.abs(this.mouse.x-n.x)<cw+5&&Math.abs(this.mouse.y-n.y)<ch+5){found=n;break;}}
                 if(found!==this.hovering){
                     this.hovering=found;clone.style.cursor=found?'pointer':'grab';
-                    const tooltip=document.getElementById('intel-tooltip');
                     if(found){
                         const tl={director:'Diretor(a)',company:'Empresa',theme:'Tema',agency:'Agência'};
                         const expandHint = !this.expandedIds.has(found.id) ? '<br><span style="opacity:0.6;font-size:10px">Duplo-clique para expandir</span>' : '';
-                        tooltip.innerHTML=`<strong>${found.label}</strong>${tl[found.type]} | ${found.connections} conexões${expandHint}`;
-                        tooltip.style.display='block';const rx=e.clientX-rect.left,ry=e.clientY-rect.top;tooltip.style.left=(rx+15)+'px';tooltip.style.top=(ry-10)+'px';
-                    } else{tooltip.style.display='none';}
-                } else if(found){const tooltip=document.getElementById('intel-tooltip'),rx=e.clientX-clone.getBoundingClientRect().left,ry=e.clientY-clone.getBoundingClientRect().top;tooltip.style.left=(rx+15)+'px';tooltip.style.top=(ry-10)+'px';}
+                        tooltipEl.innerHTML=`<strong>${found.label}</strong>${tl[found.type]} | ${found.connections} conexões${expandHint}`;
+                        tooltipEl.style.display='block';const rx=e.clientX-rect.left,ry=e.clientY-rect.top;tooltipEl.style.left=(rx+15)+'px';tooltipEl.style.top=(ry-10)+'px';
+                    } else{tooltipEl.style.display='none';}
+                } else if(found){const rx=e.clientX-this._cachedRect.left,ry=e.clientY-this._cachedRect.top;tooltipEl.style.left=(rx+15)+'px';tooltipEl.style.top=(ry-10)+'px';}
             });
             clone.addEventListener('mousedown',(e)=>{
                 if(this.hovering){this.dragging=this.hovering;clone.style.cursor='grabbing';}
@@ -2922,14 +2998,13 @@
             });
             clone.addEventListener('mouseup',()=>{this.dragging=null;clone.style.cursor=this.hovering?'pointer':'grab';});
             clone.addEventListener('click',()=>{if(this.hovering){this.selected=this.hovering;this.showNodeInfo(this.hovering);}});
-            // Double-click to expand node — Sherlocker-style drill-down
             clone.addEventListener('dblclick',(e)=>{
                 e.preventDefault();
                 if(this.hovering && !this.expandedIds.has(this.hovering.id)){
                     this.expandNode(this.hovering);
                 }
             });
-            clone.addEventListener('wheel',(e)=>{e.preventDefault();const d=e.deltaY>0?0.9:1.1;this.camera.zoom=Math.max(0.3,Math.min(3,this.camera.zoom*d));});
+            clone.addEventListener('wheel',(e)=>{e.preventDefault();const d=e.deltaY>0?0.9:1.1;this.camera.zoom=Math.max(0.3,Math.min(3,this.camera.zoom*d));this._settled=false;this._settledFrames=0;});
         },
         filterNodeType(val) { this.nodes.forEach(n=>{ n._hidden = val!=='all' && n.type!==val; }); },
         showNodeInfo(node) {
@@ -3021,15 +3096,20 @@
             document.getElementById('intel-info-body').innerHTML='<p style="color:#475569">Clique em um nó para ver detalhes.</p>';
         },
         _frameCount: 0,
-        animate(){
+        _lastTimestamp: 0,
+        animate(timestamp){
             this._frameCount++;
-            this.time += 0.016;
-            // Throttle force simulation every other frame when idle
-            if (this._frameCount % 2 === 0 || this.dragging || this.hovering) {
+            const dt = timestamp && this._lastTimestamp ? Math.min((timestamp - this._lastTimestamp) / 1000, 0.05) : 0.016;
+            this._lastTimestamp = timestamp || 0;
+            this.time += dt;
+            // Reset time periodically to prevent floating-point precision loss
+            if (this.time > 1000) this.time -= 1000;
+            // Only run force sim when not fully settled
+            if (!this._settled || this.dragging) {
                 this.simulateForces(0.01);
             }
             this.draw();
-            this.animFrame = requestAnimationFrame(() => this.animate());
+            this.animFrame = requestAnimationFrame((ts) => this.animate(ts));
         },
         // Sherlocker-style rounded rectangle helper
         _roundRect(ctx, x, y, w, h, r) {
@@ -3047,25 +3127,16 @@
         },
         draw() {
             const ctx = this.ctx, w = this.width, h = this.height;
-            ctx.clearRect(0, 0, w, h);
-
-            // Sherlocker dark background
-            ctx.fillStyle = '#0d1117';
-            ctx.fillRect(0, 0, w, h);
-
-            // Subtle grid
-            ctx.save();
-            ctx.globalAlpha = 0.06;
-            ctx.strokeStyle = '#30363d';
-            ctx.lineWidth = 0.5;
-            const gridSize = 40;
-            for (let gx = 0; gx < w; gx += gridSize) {
-                ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, h); ctx.stroke();
+            // Use pre-rendered grid canvas instead of redrawing grid every frame
+            if (this._gridCanvas) {
+                ctx.setTransform(1,0,0,1,0,0);
+                ctx.drawImage(this._gridCanvas, 0, 0);
+                ctx.setTransform(2,0,0,2,0,0);
+            } else {
+                ctx.clearRect(0, 0, w, h);
+                ctx.fillStyle = '#0d1117';
+                ctx.fillRect(0, 0, w, h);
             }
-            for (let gy = 0; gy < h; gy += gridSize) {
-                ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(w, gy); ctx.stroke();
-            }
-            ctx.restore();
 
             ctx.save();
             ctx.translate(this.camera.x - w / 2 + (w / 2) * (1 - this.camera.zoom), this.camera.y - h / 2 + (h / 2) * (1 - this.camera.zoom));
@@ -3128,14 +3199,14 @@
                     ctx.fillText(shortLabel, mx, my);
                 }
 
-                // Subtle data flow particles on active edges
+                // Subtle data flow particles on active edges (using pre-computed speed)
                 if (active && !dimmed) {
                     const dx = edge.target.x - edge.source.x, dy = edge.target.y - edge.source.y;
+                    ctx.fillStyle = 'rgba(88,166,255,0.6)';
                     for (let p = 0; p < 2; p++) {
-                        const t = ((this.time * (0.3 + (edge.strength || 0.5) * 0.3) + (edge.phase || 0) + p * 0.5) % 1);
+                        const t = ((this.time * edge._particleSpeed + (edge.phase || 0) + p * 0.5) % 1);
                         const px = edge.source.x + dx * t, py = edge.source.y + dy * t;
-                        ctx.beginPath(); ctx.arc(px, py, 2, 0, Math.PI * 2);
-                        ctx.fillStyle = 'rgba(88,166,255,0.6)'; ctx.fill();
+                        ctx.beginPath(); ctx.arc(px, py, 2, 0, Math.PI * 2); ctx.fill();
                     }
                 }
             });
@@ -3146,8 +3217,8 @@
                 const dimmed = node._dimmed, isSel = node === this.selected, isHov = node === this.hovering;
                 const isHl = node._highlighted, isRoot = node._isRoot;
                 const alpha = dimmed ? 0.15 : 1;
-                const num = parseInt(node.color.slice(1), 16);
-                const cr = (num >> 16) & 255, cg = (num >> 8) & 255, cb = num & 255;
+                // Use pre-cached RGB values (parsed once at build time)
+                const cr = node._cr, cg = node._cg, cb = node._cb;
 
                 // Card dimensions
                 const cardW = isRoot ? 140 : (isSel || isHov) ? 130 : 120;
@@ -3156,11 +3227,11 @@
                 const cardY = node.y - cardH / 2;
                 const cornerR = 10;
 
-                // Drop shadow
-                if (!dimmed) {
+                // Drop shadow (only for selected/hovered/root — reduced shadow blur)
+                if (!dimmed && (isSel || isHov || isRoot)) {
                     ctx.save();
-                    ctx.shadowColor = (isSel || isHov || isRoot) ? `rgba(${cr},${cg},${cb},0.3)` : 'rgba(0,0,0,0.3)';
-                    ctx.shadowBlur = (isSel || isHov) ? 16 : 8;
+                    ctx.shadowColor = `rgba(${cr},${cg},${cb},0.3)`;
+                    ctx.shadowBlur = (isSel || isHov) ? 12 : 6;
                     ctx.shadowOffsetY = 2;
                     this._roundRect(ctx, cardX, cardY, cardW, cardH, cornerR);
                     ctx.fillStyle = 'rgba(22,27,34,0.01)'; ctx.fill();
