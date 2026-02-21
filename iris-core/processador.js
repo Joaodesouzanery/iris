@@ -451,5 +451,9 @@ module.exports = {
     detectorDuplicidade,
     extratorDeliberacoes,
     persistencia,
-    logger
+    logger,
+
+    // Re-exporta funções de normalização para uso unificado
+    normalizarEmpresa: extratorDeliberacoes.normalizarEmpresa,
+    extrairEmpresas: extratorDeliberacoes.extrairEmpresas
 };

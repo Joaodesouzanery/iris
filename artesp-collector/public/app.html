@@ -185,12 +185,13 @@
                 <div class="sidebar-brand">
                     <span class="sidebar-brand-name">IRIS</span>
                     <span class="sidebar-brand-subtitle">Instituto de Regulação</span>
+                    <span class="demo-badge">Demo</span>
                 </div>
             </div>
 
             <div class="sidebar-nav">
                 <div class="nav-section">
-                    <div class="nav-section-title">Inicio</div>
+                    <div class="nav-section-title">Início</div>
                     <a data-route="/hub" class="nav-item">
                         <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/></svg>
                         Hub de Noticias
@@ -785,8 +786,12 @@
                     <div class="page-header">
                         <div class="page-title-section">
                             <h1 class="page-title">Mandatos</h1>
-                            <p class="page-subtitle">Composição atual e analise dos diretores das agencias reguladoras</p>
+                            <p class="page-subtitle">Composição atual e análise dos diretores das agências reguladoras</p>
                         </div>
+                    </div>
+                    <div class="demo-banner">
+                        <span class="demo-badge">Demo</span>
+                        <span>Dados de diretores são <strong>ilustrativos</strong>. Faça upload de PDFs reais para alimentar esta página.</span>
                     </div>
 
                     <!-- Seletor de Agencia -->
@@ -4638,6 +4643,10 @@
                                 <p class="page-subtitle">Selecione uma entidade para explorar suas conexões e vínculos regulatórios</p>
                             </div>
                         </div>
+                        <div class="demo-banner">
+                            <span class="demo-badge">Demo</span>
+                            <span>Os dados exibidos nesta página são <strong>ilustrativos</strong>. Conecte PDFs reais via Upload para dados de produção.</span>
+                        </div>
 
                         <!-- Search bar -->
                         <div class="card" style="margin-bottom:20px;">
@@ -4721,6 +4730,7 @@
                             </div>
                             <div class="intel-graph-wrapper">
                                 <div class="intel-scan-line"></div>
+                                <div class="intel-scan-line-v"></div>
                                 <canvas id="intel-canvas"></canvas>
                                 <div id="intel-tooltip" class="intel-tooltip"></div>
                                 <div class="intel-classification">
@@ -4756,9 +4766,10 @@
                     <div class="page-header">
                         <div class="page-title-section">
                             <h1 class="page-title">Monitoramento 24/7</h1>
-                            <p class="page-subtitle">Alertas em tempo real sobre eventos regulatorios criticos</p>
+                            <p class="page-subtitle">Alertas em tempo real sobre eventos regulatórios críticos</p>
                         </div>
                         <div class="page-actions">
+                            <span class="demo-badge">Demo</span>
                             <button class="btn btn-secondary" onclick="PageMonitoramento.configurar()">
                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                                 Configurar Alertas
@@ -4789,7 +4800,7 @@
                             <div class="stat-card-header">
                                 <span class="stat-card-title">Ultima Verificação</span>
                             </div>
-                            <div class="stat-card-value success" id="monitor-ultima" style="font-size: 18px;">ha 2 min</div>
+                            <div class="stat-card-value success" id="monitor-ultima" style="font-size: 18px;">há 2 min</div>
                         </div>
                     </div>
 
@@ -4843,7 +4854,7 @@
                                         </div>
                                         <div class="monitor-content">
                                             <div class="monitor-title">Deliberação 045/2026 - Reajuste Tarifario</div>
-                                            <div class="monitor-meta">CCR ViaOeste - Publicada ha 2 horas</div>
+                                            <div class="monitor-meta">CCR ViaOeste - Publicada há 2 horas</div>
                                         </div>
                                         <span class="badge badge-secondary">Nova</span>
                                     </div>
@@ -4853,7 +4864,7 @@
                                         </div>
                                         <div class="monitor-content">
                                             <div class="monitor-title">Deliberação 044/2026 - Penalidade</div>
-                                            <div class="monitor-meta">Ecovias - Publicada ha 5 horas</div>
+                                            <div class="monitor-meta">Ecovias - Publicada há 5 horas</div>
                                         </div>
                                         <span class="badge badge-secondary">Nova</span>
                                     </div>
@@ -4904,9 +4915,10 @@
                     <div class="page-header">
                         <div class="page-title-section">
                             <h1 class="page-title">Dossiês Automáticos</h1>
-                            <p class="page-subtitle">Geracao automatica de relatorios consolidados sobre entidades</p>
+                            <p class="page-subtitle">Geração automática de relatórios consolidados sobre entidades</p>
                         </div>
                         <div class="page-actions">
+                            <span class="demo-badge">Demo</span>
                             <button class="btn btn-primary" onclick="PageDossie.novo()">
                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                                 Novo Dossie
@@ -5101,9 +5113,10 @@
                     <div class="page-header">
                         <div class="page-title-section">
                             <h1 class="page-title">Cruzamento de Dados</h1>
-                            <p class="page-subtitle">Integracao com bases de dados externas para enriquecimento de informacoes</p>
+                            <p class="page-subtitle">Integração com bases de dados externas para enriquecimento de informações</p>
                         </div>
                         <div class="page-actions">
+                            <span class="demo-badge">Demo</span>
                             <button class="btn btn-primary" onclick="PageCruzamento.sincronizar()">
                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                                 Sincronizar Bases

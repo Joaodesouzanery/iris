@@ -325,15 +325,15 @@ function identificarTipoVotacao(texto) {
         }
     }
 
-    // Se encontrou assinaturas mas sem tipo específico, assume unanimidade
+    // Se encontrou assinaturas mas sem tipo específico, NÃO presumir unanimidade
     const diretores = extrairDiretores(texto);
     if (diretores.length > 0) {
         return {
-            tipo: temAusencia ? 'Com Ausências' : 'Presumida Unanimidade',
-            confianca: temAusencia ? 70 : 60,
+            tipo: temAusencia ? 'Com Ausências' : 'Não Explícito',
+            confianca: temAusencia ? 70 : 40,
             detalhes: temAusencia
                 ? 'Votação com ausências ou impedimentos detectados'
-                : 'Tipo de votação não explícito, presumida unanimidade'
+                : 'Tipo de votação não explícito — diretores encontrados mas sem padrão de votação claro'
         };
     }
 
@@ -358,14 +358,14 @@ function extrairVotosIndividuais(texto, diretores) {
     const textoLower = texto.toLowerCase();
     const tipoVotacao = identificarTipoVotacao(texto);
 
-    // Se é unanimidade, todos votaram a favor
-    if (tipoVotacao.tipo === 'Unanimidade' || tipoVotacao.tipo === 'Presumida Unanimidade') {
+    // Se é unanimidade explícita, todos votaram a favor
+    if (tipoVotacao.tipo === 'Unanimidade') {
         return diretores.map(diretor => ({
             diretor: diretor.nome,
             cargo: diretor.cargo,
             voto: 'Favorável',
             confianca: tipoVotacao.confianca,
-            observacao: 'Voto inferido por unanimidade'
+            observacao: 'Voto inferido por unanimidade explícita'
         }));
     }
 
@@ -441,11 +441,11 @@ function identificarVotoIndividual(texto, nomeDiretor) {
         };
     }
 
-    // Se está na lista de assinantes, presume voto favorável
+    // Sem evidência explícita: registrar como não identificado em vez de presumir
     return {
-        voto: 'Favorável',
-        confianca: 60,
-        observacao: 'Voto presumido favorável (assinante)'
+        voto: 'Não Identificado',
+        confianca: 30,
+        observacao: 'Diretor mencionado sem indicação explícita de voto'
     };
 }
 

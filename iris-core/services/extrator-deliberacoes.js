@@ -323,31 +323,36 @@ function extrairDeliberacoes(texto, agencia = 'ARTESP') {
 
 /**
  * Divide o texto em seções de deliberação
+ * Usa múltiplos separadores e valida que cada seção tem conteúdo relevante
  */
 function dividirEmSecoes(texto) {
-    const secoes = [];
-
-    // Padrões que indicam início de nova deliberação
+    // Padrões que indicam início de nova deliberação (em ordem de especificidade)
     const separadores = [
         /(?=DELIBERA[ÇC][ÃA]O\s*(?:N[ºo°]?\s*)?\d+)/gi,
         /(?=DEL[-\s]?\d+[-\/])/gi,
-        /(?=PROCESSO[\s:]+ARTESP)/gi
+        /(?=PROCESSO[\s:]+(?:ARTESP|SEI))/gi,
+        /(?=ITEM\s*(?:N[ºo°]?\s*)?\d+\s*[-–:])/gi,
+        /(?=PAUTA\s*(?:N[ºo°]?\s*)?\d+\s*[-–:])/gi
     ];
 
-    let partes = [texto];
+    let melhorDivisao = [texto];
 
     for (const sep of separadores) {
-        const novasPartes = [];
-        for (const parte of partes) {
-            const dividido = parte.split(sep).filter(p => p.trim().length > 50);
-            novasPartes.push(...dividido);
-        }
-        if (novasPartes.length > partes.length) {
-            partes = novasPartes;
+        const partes = texto.split(sep).filter(p => p.trim().length > 50);
+        if (partes.length > melhorDivisao.length) {
+            melhorDivisao = partes;
         }
     }
 
-    return partes.length > 1 ? partes : [];
+    // Valida que cada seção tem algum conteúdo substantivo
+    // (pelo menos um número de processo, data, ou palavra-chave de deliberação)
+    const secoesValidadas = melhorDivisao.filter(secao => {
+        const temNumero = /\d+[-\/]\d+/i.test(secao);
+        const temPalavraChave = /delibera|processo|interessad|requerent|deferido|indeferido/i.test(secao);
+        return temNumero || temPalavraChave;
+    });
+
+    return secoesValidadas.length > 1 ? secoesValidadas : [];
 }
 
 /**
@@ -361,10 +366,12 @@ function extrairDadosDeliberacao(texto, agencia = 'ARTESP') {
         interessado: '',
         processo: '',
         microtema: '',
+        microtemas: [],
         resultado: '',
         votos_a_favor: [],
         votos_contra: [],
         classificacao: null,
+        confianca: 0,
         agencia: agencia
     };
 
@@ -436,37 +443,52 @@ function extrairDadosDeliberacao(texto, agencia = 'ARTESP') {
         }
     }
 
-    // Identifica microtema
+    // Identifica microtemas (múltiplos permitidos)
     const textoLower = texto.toLowerCase();
+    const microtemasEncontrados = [];
     for (const [tema, palavras] of Object.entries(MICROTEMAS)) {
         for (const palavra of palavras) {
             if (textoLower.includes(palavra.toLowerCase())) {
-                delib.microtema = tema;
+                microtemasEncontrados.push(tema);
                 break;
             }
         }
-        if (delib.microtema) break;
     }
+    // Campo principal mantém o primeiro (compatibilidade), novo campo tem todos
+    delib.microtema = microtemasEncontrados[0] || '';
+    delib.microtemas = microtemasEncontrados;
 
-    // Identifica resultado (incluindo parcialmente deferido)
+    // Identifica resultado buscando na frase de decisão (deliberou/decide/resolve)
+    // Em vez de contar no texto todo, primeiro tenta localizar a frase decisória
+    const frasesDecisao = texto.match(/(?:deliberou?|decid[eiu]|resolve[ur]?|result(?:ou|ado)|voto)[^\n.;]{0,300}/gi) || [];
+    const textoDecisao = frasesDecisao.length > 0 ? frasesDecisao.join(' ') : texto;
+
     let countDeferido = 0;
     let countParcial = 0;
     let countIndeferido = 0;
 
     // Verifica parcialmente deferido primeiro (mais específico)
     for (const padrao of PADROES.resultado.parcialmenteDeferido) {
-        const matches = texto.match(padrao);
+        const matches = textoDecisao.match(padrao);
         if (matches) countParcial += matches.length;
     }
 
     for (const padrao of PADROES.resultado.deferido) {
-        const matches = texto.match(padrao);
+        const matches = textoDecisao.match(padrao);
         if (matches) countDeferido += matches.length;
     }
 
     for (const padrao of PADROES.resultado.indeferido) {
-        const matches = texto.match(padrao);
+        const matches = textoDecisao.match(padrao);
         if (matches) countIndeferido += matches.length;
+    }
+
+    // Verifica negações comuns que invertem o resultado
+    const negacoes = textoDecisao.match(/n[ãa]o\s+(?:foi\s+)?(?:deferido|aprovado|homologado|autorizado)/gi) || [];
+    if (negacoes.length > 0) {
+        // Cada negação converte um deferido em indeferido
+        countDeferido = Math.max(0, countDeferido - negacoes.length);
+        countIndeferido += negacoes.length;
     }
 
     // Parcialmente deferido tem prioridade
@@ -477,7 +499,18 @@ function extrairDadosDeliberacao(texto, agencia = 'ARTESP') {
     } else if (countIndeferido > countDeferido) {
         delib.resultado = 'Indeferido';
     } else if (countDeferido > 0) {
-        delib.resultado = 'Deferido';
+        // Empate: verifica qual aparece por último no texto (decisão final)
+        let lastDeferido = -1;
+        let lastIndeferido = -1;
+        for (const padrao of PADROES.resultado.deferido) {
+            let m; const re = new RegExp(padrao.source, padrao.flags);
+            while ((m = re.exec(textoDecisao)) !== null) lastDeferido = Math.max(lastDeferido, m.index);
+        }
+        for (const padrao of PADROES.resultado.indeferido) {
+            let m; const re = new RegExp(padrao.source, padrao.flags);
+            while ((m = re.exec(textoDecisao)) !== null) lastIndeferido = Math.max(lastIndeferido, m.index);
+        }
+        delib.resultado = lastIndeferido > lastDeferido ? 'Indeferido' : 'Deferido';
     }
 
     // Extrai votos
@@ -490,7 +523,32 @@ function extrairDadosDeliberacao(texto, agencia = 'ARTESP') {
         delib.classificacao = 'Pauta Interna da Agência';
     }
 
+    // Calcula confiança da extração
+    delib.confianca = calcularConfianca(delib);
+
     return delib;
+}
+
+/**
+ * Valida uma data extraída (dia, mês, ano)
+ * @returns {string|null} Data no formato YYYY-MM-DD ou null se inválida
+ */
+function validarData(dia, mes, ano) {
+    const d = parseInt(dia, 10);
+    const m = parseInt(mes, 10);
+    const a = parseInt(ano, 10);
+
+    // Validações básicas
+    if (isNaN(d) || isNaN(m) || isNaN(a)) return null;
+    if (m < 1 || m > 12) return null;
+    if (d < 1 || d > 31) return null;
+    if (a < 1990 || a > 2099) return null;
+
+    // Dias máximos por mês (considerando ano bissexto)
+    const diasPorMes = [31, ((a % 4 === 0 && a % 100 !== 0) || a % 400 === 0) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    if (d > diasPorMes[m - 1]) return null;
+
+    return `${String(a).padStart(4, '0')}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 }
 
 /**
@@ -500,22 +558,24 @@ function extrairDataReuniao(texto) {
     // Tenta formato DD/MM/YYYY ou DD-MM-YYYY
     const matchNumerico = texto.match(/(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})/);
     if (matchNumerico) {
-        let dia = matchNumerico[1].padStart(2, '0');
-        let mes = matchNumerico[2].padStart(2, '0');
+        let dia = matchNumerico[1];
+        let mes = matchNumerico[2];
         let ano = matchNumerico[3];
         if (ano.length === 2) {
             ano = '20' + ano;
         }
-        return `${ano}-${mes}-${dia}`;
+        const dataValidada = validarData(dia, mes, ano);
+        if (dataValidada) return dataValidada;
     }
 
     // Tenta formato "DD de MÊS de YYYY"
     const matchExtenso = texto.match(/(\d{1,2})\s+(?:de\s+)?(janeiro|fevereiro|março|marco|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)\s+(?:de\s+)?(\d{4})/i);
     if (matchExtenso) {
-        const dia = matchExtenso[1].padStart(2, '0');
+        const dia = matchExtenso[1];
         const mes = MESES[matchExtenso[2].toLowerCase()];
         const ano = matchExtenso[3];
-        return `${ano}-${mes}-${dia}`;
+        const dataValidada = validarData(dia, mes, ano);
+        if (dataValidada) return dataValidada;
     }
 
     return '';
@@ -555,7 +615,7 @@ function extrairVotos(texto) {
         return votos;
     }
 
-    // Busca votos individuais
+    // Busca votos individuais - apenas atribui se houver evidência explícita
     for (const nomeCompleto of diretoresMencionados) {
         // Pega contexto ao redor do nome
         const idx = textoUpper.indexOf(nomeCompleto.toUpperCase());
@@ -567,14 +627,12 @@ function extrairVotos(texto) {
         if (/contr[áa]rio|voto\s+contra|voto\s+vencido|divergente|discordou|se\s+opôs|votou\s+contra/i.test(contexto)) {
             votos.contra.push(nomeCompleto);
         }
-        // Padrões que indicam voto a favor
+        // Padrões que indicam voto a favor explicitamente
         else if (/favor[áa]vel|voto\s+a\s+favor|aprovou|deferiu|concordou|acompanhou|votou\s+(?:pela\s+)?aprova/i.test(contexto)) {
             votos.favor.push(nomeCompleto);
         }
-        // Se não encontrou indicação específica, assume a favor (mais comum em deliberações)
-        else {
-            votos.favor.push(nomeCompleto);
-        }
+        // Sem indicação explícita: NÃO presumir voto - registrar apenas como mencionado
+        // (evita falsos positivos de assinaturas de testemunha ou menções contextuais)
     }
 
     return votos;

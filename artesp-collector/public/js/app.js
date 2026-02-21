@@ -2848,29 +2848,154 @@
         },
         animate(){this.time+=0.016;this.simulateForces(0.01);this.draw();this.animFrame=requestAnimationFrame(()=>this.animate());},
         draw() {
-            const ctx=this.ctx,w=this.width,h=this.height;ctx.clearRect(0,0,w,h);ctx.save();
-            ctx.translate(this.camera.x-w/2+(w/2)*(1-this.camera.zoom),this.camera.y-h/2+(h/2)*(1-this.camera.zoom));ctx.scale(this.camera.zoom,this.camera.zoom);
-            // Draw edges
-            this.edges.forEach(edge=>{if(edge.source._hidden||edge.target._hidden)return;const dimmed=edge.source._dimmed&&edge.target._dimmed,hl=this.selected&&(edge.source===this.selected||edge.target===this.selected),hv=this.hovering&&(edge.source===this.hovering||edge.target===this.hovering);
-                const alpha=dimmed?0.03:hl?0.6:hv?0.4:0.15;ctx.beginPath();ctx.moveTo(edge.source.x,edge.source.y);ctx.lineTo(edge.target.x,edge.target.y);ctx.strokeStyle=hl||hv?`rgba(96,165,250,${alpha})`:`rgba(100,116,139,${alpha})`;ctx.lineWidth=hl?2.5:hv?1.5:0.8;ctx.stroke();
-                if(!dimmed){const t=((this.time*0.5+edge.phase)%1),px=edge.source.x+(edge.target.x-edge.source.x)*t,py=edge.source.y+(edge.target.y-edge.source.y)*t;ctx.beginPath();ctx.arc(px,py,hl?2.5:1.5,0,Math.PI*2);ctx.fillStyle=hl?'rgba(96,165,250,0.8)':'rgba(96,165,250,0.3)';ctx.fill();}
+            const ctx=this.ctx,w=this.width,h=this.height;
+            ctx.clearRect(0,0,w,h);
+            ctx.save();
+            ctx.translate(this.camera.x-w/2+(w/2)*(1-this.camera.zoom),this.camera.y-h/2+(h/2)*(1-this.camera.zoom));
+            ctx.scale(this.camera.zoom,this.camera.zoom);
+
+            // Draw edges with animated data flow particles
+            this.edges.forEach(edge=>{
+                if(edge.source._hidden||edge.target._hidden)return;
+                const dimmed=edge.source._dimmed&&edge.target._dimmed;
+                const hl=this.selected&&(edge.source===this.selected||edge.target===this.selected);
+                const hv=this.hovering&&(edge.source===this.hovering||edge.target===this.hovering);
+                const alpha=dimmed?0.03:hl?0.6:hv?0.4:0.12;
+                const dx=edge.target.x-edge.source.x,dy=edge.target.y-edge.source.y;
+                const dist=Math.sqrt(dx*dx+dy*dy)||1;
+
+                // Edge line with gradient
+                if(hl||hv){
+                    const grad=ctx.createLinearGradient(edge.source.x,edge.source.y,edge.target.x,edge.target.y);
+                    const srcNum=parseInt(edge.source.color.slice(1),16);
+                    const tgtNum=parseInt(edge.target.color.slice(1),16);
+                    grad.addColorStop(0,`rgba(${(srcNum>>16)&255},${(srcNum>>8)&255},${srcNum&255},${alpha})`);
+                    grad.addColorStop(1,`rgba(${(tgtNum>>16)&255},${(tgtNum>>8)&255},${tgtNum&255},${alpha})`);
+                    ctx.beginPath();ctx.moveTo(edge.source.x,edge.source.y);ctx.lineTo(edge.target.x,edge.target.y);
+                    ctx.strokeStyle=grad;ctx.lineWidth=hl?2.5:1.5;ctx.stroke();
+                } else {
+                    ctx.beginPath();ctx.moveTo(edge.source.x,edge.source.y);ctx.lineTo(edge.target.x,edge.target.y);
+                    ctx.strokeStyle=`rgba(100,116,139,${alpha})`;ctx.lineWidth=0.8;ctx.stroke();
+                }
+
+                // Animated particles flowing along edge (2 particles per edge)
+                if(!dimmed){
+                    for(let p=0;p<2;p++){
+                        const t=((this.time*(0.3+edge.strength*0.3)+edge.phase+p*0.5)%1);
+                        const px=edge.source.x+dx*t,py=edge.source.y+dy*t;
+                        const pSize=hl?3:hv?2:1.2;
+                        const pAlpha=hl?0.9:hv?0.6:0.25;
+                        // Particle glow
+                        const pGlow=ctx.createRadialGradient(px,py,0,px,py,pSize*3);
+                        pGlow.addColorStop(0,`rgba(96,165,250,${pAlpha})`);
+                        pGlow.addColorStop(1,'rgba(96,165,250,0)');
+                        ctx.beginPath();ctx.arc(px,py,pSize*3,0,Math.PI*2);ctx.fillStyle=pGlow;ctx.fill();
+                        // Particle core
+                        ctx.beginPath();ctx.arc(px,py,pSize,0,Math.PI*2);
+                        ctx.fillStyle=`rgba(96,165,250,${pAlpha})`;ctx.fill();
+                    }
+                }
+
+                // Edge label on hover/select
+                if((hl||hv)&&edge.label&&!dimmed){
+                    const mx=(edge.source.x+edge.target.x)/2,my=(edge.source.y+edge.target.y)/2;
+                    ctx.font='500 8px -apple-system,BlinkMacSystemFont,sans-serif';
+                    ctx.textAlign='center';ctx.textBaseline='middle';
+                    const tw=ctx.measureText(edge.label).width;
+                    ctx.fillStyle='rgba(6,10,20,0.85)';
+                    ctx.fillRect(mx-tw/2-4,my-7,tw+8,14);
+                    ctx.strokeStyle='rgba(96,165,250,0.3)';ctx.lineWidth=0.5;
+                    ctx.strokeRect(mx-tw/2-4,my-7,tw+8,14);
+                    ctx.fillStyle='rgba(148,163,184,0.9)';ctx.fillText(edge.label,mx,my);
+                }
             });
-            // Draw nodes
-            this.nodes.forEach(node=>{if(node._hidden)return;const dimmed=node._dimmed,isSel=node===this.selected,isHov=node===this.hovering,isHl=node._highlighted,isRoot=node._isRoot,pulse=Math.sin(this.time*2+node.pulsePhase)*0.15+1;
-                const r=node.radius*(isHov?1.15:1)*(isHl?1.2:1)*(isRoot?1.15:1),alpha=dimmed?0.15:1;
-                // Root node extra ring
-                if(isRoot&&!dimmed){ctx.beginPath();ctx.arc(node.x,node.y,r*2,0,Math.PI*2);ctx.strokeStyle=node.color+'30';ctx.lineWidth=1;ctx.setLineDash([4,4]);ctx.stroke();ctx.setLineDash([]);}
-                if((isSel||isHov||isHl||isRoot)&&!dimmed){const glR=r*2.5*pulse,glow=ctx.createRadialGradient(node.x,node.y,r,node.x,node.y,glR);glow.addColorStop(0,node.color+'30');glow.addColorStop(1,node.color+'00');ctx.beginPath();ctx.arc(node.x,node.y,glR,0,Math.PI*2);ctx.fillStyle=glow;ctx.fill();}
-                if(!dimmed){const ambR=r*1.8*pulse,amb=ctx.createRadialGradient(node.x,node.y,r*0.5,node.x,node.y,ambR);amb.addColorStop(0,node.color+'15');amb.addColorStop(1,node.color+'00');ctx.beginPath();ctx.arc(node.x,node.y,ambR,0,Math.PI*2);ctx.fillStyle=amb;ctx.fill();}
+
+            // Draw nodes with enhanced effects
+            this.nodes.forEach(node=>{
+                if(node._hidden)return;
+                const dimmed=node._dimmed,isSel=node===this.selected,isHov=node===this.hovering;
+                const isHl=node._highlighted,isRoot=node._isRoot;
+                const pulse=Math.sin(this.time*2+node.pulsePhase)*0.12+1;
+                const r=node.radius*(isHov?1.15:1)*(isHl?1.2:1)*(isRoot?1.15:1);
+                const alpha=dimmed?0.15:1;
+                const num=parseInt(node.color.slice(1),16);
+                const cr=(num>>16)&255,cg=(num>>8)&255,cb=num&255;
+
+                // Root node: animated concentric rings
+                if(isRoot&&!dimmed){
+                    for(let ring=0;ring<3;ring++){
+                        const ringR=r*(1.6+ring*0.5)+Math.sin(this.time*1.5+ring)*3;
+                        const ringAlpha=0.08-ring*0.02;
+                        ctx.beginPath();ctx.arc(node.x,node.y,ringR,0,Math.PI*2);
+                        ctx.strokeStyle=`rgba(${cr},${cg},${cb},${ringAlpha})`;
+                        ctx.lineWidth=0.8;ctx.setLineDash([3+ring,5+ring*2]);ctx.stroke();ctx.setLineDash([]);
+                    }
+                }
+
+                // Outer glow for active nodes
+                if((isSel||isHov||isHl||isRoot)&&!dimmed){
+                    const glR=r*2.8*pulse;
+                    const glow=ctx.createRadialGradient(node.x,node.y,r,node.x,node.y,glR);
+                    glow.addColorStop(0,`rgba(${cr},${cg},${cb},0.2)`);
+                    glow.addColorStop(0.5,`rgba(${cr},${cg},${cb},0.05)`);
+                    glow.addColorStop(1,`rgba(${cr},${cg},${cb},0)`);
+                    ctx.beginPath();ctx.arc(node.x,node.y,glR,0,Math.PI*2);ctx.fillStyle=glow;ctx.fill();
+                }
+
+                // Ambient glow for all nodes
+                if(!dimmed){
+                    const ambR=r*1.6*pulse;
+                    const amb=ctx.createRadialGradient(node.x,node.y,r*0.3,node.x,node.y,ambR);
+                    amb.addColorStop(0,`rgba(${cr},${cg},${cb},0.08)`);
+                    amb.addColorStop(1,`rgba(${cr},${cg},${cb},0)`);
+                    ctx.beginPath();ctx.arc(node.x,node.y,ambR,0,Math.PI*2);ctx.fillStyle=amb;ctx.fill();
+                }
+
+                // Node shape
                 ctx.beginPath();
-                if(node.type==='company'){for(let i=0;i<6;i++){const a=(Math.PI/3)*i-Math.PI/6,px=node.x+r*Math.cos(a),py=node.y+r*Math.sin(a);i===0?ctx.moveTo(px,py):ctx.lineTo(px,py);}ctx.closePath();}
-                else if(node.type==='theme'){ctx.moveTo(node.x,node.y-r);ctx.lineTo(node.x+r*0.8,node.y);ctx.lineTo(node.x,node.y+r);ctx.lineTo(node.x-r*0.8,node.y);ctx.closePath();}
-                else ctx.arc(node.x,node.y,r,0,Math.PI*2);
-                const num=parseInt(node.color.slice(1),16),cr=(num>>16)&255,cg=(num>>8)&255,cb=num&255;
-                const bg=ctx.createRadialGradient(node.x-r*0.3,node.y-r*0.3,0,node.x,node.y,r);bg.addColorStop(0,`rgba(${Math.min(255,cr+30)},${Math.min(255,cg+30)},${Math.min(255,cb+30)},${alpha*0.4})`);bg.addColorStop(1,`rgba(${cr},${cg},${cb},${alpha*0.2})`);ctx.fillStyle=bg;ctx.fill();
-                ctx.strokeStyle=`rgba(${cr},${cg},${cb},${alpha*(isSel||isRoot?1:0.7)})`;ctx.lineWidth=isSel?2.5:isRoot?2:isHov?2:1;ctx.stroke();
-                if(!dimmed||isHl){ctx.font=`${node.type==='agency'?'600 11px':node.type==='director'?'600 10px':'500 9px'} -apple-system,BlinkMacSystemFont,sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='rgba(0,0,0,0.6)';ctx.fillText(node.type==='director'?node.initials:node.label,node.x+0.5,node.y+0.5);ctx.fillStyle=`rgba(226,232,240,${alpha})`;ctx.fillText(node.type==='director'?node.initials:node.label,node.x,node.y);
-                    if(node.type==='director'||node.type==='agency'){ctx.font='500 9px -apple-system,BlinkMacSystemFont,sans-serif';ctx.fillStyle=`rgba(${cr},${cg},${cb},${alpha*0.8})`;ctx.fillText(node.label,node.x,node.y+r+14);}
+                if(node.type==='company'){
+                    for(let i=0;i<6;i++){const a=(Math.PI/3)*i-Math.PI/6;const px=node.x+r*Math.cos(a),py=node.y+r*Math.sin(a);i===0?ctx.moveTo(px,py):ctx.lineTo(px,py);}ctx.closePath();
+                } else if(node.type==='theme'){
+                    ctx.moveTo(node.x,node.y-r);ctx.lineTo(node.x+r*0.8,node.y);ctx.lineTo(node.x,node.y+r);ctx.lineTo(node.x-r*0.8,node.y);ctx.closePath();
+                } else {
+                    ctx.arc(node.x,node.y,r,0,Math.PI*2);
+                }
+
+                // Fill with gradient
+                const bg=ctx.createRadialGradient(node.x-r*0.3,node.y-r*0.3,0,node.x,node.y,r);
+                bg.addColorStop(0,`rgba(${Math.min(255,cr+40)},${Math.min(255,cg+40)},${Math.min(255,cb+40)},${alpha*0.35})`);
+                bg.addColorStop(1,`rgba(${cr},${cg},${cb},${alpha*0.15})`);
+                ctx.fillStyle=bg;ctx.fill();
+
+                // Stroke
+                ctx.strokeStyle=`rgba(${cr},${cg},${cb},${alpha*(isSel||isRoot?1:isHov?0.85:0.6)})`;
+                ctx.lineWidth=isSel?3:isRoot?2.5:isHov?2:1;ctx.stroke();
+
+                // Connection count indicator (small arc)
+                if(!dimmed&&node.connections>2){
+                    const arcLen=(node.connections/10)*Math.PI*2;
+                    ctx.beginPath();ctx.arc(node.x,node.y,r+4,0,Math.min(arcLen,Math.PI*2));
+                    ctx.strokeStyle=`rgba(${cr},${cg},${cb},0.3)`;ctx.lineWidth=1.5;ctx.stroke();
+                }
+
+                // Text label
+                if(!dimmed||isHl){
+                    const label=node.type==='director'?node.initials:node.label;
+                    const fontSize=node.type==='agency'?11:node.type==='director'?10:9;
+                    ctx.font=`600 ${fontSize}px -apple-system,BlinkMacSystemFont,sans-serif`;
+                    ctx.textAlign='center';ctx.textBaseline='middle';
+                    // Text shadow
+                    ctx.fillStyle='rgba(0,0,0,0.7)';
+                    ctx.fillText(label,node.x+0.7,node.y+0.7);
+                    // Text
+                    ctx.fillStyle=`rgba(226,232,240,${alpha})`;
+                    ctx.fillText(label,node.x,node.y);
+                    // Sub-label for directors and agencies
+                    if(node.type==='director'||node.type==='agency'){
+                        ctx.font='500 9px -apple-system,BlinkMacSystemFont,sans-serif';
+                        ctx.fillStyle=`rgba(${cr},${cg},${cb},${alpha*0.8})`;
+                        ctx.fillText(node.label,node.x,node.y+r+14);
+                    }
                 }
             });
             ctx.restore();
@@ -2895,12 +3020,12 @@
         updateLastCheck() {
             const elemento = document.getElementById('monitor-ultima');
             if (elemento) {
-                elemento.textContent = 'ha 2 min';
+                elemento.textContent = 'há 2 min';
             }
         },
 
         configurar() {
-            alert('Configuracao de alertas em desenvolvimento');
+            alert('Configuração de alertas em desenvolvimento');
         }
     };
 
@@ -3660,69 +3785,69 @@
     const PageHub = {
         // Agencias Federais completas
         agenciasFederais: [
-            { sigla: 'ANA', nome: 'Agencia Nacional de Aguas', setor: 'saneamento', diretores: 5, mandato: 4, fonte: 'API SNIRH + RSS', rss: 'gov.br/ana/pt-br/noticias', viabilidade: 'alta', cor: '#60A5FA' },
-            { sigla: 'ANEEL', nome: 'Agencia Nacional de Energia Eletrica', setor: 'energia', diretores: 5, mandato: 5, fonte: 'API aberta + RSS', rss: 'gov.br/aneel/pt-br/noticias', viabilidade: 'alta', cor: '#FFEF4D' },
-            { sigla: 'ANATEL', nome: 'Agencia Nacional de Telecomunicacoes', setor: 'telecom', diretores: 5, mandato: 5, fonte: 'API dados.anatel.gov.br', rss: 'gov.br/anatel/pt-br/noticias', viabilidade: 'alta', cor: '#4ADE80' },
-            { sigla: 'ANP', nome: 'Agencia Nacional do Petroleo', setor: 'petroleo', diretores: 4, mandato: 4, fonte: 'API + dados abertos', rss: 'gov.br/anp/pt-br/noticias', viabilidade: 'alta', cor: '#F472B6' },
-            { sigla: 'ANVISA', nome: 'Agencia Nacional de Vigilancia Sanitaria', setor: 'saude', diretores: 5, mandato: 5, fonte: 'API + RSS', rss: 'gov.br/anvisa/pt-br/noticias', viabilidade: 'alta', cor: '#A78BFA' },
-            { sigla: 'ANS', nome: 'Agencia Nacional de Saude Suplementar', setor: 'saude', diretores: 5, mandato: 5, fonte: 'API dados.ans.gov.br', rss: 'gov.br/ans/pt-br/noticias', viabilidade: 'alta', cor: '#F97316' },
-            { sigla: 'ANTT', nome: 'Agencia Nacional de Transportes Terrestres', setor: 'transporte', diretores: 5, mandato: 5, fonte: 'API + PNCP', rss: 'gov.br/antt/pt-br/noticias', viabilidade: 'alta', cor: '#14B8A6' },
-            { sigla: 'ANTAQ', nome: 'Agencia Nacional de Transportes Aquaviarios', setor: 'transporte', diretores: 3, mandato: 4, fonte: 'Dados abertos', rss: 'gov.br/antaq/pt-br/noticias', viabilidade: 'media', cor: '#06B6D4' },
-            { sigla: 'ANAC', nome: 'Agencia Nacional de Aviacao Civil', setor: 'aviacao', diretores: 5, mandato: 5, fonte: 'API + dados abertos', rss: 'gov.br/anac/pt-br/noticias', viabilidade: 'alta', cor: '#8B5CF6' },
-            { sigla: 'ANM', nome: 'Agencia Nacional de Mineracao', setor: 'mineracao', diretores: 5, mandato: 4, fonte: 'API SIGMINE', rss: 'gov.br/anm/pt-br/noticias', viabilidade: 'alta', cor: '#EF4444' },
-            { sigla: 'ANCINE', nome: 'Agencia Nacional do Cinema', setor: 'cinema', diretores: 4, mandato: 4, fonte: 'RSS', rss: 'gov.br/ancine/pt-br/noticias', viabilidade: 'media', cor: '#EC4899' }
+            { sigla: 'ANA', nome: 'Agência Nacional de Águas', setor: 'saneamento', diretores: 5, mandato: 4, fonte: 'API SNIRH + RSS', rss: 'gov.br/ana/pt-br/noticias', viabilidade: 'alta', cor: '#60A5FA' },
+            { sigla: 'ANEEL', nome: 'Agência Nacional de Energia Elétrica', setor: 'energia', diretores: 5, mandato: 5, fonte: 'API aberta + RSS', rss: 'gov.br/aneel/pt-br/noticias', viabilidade: 'alta', cor: '#FFEF4D' },
+            { sigla: 'ANATEL', nome: 'Agência Nacional de Telecomunicações', setor: 'telecom', diretores: 5, mandato: 5, fonte: 'API dados.anatel.gov.br', rss: 'gov.br/anatel/pt-br/noticias', viabilidade: 'alta', cor: '#4ADE80' },
+            { sigla: 'ANP', nome: 'Agência Nacional do Petróleo', setor: 'petroleo', diretores: 4, mandato: 4, fonte: 'API + dados abertos', rss: 'gov.br/anp/pt-br/noticias', viabilidade: 'alta', cor: '#F472B6' },
+            { sigla: 'ANVISA', nome: 'Agência Nacional de Vigilância Sanitária', setor: 'saude', diretores: 5, mandato: 5, fonte: 'API + RSS', rss: 'gov.br/anvisa/pt-br/noticias', viabilidade: 'alta', cor: '#A78BFA' },
+            { sigla: 'ANS', nome: 'Agência Nacional de Saúde Suplementar', setor: 'saude', diretores: 5, mandato: 5, fonte: 'API dados.ans.gov.br', rss: 'gov.br/ans/pt-br/noticias', viabilidade: 'alta', cor: '#F97316' },
+            { sigla: 'ANTT', nome: 'Agência Nacional de Transportes Terrestres', setor: 'transporte', diretores: 5, mandato: 5, fonte: 'API + PNCP', rss: 'gov.br/antt/pt-br/noticias', viabilidade: 'alta', cor: '#14B8A6' },
+            { sigla: 'ANTAQ', nome: 'Agência Nacional de Transportes Aquaviários', setor: 'transporte', diretores: 3, mandato: 4, fonte: 'Dados abertos', rss: 'gov.br/antaq/pt-br/noticias', viabilidade: 'media', cor: '#06B6D4' },
+            { sigla: 'ANAC', nome: 'Agência Nacional de Aviação Civil', setor: 'aviacao', diretores: 5, mandato: 5, fonte: 'API + dados abertos', rss: 'gov.br/anac/pt-br/noticias', viabilidade: 'alta', cor: '#8B5CF6' },
+            { sigla: 'ANM', nome: 'Agência Nacional de Mineração', setor: 'mineracao', diretores: 5, mandato: 4, fonte: 'API SIGMINE', rss: 'gov.br/anm/pt-br/noticias', viabilidade: 'alta', cor: '#EF4444' },
+            { sigla: 'ANCINE', nome: 'Agência Nacional do Cinema', setor: 'cinema', diretores: 4, mandato: 4, fonte: 'RSS', rss: 'gov.br/ancine/pt-br/noticias', viabilidade: 'media', cor: '#EC4899' }
         ],
 
         // Orgaos complementares
         orgaosComplementares: [
-            { sigla: 'TCU', nome: 'Tribunal de Contas da Uniao', fonte: 'RSS', rss: 'portal.tcu.gov.br/imprensa/noticias' },
-            { sigla: 'CGU', nome: 'Controladoria-Geral da Uniao', fonte: 'RSS', rss: 'gov.br/cgu/pt-br/noticias' },
-            { sigla: 'DOU', nome: 'Diario Oficial da Uniao', fonte: 'API REST', rss: 'in.gov.br/servicos/api' },
-            { sigla: 'PNCP', nome: 'Portal Nacional de Contratacoes', fonte: 'API REST', rss: 'pncp.gov.br/api' }
+            { sigla: 'TCU', nome: 'Tribunal de Contas da União', fonte: 'RSS', rss: 'portal.tcu.gov.br/imprensa/noticias' },
+            { sigla: 'CGU', nome: 'Controladoria-Geral da União', fonte: 'RSS', rss: 'gov.br/cgu/pt-br/noticias' },
+            { sigla: 'DOU', nome: 'Diário Oficial da União', fonte: 'API REST', rss: 'in.gov.br/servicos/api' },
+            { sigla: 'PNCP', nome: 'Portal Nacional de Contratações', fonte: 'API REST', rss: 'pncp.gov.br/api' }
         ],
 
         // Agencias Estaduais
         agenciasEstaduais: [
-            { sigla: 'ARTESP', nome: 'Agencia de Transporte do Estado de Sao Paulo', estado: 'SP', setor: 'transporte' },
-            { sigla: 'ARSESP', nome: 'Agencia Reguladora de Servicos Publicos de SP', estado: 'SP', setor: 'saneamento' },
-            { sigla: 'ARSAE-MG', nome: 'Agencia Reguladora de Servicos de Abast. de Agua de MG', estado: 'MG', setor: 'saneamento' },
-            { sigla: 'AGEPAR', nome: 'Agencia Reguladora do Parana', estado: 'PR', setor: 'multisetorial' },
-            { sigla: 'ARCE', nome: 'Agencia Reguladora do Ceara', estado: 'CE', setor: 'multisetorial' },
-            { sigla: 'AGERBA', nome: 'Agencia de Regulacao da Bahia', estado: 'BA', setor: 'multisetorial' },
-            { sigla: 'ARPE', nome: 'Agencia de Regulacao de Pernambuco', estado: 'PE', setor: 'multisetorial' },
-            { sigla: 'ADASA', nome: 'Agencia Reguladora de Aguas do DF', estado: 'DF', setor: 'saneamento' },
-            { sigla: 'AGENERSA', nome: 'Agencia Reguladora de Energia e Saneamento do RJ', estado: 'RJ', setor: 'energia' },
-            { sigla: 'AGERGS', nome: 'Agencia Estadual de Regulacao do RS', estado: 'RS', setor: 'multisetorial' },
-            { sigla: 'ARSAM', nome: 'Agencia Reguladora dos Servicos do Amazonas', estado: 'AM', setor: 'multisetorial' },
-            { sigla: 'ARSAL', nome: 'Agencia Reguladora de Servicos de Alagoas', estado: 'AL', setor: 'multisetorial' },
-            { sigla: 'AGRESPI', nome: 'Agencia de Regulacao do Piaui', estado: 'PI', setor: 'multisetorial' },
-            { sigla: 'AGR', nome: 'Agencia Goiana de Regulacao', estado: 'GO', setor: 'multisetorial' },
-            { sigla: 'AGEPAN', nome: 'Agencia de Regulacao do Mato Grosso do Sul', estado: 'MS', setor: 'multisetorial' },
-            { sigla: 'AGER-MT', nome: 'Agencia de Regulacao do Mato Grosso', estado: 'MT', setor: 'multisetorial' },
-            { sigla: 'ARESC', nome: 'Agencia de Regulacao de Santa Catarina', estado: 'SC', setor: 'multisetorial' },
-            { sigla: 'AGEAC', nome: 'Agencia Reguladora do Acre', estado: 'AC', setor: 'multisetorial' },
-            { sigla: 'ATR', nome: 'Agencia Tocantinense de Regulacao', estado: 'TO', setor: 'multisetorial' },
-            { sigla: 'ARSEP', nome: 'Agencia Reguladora do Rio Grande do Norte', estado: 'RN', setor: 'multisetorial' },
-            { sigla: 'ARPB', nome: 'Agencia de Regulacao da Paraiba', estado: 'PB', setor: 'multisetorial' },
-            { sigla: 'AGRESE', nome: 'Agencia Reguladora de Sergipe', estado: 'SE', setor: 'multisetorial' },
-            { sigla: 'MOB', nome: 'Agencia de Mobilidade de Recife', estado: 'PE', setor: 'transporte' }
+            { sigla: 'ARTESP', nome: 'Agência de Transporte do Estado de São Paulo', estado: 'SP', setor: 'transporte' },
+            { sigla: 'ARSESP', nome: 'Agência Reguladora de Serviços Públicos de SP', estado: 'SP', setor: 'saneamento' },
+            { sigla: 'ARSAE-MG', nome: 'Agência Reguladora de Serviços de Abast. de Água de MG', estado: 'MG', setor: 'saneamento' },
+            { sigla: 'AGEPAR', nome: 'Agência Reguladora do Paraná', estado: 'PR', setor: 'multisetorial' },
+            { sigla: 'ARCE', nome: 'Agência Reguladora do Ceará', estado: 'CE', setor: 'multisetorial' },
+            { sigla: 'AGERBA', nome: 'Agência de Regulação da Bahia', estado: 'BA', setor: 'multisetorial' },
+            { sigla: 'ARPE', nome: 'Agência de Regulação de Pernambuco', estado: 'PE', setor: 'multisetorial' },
+            { sigla: 'ADASA', nome: 'Agência Reguladora de Águas do DF', estado: 'DF', setor: 'saneamento' },
+            { sigla: 'AGENERSA', nome: 'Agência Reguladora de Energia e Saneamento do RJ', estado: 'RJ', setor: 'energia' },
+            { sigla: 'AGERGS', nome: 'Agência Estadual de Regulação do RS', estado: 'RS', setor: 'multisetorial' },
+            { sigla: 'ARSAM', nome: 'Agência Reguladora dos Serviços do Amazonas', estado: 'AM', setor: 'multisetorial' },
+            { sigla: 'ARSAL', nome: 'Agência Reguladora de Serviços de Alagoas', estado: 'AL', setor: 'multisetorial' },
+            { sigla: 'AGRESPI', nome: 'Agência de Regulação do Piauí', estado: 'PI', setor: 'multisetorial' },
+            { sigla: 'AGR', nome: 'Agência Goiana de Regulação', estado: 'GO', setor: 'multisetorial' },
+            { sigla: 'AGEPAN', nome: 'Agência de Regulação do Mato Grosso do Sul', estado: 'MS', setor: 'multisetorial' },
+            { sigla: 'AGER-MT', nome: 'Agência de Regulação do Mato Grosso', estado: 'MT', setor: 'multisetorial' },
+            { sigla: 'ARESC', nome: 'Agência de Regulação de Santa Catarina', estado: 'SC', setor: 'multisetorial' },
+            { sigla: 'AGEAC', nome: 'Agência Reguladora do Acre', estado: 'AC', setor: 'multisetorial' },
+            { sigla: 'ATR', nome: 'Agência Tocantinense de Regulação', estado: 'TO', setor: 'multisetorial' },
+            { sigla: 'ARSEP', nome: 'Agência Reguladora do Rio Grande do Norte', estado: 'RN', setor: 'multisetorial' },
+            { sigla: 'ARPB', nome: 'Agência de Regulação da Paraíba', estado: 'PB', setor: 'multisetorial' },
+            { sigla: 'AGRESE', nome: 'Agência Reguladora de Sergipe', estado: 'SE', setor: 'multisetorial' },
+            { sigla: 'MOB', nome: 'Agência de Mobilidade de Recife', estado: 'PE', setor: 'transporte' }
         ],
 
         // Noticias simuladas (placeholder para RSS/API real)
         noticias: [
-            { agencia: 'ANEEL', tipo: 'resolucao', titulo: 'ANEEL aprova revisao tarifaria extraordinaria para distribuidoras do Nordeste', resumo: 'A diretoria colegiada da ANEEL aprovou nesta terca-feira a revisao tarifaria extraordinaria que afeta 8 distribuidoras de energia da regiao Nordeste, com impacto medio de 5,2% nas tarifas residenciais.', data: '2026-02-18', esfera: 'federal', fonte: 'RSS gov.br' },
-            { agencia: 'ANVISA', tipo: 'noticia', titulo: 'ANVISA publica novas regras para rotulagem de alimentos ultraprocessados', resumo: 'Resolucao da Diretoria Colegiada estabelece novos criterios para advertencias frontais em embalagens, com prazo de adequacao ate dezembro de 2026.', data: '2026-02-17', esfera: 'federal', fonte: 'Portal ANVISA' },
-            { agencia: 'ANATEL', tipo: 'consulta', titulo: 'ANATEL abre consulta publica sobre regulamentacao do 6G', resumo: 'Consulta Publica n. 12/2026 visa colher contribuicoes da sociedade sobre o marco regulatorio para tecnologias de sexta geracao de telecomunicacoes.', data: '2026-02-17', esfera: 'federal', fonte: 'RSS gov.br' },
-            { agencia: 'ARTESP', tipo: 'deliberacao', titulo: 'ARTESP delibera sobre reajuste de pedagio na Rodovia Anhanguera', resumo: 'A 1178a Reuniao Ordinaria da Diretoria analisou o pleito da concessionaria para reajuste anual do pedágio com base no IPCA acumulado.', data: '2026-02-16', esfera: 'estadual', fonte: 'ARTESP Transparencia' },
-            { agencia: 'ANA', tipo: 'resolucao', titulo: 'ANA estabelece novas regras para outorga de uso de recursos hidricos', resumo: 'Resolucao define criterios atualizados para concessao de outorga em bacias hidrograficas criticas, priorizando abastecimento humano.', data: '2026-02-15', esfera: 'federal', fonte: 'RSS gov.br' },
-            { agencia: 'ANP', tipo: 'noticia', titulo: 'ANP divulga resultado do 4o Ciclo de Oferta Permanente', resumo: 'Leilao arrecadou R$ 1,2 bilhao em bonus de assinatura, com 15 blocos arrematados por 8 empresas nacionais e internacionais.', data: '2026-02-15', esfera: 'federal', fonte: 'Portal ANP' },
-            { agencia: 'ANTT', tipo: 'resolucao', titulo: 'ANTT regulamenta servico de transporte rodoviario interestadual por aplicativo', resumo: 'Nova resolucao cria categoria especifica para transporte por plataformas digitais, com requisitos de seguranca e qualidade.', data: '2026-02-14', esfera: 'federal', fonte: 'RSS gov.br' },
-            { agencia: 'ARSESP', tipo: 'deliberacao', titulo: 'ARSESP aprova revisao tarifaria da SABESP para ciclo 2026-2030', resumo: 'Agencia estadual concluiu processo de revisao tarifaria periodica da SABESP, definindo novo nivel de receita requerida.', data: '2026-02-14', esfera: 'estadual', fonte: 'ARSESP' },
-            { agencia: 'ANAC', tipo: 'noticia', titulo: 'ANAC autoriza operacao de drones autonomos para entregas urbanas', resumo: 'Regulamentacao permite operacoes BVLOS (alem da linha de visada) em areas urbanas especificas, mediante certificacao.', data: '2026-02-13', esfera: 'federal', fonte: 'Portal ANAC' },
-            { agencia: 'ANS', tipo: 'resolucao', titulo: 'ANS atualiza Rol de Procedimentos com 12 novas coberturas obrigatorias', resumo: 'Atualizacao inclui terapias genicas, novos medicamentos oncologicos e procedimentos de saude mental no rol obrigatorio.', data: '2026-02-13', esfera: 'federal', fonte: 'RSS gov.br' },
-            { agencia: 'TCU', tipo: 'auditoria', titulo: 'TCU identifica irregularidades em contratos de concessao rodoviaria', resumo: 'Relatorio de auditoria aponta sobrepreco de R$ 340 milhoes em obras de duplicacao previstas em contratos de concessao federal.', data: '2026-02-12', esfera: 'federal', fonte: 'Portal TCU' },
-            { agencia: 'ANM', tipo: 'noticia', titulo: 'ANM intensifica fiscalizacao de barragens com potencial de dano alto', resumo: 'Agencia anuncia plano de fiscalizacao emergencial para 47 barragens classificadas com Nivel de Emergencia 1 e 2.', data: '2026-02-12', esfera: 'federal', fonte: 'RSS gov.br' },
-            { agencia: 'DOU', tipo: 'decreto', titulo: 'Governo nomeia dois novos diretores para a ANATEL', resumo: 'Decreto presidencial publicado no DOU nomeia novos integrantes para a diretoria colegiada da agencia de telecomunicacoes.', data: '2026-02-11', esfera: 'federal', fonte: 'API DOU' },
+            { agencia: 'ANEEL', tipo: 'resolucao', titulo: 'ANEEL aprova revisão tarifária extraordinária para distribuidoras do Nordeste', resumo: 'A diretoria colegiada da ANEEL aprovou nesta terça-feira a revisão tarifária extraordinária que afeta 8 distribuidoras de energia da região Nordeste, com impacto médio de 5,2% nas tarifas residenciais.', data: '2026-02-18', esfera: 'federal', fonte: 'RSS gov.br' },
+            { agencia: 'ANVISA', tipo: 'noticia', titulo: 'ANVISA publica novas regras para rotulagem de alimentos ultraprocessados', resumo: 'Resolução da Diretoria Colegiada estabelece novos critérios para advertências frontais em embalagens, com prazo de adequação até dezembro de 2026.', data: '2026-02-17', esfera: 'federal', fonte: 'Portal ANVISA' },
+            { agencia: 'ANATEL', tipo: 'consulta', titulo: 'ANATEL abre consulta pública sobre regulamentação do 6G', resumo: 'Consulta Pública n. 12/2026 visa colher contribuições da sociedade sobre o marco regulatório para tecnologias de sexta geração de telecomunicações.', data: '2026-02-17', esfera: 'federal', fonte: 'RSS gov.br' },
+            { agencia: 'ARTESP', tipo: 'deliberacao', titulo: 'ARTESP delibera sobre reajuste de pedágio na Rodovia Anhanguera', resumo: 'A 1178ª Reunião Ordinária da Diretoria analisou o pleito da concessionária para reajuste anual do pedágio com base no IPCA acumulado.', data: '2026-02-16', esfera: 'estadual', fonte: 'ARTESP Transparência' },
+            { agencia: 'ANA', tipo: 'resolucao', titulo: 'ANA estabelece novas regras para outorga de uso de recursos hídricos', resumo: 'Resolução define critérios atualizados para concessão de outorga em bacias hidrográficas críticas, priorizando abastecimento humano.', data: '2026-02-15', esfera: 'federal', fonte: 'RSS gov.br' },
+            { agencia: 'ANP', tipo: 'noticia', titulo: 'ANP divulga resultado do 4º Ciclo de Oferta Permanente', resumo: 'Leilão arrecadou R$ 1,2 bilhão em bônus de assinatura, com 15 blocos arrematados por 8 empresas nacionais e internacionais.', data: '2026-02-15', esfera: 'federal', fonte: 'Portal ANP' },
+            { agencia: 'ANTT', tipo: 'resolucao', titulo: 'ANTT regulamenta serviço de transporte rodoviário interestadual por aplicativo', resumo: 'Nova resolução cria categoria específica para transporte por plataformas digitais, com requisitos de segurança e qualidade.', data: '2026-02-14', esfera: 'federal', fonte: 'RSS gov.br' },
+            { agencia: 'ARSESP', tipo: 'deliberacao', titulo: 'ARSESP aprova revisão tarifária da SABESP para ciclo 2026-2030', resumo: 'Agência estadual concluiu processo de revisão tarifária periódica da SABESP, definindo novo nível de receita requerida.', data: '2026-02-14', esfera: 'estadual', fonte: 'ARSESP' },
+            { agencia: 'ANAC', tipo: 'noticia', titulo: 'ANAC autoriza operação de drones autônomos para entregas urbanas', resumo: 'Regulamentação permite operações BVLOS (além da linha de visada) em áreas urbanas específicas, mediante certificação.', data: '2026-02-13', esfera: 'federal', fonte: 'Portal ANAC' },
+            { agencia: 'ANS', tipo: 'resolucao', titulo: 'ANS atualiza Rol de Procedimentos com 12 novas coberturas obrigatórias', resumo: 'Atualização inclui terapias gênicas, novos medicamentos oncológicos e procedimentos de saúde mental no rol obrigatório.', data: '2026-02-13', esfera: 'federal', fonte: 'RSS gov.br' },
+            { agencia: 'TCU', tipo: 'auditoria', titulo: 'TCU identifica irregularidades em contratos de concessão rodoviária', resumo: 'Relatório de auditoria aponta sobrepreço de R$ 340 milhões em obras de duplicação previstas em contratos de concessão federal.', data: '2026-02-12', esfera: 'federal', fonte: 'Portal TCU' },
+            { agencia: 'ANM', tipo: 'noticia', titulo: 'ANM intensifica fiscalização de barragens com potencial de dano alto', resumo: 'Agência anuncia plano de fiscalização emergencial para 47 barragens classificadas com Nível de Emergência 1 e 2.', data: '2026-02-12', esfera: 'federal', fonte: 'RSS gov.br' },
+            { agencia: 'DOU', tipo: 'decreto', titulo: 'Governo nomeia dois novos diretores para a ANATEL', resumo: 'Decreto presidencial publicado no DOU nomeia novos integrantes para a diretoria colegiada da agência de telecomunicações.', data: '2026-02-11', esfera: 'federal', fonte: 'API DOU' },
             { agencia: 'AGERGS', tipo: 'deliberacao', titulo: 'AGERGS homologa tarifas do transporte metropolitano de Porto Alegre', resumo: 'Diretoria colegiada homologou o reajuste de 8,3% nas tarifas do sistema de transporte metropolitano do RS.', data: '2026-02-10', esfera: 'estadual', fonte: 'AGERGS' }
         ],
 
@@ -3867,10 +3992,10 @@
 
         getTipoBadge(tipo) {
             const tipos = {
-                resolucao: { label: 'Resolucao', bg: 'rgba(74,222,128,0.2)', color: '#4ADE80' },
-                noticia: { label: 'Noticia', bg: 'rgba(96,165,250,0.2)', color: '#60A5FA' },
-                consulta: { label: 'Consulta Publica', bg: 'rgba(251,191,36,0.2)', color: '#FBBF24' },
-                deliberacao: { label: 'Deliberacao', bg: 'rgba(255,239,77,0.2)', color: '#FFEF4D' },
+                resolucao: { label: 'Resolução', bg: 'rgba(74,222,128,0.2)', color: '#4ADE80' },
+                noticia: { label: 'Notícia', bg: 'rgba(96,165,250,0.2)', color: '#60A5FA' },
+                consulta: { label: 'Consulta Pública', bg: 'rgba(251,191,36,0.2)', color: '#FBBF24' },
+                deliberacao: { label: 'Deliberação', bg: 'rgba(255,239,77,0.2)', color: '#FFEF4D' },
                 decreto: { label: 'Decreto', bg: 'rgba(167,139,250,0.2)', color: '#A78BFA' },
                 auditoria: { label: 'Auditoria', bg: 'rgba(248,113,113,0.2)', color: '#F87171' }
             };
@@ -3884,7 +4009,7 @@
             const news = this.getFilteredNews();
 
             if (news.length === 0) {
-                container.innerHTML = '<div class="empty-state"><p>Nenhuma noticia encontrada para os filtros selecionados.</p></div>';
+                container.innerHTML = '<div class="empty-state"><p>Nenhuma notícia encontrada para os filtros selecionados.</p></div>';
                 return;
             }
 
@@ -4029,13 +4154,13 @@
         formatSetor(setor) {
             const setores = {
                 energia: 'Energia',
-                telecom: 'Telecomunicacoes',
+                telecom: 'Telecomunicações',
                 transporte: 'Transportes',
-                saude: 'Saude',
+                saude: 'Saúde',
                 saneamento: 'Saneamento',
-                petroleo: 'Petroleo e Gas',
-                mineracao: 'Mineracao',
-                aviacao: 'Aviacao Civil',
+                petroleo: 'Petróleo e Gás',
+                mineracao: 'Mineração',
+                aviacao: 'Aviação Civil',
                 cinema: 'Cinema/Audiovisual',
                 multisetorial: 'Multisetorial'
             };
@@ -4072,7 +4197,7 @@
                 {
                     numero: 2,
                     titulo: 'Mandatos dos Diretores',
-                    desc: 'Dados publicos do Diario Oficial da Uniao (DOU). Criar tabela de diretores com mandatos e alertas automaticos de troca.',
+                    desc: 'Dados publicos do Diário Oficial da União (DOU). Criar tabela de diretores com mandatos e alertas automaticos de troca.',
                     status: 'pending',
                     items: ['API DOU', 'Tabela Diretores', 'Alertas Automaticos', 'Decretos']
                 },
@@ -4152,7 +4277,7 @@
             {
                 id: 'anm',
                 nome: 'ANM',
-                nomeCompleto: 'Agencia Nacional de Mineracao',
+                nomeCompleto: 'Agência Nacional de Mineração',
                 setor: 'mineracao',
                 esfera: 'Federal',
                 decisoes: 892,

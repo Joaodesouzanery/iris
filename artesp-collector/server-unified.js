@@ -97,6 +97,7 @@ const empresasConhecidas = [
 
 /**
  * Detecta empresas mencionadas no texto do PDF
+ * Usa a lista local de concessionárias + normalização unificada do iris-core
  * @param {string} texto - Texto extraido do PDF
  * @returns {Array} - Lista de empresas detectadas com suas informacoes
  */
@@ -109,8 +110,11 @@ function detectarEmpresas(texto) {
     for (const empresa of empresasConhecidas) {
         // Verifica o nome principal
         if (textoUpper.includes(empresa.nome.toUpperCase())) {
+            // Usa normalizarEmpresa do iris-core para nome consistente
+            const nomeNormalizado = irisCore.normalizarEmpresa ? irisCore.normalizarEmpresa(empresa.nome) : empresa.nome;
             empresasDetectadas.push({
                 nome: empresa.nome,
+                nomeNormalizado: nomeNormalizado,
                 setor: empresa.setor,
                 tipo: empresa.tipo,
                 mencoes: contarMencoes(textoUpper, empresa.nome.toUpperCase())
@@ -121,8 +125,10 @@ function detectarEmpresas(texto) {
         // Verifica aliases
         for (const alias of empresa.aliases || []) {
             if (textoUpper.includes(alias.toUpperCase())) {
+                const nomeNormalizado = irisCore.normalizarEmpresa ? irisCore.normalizarEmpresa(empresa.nome) : empresa.nome;
                 empresasDetectadas.push({
                     nome: empresa.nome,
+                    nomeNormalizado: nomeNormalizado,
                     setor: empresa.setor,
                     tipo: empresa.tipo,
                     mencoes: contarMencoes(textoUpper, alias.toUpperCase())
