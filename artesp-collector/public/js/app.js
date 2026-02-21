@@ -2556,55 +2556,454 @@
     };
 
     // ============================================
-    // PAGE: Grafo de Conexoes - Card-based Network Graph
+    // PAGE: Grafo de Conexoes - Search-First Network Explorer
     // ============================================
     const PageGrafo = {
-        nodes: [],
-        links: [],
+        allEntities: [],
+        allConnections: [],
+        visibleNodes: [],
+        visibleLinks: [],
+        selectedEntity: null,
+        searchTerm: '',
+        activeCategory: 'todos',
         zoom: 1,
-        panX: 0,
-        panY: 0,
-        selectedNode: null,
-        containerWidth: 1200,
-        containerHeight: 700,
+        containerWidth: 1000,
+        containerHeight: 600,
 
         init() {
             const page = document.getElementById('page-grafo');
             page.classList.add('active');
-            this.initData();
+            this.initDatabase();
+            this.renderSearchInterface();
+            this.bindEvents();
+        },
+
+        initDatabase() {
+            // Database of all entities
+            this.allEntities = [
+                // Agencias
+                { id: 'ag1', name: 'ARTESP', type: 'agencia', sigla: 'ARTESP', setor: 'Transporte', estado: 'SP', deliberacoes: 4521, diretores: 4 },
+                { id: 'ag2', name: 'ANEEL', type: 'agencia', sigla: 'ANEEL', setor: 'Energia', estado: 'Federal', deliberacoes: 3245, diretores: 5 },
+                { id: 'ag3', name: 'ANATEL', type: 'agencia', sigla: 'ANATEL', setor: 'Telecom', estado: 'Federal', deliberacoes: 2876, diretores: 5 },
+                { id: 'ag4', name: 'ANP', type: 'agencia', sigla: 'ANP', setor: 'Petroleo', estado: 'Federal', deliberacoes: 1543, diretores: 4 },
+
+                // Diretores ARTESP
+                { id: 'dir1', name: 'Andre Isper R. Barnabe', type: 'diretor', cargo: 'Diretor-Presidente', agencia: 'ARTESP', desde: '2023', deliberacoes: 156, cpf: '687.***.***-08' },
+                { id: 'dir2', name: 'Diego Albert Zanatto', type: 'diretor', cargo: 'Diretor de Fiscalizacao', agencia: 'ARTESP', desde: '2022', deliberacoes: 89, cpf: '345.***.***-12' },
+                { id: 'dir3', name: 'Fernanda Esbizaro', type: 'diretor', cargo: 'Diretora Tecnica', agencia: 'ARTESP', desde: '2023', deliberacoes: 112, cpf: '456.***.***-34' },
+                { id: 'dir4', name: 'Raquel Franca Carneiro', type: 'diretor', cargo: 'Diretora Administrativa', agencia: 'ARTESP', desde: '2022', deliberacoes: 78, cpf: '567.***.***-45' },
+
+                // Empresas
+                { id: 'emp1', name: 'CCR S.A.', type: 'empresa', cnpj: '02.846.056/0001-97', setor: 'Concessoes', capital: 'R$ 8.5 bi', deliberacoes: 245, alertas: 2 },
+                { id: 'emp2', name: 'Ecorodovias', type: 'empresa', cnpj: '04.149.454/0001-80', setor: 'Concessoes', capital: 'R$ 2.1 bi', deliberacoes: 187, alertas: 3 },
+                { id: 'emp3', name: 'ViaOeste', type: 'empresa', cnpj: '02.748.567/0001-45', setor: 'Concessoes', capital: 'R$ 320 mi', deliberacoes: 98, alertas: 1, controlador: 'CCR S.A.' },
+                { id: 'emp4', name: 'AutoBAn', type: 'empresa', cnpj: '02.695.324/0001-89', setor: 'Concessoes', capital: 'R$ 450 mi', deliberacoes: 76, alertas: 0, controlador: 'CCR S.A.' },
+                { id: 'emp5', name: 'Ecovias', type: 'empresa', cnpj: '03.158.863/0001-92', setor: 'Concessoes', capital: 'R$ 500 mi', deliberacoes: 112, alertas: 2, controlador: 'Ecorodovias' },
+                { id: 'emp6', name: 'SPVias', type: 'empresa', cnpj: '04.156.487/0001-23', setor: 'Concessoes', capital: 'R$ 280 mi', deliberacoes: 54, alertas: 0 },
+
+                // Processos
+                { id: 'proc1', name: 'ARTESP-PRC-2024/00123', type: 'processo', assunto: 'Reequilibrio Economico', empresa: 'CCR S.A.', valor: 'R$ 45 milhoes', status: 'Em analise' },
+                { id: 'proc2', name: 'ARTESP-PRC-2024/00456', type: 'processo', assunto: 'Multa Contratual', empresa: 'ViaOeste', valor: 'R$ 2.3 milhoes', status: 'Deferido' },
+                { id: 'proc3', name: 'ARTESP-PRC-2024/00789', type: 'processo', assunto: 'Obras de Duplicacao', empresa: 'Ecovias', valor: 'R$ 120 milhoes', status: 'Indeferido' }
+            ];
+
+            // Database of all connections
+            this.allConnections = [
+                // Diretores -> Agencia
+                { source: 'dir1', target: 'ag1', type: 'dirige', label: 'Dirige' },
+                { source: 'dir2', target: 'ag1', type: 'dirige', label: 'Dirige' },
+                { source: 'dir3', target: 'ag1', type: 'dirige', label: 'Dirige' },
+                { source: 'dir4', target: 'ag1', type: 'dirige', label: 'Dirige' },
+
+                // Empresas -> Agencia (reguladas por)
+                { source: 'emp1', target: 'ag1', type: 'regulada', label: 'Regulada por' },
+                { source: 'emp2', target: 'ag1', type: 'regulada', label: 'Regulada por' },
+                { source: 'emp3', target: 'ag1', type: 'regulada', label: 'Regulada por' },
+                { source: 'emp4', target: 'ag1', type: 'regulada', label: 'Regulada por' },
+                { source: 'emp5', target: 'ag1', type: 'regulada', label: 'Regulada por' },
+                { source: 'emp6', target: 'ag1', type: 'regulada', label: 'Regulada por' },
+
+                // Controle societario
+                { source: 'emp1', target: 'emp3', type: 'controla', label: 'Controla' },
+                { source: 'emp1', target: 'emp4', type: 'controla', label: 'Controla' },
+                { source: 'emp2', target: 'emp5', type: 'controla', label: 'Controla' },
+
+                // Processos -> Empresas
+                { source: 'proc1', target: 'emp1', type: 'processo', label: 'Interessado' },
+                { source: 'proc2', target: 'emp3', type: 'processo', label: 'Interessado' },
+                { source: 'proc3', target: 'emp5', type: 'processo', label: 'Interessado' },
+
+                // Diretores votaram em processos
+                { source: 'dir1', target: 'proc1', type: 'votou', label: 'Votou' },
+                { source: 'dir2', target: 'proc2', type: 'votou', label: 'Votou' },
+                { source: 'dir1', target: 'proc3', type: 'votou', label: 'Votou' },
+
+                // Vinculo oculto (exemplo de alerta)
+                { source: 'dir2', target: 'emp3', type: 'vinculo_oculto', label: 'Vinculo Detectado', hidden: true }
+            ];
+        },
+
+        renderSearchInterface() {
+            const container = document.getElementById('grafo-container');
+            if (!container) return;
+
+            const categories = [
+                { id: 'todos', label: 'Todos', icon: 'M4 6h16M4 12h16M4 18h16' },
+                { id: 'agencia', label: 'Agencias', icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4' },
+                { id: 'diretor', label: 'Diretores', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' },
+                { id: 'empresa', label: 'Empresas', icon: 'M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' },
+                { id: 'processo', label: 'Processos', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' }
+            ];
+
+            container.innerHTML = `
+                <div class="grafo-explorer">
+                    <!-- Search Panel -->
+                    <div class="grafo-search-panel">
+                        <div class="search-header">
+                            <h3>Explorar Conexoes</h3>
+                            <p>Selecione uma entidade para visualizar suas conexoes</p>
+                        </div>
+
+                        <div class="search-box">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                            <input type="text" id="grafo-search-input" placeholder="Buscar agencia, diretor, empresa...">
+                        </div>
+
+                        <div class="category-tabs">
+                            ${categories.map(cat => `
+                                <button class="category-tab ${cat.id === 'todos' ? 'active' : ''}" data-category="${cat.id}">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="${cat.icon}"/></svg>
+                                    <span>${cat.label}</span>
+                                </button>
+                            `).join('')}
+                        </div>
+
+                        <div class="entities-list" id="grafo-entities-list">
+                            ${this.renderEntitiesList()}
+                        </div>
+                    </div>
+
+                    <!-- Graph Canvas -->
+                    <div class="grafo-canvas-area" id="grafo-canvas-area">
+                        <div class="grafo-empty-state" id="grafo-empty-state">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="64" height="64">
+                                <circle cx="12" cy="12" r="3"/>
+                                <path d="M12 2v4m0 12v4m10-10h-4M6 12H2m15.364-6.364l-2.828 2.828M9.464 14.536l-2.828 2.828m12.728 0l-2.828-2.828M9.464 9.464L6.636 6.636"/>
+                            </svg>
+                            <h3>Selecione uma Entidade</h3>
+                            <p>Escolha uma agencia, diretor, empresa ou processo na lista ao lado para visualizar suas conexoes no grafo.</p>
+                        </div>
+                        <div class="grafo-canvas" id="grafo-canvas" style="display: none;">
+                            <svg class="grafo-svg-lines" id="grafo-svg-lines" viewBox="0 0 ${this.containerWidth} ${this.containerHeight}">
+                                <defs>
+                                    <marker id="arrow-yellow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#FFEF4D"/></marker>
+                                    <marker id="arrow-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#60a5fa"/></marker>
+                                    <marker id="arrow-green" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#4ade80"/></marker>
+                                    <marker id="arrow-purple" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#a855f7"/></marker>
+                                    <marker id="arrow-red" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#ef4444"/></marker>
+                                </defs>
+                                <g id="grafo-links-group"></g>
+                            </svg>
+                            <div class="grafo-nodes-container" id="grafo-nodes-container"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Legend -->
+                <div class="grafo-legend-bottom">
+                    <div class="legend-item"><span class="legend-dot" style="background: #FFEF4D;"></span> Agencia</div>
+                    <div class="legend-item"><span class="legend-dot" style="background: #60a5fa;"></span> Diretor</div>
+                    <div class="legend-item"><span class="legend-dot" style="background: #4ade80;"></span> Empresa</div>
+                    <div class="legend-item"><span class="legend-dot" style="background: #a855f7;"></span> Processo</div>
+                    <div class="legend-item"><span class="legend-line dashed" style="background: #ef4444;"></span> Alerta</div>
+                </div>`;
+        },
+
+        renderEntitiesList() {
+            let filtered = this.allEntities;
+
+            // Filter by category
+            if (this.activeCategory !== 'todos') {
+                filtered = filtered.filter(e => e.type === this.activeCategory);
+            }
+
+            // Filter by search term
+            if (this.searchTerm) {
+                const term = this.searchTerm.toLowerCase();
+                filtered = filtered.filter(e =>
+                    e.name.toLowerCase().includes(term) ||
+                    (e.sigla && e.sigla.toLowerCase().includes(term)) ||
+                    (e.cnpj && e.cnpj.includes(term)) ||
+                    (e.setor && e.setor.toLowerCase().includes(term))
+                );
+            }
+
+            if (filtered.length === 0) {
+                return '<div class="entities-empty">Nenhuma entidade encontrada</div>';
+            }
+
+            return filtered.map(entity => {
+                const typeColors = { agencia: '#FFEF4D', diretor: '#60a5fa', empresa: '#4ade80', processo: '#a855f7' };
+                const color = typeColors[entity.type] || '#64748b';
+                const isSelected = this.selectedEntity?.id === entity.id;
+
+                return `
+                    <div class="entity-item ${isSelected ? 'selected' : ''}" data-entity-id="${entity.id}">
+                        <div class="entity-icon" style="background: ${color}20; color: ${color};">
+                            ${this.getTypeIcon(entity.type)}
+                        </div>
+                        <div class="entity-info">
+                            <div class="entity-name">${entity.name}</div>
+                            <div class="entity-meta">${this.getEntityMeta(entity)}</div>
+                        </div>
+                        <div class="entity-badge" style="background: ${color}20; color: ${color};">
+                            ${entity.deliberacoes || 0}
+                        </div>
+                    </div>`;
+            }).join('');
+        },
+
+        getTypeIcon(type) {
+            const icons = {
+                agencia: '<svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 01-1 1h-2a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/></svg>',
+                diretor: '<svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/></svg>',
+                empresa: '<svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fill-rule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clip-rule="evenodd"/></svg>',
+                processo: '<svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/></svg>'
+            };
+            return icons[type] || icons.empresa;
+        },
+
+        getEntityMeta(entity) {
+            switch (entity.type) {
+                case 'agencia': return `${entity.setor} • ${entity.estado}`;
+                case 'diretor': return `${entity.cargo} • ${entity.agencia}`;
+                case 'empresa': return entity.cnpj || entity.setor;
+                case 'processo': return `${entity.assunto} • ${entity.status}`;
+                default: return '';
+            }
+        },
+
+        bindEvents() {
+            // Search input
+            const searchInput = document.getElementById('grafo-search-input');
+            if (searchInput) {
+                searchInput.addEventListener('input', (e) => {
+                    this.searchTerm = e.target.value;
+                    this.updateEntitiesList();
+                });
+            }
+
+            // Category tabs
+            document.querySelectorAll('.category-tab').forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
+                    e.currentTarget.classList.add('active');
+                    this.activeCategory = e.currentTarget.dataset.category;
+                    this.updateEntitiesList();
+                });
+            });
+
+            // Entity selection (event delegation)
+            const entitiesList = document.getElementById('grafo-entities-list');
+            if (entitiesList) {
+                entitiesList.addEventListener('click', (e) => {
+                    const item = e.target.closest('.entity-item');
+                    if (item) {
+                        const entityId = item.dataset.entityId;
+                        this.selectEntity(entityId);
+                    }
+                });
+            }
+        },
+
+        updateEntitiesList() {
+            const container = document.getElementById('grafo-entities-list');
+            if (container) {
+                container.innerHTML = this.renderEntitiesList();
+            }
+        },
+
+        selectEntity(entityId) {
+            this.selectedEntity = this.allEntities.find(e => e.id === entityId);
+            if (!this.selectedEntity) return;
+
+            // Update list to show selection
+            this.updateEntitiesList();
+
+            // Show graph canvas, hide empty state
+            document.getElementById('grafo-empty-state').style.display = 'none';
+            document.getElementById('grafo-canvas').style.display = 'block';
+
+            // Build visible nodes and links
+            this.buildGraphFromEntity(entityId);
+
+            // Render the graph
             this.renderGraph();
-            this.setupFilters();
+        },
+
+        buildGraphFromEntity(entityId) {
+            const centerEntity = this.allEntities.find(e => e.id === entityId);
+            if (!centerEntity) return;
+
+            // Find all connections involving this entity
+            const relatedConnections = this.allConnections.filter(c =>
+                c.source === entityId || c.target === entityId
+            );
+
+            // Get all related entity IDs
+            const relatedIds = new Set([entityId]);
+            relatedConnections.forEach(c => {
+                relatedIds.add(c.source);
+                relatedIds.add(c.target);
+            });
+
+            // Build visible nodes
+            this.visibleNodes = Array.from(relatedIds).map(id => {
+                const entity = this.allEntities.find(e => e.id === id);
+                return entity ? { ...entity, isCenter: id === entityId } : null;
+            }).filter(Boolean);
+
+            // Build visible links
+            this.visibleLinks = relatedConnections;
+
+            // Calculate positions (center node in middle, others around)
+            this.calculatePositions();
+        },
+
+        calculatePositions() {
+            const centerX = this.containerWidth / 2;
+            const centerY = this.containerHeight / 2;
+            const radius = 200;
+
+            const centerNode = this.visibleNodes.find(n => n.isCenter);
+            const otherNodes = this.visibleNodes.filter(n => !n.isCenter);
+
+            if (centerNode) {
+                centerNode.x = centerX;
+                centerNode.y = centerY;
+            }
+
+            otherNodes.forEach((node, i) => {
+                const angle = (i / otherNodes.length) * 2 * Math.PI - Math.PI / 2;
+                node.x = centerX + Math.cos(angle) * radius;
+                node.y = centerY + Math.sin(angle) * radius;
+            });
+        },
+
+        renderGraph() {
+            this.renderLinks();
+            this.renderNodes();
+        },
+
+        renderLinks() {
+            const linksGroup = document.getElementById('grafo-links-group');
+            if (!linksGroup) return;
+
+            const linkColors = {
+                dirige: { color: '#60a5fa', marker: 'blue' },
+                regulada: { color: '#FFEF4D', marker: 'yellow' },
+                controla: { color: '#4ade80', marker: 'green' },
+                processo: { color: '#a855f7', marker: 'purple' },
+                votou: { color: '#64748b', marker: 'gray' },
+                vinculo_oculto: { color: '#ef4444', marker: 'red' }
+            };
+
+            let svgContent = '';
+            this.visibleLinks.forEach((link, idx) => {
+                const source = this.visibleNodes.find(n => n.id === link.source);
+                const target = this.visibleNodes.find(n => n.id === link.target);
+                if (!source || !target) return;
+
+                const style = linkColors[link.type] || linkColors.regulada;
+                const dashArray = link.hidden ? '6,4' : 'none';
+
+                // Curve calculation
+                const midX = (source.x + target.x) / 2;
+                const midY = (source.y + target.y) / 2;
+                const dx = target.x - source.x;
+                const dy = target.y - source.y;
+                const len = Math.sqrt(dx * dx + dy * dy) || 1;
+                const offset = 30;
+                const perpX = -dy / len * offset;
+                const perpY = dx / len * offset;
+
+                svgContent += `
+                    <g class="link-group">
+                        <path d="M ${source.x} ${source.y} Q ${midX + perpX} ${midY + perpY} ${target.x} ${target.y}"
+                              fill="none" stroke="${style.color}" stroke-width="2"
+                              stroke-dasharray="${dashArray}" opacity="0.7"
+                              marker-end="url(#arrow-${style.marker})"/>
+                        <circle cx="${midX + perpX * 0.5}" cy="${midY + perpY * 0.5}" r="22"
+                                fill="rgba(15, 23, 42, 0.95)" stroke="${style.color}" stroke-width="1"/>
+                        <text x="${midX + perpX * 0.5}" y="${midY + perpY * 0.5 + 4}"
+                              text-anchor="middle" fill="${style.color}" font-size="9" font-weight="500">${link.label}</text>
+                    </g>`;
+            });
+
+            linksGroup.innerHTML = svgContent;
+        },
+
+        renderNodes() {
+            const nodesContainer = document.getElementById('grafo-nodes-container');
+            if (!nodesContainer) return;
+
+            const typeColors = { agencia: '#FFEF4D', diretor: '#60a5fa', empresa: '#4ade80', processo: '#a855f7' };
+
+            let html = '';
+            this.visibleNodes.forEach(node => {
+                const color = typeColors[node.type] || '#64748b';
+                const size = node.isCenter ? 'large' : 'normal';
+
+                html += `
+                    <div class="grafo-node ${size} ${node.isCenter ? 'center' : ''}" data-node-id="${node.id}"
+                         style="left: ${node.x}px; top: ${node.y}px; --node-color: ${color};">
+                        <div class="node-icon">${this.getTypeIcon(node.type)}</div>
+                        <div class="node-label">${node.name}</div>
+                        ${node.alertas > 0 ? `<div class="node-alert">${node.alertas}</div>` : ''}
+                    </div>`;
+            });
+
+            nodesContainer.innerHTML = html;
+
+            // Bind click events for expansion
+            nodesContainer.querySelectorAll('.grafo-node').forEach(nodeEl => {
+                nodeEl.addEventListener('click', () => {
+                    const nodeId = nodeEl.dataset.nodeId;
+                    if (nodeId !== this.selectedEntity?.id) {
+                        this.selectEntity(nodeId);
+                    }
+                });
+            });
+        },
+
+        setupFilters() {
+            // No longer needed with new design
         },
 
         initData() {
-            // Node data with detailed information
-            this.nodes = [
-                {
-                    id: 1, name: 'CCR S.A.', type: 'empresa',
-                    cnpj: '02.846.056/0001-97', status: 'Ativo',
-                    capital: 'R$ 8.500.000.000', abertura: '12/05/1998',
-                    cidade: 'Sao Paulo/SP', cnae: '52.21-4-00',
-                    deliberacoes: 45, alertas: 2,
-                    img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/CCR_logo.svg/200px-CCR_logo.svg.png'
-                },
-                {
-                    id: 2, name: 'Ecovias', type: 'empresa',
-                    cnpj: '03.158.863/0001-92', status: 'Ativo',
-                    capital: 'R$ 500.000.000', abertura: '08/02/2000',
-                    cidade: 'Sao Paulo/SP', cnae: '52.21-4-00',
-                    deliberacoes: 38, alertas: 3
-                },
-                {
-                    id: 3, name: 'Andre Isper R. Barnabe', type: 'diretor',
-                    cpf: '687.***.***-08', status: 'Ativo',
-                    cargo: 'Diretor-Presidente', desde: '2023',
-                    deliberacoes: 156, alertas: 0
-                },
-                {
-                    id: 4, name: 'ViaOeste', type: 'empresa',
-                    cnpj: '02.748.567/0001-45', status: 'Ativo',
-                    capital: 'R$ 320.000.000', abertura: '15/03/1999',
-                    cidade: 'Osasco/SP', cnae: '52.21-4-00',
+            // Legacy - now uses initDatabase
+            this.initDatabase();
+        },
+
+        zoomIn() { },
+        zoomOut() { },
+        resetView() {
+            this.selectedEntity = null;
+            this.visibleNodes = [];
+            this.visibleLinks = [];
+            document.getElementById('grafo-empty-state').style.display = 'flex';
+            document.getElementById('grafo-canvas').style.display = 'none';
+            this.updateEntitiesList();
+        },
+        exportar() { alert('Exportando grafo...'); }
+    };
+
+    // Placeholder for backward compatibility - data was moved to initDatabase
+    const _legacyGrafoData = {
+        id: 4, name: 'ViaOeste', type: 'empresa',
+        cnpj: '02.748.567/0001-45', status: 'Ativo',
+        capital: 'R$ 320.000.000', abertura: '15/03/1999',
+        cidade: 'Osasco/SP', cnae: '52.21-4-00',
                     deliberacoes: 52, alertas: 1
                 },
                 {
@@ -4466,8 +4865,8 @@
 
         getMarkerRadius(decisoes) {
             const maxDecisoes = 4521;
-            const minRadius = 15;
-            const maxRadius = 45;
+            const minRadius = 5;
+            const maxRadius = 18;
             const ratio = decisoes / maxDecisoes;
             return minRadius + (maxRadius - minRadius) * Math.sqrt(ratio);
         },
@@ -4518,14 +4917,16 @@
                     fillOpacity: 0.7
                 }).addTo(this.map);
 
-                // Add label
-                const label = L.divIcon({
-                    className: 'leaflet-state-label',
-                    html: `<span style="color: #0f172a; font-weight: 700; font-size: 11px; text-shadow: 0 0 3px rgba(255,255,255,0.8);">${code}</span>`,
-                    iconSize: [30, 20],
-                    iconAnchor: [15, 10]
-                });
-                L.marker([estado.lat, estado.lng], { icon: label, interactive: false }).addTo(this.map);
+                // Add label (only for states with enough decisions to have visible markers)
+                if (estado.decisoes > 100) {
+                    const label = L.divIcon({
+                        className: 'leaflet-state-label',
+                        html: `<span style="color: #fff; font-weight: 600; font-size: 9px; text-shadow: 0 1px 2px rgba(0,0,0,0.8);">${code}</span>`,
+                        iconSize: [20, 14],
+                        iconAnchor: [10, 7]
+                    });
+                    L.marker([estado.lat, estado.lng], { icon: label, interactive: false }).addTo(this.map);
+                }
 
                 // Popup content
                 const popupContent = `
