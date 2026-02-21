@@ -10,7 +10,155 @@
     <script src="https://d3js.org/topojson.v3.min.js"></script>
 </head>
 <body>
-    <div class="app-container">
+    <!-- ============================================
+         LANDING PAGE PUBLICA - Hub de Noticias (gratuito)
+         ============================================ -->
+    <div id="landing-page" class="landing-page">
+        <!-- Landing Header -->
+        <header class="landing-header">
+            <div class="landing-header-inner">
+                <div class="landing-brand">
+                    <svg width="48" height="26" viewBox="0 0 120 50" fill="none">
+                        <rect x="0" y="5" width="3" height="40" fill="#c9a227"/>
+                        <rect x="6" y="5" width="3" height="40" fill="#c9a227"/>
+                        <rect x="20" y="5" width="3" height="40" fill="#c9a227"/>
+                        <path d="M23 5 H35 Q42 5 42 15 Q42 25 35 25 H23" stroke="#c9a227" stroke-width="3" fill="none"/>
+                        <line x1="30" y1="25" x2="42" y2="45" stroke="#c9a227" stroke-width="3"/>
+                        <rect x="52" y="5" width="3" height="40" fill="#c9a227"/>
+                        <rect x="58" y="5" width="3" height="40" fill="#c9a227"/>
+                        <path d="M72 12 Q72 5 82 5 Q92 5 92 12 Q92 20 82 22 Q72 24 72 32 Q72 45 82 45 Q92 45 92 38" stroke="#c9a227" stroke-width="3" fill="none"/>
+                    </svg>
+                    <div>
+                        <div class="landing-brand-name">IRIS</div>
+                        <div class="landing-brand-sub">Inteligencia Regulatoria</div>
+                    </div>
+                </div>
+                <nav class="landing-nav">
+                    <a href="#noticias" class="landing-nav-link">Noticias</a>
+                    <a href="#agencias" class="landing-nav-link">Agencias</a>
+                    <a href="#sobre" class="landing-nav-link">Sobre</a>
+                    <button class="landing-login-btn" onclick="LandingPage.enterPlatform()">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
+                        Entrar na Plataforma
+                    </button>
+                </nav>
+            </div>
+        </header>
+
+        <!-- Hero Section -->
+        <section class="landing-hero">
+            <div class="landing-hero-inner">
+                <div class="landing-hero-badge">Acesso Gratuito</div>
+                <h1 class="landing-hero-title">Hub de Inteligencia<br>Regulatoria do Brasil</h1>
+                <p class="landing-hero-subtitle">Acompanhe em tempo real as noticias, deliberacoes e movimentacoes das agencias reguladoras brasileiras. Totalmente gratuito.</p>
+                <div class="landing-hero-actions">
+                    <a href="#noticias" class="landing-btn-primary">Ver Noticias</a>
+                    <button class="landing-btn-secondary" onclick="LandingPage.enterPlatform()">Acessar Plataforma Completa</button>
+                </div>
+                <div class="landing-hero-stats">
+                    <div class="landing-stat">
+                        <div class="landing-stat-value" id="landing-stat-agencias">34</div>
+                        <div class="landing-stat-label">Agencias Mapeadas</div>
+                    </div>
+                    <div class="landing-stat">
+                        <div class="landing-stat-value" id="landing-stat-fontes">28</div>
+                        <div class="landing-stat-label">Fontes de Dados</div>
+                    </div>
+                    <div class="landing-stat">
+                        <div class="landing-stat-value" id="landing-stat-setores">9</div>
+                        <div class="landing-stat-label">Setores Regulados</div>
+                    </div>
+                    <div class="landing-stat">
+                        <div class="landing-stat-value" id="landing-stat-atualizacao">Diaria</div>
+                        <div class="landing-stat-label">Atualizacao</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- News Feed Section -->
+        <section class="landing-section" id="noticias">
+            <div class="landing-section-inner">
+                <div class="landing-section-header">
+                    <h2 class="landing-section-title">Ultimas Noticias das Agencias</h2>
+                    <div class="landing-news-tabs">
+                        <button class="landing-tab active" data-landing-tab="todas">Todas</button>
+                        <button class="landing-tab" data-landing-tab="federal">Federais</button>
+                        <button class="landing-tab" data-landing-tab="estadual">Estaduais</button>
+                        <button class="landing-tab" data-landing-tab="resolucoes">Resolucoes</button>
+                    </div>
+                </div>
+                <div class="landing-news-grid" id="landing-news-container">
+                    <!-- Noticias renderizadas via JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Agencias Section -->
+        <section class="landing-section landing-section-alt" id="agencias">
+            <div class="landing-section-inner">
+                <h2 class="landing-section-title">Agencias Reguladoras Mapeadas</h2>
+                <p class="landing-section-subtitle">Monitoramos as principais agencias federais e estaduais do Brasil</p>
+                <div class="landing-agencias-grid" id="landing-agencias-container">
+                    <!-- Renderizado via JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section class="landing-cta" id="sobre">
+            <div class="landing-section-inner">
+                <h2 class="landing-cta-title">Quer acesso a plataforma completa?</h2>
+                <p class="landing-cta-subtitle">Analise de deliberacoes, monitoramento de diretores, jurimetria, painel regulatorio e muito mais.</p>
+                <div class="landing-features-grid">
+                    <div class="landing-feature">
+                        <div class="landing-feature-icon">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        </div>
+                        <h3>Analise de Deliberacoes</h3>
+                        <p>Processamento automatico de PDFs com extracao inteligente</p>
+                    </div>
+                    <div class="landing-feature">
+                        <div class="landing-feature-icon">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                        </div>
+                        <h3>Painel Regulatorio</h3>
+                        <p>Visao estatistica e filtravel das normas regulatorias</p>
+                    </div>
+                    <div class="landing-feature">
+                        <div class="landing-feature-icon">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        </div>
+                        <h3>Monitoramento de Diretores</h3>
+                        <p>Mandatos, votacoes e perfis de decisores regulatorios</p>
+                    </div>
+                    <div class="landing-feature">
+                        <div class="landing-feature-icon">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                        </div>
+                        <h3>Auditoria Forense</h3>
+                        <p>Deteccao de padroes anomalos em decisoes regulatorias</p>
+                    </div>
+                </div>
+                <button class="landing-btn-cta" onclick="LandingPage.enterPlatform()">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    Entrar na Plataforma IRIS
+                </button>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="landing-footer">
+            <div class="landing-section-inner">
+                <p>IRIS - Instituto de Regulacao, Inovacao e Sustentabilidade | Hub de Inteligencia Regulatoria</p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- ============================================
+         PLATAFORMA IRIS (requer login)
+         ============================================ -->
+    <div class="app-container" id="app-platform" style="display: none;">
         <!-- Sidebar -->
         <nav class="sidebar">
             <div class="sidebar-header">
@@ -75,6 +223,10 @@
 
                 <div class="nav-section">
                     <div class="nav-section-title">Temas Regulados</div>
+                    <a data-route="/painel-regulatorio" class="nav-item">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path></svg>
+                        Painel Regulatorio
+                    </a>
                     <a data-route="/setores" class="nav-item">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
                         Setores
@@ -139,6 +291,10 @@
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
                     3 alertas
                 </div>
+                <button class="sidebar-back-btn" onclick="LandingPage.backToLanding()" title="Voltar ao Hub Publico">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    Sair
+                </button>
             </div>
         </nav>
 
@@ -2041,6 +2197,173 @@
                                 <div class="director-profile" id="director-profile">
                                     <!-- Sera renderizado via JavaScript -->
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================
+                     PAGE: Painel Regulatorio
+                     ============================================ -->
+                <div id="page-painel-regulatorio" class="page-view">
+                    <div class="page-header">
+                        <div class="page-title-section">
+                            <h1 class="page-title">Painel Regulatorio</h1>
+                            <p class="page-subtitle">Visao estatistica e filtravel das normas regulatorias</p>
+                        </div>
+                        <div class="page-actions">
+                            <select class="filter-select" id="painel-agencia-filter">
+                                <option value="artesp">ARTESP</option>
+                                <option value="anatel">ANATEL</option>
+                                <option value="aneel">ANEEL</option>
+                                <option value="anm">ANM</option>
+                                <option value="anac">ANAC</option>
+                            </select>
+                            <button class="btn btn-primary" id="painel-exportar-btn">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                Exportar
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- KPI Cards -->
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Total de Normas</span>
+                                <div class="stat-card-icon stat-icon-blue">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                </div>
+                            </div>
+                            <div class="stat-card-value" id="painel-total-normas">247</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Novas (2026)</span>
+                                <div class="stat-card-icon stat-icon-green">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                </div>
+                            </div>
+                            <div class="stat-card-value success" id="painel-novas">73</div>
+                            <div class="stat-card-trend trend-up">+18% vs 2025</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Alteracoes</span>
+                                <div class="stat-card-icon stat-icon-orange">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                </div>
+                            </div>
+                            <div class="stat-card-value warning" id="painel-alteracoes">124</div>
+                            <div class="stat-card-trend trend-up">+5% vs 2025</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Revogacoes</span>
+                                <div class="stat-card-icon stat-icon-red">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                </div>
+                            </div>
+                            <div class="stat-card-value danger" id="painel-revogacoes">18</div>
+                        </div>
+                    </div>
+
+                    <!-- Filtros + Grafico -->
+                    <div class="painel-grid">
+                        <!-- Filtros -->
+                        <div class="card painel-filtros-card">
+                            <div class="card-header">
+                                <h2 class="card-title">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
+                                    Filtros
+                                </h2>
+                            </div>
+                            <div class="card-body">
+                                <div class="painel-filter-group">
+                                    <label class="painel-filter-label">Setor</label>
+                                    <div class="painel-filter-chips" id="painel-setor-chips">
+                                        <button class="painel-chip active" data-setor="todos">Todos</button>
+                                        <button class="painel-chip" data-setor="rodovias">Rodovias</button>
+                                        <button class="painel-chip" data-setor="ferrovias">Ferrovias</button>
+                                        <button class="painel-chip" data-setor="aeroportos">Aeroportos</button>
+                                        <button class="painel-chip" data-setor="portos">Portos</button>
+                                    </div>
+                                </div>
+                                <div class="painel-filter-group">
+                                    <label class="painel-filter-label">Natureza da Alteracao</label>
+                                    <div class="painel-filter-chips" id="painel-natureza-chips">
+                                        <button class="painel-chip active" data-natureza="todos">Todos</button>
+                                        <button class="painel-chip" data-natureza="nova">Nova</button>
+                                        <button class="painel-chip" data-natureza="alteracao">Alteracao</button>
+                                        <button class="painel-chip" data-natureza="revogacao">Revogacao</button>
+                                    </div>
+                                </div>
+                                <div class="painel-filter-group">
+                                    <label class="painel-filter-label">Ano</label>
+                                    <select class="filter-select" id="painel-ano-filter" style="width: 100%;">
+                                        <option value="">Selecione o ano</option>
+                                        <option value="2026" selected>2026</option>
+                                        <option value="2025">2025</option>
+                                        <option value="2024">2024</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Grafico Evolucao Mensal -->
+                        <div class="card painel-chart-card">
+                            <div class="card-header">
+                                <h2 class="card-title">Evolucao Mensal de Publicacoes</h2>
+                            </div>
+                            <div class="card-body">
+                                <div class="painel-chart-container" id="painel-chart">
+                                    <canvas id="painel-evolucao-canvas" width="700" height="320"></canvas>
+                                </div>
+                                <div class="painel-chart-legend">
+                                    <div class="painel-legend-item">
+                                        <span class="painel-legend-dot" style="background: #fbbf24;"></span> Novas
+                                    </div>
+                                    <div class="painel-legend-item">
+                                        <span class="painel-legend-dot" style="background: #4ade80;"></span> Alteracoes
+                                    </div>
+                                    <div class="painel-legend-item">
+                                        <span class="painel-legend-dot" style="background: #f87171;"></span> Revogacoes
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Boletim de Normas -->
+                    <div class="card" style="margin-top: 24px;">
+                        <div class="card-header">
+                            <h2 class="card-title">Boletim de Normas</h2>
+                        </div>
+                        <div class="card-body" style="padding: 0;">
+                            <table class="painel-table">
+                                <thead>
+                                    <tr>
+                                        <th>Titulo</th>
+                                        <th>Data</th>
+                                        <th>Setor</th>
+                                        <th>Tipo</th>
+                                        <th>Natureza</th>
+                                        <th>Relevancia</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="painel-normas-tbody">
+                                    <!-- Renderizado via JavaScript -->
+                                </tbody>
+                            </table>
+                            <div class="painel-pagination" id="painel-pagination">
+                                <button class="painel-page-btn" id="painel-prev-btn" disabled>
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                                </button>
+                                <span id="painel-page-info">Pagina 1 de 1</span>
+                                <button class="painel-page-btn" id="painel-next-btn" disabled>
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -4045,5 +4368,117 @@
     </div>
 
     <script src="/js/app.js"></script>
+    <script>
+    // ============================================
+    // LANDING PAGE - Pagina Publica
+    // ============================================
+    const LandingPage = {
+        currentTab: 'todas',
+
+        noticias: [
+            { id: 1, titulo: 'ANEEL publica novas regras para tarifas de energia renovavel', resumo: 'A agencia reguladora definiu novos parametros para precificacao de energia solar e eolica, impactando contratos vigentes.', agencia: 'ANEEL', tipo: 'federal', data: '21/02/2026', categoria: 'resolucao' },
+            { id: 2, titulo: 'ARTESP aprova reajuste de pedagio em rodovias paulistas', resumo: 'Deliberacao define indices de reajuste tarifario para concessoes rodoviarias do estado de Sao Paulo.', agencia: 'ARTESP', tipo: 'estadual', data: '20/02/2026', categoria: 'resolucao' },
+            { id: 3, titulo: 'ANATEL abre consulta publica sobre 6G', resumo: 'Agencia inicia processo de consulta para definicao do marco regulatorio da tecnologia 6G no Brasil.', agencia: 'ANATEL', tipo: 'federal', data: '19/02/2026', categoria: 'resolucao' },
+            { id: 4, titulo: 'ANP atualiza regulacao de combustiveis verdes', resumo: 'Novas diretrizes para producao e distribuicao de biocombustiveis entram em vigor.', agencia: 'ANP', tipo: 'federal', data: '18/02/2026', categoria: 'resolucao' },
+            { id: 5, titulo: 'ANAC define novas regras de seguranca para drones comerciais', resumo: 'Resolucao estabelece parametros obrigatorios para operacao de drones em areas urbanas.', agencia: 'ANAC', tipo: 'federal', data: '17/02/2026', categoria: 'resolucao' },
+            { id: 6, titulo: 'ARSESP revisa tarifas de agua e esgoto para 2026', resumo: 'Revisao tarifaria impacta concessionarias de saneamento no estado de Sao Paulo.', agencia: 'ARSESP', tipo: 'estadual', data: '16/02/2026', categoria: 'resolucao' },
+            { id: 7, titulo: 'ANTAQ publica normas para navegacao autonoma', resumo: 'Agencia define requisitos tecnicos para embarcacoes autonomas em portos brasileiros.', agencia: 'ANTAQ', tipo: 'federal', data: '15/02/2026', categoria: 'resolucao' },
+            { id: 8, titulo: 'ANM atualiza codigo de mineracao sustentavel', resumo: 'Novas exigencias ambientais para exploracao mineral entram em vigor em marco.', agencia: 'ANM', tipo: 'federal', data: '14/02/2026', categoria: 'resolucao' },
+            { id: 9, titulo: 'AGETRANSP fiscaliza qualidade do transporte intermunicipal', resumo: 'Operacao de vistoria em linhas de onibus intermunicipais no Rio de Janeiro.', agencia: 'AGETRANSP', tipo: 'estadual', data: '13/02/2026', categoria: 'resolucao' }
+        ],
+
+        agencias: [
+            { sigla: 'ANEEL', nome: 'Ag. Nac. de Energia Eletrica', setor: 'Energia' },
+            { sigla: 'ANATEL', nome: 'Ag. Nac. de Telecomunicacoes', setor: 'Telecom' },
+            { sigla: 'ANP', nome: 'Ag. Nac. do Petroleo', setor: 'Petroleo' },
+            { sigla: 'ANAC', nome: 'Ag. Nac. de Aviacao Civil', setor: 'Aviacao' },
+            { sigla: 'ANTAQ', nome: 'Ag. Nac. de Transp. Aquaviarios', setor: 'Portos' },
+            { sigla: 'ANTT', nome: 'Ag. Nac. de Transp. Terrestres', setor: 'Transportes' },
+            { sigla: 'ANM', nome: 'Ag. Nac. de Mineracao', setor: 'Mineracao' },
+            { sigla: 'ANS', nome: 'Ag. Nac. de Saude Suplementar', setor: 'Saude' },
+            { sigla: 'ANVISA', nome: 'Ag. Nac. de Vigilancia Sanitaria', setor: 'Saude' },
+            { sigla: 'ANA', nome: 'Ag. Nac. de Aguas', setor: 'Saneamento' },
+            { sigla: 'ARTESP', nome: 'Ag. de Transp. do Estado de SP', setor: 'Transportes' },
+            { sigla: 'ARSESP', nome: 'Ag. Reguladora de SP', setor: 'Saneamento' },
+            { sigla: 'AGETRANSP', nome: 'Ag. de Transportes do RJ', setor: 'Transportes' },
+            { sigla: 'AGERGS', nome: 'Ag. Estadual do RS', setor: 'Multissetorial' },
+            { sigla: 'ARCE', nome: 'Ag. Reguladora do Ceara', setor: 'Multissetorial' },
+            { sigla: 'AGEPAR', nome: 'Ag. Reguladora do Parana', setor: 'Multissetorial' }
+        ],
+
+        init() {
+            this.renderNews();
+            this.renderAgencias();
+            this.bindEvents();
+        },
+
+        bindEvents() {
+            document.querySelectorAll('[data-landing-tab]').forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    document.querySelectorAll('[data-landing-tab]').forEach(t => t.classList.remove('active'));
+                    e.target.classList.add('active');
+                    this.currentTab = e.target.dataset.landingTab;
+                    this.renderNews();
+                });
+            });
+        },
+
+        renderNews() {
+            const container = document.getElementById('landing-news-container');
+            if (!container) return;
+
+            let filtered = this.noticias;
+            if (this.currentTab === 'federal') filtered = filtered.filter(n => n.tipo === 'federal');
+            else if (this.currentTab === 'estadual') filtered = filtered.filter(n => n.tipo === 'estadual');
+
+            container.innerHTML = filtered.map(n => `
+                <div class="landing-news-card">
+                    <div class="landing-news-card-header">
+                        <span class="landing-news-badge ${n.tipo}">${n.tipo === 'federal' ? 'Federal' : 'Estadual'}</span>
+                        <span class="landing-news-date">${n.data}</span>
+                    </div>
+                    <div class="landing-news-title">${n.titulo}</div>
+                    <div class="landing-news-excerpt">${n.resumo}</div>
+                    <div class="landing-news-source">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="12" height="12"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5"></path></svg>
+                        ${n.agencia}
+                    </div>
+                </div>
+            `).join('');
+        },
+
+        renderAgencias() {
+            const container = document.getElementById('landing-agencias-container');
+            if (!container) return;
+
+            container.innerHTML = this.agencias.map(a => `
+                <div class="landing-agencia-card">
+                    <div class="landing-agencia-sigla">${a.sigla}</div>
+                    <div class="landing-agencia-nome">${a.nome}</div>
+                    <span class="landing-agencia-setor">${a.setor}</span>
+                </div>
+            `).join('');
+        },
+
+        enterPlatform() {
+            document.getElementById('landing-page').style.display = 'none';
+            document.getElementById('app-platform').style.display = 'flex';
+            if (window.App) {
+                window.App.Router.navigate('/hub');
+            }
+        },
+
+        backToLanding() {
+            document.getElementById('app-platform').style.display = 'none';
+            document.getElementById('landing-page').style.display = 'block';
+            window.scrollTo(0, 0);
+        }
+    };
+
+    // Initialize landing page
+    document.addEventListener('DOMContentLoaded', () => {
+        LandingPage.init();
+    });
+    </script>
 </body>
 </html>

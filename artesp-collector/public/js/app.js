@@ -63,7 +63,12 @@
                 '/upload': 'Upload de PDFs',
                 '/analise': 'Analise de PDFs',
                 '/agencias': 'Agencias Reguladoras',
-                '/mapa': 'Mapa do Brasil'
+                '/mapa': 'Mapa do Brasil',
+                '/painel-regulatorio': 'Painel Regulatorio',
+                '/setores': 'Setores Regulados',
+                '/microtemas': 'Microtemas',
+                '/empresas': 'Empresas',
+                '/historico': 'Historico'
             };
             const breadcrumb = document.getElementById('breadcrumb-page');
             if (breadcrumb) {
@@ -1274,6 +1279,260 @@
         init() {
             const page = document.getElementById('page-setores');
             page.classList.add('active');
+        }
+    };
+
+    // ============================================
+    // PAGE: Painel Regulatorio
+    // ============================================
+    const PagePainelRegulatorio = {
+        currentPage: 1,
+        itemsPerPage: 8,
+        activeSetor: 'todos',
+        activeNatureza: 'todos',
+        activeAno: '2026',
+
+        normasData: [
+            { titulo: 'Resolucao no 001/2026 - Diretrizes de Fiscalizacao', data: '04/01/2026', setor: 'Rodovias', tipo: 'Resolucao', natureza: 'nova', relevancia: 'alta' },
+            { titulo: 'Deliberacao no 15/2026 - Tarifas de Pedagio', data: '03/01/2026', setor: 'Rodovias', tipo: 'Deliberacao', natureza: 'alteracao', relevancia: 'alta' },
+            { titulo: 'Portaria no 042/2026 - Procedimentos de Vistoria', data: '02/01/2026', setor: 'Ferrovias', tipo: 'Portaria', natureza: 'nova', relevancia: 'media' },
+            { titulo: 'Resolucao no 998/2025 - Revogacao de Normativo', data: '27/12/2025', setor: 'Rodovias', tipo: 'Resolucao', natureza: 'revogacao', relevancia: 'baixa' },
+            { titulo: 'Deliberacao no 14/2026 - Indicadores de Qualidade', data: '01/01/2026', setor: 'Rodovias', tipo: 'Deliberacao', natureza: 'alteracao', relevancia: 'media' },
+            { titulo: 'Resolucao no 002/2026 - Normas de Seguranca Ferroviaria', data: '05/01/2026', setor: 'Ferrovias', tipo: 'Resolucao', natureza: 'nova', relevancia: 'alta' },
+            { titulo: 'Deliberacao no 16/2026 - Reajuste Tarifario Aeroportuario', data: '06/01/2026', setor: 'Aeroportos', tipo: 'Deliberacao', natureza: 'alteracao', relevancia: 'alta' },
+            { titulo: 'Portaria no 043/2026 - Inspecao de Terminais Portuarios', data: '07/01/2026', setor: 'Portos', tipo: 'Portaria', natureza: 'nova', relevancia: 'media' },
+            { titulo: 'Resolucao no 003/2026 - Padrao de Sinalizacao', data: '08/01/2026', setor: 'Rodovias', tipo: 'Resolucao', natureza: 'nova', relevancia: 'media' },
+            { titulo: 'Deliberacao no 17/2026 - Concessao de Rodovia SP-300', data: '09/01/2026', setor: 'Rodovias', tipo: 'Deliberacao', natureza: 'nova', relevancia: 'alta' },
+            { titulo: 'Resolucao no 997/2025 - Revogacao de Taxas Aeroportuarias', data: '26/12/2025', setor: 'Aeroportos', tipo: 'Resolucao', natureza: 'revogacao', relevancia: 'media' },
+            { titulo: 'Portaria no 044/2026 - Manutencao de Vias Ferreas', data: '10/01/2026', setor: 'Ferrovias', tipo: 'Portaria', natureza: 'alteracao', relevancia: 'baixa' },
+            { titulo: 'Deliberacao no 18/2026 - Seguro de Cargas Portuarias', data: '11/01/2026', setor: 'Portos', tipo: 'Deliberacao', natureza: 'nova', relevancia: 'media' },
+            { titulo: 'Resolucao no 004/2026 - Limite de Velocidade em Tuneis', data: '12/01/2026', setor: 'Rodovias', tipo: 'Resolucao', natureza: 'alteracao', relevancia: 'alta' }
+        ],
+
+        chartData: {
+            meses: ['Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
+            novas:      [12, 8, 14, 10, 18, 11],
+            alteracoes: [14, 12, 16, 22, 14, 15],
+            revogacoes: [3, 2, 4, 3, 5, 2]
+        },
+
+        init() {
+            const page = document.getElementById('page-painel-regulatorio');
+            page.classList.add('active');
+            this.renderChart();
+            this.renderNormas();
+            this.bindEvents();
+        },
+
+        bindEvents() {
+            // Chip filters - Setor
+            document.querySelectorAll('#painel-setor-chips .painel-chip').forEach(chip => {
+                chip.addEventListener('click', (e) => {
+                    document.querySelectorAll('#painel-setor-chips .painel-chip').forEach(c => c.classList.remove('active'));
+                    e.target.classList.add('active');
+                    this.activeSetor = e.target.dataset.setor;
+                    this.currentPage = 1;
+                    this.renderNormas();
+                    this.updateKPIs();
+                });
+            });
+
+            // Chip filters - Natureza
+            document.querySelectorAll('#painel-natureza-chips .painel-chip').forEach(chip => {
+                chip.addEventListener('click', (e) => {
+                    document.querySelectorAll('#painel-natureza-chips .painel-chip').forEach(c => c.classList.remove('active'));
+                    e.target.classList.add('active');
+                    this.activeNatureza = e.target.dataset.natureza;
+                    this.currentPage = 1;
+                    this.renderNormas();
+                    this.updateKPIs();
+                });
+            });
+
+            // Ano filter
+            const anoFilter = document.getElementById('painel-ano-filter');
+            if (anoFilter) {
+                anoFilter.addEventListener('change', (e) => {
+                    this.activeAno = e.target.value;
+                    this.currentPage = 1;
+                    this.renderNormas();
+                    this.updateKPIs();
+                });
+            }
+
+            // Pagination
+            const prevBtn = document.getElementById('painel-prev-btn');
+            const nextBtn = document.getElementById('painel-next-btn');
+            if (prevBtn) prevBtn.addEventListener('click', () => { this.currentPage--; this.renderNormas(); });
+            if (nextBtn) nextBtn.addEventListener('click', () => { this.currentPage++; this.renderNormas(); });
+
+            // Agencia filter
+            const agenciaFilter = document.getElementById('painel-agencia-filter');
+            if (agenciaFilter) {
+                agenciaFilter.addEventListener('change', () => {
+                    this.renderChart();
+                    this.renderNormas();
+                    this.updateKPIs();
+                });
+            }
+
+            // Export
+            const exportBtn = document.getElementById('painel-exportar-btn');
+            if (exportBtn) {
+                exportBtn.addEventListener('click', () => {
+                    alert('Exportacao em desenvolvimento. Os dados serao exportados em formato CSV/PDF.');
+                });
+            }
+        },
+
+        getFilteredNormas() {
+            return this.normasData.filter(n => {
+                if (this.activeSetor !== 'todos' && n.setor.toLowerCase() !== this.activeSetor) return false;
+                if (this.activeNatureza !== 'todos' && n.natureza !== this.activeNatureza) return false;
+                return true;
+            });
+        },
+
+        updateKPIs() {
+            const filtered = this.getFilteredNormas();
+            const total = filtered.length;
+            const novas = filtered.filter(n => n.natureza === 'nova').length;
+            const alteracoes = filtered.filter(n => n.natureza === 'alteracao').length;
+            const revogacoes = filtered.filter(n => n.natureza === 'revogacao').length;
+
+            const elTotal = document.getElementById('painel-total-normas');
+            const elNovas = document.getElementById('painel-novas');
+            const elAlteracoes = document.getElementById('painel-alteracoes');
+            const elRevogacoes = document.getElementById('painel-revogacoes');
+
+            if (elTotal) elTotal.textContent = total;
+            if (elNovas) elNovas.textContent = novas;
+            if (elAlteracoes) elAlteracoes.textContent = alteracoes;
+            if (elRevogacoes) elRevogacoes.textContent = revogacoes;
+        },
+
+        renderNormas() {
+            const tbody = document.getElementById('painel-normas-tbody');
+            if (!tbody) return;
+
+            const filtered = this.getFilteredNormas();
+            const totalPages = Math.max(1, Math.ceil(filtered.length / this.itemsPerPage));
+            if (this.currentPage > totalPages) this.currentPage = totalPages;
+
+            const start = (this.currentPage - 1) * this.itemsPerPage;
+            const pageItems = filtered.slice(start, start + this.itemsPerPage);
+
+            tbody.innerHTML = pageItems.map(n => `
+                <tr>
+                    <td style="max-width: 320px; font-weight: 500;">${n.titulo}</td>
+                    <td>${n.data}</td>
+                    <td><span class="painel-badge-setor">${n.setor}</span></td>
+                    <td>${n.tipo}</td>
+                    <td><span class="painel-badge-natureza ${n.natureza}">${n.natureza.charAt(0).toUpperCase() + n.natureza.slice(1)}</span></td>
+                    <td><span class="painel-badge-relevancia ${n.relevancia}">${n.relevancia.charAt(0).toUpperCase() + n.relevancia.slice(1)}</span></td>
+                    <td>
+                        <button class="painel-link-btn" title="Ver detalhes">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+
+            // Pagination
+            const pageInfo = document.getElementById('painel-page-info');
+            const prevBtn = document.getElementById('painel-prev-btn');
+            const nextBtn = document.getElementById('painel-next-btn');
+            if (pageInfo) pageInfo.textContent = `Pagina ${this.currentPage} de ${totalPages}`;
+            if (prevBtn) prevBtn.disabled = this.currentPage <= 1;
+            if (nextBtn) nextBtn.disabled = this.currentPage >= totalPages;
+        },
+
+        renderChart() {
+            const canvas = document.getElementById('painel-evolucao-canvas');
+            if (!canvas) return;
+
+            const ctx = canvas.getContext('2d');
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.parentElement.getBoundingClientRect();
+            const w = rect.width || 700;
+            const h = 320;
+
+            canvas.width = w * dpr;
+            canvas.height = h * dpr;
+            canvas.style.width = w + 'px';
+            canvas.style.height = h + 'px';
+            ctx.scale(dpr, dpr);
+
+            ctx.clearRect(0, 0, w, h);
+
+            const data = this.chartData;
+            const padding = { top: 20, right: 30, bottom: 40, left: 40 };
+            const chartW = w - padding.left - padding.right;
+            const chartH = h - padding.top - padding.bottom;
+            const maxVal = Math.max(...data.novas, ...data.alteracoes, ...data.revogacoes) + 5;
+            const stepX = chartW / (data.meses.length - 1);
+
+            // Grid lines
+            ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 4; i++) {
+                const y = padding.top + (chartH / 4) * i;
+                ctx.beginPath();
+                ctx.moveTo(padding.left, y);
+                ctx.lineTo(w - padding.right, y);
+                ctx.stroke();
+
+                ctx.fillStyle = 'rgba(255,255,255,0.4)';
+                ctx.font = '11px Inter';
+                ctx.textAlign = 'right';
+                ctx.fillText(Math.round(maxVal - (maxVal / 4) * i), padding.left - 8, y + 4);
+            }
+
+            // X labels
+            ctx.fillStyle = 'rgba(255,255,255,0.5)';
+            ctx.font = '12px Inter';
+            ctx.textAlign = 'center';
+            data.meses.forEach((m, i) => {
+                const x = padding.left + stepX * i;
+                ctx.fillText(m, x, h - 10);
+            });
+
+            // Draw lines with area fill
+            const drawLine = (values, color, fillColor) => {
+                const points = values.map((v, i) => ({
+                    x: padding.left + stepX * i,
+                    y: padding.top + chartH - (v / maxVal) * chartH
+                }));
+
+                // Area fill
+                ctx.beginPath();
+                ctx.moveTo(points[0].x, padding.top + chartH);
+                points.forEach(p => ctx.lineTo(p.x, p.y));
+                ctx.lineTo(points[points.length - 1].x, padding.top + chartH);
+                ctx.closePath();
+                ctx.fillStyle = fillColor;
+                ctx.fill();
+
+                // Line
+                ctx.beginPath();
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2.5;
+                ctx.lineJoin = 'round';
+                points.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+                ctx.stroke();
+
+                // Dots
+                points.forEach(p => {
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+                    ctx.fillStyle = color;
+                    ctx.fill();
+                });
+            };
+
+            drawLine(data.novas, '#fbbf24', 'rgba(251, 191, 36, 0.08)');
+            drawLine(data.alteracoes, '#4ade80', 'rgba(74, 222, 128, 0.12)');
+            drawLine(data.revogacoes, '#f87171', 'rgba(248, 113, 113, 0.06)');
         }
     };
 
@@ -3875,6 +4134,7 @@
         PageHub,
         PageAgencias,
         PageMapa,
+        PagePainelRegulatorio,
         PageSetores,
         PageMicrotemas,
         PageEmpresas,
@@ -3930,6 +4190,10 @@
             Router.register('/mapa', () => {
                 PageMonitor.destroy();
                 PageMapa.init();
+            });
+            Router.register('/painel-regulatorio', () => {
+                PageMonitor.destroy();
+                PagePainelRegulatorio.init();
             });
             Router.register('/setores', () => {
                 PageMonitor.destroy();
