@@ -4,13 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IRIS - Plataforma de Inteligência Regulatória</title>
+    <meta name="description" content="Hub de Inteligência Regulatória do Brasil — Notícias, deliberações e monitoramento de agências reguladoras.">
+    <link rel="preconnect" href="https://d3js.org" crossorigin>
+    <link rel="preconnect" href="https://unpkg.com" crossorigin>
     <link rel="stylesheet" href="/css/styles.css">
-    <!-- D3.js para visualizacao de mapas -->
-    <script src="https://d3js.org/d3.v7.min.js"></script>
-    <script src="https://d3js.org/topojson.v3.min.js"></script>
-    <!-- Leaflet para mapa interativo -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <!-- Defer non-critical JS to avoid blocking initial paint -->
+    <script defer src="https://d3js.org/d3.v7.min.js"></script>
+    <script defer src="https://d3js.org/topojson.v3.min.js"></script>
+    <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 </head>
 <body>
     <!-- ============================================
@@ -5314,42 +5316,74 @@
     // ============================================
     const LandingPage = {
         currentTab: 'todas',
+        noticias: [],
+        noticiasLoaded: false,
 
-        noticias: [
-            { id: 1, titulo: 'ANEEL publica novas regras para tarifas de energia renovavel', resumo: 'A agencia reguladora definiu novos parametros para precificacao de energia solar e eolica, impactando contratos vigentes.', agencia: 'ANEEL', tipo: 'federal', data: '21/02/2026', categoria: 'resolucao' },
-            { id: 2, titulo: 'ARTESP aprova reajuste de pedagio em rodovias paulistas', resumo: 'Deliberação define indices de reajuste tarifario para concessoes rodoviarias do estado de São Paulo.', agencia: 'ARTESP', tipo: 'estadual', data: '20/02/2026', categoria: 'resolucao' },
-            { id: 3, titulo: 'ANATEL abre consulta publica sobre 6G', resumo: 'Agencia inicia processo de consulta para definicao do marco regulatorio da tecnologia 6G no Brasil.', agencia: 'ANATEL', tipo: 'federal', data: '19/02/2026', categoria: 'resolucao' },
-            { id: 4, titulo: 'ANP atualiza regulacao de combustiveis verdes', resumo: 'Novas diretrizes para producao e distribuicao de biocombustiveis entram em vigor.', agencia: 'ANP', tipo: 'federal', data: '18/02/2026', categoria: 'resolucao' },
-            { id: 5, titulo: 'ANAC define novas regras de seguranca para drones comerciais', resumo: 'Resolucao estabelece parametros obrigatorios para operacao de drones em areas urbanas.', agencia: 'ANAC', tipo: 'federal', data: '17/02/2026', categoria: 'resolucao' },
-            { id: 6, titulo: 'ARSESP revisa tarifas de agua e esgoto para 2026', resumo: 'Revisao tarifaria impacta concessionarias de saneamento no estado de São Paulo.', agencia: 'ARSESP', tipo: 'estadual', data: '16/02/2026', categoria: 'resolucao' },
-            { id: 7, titulo: 'ANTAQ publica normas para navegacao autonoma', resumo: 'Agencia define requisitos tecnicos para embarcacoes autonomas em portos brasileiros.', agencia: 'ANTAQ', tipo: 'federal', data: '15/02/2026', categoria: 'resolucao' },
-            { id: 8, titulo: 'ANM atualiza codigo de mineracao sustentavel', resumo: 'Novas exigencias ambientais para exploracao mineral entram em vigor em marco.', agencia: 'ANM', tipo: 'federal', data: '14/02/2026', categoria: 'resolucao' },
-            { id: 9, titulo: 'AGETRANSP fiscaliza qualidade do transporte intermunicipal', resumo: 'Operacao de vistoria em linhas de onibus intermunicipais no Rio de Janeiro.', agencia: 'AGETRANSP', tipo: 'estadual', data: '13/02/2026', categoria: 'resolucao' }
-        ],
+        agencias: [],
+        agenciasLoaded: false,
 
-        agencias: [
-            { sigla: 'ANEEL', nome: 'Ag. Nac. de Energia Elétrica', setor: 'Energia' },
-            { sigla: 'ANATEL', nome: 'Ag. Nac. de Telecomunicacoes', setor: 'Telecom' },
-            { sigla: 'ANP', nome: 'Ag. Nac. do Petroleo', setor: 'Petroleo' },
-            { sigla: 'ANAC', nome: 'Ag. Nac. de Aviacao Civil', setor: 'Aviacao' },
-            { sigla: 'ANTAQ', nome: 'Ag. Nac. de Transp. Aquaviarios', setor: 'Portos' },
-            { sigla: 'ANTT', nome: 'Ag. Nac. de Transp. Terrestres', setor: 'Transportes' },
-            { sigla: 'ANM', nome: 'Ag. Nac. de Mineração', setor: 'Mineração' },
-            { sigla: 'ANS', nome: 'Ag. Nac. de Saude Suplementar', setor: 'Saude' },
-            { sigla: 'ANVISA', nome: 'Ag. Nac. de Vigilancia Sanitaria', setor: 'Saude' },
-            { sigla: 'ANA', nome: 'Ag. Nac. de Aguas', setor: 'Saneamento' },
-            { sigla: 'ARTESP', nome: 'Ag. de Transp. do Estado de SP', setor: 'Transportes' },
-            { sigla: 'ARSESP', nome: 'Ag. Reguladora de SP', setor: 'Saneamento' },
-            { sigla: 'AGETRANSP', nome: 'Ag. de Transportes do RJ', setor: 'Transportes' },
-            { sigla: 'AGERGS', nome: 'Ag. Estadual do RS', setor: 'Multissetorial' },
-            { sigla: 'ARCE', nome: 'Ag. Reguladora do Ceará', setor: 'Multissetorial' },
-            { sigla: 'AGEPAR', nome: 'Ag. Reguladora do Paraná', setor: 'Multissetorial' }
-        ],
-
-        init() {
-            this.renderNews();
-            this.renderAgencias();
+        async init() {
+            this.renderNewsLoading();
+            this.renderAgenciasLoading();
             this.bindEvents();
+
+            // Fetch real news from API
+            try {
+                const resp = await fetch('/api/noticias?limite=30');
+                const data = await resp.json();
+                if (data.success && data.noticias && data.noticias.length > 0) {
+                    this.noticias = data.noticias.map((n, i) => ({
+                        id: i + 1,
+                        titulo: n.titulo,
+                        resumo: n.resumo || '',
+                        agencia: n.agencia,
+                        tipo: n.esfera || 'federal',
+                        data: n.data || new Date().toISOString().split('T')[0],
+                        categoria: n.tipo || 'noticia',
+                        link: n.link || '#',
+                        fonte: n.fonte || n.agencia,
+                        cor: n.cor || '#FFEF4D'
+                    }));
+                    this.noticiasLoaded = true;
+                    document.getElementById('landing-stat-fontes').textContent = data.fontes || '22';
+                }
+            } catch (e) {
+                console.warn('[Landing] Não foi possível carregar notícias da API, usando fallback');
+                this.noticias = [
+                    { id: 1, titulo: 'Conectando às fontes de notícias...', resumo: 'As notícias serão carregadas em tempo real dos sites oficiais das agências reguladoras brasileiras.', agencia: 'IRIS', tipo: 'federal', data: new Date().toISOString().split('T')[0], categoria: 'noticia', link: '#' }
+                ];
+            }
+            this.renderNews();
+
+            // Fetch real agencies from API
+            try {
+                const respAg = await fetch('/api/agencias-reguladoras');
+                const dataAg = await respAg.json();
+                if (dataAg.success && dataAg.agencias) {
+                    this.agencias = dataAg.agencias.map(a => ({
+                        sigla: a.sigla,
+                        nome: a.nome,
+                        setor: a.setor,
+                        esfera: a.esfera,
+                        diretores: a.total_diretores,
+                        site: a.site
+                    }));
+                    this.agenciasLoaded = true;
+                    document.getElementById('landing-stat-agencias').textContent = dataAg.total;
+                }
+            } catch (e) {
+                console.warn('[Landing] Usando lista estática de agências');
+                this.agencias = [
+                    { sigla: 'ANEEL', nome: 'Ag. Nac. de Energia Elétrica', setor: 'Energia Elétrica' },
+                    { sigla: 'ANATEL', nome: 'Ag. Nac. de Telecomunicações', setor: 'Telecomunicações' },
+                    { sigla: 'ANP', nome: 'Ag. Nac. do Petróleo', setor: 'Petróleo e Gás' },
+                    { sigla: 'ANVISA', nome: 'Ag. Nac. de Vigilância Sanitária', setor: 'Vigilância Sanitária' },
+                    { sigla: 'ANAC', nome: 'Ag. Nac. de Aviação Civil', setor: 'Aviação Civil' },
+                    { sigla: 'ANTT', nome: 'Ag. Nac. de Transportes Terrestres', setor: 'Transportes' },
+                    { sigla: 'ARTESP', nome: 'Ag. de Transporte do Estado de SP', setor: 'Transportes SP' }
+                ];
+            }
+            this.renderAgencias();
         },
 
         bindEvents() {
@@ -5363,6 +5397,18 @@
             });
         },
 
+        renderNewsLoading() {
+            const container = document.getElementById('landing-news-container');
+            if (!container) return;
+            container.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px 0;color:#8b949e;"><div style="width:36px;height:36px;border:3px solid #21262d;border-top-color:#58a6ff;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px"></div>Carregando notícias em tempo real das agências reguladoras...</div>';
+        },
+
+        renderAgenciasLoading() {
+            const container = document.getElementById('landing-agencias-container');
+            if (!container) return;
+            container.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px 0;color:#8b949e;">Carregando agências...</div>';
+        },
+
         renderNews() {
             const container = document.getElementById('landing-news-container');
             if (!container) return;
@@ -5370,10 +5416,17 @@
             let filtered = this.noticias;
             if (this.currentTab === 'federal') filtered = filtered.filter(n => n.tipo === 'federal');
             else if (this.currentTab === 'estadual') filtered = filtered.filter(n => n.tipo === 'estadual');
-            else if (this.currentTab === 'resolucoes') filtered = filtered.filter(n => n.categoria === 'resolucao');
+            else if (this.currentTab === 'resolucoes') filtered = filtered.filter(n => n.categoria === 'resolucao' || n.categoria === 'deliberacao' || n.categoria === 'decreto');
 
-            container.innerHTML = filtered.map((n, index) => {
+            if (filtered.length === 0) {
+                container.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px 0;color:#8b949e;">Nenhuma notícia encontrada nesta categoria.</div>';
+                return;
+            }
+
+            container.innerHTML = filtered.slice(0, 12).map((n, index) => {
                 const isFeatured = index === 0 && this.currentTab === 'todas';
+                const linkUrl = n.link && n.link !== '#' ? n.link : '#';
+                const hasLink = linkUrl !== '#';
                 return `
                 <div class="landing-news-card${isFeatured ? ' featured' : ''}">
                     ${isFeatured ? `
@@ -5384,26 +5437,26 @@
                     <div class="landing-news-card-content">
                         <div class="landing-news-card-header">
                             <div class="landing-news-agency">
-                                <div class="landing-news-agency-icon">${n.agencia.substring(0, 2)}</div>
-                                <span class="landing-news-agency-name">${n.agencia}</span>
+                                <div class="landing-news-agency-icon" ${n.cor ? `style="background:${n.cor}20;color:${n.cor}"` : ''}>${(n.agencia || '??').substring(0, 2)}</div>
+                                <span class="landing-news-agency-name">${n.agencia || 'IRIS'}</span>
                             </div>
-                            <span class="landing-news-badge ${n.tipo}">${n.tipo === 'federal' ? 'Federal' : 'Estadual'}</span>
+                            <span class="landing-news-badge ${n.tipo}">${n.tipo === 'federal' ? 'Federal' : n.tipo === 'estadual' ? 'Estadual' : 'Geral'}</span>
                             <span class="landing-news-date">
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="12" height="12"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                 ${n.data}
                             </span>
                         </div>
                         <div class="landing-news-title">${n.titulo}</div>
-                        <div class="landing-news-excerpt">${n.resumo}</div>
+                        <div class="landing-news-excerpt">${(n.resumo || '').substring(0, 200)}${n.resumo && n.resumo.length > 200 ? '...' : ''}</div>
                         <div class="landing-news-footer">
                             <div class="landing-news-source">
-                                <svg class="landing-news-source-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5"></path></svg>
-                                Fonte: ${n.agencia}
+                                <svg class="landing-news-source-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="12" height="12"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5"></path></svg>
+                                ${n.fonte || n.agencia}
                             </div>
-                            <a href="#" class="landing-news-read-more">
+                            ${hasLink ? `<a href="${linkUrl}" target="_blank" rel="noopener" class="landing-news-read-more">
                                 Ler mais
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                            </a>
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="12" height="12"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                            </a>` : ''}
                         </div>
                     </div>
                 </div>
@@ -5415,10 +5468,11 @@
             if (!container) return;
 
             container.innerHTML = this.agencias.map(a => `
-                <div class="landing-agencia-card">
+                <div class="landing-agencia-card" ${a.site ? `onclick="window.open('${a.site}','_blank')" style="cursor:pointer"` : ''}>
                     <div class="landing-agencia-sigla">${a.sigla}</div>
                     <div class="landing-agencia-nome">${a.nome}</div>
                     <span class="landing-agencia-setor">${a.setor}</span>
+                    ${a.diretores ? `<span class="landing-agencia-diretores">${a.diretores} diretores</span>` : ''}
                 </div>
             `).join('');
         },

@@ -6567,6 +6567,16 @@ tr:hover {
     color: var(--text-muted);
 }
 
+.landing-agencia-diretores {
+    display: inline-block;
+    padding: 2px 8px;
+    background: rgba(88, 166, 255, 0.1);
+    border-radius: 10px;
+    font-size: 10px;
+    color: #58a6ff;
+    margin-left: 4px;
+}
+
 /* CTA Section */
 .landing-cta {
     padding: 80px 24px;

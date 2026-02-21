@@ -12,7 +12,7 @@ const http = require('http');
 // FONTES OFICIAIS DE NOTÍCIAS (Públicas)
 // ============================================
 const FONTES_RSS = {
-    // Agências Reguladoras Federais
+    // ─── Agências Reguladoras Federais ───
     'DOU': {
         nome: 'Diário Oficial da União',
         url: 'https://www.in.gov.br/web/dou/-/rss',
@@ -21,7 +21,7 @@ const FONTES_RSS = {
         setor: 'geral'
     },
     'ANEEL': {
-        nome: 'ANEEL - Notícias',
+        nome: 'ANEEL - Energia Elétrica',
         url: 'https://www.gov.br/aneel/pt-br/noticias/RSS',
         tipo: 'rss',
         esfera: 'federal',
@@ -29,7 +29,7 @@ const FONTES_RSS = {
         cor: '#FFEF4D'
     },
     'ANATEL': {
-        nome: 'ANATEL - Notícias',
+        nome: 'ANATEL - Telecomunicações',
         url: 'https://www.gov.br/anatel/pt-br/noticias/RSS',
         tipo: 'rss',
         esfera: 'federal',
@@ -37,7 +37,7 @@ const FONTES_RSS = {
         cor: '#4ADE80'
     },
     'ANP': {
-        nome: 'ANP - Notícias',
+        nome: 'ANP - Petróleo e Gás',
         url: 'https://www.gov.br/anp/pt-br/noticias/RSS',
         tipo: 'rss',
         esfera: 'federal',
@@ -45,7 +45,7 @@ const FONTES_RSS = {
         cor: '#F472B6'
     },
     'ANVISA': {
-        nome: 'ANVISA - Notícias',
+        nome: 'ANVISA - Vigilância Sanitária',
         url: 'https://www.gov.br/anvisa/pt-br/noticias/RSS',
         tipo: 'rss',
         esfera: 'federal',
@@ -53,7 +53,7 @@ const FONTES_RSS = {
         cor: '#A78BFA'
     },
     'ANS': {
-        nome: 'ANS - Notícias',
+        nome: 'ANS - Saúde Suplementar',
         url: 'https://www.gov.br/ans/pt-br/noticias/RSS',
         tipo: 'rss',
         esfera: 'federal',
@@ -61,7 +61,7 @@ const FONTES_RSS = {
         cor: '#F97316'
     },
     'ANTT': {
-        nome: 'ANTT - Notícias',
+        nome: 'ANTT - Transportes Terrestres',
         url: 'https://www.gov.br/antt/pt-br/noticias/RSS',
         tipo: 'rss',
         esfera: 'federal',
@@ -69,7 +69,7 @@ const FONTES_RSS = {
         cor: '#14B8A6'
     },
     'ANTAQ': {
-        nome: 'ANTAQ - Notícias',
+        nome: 'ANTAQ - Transportes Aquaviários',
         url: 'https://www.gov.br/antaq/pt-br/noticias/RSS',
         tipo: 'rss',
         esfera: 'federal',
@@ -77,7 +77,7 @@ const FONTES_RSS = {
         cor: '#06B6D4'
     },
     'ANAC': {
-        nome: 'ANAC - Notícias',
+        nome: 'ANAC - Aviação Civil',
         url: 'https://www.gov.br/anac/pt-br/noticias/RSS',
         tipo: 'rss',
         esfera: 'federal',
@@ -85,7 +85,7 @@ const FONTES_RSS = {
         cor: '#8B5CF6'
     },
     'ANA': {
-        nome: 'ANA - Notícias',
+        nome: 'ANA - Águas e Saneamento',
         url: 'https://www.gov.br/ana/pt-br/noticias/RSS',
         tipo: 'rss',
         esfera: 'federal',
@@ -93,27 +93,95 @@ const FONTES_RSS = {
         cor: '#60A5FA'
     },
     'ANM': {
-        nome: 'ANM - Notícias',
+        nome: 'ANM - Mineração',
         url: 'https://www.gov.br/anm/pt-br/noticias/RSS',
         tipo: 'rss',
         esfera: 'federal',
         setor: 'mineracao',
         cor: '#EF4444'
     },
-    // Órgãos Complementares
+    'ANCINE': {
+        nome: 'ANCINE - Cinema',
+        url: 'https://www.gov.br/ancine/pt-br/noticias/RSS',
+        tipo: 'rss',
+        esfera: 'federal',
+        setor: 'cultura',
+        cor: '#EC4899'
+    },
+    'CVM': {
+        nome: 'CVM - Valores Mobiliários',
+        url: 'https://www.gov.br/cvm/pt-br/assuntos/noticias/RSS',
+        tipo: 'rss',
+        esfera: 'federal',
+        setor: 'financeiro',
+        cor: '#22D3EE'
+    },
+    // ─── Órgãos de Controle ───
     'TCU': {
-        nome: 'TCU - Notícias',
+        nome: 'TCU - Tribunal de Contas',
         url: 'https://portal.tcu.gov.br/imprensa/noticias/rss.htm',
         tipo: 'rss',
         esfera: 'federal',
-        setor: 'controle'
+        setor: 'controle',
+        cor: '#F59E0B'
     },
     'CGU': {
-        nome: 'CGU - Notícias',
+        nome: 'CGU - Controladoria Geral',
         url: 'https://www.gov.br/cgu/pt-br/noticias/RSS',
         tipo: 'rss',
         esfera: 'federal',
-        setor: 'controle'
+        setor: 'controle',
+        cor: '#10B981'
+    },
+    'CADE': {
+        nome: 'CADE - Defesa da Concorrência',
+        url: 'https://www.gov.br/cade/pt-br/assuntos/noticias/RSS',
+        tipo: 'rss',
+        esfera: 'federal',
+        setor: 'concorrencia',
+        cor: '#3B82F6'
+    },
+    // ─── Agências Estaduais (SP) ───
+    'ARTESP': {
+        nome: 'ARTESP - Regulação SP',
+        url: 'https://www.artesp.sp.gov.br/Style%20Library/Handlers/RSSFeed.ashx',
+        tipo: 'rss',
+        esfera: 'estadual',
+        setor: 'transporte',
+        cor: '#FBBF24'
+    },
+    'ARSESP': {
+        nome: 'ARSESP - Saneamento e Energia SP',
+        url: 'https://www.arsesp.sp.gov.br/SitePages/noticias.aspx',
+        tipo: 'scrape',
+        esfera: 'estadual',
+        setor: 'saneamento',
+        cor: '#38BDF8'
+    },
+    // ─── Portais de Notícias Regulatórias ───
+    'JOTA': {
+        nome: 'JOTA - Regulação e Poder',
+        url: 'https://www.jota.info/feed/regulacao',
+        tipo: 'rss',
+        esfera: 'federal',
+        setor: 'juridico',
+        cor: '#FB923C'
+    },
+    'SENADO': {
+        nome: 'Senado Federal - Notícias',
+        url: 'https://www12.senado.leg.br/noticias/feed',
+        tipo: 'rss',
+        esfera: 'federal',
+        setor: 'legislativo',
+        cor: '#34D399'
+    },
+    'CAMARA': {
+        nome: 'Câmara dos Deputados - Notícias',
+        url: 'https://www.camara.leg.br/noticias/rss/ultimas',
+        tipo: 'rss',
+        esfera: 'federal',
+        setor: 'legislativo',
+        cor: '#A3E635'
     }
 };
 

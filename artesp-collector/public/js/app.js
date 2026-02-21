@@ -2624,7 +2624,7 @@
                 const grid = document.getElementById('grafo-entity-grid');
                 if (grid) grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:48px 0;color:var(--text-muted);">Carregando dados dos PDFs analisados...</div>';
 
-                const response = await fetch('/api/grafo-data');
+                const response = await fetch('/api/grafo-data-completo');
                 const data = await response.json();
 
                 if (data.success && data.nodes && data.nodes.length > 0) {
@@ -2632,9 +2632,9 @@
                     const directors = [], companies = [], themes = [], agencies = [], connections = [];
 
                     data.nodes.forEach(n => {
-                        if (n.type === 'agency') agencies.push({ id: n.id, label: n.label, full: n.full || n.label, deliberations: n.deliberations || 0 });
-                        else if (n.type === 'director') directors.push({ id: n.id, label: n.label, full: n.full || n.label, role: n.role || 'Diretor(a)', initials: n.initials || n.label.split(' ').map(w=>w[0]).join('').substring(0,2), agency: n.agency || 'a1' });
-                        else if (n.type === 'company') companies.push({ id: n.id, label: n.label, full: n.full || n.label, sector: n.sector || 'Rodovias', contracts: n.contracts || 0 });
+                        if (n.type === 'agency') agencies.push({ id: n.id, label: n.label, full: n.full || n.label, setor: n.setor || '', esfera: n.esfera || 'federal', site: n.site || '', deliberations: n.deliberations || 0 });
+                        else if (n.type === 'director') directors.push({ id: n.id, label: n.label, full: n.full || n.label, role: n.role || 'Diretor(a)', mandato: n.mandato || '', initials: n.initials || n.label.split(' ').map(w=>w[0]).join('').substring(0,2), agency: n.agency || '' });
+                        else if (n.type === 'company') companies.push({ id: n.id, label: n.label, full: n.full || n.label, sector: n.sector || 'Regulado', contracts: n.contracts || 0 });
                         else if (n.type === 'theme') themes.push({ id: n.id, label: n.label, count: n.count || 0, category: n.category || 'regulação' });
                     });
 
@@ -2939,10 +2939,24 @@
             const tl={director:'Diretor(a)',company:'Empresa',theme:'Tema',agency:'Agência'};
             // Entity info
             html+=`<div class="info-row"><span class="info-label">Tipo</span><span class="info-value" style="color:${tc[node.type]}">${tl[node.type]}</span></div>`;
-            if(node.type==='director') html+=`<div class="info-row"><span class="info-label">Cargo</span><span class="info-value">${node.role||'Diretor(a)'}</span></div><div class="info-row"><span class="info-label">Conexões</span><span class="info-value">${node.connections}</span></div>`;
-            else if(node.type==='company') html+=`<div class="info-row"><span class="info-label">Nome completo</span><span class="info-value" style="font-size:10px">${node.full||node.label}</span></div><div class="info-row"><span class="info-label">Setor</span><span class="info-value">${node.sector||'--'}</span></div><div class="info-row"><span class="info-label">Menções</span><span class="info-value">${node.mentions||node.contracts||0}</span></div>`;
-            else if(node.type==='theme') html+=`<div class="info-row"><span class="info-label">Categoria</span><span class="info-value">${node.category||'--'}</span></div><div class="info-row"><span class="info-label">Ocorrências</span><span class="info-value">${node.count||0}</span></div>`;
-            else if(node.type==='agency') html+=`<div class="info-row"><span class="info-label">Nome</span><span class="info-value" style="font-size:10px">${node.full||node.label}</span></div><div class="info-row"><span class="info-label">Deliberações</span><span class="info-value">${node.deliberations||0}</span></div>`;
+            if(node.type==='director'){
+                html+=`<div class="info-row"><span class="info-label">Cargo</span><span class="info-value">${node.role||'Diretor(a)'}</span></div>`;
+                if(node.mandato) html+=`<div class="info-row"><span class="info-label">Mandato</span><span class="info-value">${node.mandato}</span></div>`;
+                html+=`<div class="info-row"><span class="info-label">Conexões</span><span class="info-value">${node.connections}</span></div>`;
+            } else if(node.type==='company'){
+                html+=`<div class="info-row"><span class="info-label">Nome completo</span><span class="info-value" style="font-size:10px">${node.full||node.label}</span></div>`;
+                html+=`<div class="info-row"><span class="info-label">Setor</span><span class="info-value">${node.sector||'--'}</span></div>`;
+                html+=`<div class="info-row"><span class="info-label">Menções</span><span class="info-value">${node.mentions||node.contracts||0}</span></div>`;
+            } else if(node.type==='theme'){
+                html+=`<div class="info-row"><span class="info-label">Categoria</span><span class="info-value">${node.category||'--'}</span></div>`;
+                html+=`<div class="info-row"><span class="info-label">Ocorrências</span><span class="info-value">${node.count||0}</span></div>`;
+            } else if(node.type==='agency'){
+                html+=`<div class="info-row"><span class="info-label">Nome</span><span class="info-value" style="font-size:10px">${node.full||node.label}</span></div>`;
+                if(node.setor) html+=`<div class="info-row"><span class="info-label">Setor</span><span class="info-value">${node.setor}</span></div>`;
+                if(node.esfera) html+=`<div class="info-row"><span class="info-label">Esfera</span><span class="info-value" style="text-transform:capitalize">${node.esfera}</span></div>`;
+                if(node.site) html+=`<div class="info-row"><span class="info-label">Site</span><span class="info-value" style="font-size:10px"><a href="${node.site}" target="_blank" style="color:#58a6ff">${node.site.replace('https://','')}</a></span></div>`;
+                html+=`<div class="info-row"><span class="info-label">Deliberações</span><span class="info-value">${node.deliberations||0}</span></div>`;
+            }
 
             // Action buttons — Sherlocker-style
             html+='<div style="display:flex;gap:6px;margin:10px 0 8px">';
@@ -3006,7 +3020,17 @@
             document.getElementById('intel-info-title').textContent='Selecione um Nó';
             document.getElementById('intel-info-body').innerHTML='<p style="color:#475569">Clique em um nó para ver detalhes.</p>';
         },
-        animate(){this.time+=0.016;this.simulateForces(0.01);this.draw();this.animFrame=requestAnimationFrame(()=>this.animate());},
+        _frameCount: 0,
+        animate(){
+            this._frameCount++;
+            this.time += 0.016;
+            // Throttle force simulation every other frame when idle
+            if (this._frameCount % 2 === 0 || this.dragging || this.hovering) {
+                this.simulateForces(0.01);
+            }
+            this.draw();
+            this.animFrame = requestAnimationFrame(() => this.animate());
+        },
         // Sherlocker-style rounded rectangle helper
         _roundRect(ctx, x, y, w, h, r) {
             ctx.beginPath();

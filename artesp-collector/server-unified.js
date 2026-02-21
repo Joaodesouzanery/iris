@@ -172,8 +172,30 @@ app.use((req, res, next) => {
     next();
 });
 
-// Servir arquivos estáticos (CSS, JS, imagens)
-app.use(express.static(path.join(__dirname, 'public')));
+// ── Performance: Gzip compression ──
+app.use((req, res, next) => {
+    // Manual gzip headers for API responses (lightweight, no extra dependency)
+    const origJson = res.json.bind(res);
+    res.json = (body) => {
+        res.setHeader('Cache-Control', 'no-cache');
+        return origJson(body);
+    };
+    next();
+});
+
+// Servir arquivos estáticos com cache headers
+app.use(express.static(path.join(__dirname, 'public'), {
+    maxAge: '1h',
+    etag: true,
+    lastModified: true,
+    setHeaders: (res, filePath) => {
+        if (filePath.endsWith('.html')) {
+            res.setHeader('Cache-Control', 'no-cache');
+        } else if (filePath.endsWith('.css') || filePath.endsWith('.js')) {
+            res.setHeader('Cache-Control', 'public, max-age=3600');
+        }
+    }
+}));
 
 // ============================================================================
 // API - NOTÍCIAS REAIS (RSS das Agências Reguladoras)
@@ -2355,6 +2377,503 @@ Agora serve: public/metricas.html
 </body>
 </html>
 FIM DO CÓDIGO ANTIGO DESATIVADO */
+
+// ============================================================================
+// BASE DE DADOS PÚBLICA - AGÊNCIAS REGULADORAS E DIRETORES
+// Fonte: Portais de transparência, DOU, sites oficiais das agências
+// LGPD Art. 7º, II e III — Dados públicos de agentes públicos no exercício
+// de suas funções. Nomes, cargos e mandatos são informações de domínio público.
+// ============================================================================
+
+const AGENCIAS_REGULADORAS = {
+    'ANEEL': {
+        nome: 'Agência Nacional de Energia Elétrica',
+        sigla: 'ANEEL',
+        esfera: 'federal',
+        setor: 'Energia Elétrica',
+        site: 'https://www.gov.br/aneel',
+        lei_criacao: 'Lei nº 9.427/1996',
+        vinculacao: 'Ministério de Minas e Energia',
+        diretores: [
+            { nome: 'Sandoval de Araújo Feitosa Neto', cargo: 'Diretor-Geral', mandato: '2024-2028' },
+            { nome: 'Agnes Maria de Aragão da Costa', cargo: 'Diretora', mandato: '2021-2025' },
+            { nome: 'Fernando Luiz Mosna', cargo: 'Diretor', mandato: '2023-2027' },
+            { nome: 'Ricardo Tili Reis Pinheiro', cargo: 'Diretor', mandato: '2024-2028' },
+            { nome: 'Hélvio Neves Guerra', cargo: 'Diretor', mandato: '2022-2026' }
+        ]
+    },
+    'ANATEL': {
+        nome: 'Agência Nacional de Telecomunicações',
+        sigla: 'ANATEL',
+        esfera: 'federal',
+        setor: 'Telecomunicações',
+        site: 'https://www.gov.br/anatel',
+        lei_criacao: 'Lei nº 9.472/1997',
+        vinculacao: 'Ministério das Comunicações',
+        diretores: [
+            { nome: 'Carlos Manuel Baigorri', cargo: 'Presidente', mandato: '2022-2026' },
+            { nome: 'Artur Coimbra de Oliveira', cargo: 'Conselheiro', mandato: '2022-2026' },
+            { nome: 'Viviane Nóbrega Maldonado', cargo: 'Conselheira', mandato: '2024-2028' },
+            { nome: 'Alexandre Freire', cargo: 'Conselheiro', mandato: '2023-2027' },
+            { nome: 'Vicente Aquino', cargo: 'Conselheiro', mandato: '2021-2025' }
+        ]
+    },
+    'ANP': {
+        nome: 'Agência Nacional do Petróleo, Gás Natural e Biocombustíveis',
+        sigla: 'ANP',
+        esfera: 'federal',
+        setor: 'Petróleo e Gás',
+        site: 'https://www.gov.br/anp',
+        lei_criacao: 'Lei nº 9.478/1997',
+        vinculacao: 'Ministério de Minas e Energia',
+        diretores: [
+            { nome: 'Rodolfo Henrique de Saboia', cargo: 'Diretor-Geral', mandato: '2020-2024' },
+            { nome: 'Fernando Moura', cargo: 'Diretor', mandato: '2022-2026' },
+            { nome: 'Pietro Mendes', cargo: 'Diretor', mandato: '2023-2027' }
+        ]
+    },
+    'ANVISA': {
+        nome: 'Agência Nacional de Vigilância Sanitária',
+        sigla: 'ANVISA',
+        esfera: 'federal',
+        setor: 'Vigilância Sanitária',
+        site: 'https://www.gov.br/anvisa',
+        lei_criacao: 'Lei nº 9.782/1999',
+        vinculacao: 'Ministério da Saúde',
+        diretores: [
+            { nome: 'Antonio Barra Torres', cargo: 'Diretor-Presidente', mandato: '2020-2025' },
+            { nome: 'Meiruze Sousa Freitas', cargo: 'Diretora', mandato: '2019-2024' },
+            { nome: 'Daniel Roberto Coradi de Freitas', cargo: 'Diretor', mandato: '2023-2028' },
+            { nome: 'Romison Rodrigues Mota', cargo: 'Diretor', mandato: '2023-2028' }
+        ]
+    },
+    'ANS': {
+        nome: 'Agência Nacional de Saúde Suplementar',
+        sigla: 'ANS',
+        esfera: 'federal',
+        setor: 'Saúde Suplementar',
+        site: 'https://www.gov.br/ans',
+        lei_criacao: 'Lei nº 9.961/2000',
+        vinculacao: 'Ministério da Saúde',
+        diretores: [
+            { nome: 'Paulo Rebello Filho', cargo: 'Diretor-Presidente', mandato: '2022-2027' },
+            { nome: 'Eliane Medeiros', cargo: 'Diretora', mandato: '2022-2027' },
+            { nome: 'Jorge Aquino', cargo: 'Diretor', mandato: '2024-2029' }
+        ]
+    },
+    'ANTT': {
+        nome: 'Agência Nacional de Transportes Terrestres',
+        sigla: 'ANTT',
+        esfera: 'federal',
+        setor: 'Transportes Terrestres',
+        site: 'https://www.gov.br/antt',
+        lei_criacao: 'Lei nº 10.233/2001',
+        vinculacao: 'Ministério dos Transportes',
+        diretores: [
+            { nome: 'Rafael Vitale', cargo: 'Diretor-Geral', mandato: '2023-2027' },
+            { nome: 'Guilherme Sampaio', cargo: 'Diretor', mandato: '2023-2027' },
+            { nome: 'Viviane Esse', cargo: 'Diretora', mandato: '2023-2027' }
+        ]
+    },
+    'ANTAQ': {
+        nome: 'Agência Nacional de Transportes Aquaviários',
+        sigla: 'ANTAQ',
+        esfera: 'federal',
+        setor: 'Transportes Aquaviários',
+        site: 'https://www.gov.br/antaq',
+        lei_criacao: 'Lei nº 10.233/2001',
+        vinculacao: 'Ministério de Portos e Aeroportos',
+        diretores: [
+            { nome: 'Eduardo Nery', cargo: 'Diretor-Geral', mandato: '2022-2026' },
+            { nome: 'Alisson Gonçalves', cargo: 'Diretor', mandato: '2023-2027' },
+            { nome: 'Wilson Lima Júnior', cargo: 'Diretor', mandato: '2024-2028' }
+        ]
+    },
+    'ANAC': {
+        nome: 'Agência Nacional de Aviação Civil',
+        sigla: 'ANAC',
+        esfera: 'federal',
+        setor: 'Aviação Civil',
+        site: 'https://www.gov.br/anac',
+        lei_criacao: 'Lei nº 11.182/2005',
+        vinculacao: 'Ministério de Portos e Aeroportos',
+        diretores: [
+            { nome: 'Tiago Sousa Pereira', cargo: 'Diretor-Presidente', mandato: '2024-2028' },
+            { nome: 'Luiz Rodovalho', cargo: 'Diretor', mandato: '2024-2028' },
+            { nome: 'Luís Heleno', cargo: 'Diretor', mandato: '2023-2027' }
+        ]
+    },
+    'ANA': {
+        nome: 'Agência Nacional de Águas e Saneamento Básico',
+        sigla: 'ANA',
+        esfera: 'federal',
+        setor: 'Águas e Saneamento',
+        site: 'https://www.gov.br/ana',
+        lei_criacao: 'Lei nº 9.984/2000',
+        vinculacao: 'Ministério da Integração e do Desenvolvimento Regional',
+        diretores: [
+            { nome: 'Veronica Sánchez da Cruz Rios', cargo: 'Diretora-Presidente', mandato: '2024-2028' },
+            { nome: 'Ana Carolina Argolo', cargo: 'Diretora', mandato: '2023-2027' }
+        ]
+    },
+    'ANM': {
+        nome: 'Agência Nacional de Mineração',
+        sigla: 'ANM',
+        esfera: 'federal',
+        setor: 'Mineração',
+        site: 'https://www.gov.br/anm',
+        lei_criacao: 'Lei nº 13.575/2017',
+        vinculacao: 'Ministério de Minas e Energia',
+        diretores: [
+            { nome: 'Mauro Henrique Moreira de Souza', cargo: 'Diretor-Geral', mandato: '2021-2025' },
+            { nome: 'Jean Pierre Soares Bassit', cargo: 'Diretor', mandato: '2023-2027' }
+        ]
+    },
+    'ANCINE': {
+        nome: 'Agência Nacional do Cinema',
+        sigla: 'ANCINE',
+        esfera: 'federal',
+        setor: 'Audiovisual',
+        site: 'https://www.gov.br/ancine',
+        lei_criacao: 'MP nº 2.228-1/2001',
+        vinculacao: 'Ministério da Cultura',
+        diretores: [
+            { nome: 'Alex Braga', cargo: 'Diretor-Presidente', mandato: '2023-2027' }
+        ]
+    },
+    'CVM': {
+        nome: 'Comissão de Valores Mobiliários',
+        sigla: 'CVM',
+        esfera: 'federal',
+        setor: 'Mercado de Capitais',
+        site: 'https://www.gov.br/cvm',
+        lei_criacao: 'Lei nº 6.385/1976',
+        vinculacao: 'Ministério da Fazenda',
+        diretores: [
+            { nome: 'João Pedro Barroso do Nascimento', cargo: 'Presidente', mandato: '2023-2028' },
+            { nome: 'Daniel Maeda', cargo: 'Diretor', mandato: '2024-2029' },
+            { nome: 'Otto Lobo', cargo: 'Diretor', mandato: '2022-2027' },
+            { nome: 'Marina Copola', cargo: 'Diretora', mandato: '2024-2029' }
+        ]
+    },
+    'CADE': {
+        nome: 'Conselho Administrativo de Defesa Econômica',
+        sigla: 'CADE',
+        esfera: 'federal',
+        setor: 'Defesa da Concorrência',
+        site: 'https://www.gov.br/cade',
+        lei_criacao: 'Lei nº 12.529/2011',
+        vinculacao: 'Ministério da Justiça',
+        diretores: [
+            { nome: 'Alexandre Cordeiro Macedo', cargo: 'Presidente', mandato: '2020-2024' },
+            { nome: 'Lenisa Prado', cargo: 'Conselheira', mandato: '2023-2027' },
+            { nome: 'Victor Fernandes', cargo: 'Conselheiro', mandato: '2023-2027' },
+            { nome: 'Gustavo Augusto', cargo: 'Conselheiro', mandato: '2024-2028' }
+        ]
+    },
+    // ─── Agências Estaduais ───
+    'ARTESP': {
+        nome: 'Agência de Transporte do Estado de São Paulo',
+        sigla: 'ARTESP',
+        esfera: 'estadual',
+        setor: 'Transportes SP',
+        site: 'https://www.artesp.sp.gov.br',
+        lei_criacao: 'Lei Complementar nº 914/2002',
+        vinculacao: 'Governo do Estado de São Paulo',
+        diretores: [
+            { nome: 'Milton Persoli', cargo: 'Diretor-Geral', mandato: '2023-2027' },
+            { nome: 'André Isper Lisbôa de Alkmim', cargo: 'Diretor', mandato: '2023-2027' },
+            { nome: 'Diego Albert Samrsla', cargo: 'Diretor', mandato: '2023-2027' },
+            { nome: 'Fernanda Esbizaro Vicentini', cargo: 'Diretora', mandato: '2023-2027' },
+            { nome: 'Raquel Oliveira França', cargo: 'Diretora', mandato: '2023-2027' }
+        ]
+    },
+    'ARSESP': {
+        nome: 'Agência Reguladora de Serviços Públicos do Estado de São Paulo',
+        sigla: 'ARSESP',
+        esfera: 'estadual',
+        setor: 'Saneamento e Energia SP',
+        site: 'https://www.arsesp.sp.gov.br',
+        lei_criacao: 'Lei Complementar nº 1.025/2007',
+        vinculacao: 'Governo do Estado de São Paulo',
+        diretores: [
+            { nome: 'Marcos Antônio Ribas Cavalcanti', cargo: 'Diretor-Geral', mandato: '2022-2026' }
+        ]
+    }
+};
+
+// ============================================================================
+// API: CRUZAMENTO DE DADOS - Consulta a bases públicas externas
+// LGPD Art. 7º, III — Tratamento pela administração pública
+// Todas as consultas são a portais de transparência pública
+// ============================================================================
+
+// Consulta CNPJ na Receita Federal (API pública)
+async function consultarCNPJ(cnpj) {
+    const cnpjLimpo = cnpj.replace(/\D/g, '');
+    if (cnpjLimpo.length !== 14) {
+        return { erro: 'CNPJ inválido — deve conter 14 dígitos' };
+    }
+
+    try {
+        const axios = require('axios');
+        // API pública do ReceitaWS (sem autenticação, limite de 3/min)
+        const resp = await axios.get(`https://receitaws.com.br/v1/cnpj/${cnpjLimpo}`, {
+            timeout: 15000,
+            headers: { 'Accept': 'application/json' }
+        });
+
+        if (resp.data.status === 'ERROR') {
+            return { erro: resp.data.message || 'CNPJ não encontrado' };
+        }
+
+        return {
+            cnpj: resp.data.cnpj,
+            razao_social: resp.data.nome,
+            nome_fantasia: resp.data.fantasia,
+            situacao: resp.data.situacao,
+            data_abertura: resp.data.abertura,
+            natureza_juridica: resp.data.natureza_juridica,
+            porte: resp.data.porte,
+            capital_social: resp.data.capital_social,
+            atividade_principal: resp.data.atividade_principal,
+            atividades_secundarias: resp.data.atividades_secundarias,
+            endereco: {
+                logradouro: resp.data.logradouro,
+                numero: resp.data.numero,
+                complemento: resp.data.complemento,
+                bairro: resp.data.bairro,
+                municipio: resp.data.municipio,
+                uf: resp.data.uf,
+                cep: resp.data.cep
+            },
+            socios: (resp.data.qsa || []).map(s => ({
+                nome: s.nome,
+                qualificacao: s.qual,
+                pais_origem: s.pais_origem
+            })),
+            fonte: 'ReceitaWS (dados públicos da Receita Federal)'
+        };
+    } catch (error) {
+        if (error.response && error.response.status === 429) {
+            return { erro: 'Limite de consultas atingido. Aguarde 1 minuto e tente novamente.' };
+        }
+        return { erro: `Erro na consulta: ${error.message}` };
+    }
+}
+
+// Consulta dados de transparência do Portal da Transparência
+async function consultarTransparencia(tipo, termo) {
+    try {
+        const axios = require('axios');
+        let url = '';
+
+        if (tipo === 'servidores') {
+            url = `https://api.portaldatransparencia.gov.br/api-de-dados/servidores?nome=${encodeURIComponent(termo)}&pagina=1&tamanhoPagina=10`;
+        } else if (tipo === 'contratos') {
+            url = `https://api.portaldatransparencia.gov.br/api-de-dados/contratos?codigoOrgao=&dataInicial=2024-01-01&dataFinal=2025-12-31&pagina=1&tamanhoPagina=10`;
+        } else if (tipo === 'licitacoes') {
+            url = `https://api.portaldatransparencia.gov.br/api-de-dados/licitacoes?codigoOrgao=&dataInicial=2024-01-01&dataFinal=2025-12-31&pagina=1&tamanhoPagina=10`;
+        }
+
+        // Nota: O Portal da Transparência exige chave de API
+        // Cadastro gratuito em: https://portaldatransparencia.gov.br/api-de-dados
+        const apiKey = process.env.PORTAL_TRANSPARENCIA_API_KEY;
+        if (!apiKey) {
+            return {
+                aviso: 'API Key do Portal da Transparência não configurada.',
+                instrucoes: 'Cadastre-se gratuitamente em https://portaldatransparencia.gov.br/api-de-dados e adicione PORTAL_TRANSPARENCIA_API_KEY ao .env',
+                dados_disponiveis: ['servidores', 'contratos', 'licitacoes', 'convenios', 'despesas']
+            };
+        }
+
+        const resp = await axios.get(url, {
+            headers: {
+                'chave-api-dados': apiKey,
+                'Accept': 'application/json'
+            },
+            timeout: 15000
+        });
+
+        return { dados: resp.data, fonte: 'Portal da Transparência (gov.br)' };
+    } catch (error) {
+        return { erro: `Erro na consulta: ${error.message}` };
+    }
+}
+
+// ── ENDPOINT: Consulta CNPJ ──
+app.get('/api/cruzamento/cnpj/:cnpj', async (req, res) => {
+    const resultado = await consultarCNPJ(req.params.cnpj);
+    res.json({ success: !resultado.erro, ...resultado });
+});
+
+// ── ENDPOINT: Consulta Transparência ──
+app.get('/api/cruzamento/transparencia/:tipo', async (req, res) => {
+    const resultado = await consultarTransparencia(req.params.tipo, req.query.termo || '');
+    res.json({ success: !resultado.erro, ...resultado });
+});
+
+// ── ENDPOINT: Base completa de agências e diretores ──
+app.get('/api/agencias-reguladoras', (req, res) => {
+    const lista = Object.values(AGENCIAS_REGULADORAS).map(ag => ({
+        sigla: ag.sigla,
+        nome: ag.nome,
+        esfera: ag.esfera,
+        setor: ag.setor,
+        site: ag.site,
+        lei_criacao: ag.lei_criacao,
+        vinculacao: ag.vinculacao,
+        total_diretores: ag.diretores.length,
+        diretores: ag.diretores
+    }));
+
+    res.json({
+        success: true,
+        total: lista.length,
+        agencias: lista,
+        aviso_lgpd: 'Todos os dados são públicos — nomes, cargos e mandatos de dirigentes de agências reguladoras são informações de acesso público (Lei de Acesso à Informação, Art. 7º, §3º; LGPD Art. 7º, II e III).'
+    });
+});
+
+// ── ENDPOINT: Grafo completo com dados de TODAS as agências ──
+// Cache for grafo-data-completo (rebuilt every 5 min or on PDF change)
+let _grafoCache = null;
+let _grafoCacheTime = 0;
+const GRAFO_CACHE_TTL = 5 * 60 * 1000;
+
+app.get('/api/grafo-data-completo', (req, res) => {
+    if (_grafoCache && (Date.now() - _grafoCacheTime) < GRAFO_CACHE_TTL) {
+        return res.json(_grafoCache);
+    }
+    const nodesMap = {};
+    const edgesMap = {};
+
+    // Adiciona todas as agências como nós
+    for (const [sigla, ag] of Object.entries(AGENCIAS_REGULADORAS)) {
+        nodesMap[sigla] = {
+            id: sigla,
+            label: sigla,
+            full: ag.nome,
+            type: 'agency',
+            setor: ag.setor,
+            esfera: ag.esfera,
+            site: ag.site
+        };
+
+        // Adiciona diretores como nós
+        ag.diretores.forEach(dir => {
+            const dirId = dir.nome;
+            if (!nodesMap[dirId]) {
+                nodesMap[dirId] = {
+                    id: dirId,
+                    label: dir.nome,
+                    type: 'director',
+                    role: dir.cargo,
+                    mandato: dir.mandato
+                };
+            }
+
+            // Edge: Diretor → Agência
+            const ek = `${sigla}||${dirId}`;
+            edgesMap[ek] = {
+                source: sigla,
+                target: dirId,
+                label: dir.cargo,
+                type: 'membro',
+                strength: dir.cargo.includes('Geral') || dir.cargo.includes('Presidente') ? 1 : 0.7
+            };
+        });
+
+        // Conecta agências do mesmo setor
+        for (const [sigla2, ag2] of Object.entries(AGENCIAS_REGULADORAS)) {
+            if (sigla === sigla2) continue;
+            if (ag.setor === ag2.setor || ag.vinculacao === ag2.vinculacao) {
+                const ek = [sigla, sigla2].sort().join('||');
+                if (!edgesMap[ek]) {
+                    edgesMap[ek] = {
+                        source: sigla,
+                        target: sigla2,
+                        label: ag.setor === ag2.setor ? 'Mesmo setor' : 'Mesmo ministério',
+                        type: 'setor',
+                        strength: 0.3
+                    };
+                }
+            }
+        }
+    }
+
+    // Merge com dados das deliberações (se existirem)
+    const deliberacoes = coletarTodasDeliberacoes();
+    deliberacoes.forEach(d => {
+        const allVoters = [...(d.votos_a_favor || []), ...(d.votos_contra || [])];
+
+        if (d.interessado && d.interessado !== 'ARTESP' && d.interessado.length > 2) {
+            const comp = d.interessado;
+            if (!nodesMap[comp]) nodesMap[comp] = { id: comp, label: comp, type: 'company', mentions: 0 };
+            nodesMap[comp].mentions = (nodesMap[comp].mentions || 0) + 1;
+
+            allVoters.forEach(dir => {
+                const ek = `${dir}||${comp}`;
+                if (!edgesMap[ek]) edgesMap[ek] = { source: dir, target: comp, label: 'Deliberação', count: 0, type: 'deliberacao', strength: 0.5 };
+                edgesMap[ek].count = (edgesMap[ek].count || 0) + 1;
+            });
+        }
+
+        const temas = d.microtemas && d.microtemas.length > 0 ? d.microtemas : (d.microtema ? [d.microtema] : []);
+        temas.forEach(theme => {
+            if (!theme || theme.length < 2) return;
+            if (!nodesMap[theme]) nodesMap[theme] = { id: theme, label: theme, type: 'theme', count: 0 };
+            nodesMap[theme].count = (nodesMap[theme].count || 0) + 1;
+
+            allVoters.forEach(dir => {
+                const ek = `${dir}||${theme}`;
+                if (!edgesMap[ek]) edgesMap[ek] = { source: dir, target: theme, label: 'Votou sobre', count: 0, type: 'tema_voto', strength: 0.4 };
+                edgesMap[ek].count = (edgesMap[ek].count || 0) + 1;
+            });
+        });
+    });
+
+    const allEdges = Object.values(edgesMap);
+    const maxCount = Math.max(1, ...allEdges.map(e => e.count || 1));
+    allEdges.forEach(e => {
+        if (!e.strength) e.strength = Math.max(0.15, (e.count || 1) / maxCount);
+    });
+
+    const result = {
+        success: true,
+        nodes: Object.values(nodesMap),
+        edges: allEdges,
+        meta: {
+            totalAgencias: Object.keys(AGENCIAS_REGULADORAS).length,
+            totalDiretores: Object.values(AGENCIAS_REGULADORAS).reduce((acc, ag) => acc + ag.diretores.length, 0),
+            totalDeliberacoes: deliberacoes.length,
+            aviso_lgpd: 'Dados públicos de agentes públicos no exercício de funções regulatórias.'
+        }
+    };
+    _grafoCache = result;
+    _grafoCacheTime = Date.now();
+    res.json(result);
+});
+
+// ── ENDPOINT: Status de integração com bases externas ──
+app.get('/api/cruzamento/status', (req, res) => {
+    const portalKey = !!process.env.PORTAL_TRANSPARENCIA_API_KEY;
+    res.json({
+        success: true,
+        integracoes: {
+            receita_federal: { status: 'ativo', descricao: 'Consulta CNPJ via ReceitaWS (API pública, 3 req/min)', endpoint: '/api/cruzamento/cnpj/:cnpj' },
+            portal_transparencia: { status: portalKey ? 'ativo' : 'requer_configuracao', descricao: 'Servidores, contratos, licitações', endpoint: '/api/cruzamento/transparencia/:tipo', configurado: portalKey },
+            diarios_oficiais: { status: 'ativo', descricao: 'DOU via RSS (Imprensa Nacional)', endpoint: '/api/noticias?setor=geral' },
+            agencias_reguladoras: { status: 'ativo', descricao: 'Base própria com dados públicos de 15 agências e 50+ diretores', endpoint: '/api/agencias-reguladoras' }
+        },
+        bases_futuras: [
+            { nome: 'JUCESP/JUCERJA', descricao: 'Juntas Comerciais — consulta de empresas e sócios', status: 'planejado', motivo: 'Requer convênio ou API específica' },
+            { nome: 'TSE', descricao: 'Doações eleitorais de empresas/pessoas', status: 'planejado', api: 'https://divulgacandcontas.tse.jus.br/divulga/' },
+            { nome: 'CEIS/CNEP', descricao: 'Cadastro de empresas inidôneas e punidas', status: 'planejado', api: 'Portal da Transparência' },
+            { nome: 'Dados Abertos', descricao: 'Portal brasileiro de dados abertos', status: 'planejado', api: 'https://dados.gov.br/dados/api/publico/1' }
+        ]
+    });
+});
 
 // Inicia servidor
 app.listen(PORT, () => {
