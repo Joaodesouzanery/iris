@@ -3794,444 +3794,347 @@
     };
 
     // ============================================
-    // PAGE: Mapa do Brasil (D3.js)
+    // PAGE: Mapa do Brasil (SVG Interativo)
     // ============================================
     const PageMapa = {
         estados: {
-            'SP': { nome: 'Sao Paulo', decisoes: 4521, taxa: 78.5 },
-            'RJ': { nome: 'Rio de Janeiro', decisoes: 2134, taxa: 72.3 },
-            'MG': { nome: 'Minas Gerais', decisoes: 1876, taxa: 81.2 },
-            'RS': { nome: 'Rio Grande do Sul', decisoes: 1245, taxa: 75.8 },
-            'PR': { nome: 'Parana', decisoes: 1123, taxa: 79.4 },
-            'BA': { nome: 'Bahia', decisoes: 987, taxa: 68.9 },
-            'SC': { nome: 'Santa Catarina', decisoes: 876, taxa: 82.1 },
-            'GO': { nome: 'Goias', decisoes: 654, taxa: 71.5 },
-            'PE': { nome: 'Pernambuco', decisoes: 543, taxa: 65.7 },
-            'CE': { nome: 'Ceara', decisoes: 432, taxa: 69.2 },
-            'DF': { nome: 'Distrito Federal', decisoes: 398, taxa: 84.3 },
-            'PA': { nome: 'Para', decisoes: 321, taxa: 62.8 },
-            'MT': { nome: 'Mato Grosso', decisoes: 287, taxa: 73.4 },
-            'ES': { nome: 'Espirito Santo', decisoes: 265, taxa: 77.1 },
-            'MS': { nome: 'Mato Grosso do Sul', decisoes: 234, taxa: 74.6 },
-            'MA': { nome: 'Maranhao', decisoes: 198, taxa: 61.3 },
-            'AM': { nome: 'Amazonas', decisoes: 176, taxa: 58.9 },
-            'RN': { nome: 'Rio Grande do Norte', decisoes: 154, taxa: 66.4 },
-            'PB': { nome: 'Paraiba', decisoes: 143, taxa: 64.8 },
-            'AL': { nome: 'Alagoas', decisoes: 121, taxa: 63.2 },
-            'PI': { nome: 'Piaui', decisoes: 98, taxa: 59.7 },
-            'SE': { nome: 'Sergipe', decisoes: 87, taxa: 67.3 },
-            'RO': { nome: 'Rondonia', decisoes: 76, taxa: 71.2 },
-            'TO': { nome: 'Tocantins', decisoes: 65, taxa: 68.5 },
-            'AC': { nome: 'Acre', decisoes: 43, taxa: 55.8 },
-            'AP': { nome: 'Amapa', decisoes: 32, taxa: 53.1 },
-            'RR': { nome: 'Roraima', decisoes: 21, taxa: 52.4 }
+            'SP': { nome: 'Sao Paulo', decisoes: 4521, taxa: 78.5, regiao: 'Sudeste' },
+            'RJ': { nome: 'Rio de Janeiro', decisoes: 2134, taxa: 72.3, regiao: 'Sudeste' },
+            'MG': { nome: 'Minas Gerais', decisoes: 1876, taxa: 81.2, regiao: 'Sudeste' },
+            'RS': { nome: 'Rio Grande do Sul', decisoes: 1245, taxa: 75.8, regiao: 'Sul' },
+            'PR': { nome: 'Parana', decisoes: 1123, taxa: 79.4, regiao: 'Sul' },
+            'BA': { nome: 'Bahia', decisoes: 987, taxa: 68.9, regiao: 'Nordeste' },
+            'SC': { nome: 'Santa Catarina', decisoes: 876, taxa: 82.1, regiao: 'Sul' },
+            'GO': { nome: 'Goias', decisoes: 654, taxa: 71.5, regiao: 'Centro-Oeste' },
+            'PE': { nome: 'Pernambuco', decisoes: 543, taxa: 65.7, regiao: 'Nordeste' },
+            'CE': { nome: 'Ceara', decisoes: 432, taxa: 69.2, regiao: 'Nordeste' },
+            'DF': { nome: 'Distrito Federal', decisoes: 398, taxa: 84.3, regiao: 'Centro-Oeste' },
+            'PA': { nome: 'Para', decisoes: 321, taxa: 62.8, regiao: 'Norte' },
+            'MT': { nome: 'Mato Grosso', decisoes: 287, taxa: 73.4, regiao: 'Centro-Oeste' },
+            'ES': { nome: 'Espirito Santo', decisoes: 265, taxa: 77.1, regiao: 'Sudeste' },
+            'MS': { nome: 'Mato Grosso do Sul', decisoes: 234, taxa: 74.6, regiao: 'Centro-Oeste' },
+            'MA': { nome: 'Maranhao', decisoes: 198, taxa: 61.3, regiao: 'Nordeste' },
+            'AM': { nome: 'Amazonas', decisoes: 176, taxa: 58.9, regiao: 'Norte' },
+            'RN': { nome: 'Rio Grande do Norte', decisoes: 154, taxa: 66.4, regiao: 'Nordeste' },
+            'PB': { nome: 'Paraiba', decisoes: 143, taxa: 64.8, regiao: 'Nordeste' },
+            'AL': { nome: 'Alagoas', decisoes: 121, taxa: 63.2, regiao: 'Nordeste' },
+            'PI': { nome: 'Piaui', decisoes: 98, taxa: 59.7, regiao: 'Nordeste' },
+            'SE': { nome: 'Sergipe', decisoes: 87, taxa: 67.3, regiao: 'Nordeste' },
+            'RO': { nome: 'Rondonia', decisoes: 76, taxa: 71.2, regiao: 'Norte' },
+            'TO': { nome: 'Tocantins', decisoes: 65, taxa: 68.5, regiao: 'Norte' },
+            'AC': { nome: 'Acre', decisoes: 43, taxa: 55.8, regiao: 'Norte' },
+            'AP': { nome: 'Amapa', decisoes: 32, taxa: 53.1, regiao: 'Norte' },
+            'RR': { nome: 'Roraima', decisoes: 21, taxa: 52.4, regiao: 'Norte' }
         },
 
-        regioes: {
-            'Sudeste': { estados: ['SP', 'RJ', 'MG', 'ES'], cor: '#FFEF4D' },
-            'Sul': { estados: ['PR', 'SC', 'RS'], cor: '#4ADE80' },
-            'Nordeste': { estados: ['BA', 'PE', 'CE', 'MA', 'RN', 'PB', 'AL', 'PI', 'SE'], cor: '#60A5FA' },
-            'Centro-Oeste': { estados: ['GO', 'MT', 'MS', 'DF'], cor: '#F472B6' },
-            'Norte': { estados: ['PA', 'AM', 'RO', 'TO', 'AC', 'AP', 'RR'], cor: '#A78BFA' }
+        // SVG paths for Brazil states (simplified but accurate)
+        statePaths: {
+            'AC': 'M78,bindPath53 L108,bindPath53 L108,270 L78,270 Z',
+            'AM': 'M90,bindPath120 L220,bindPath120 L240,200 L200,220 L140,220 L90,180 Z',
+            'RR': 'M175,bindPath40 L220,bindPath40 L230,95 L185,95 Z',
+            'AP': 'M310,bindPath35 L345,bindPath35 L355,90 L300,95 Z',
+            'PA': 'M230,bindPath100 L350,bindPath95 L380,180 L320,220 L240,200 Z',
+            'MA': 'M350,bindPath140 L410,bindPath130 L420,200 L360,210 Z',
+            'PI': 'M385,bindPath180 L430,bindPath165 L435,250 L390,260 Z',
+            'CE': 'M420,bindPath135 L470,bindPath130 L465,180 L425,185 Z',
+            'RN': 'M465,bindPath140 L505,bindPath140 L500,170 L460,175 Z',
+            'PB': 'M455,bindPath175 L505,bindPath170 L500,195 L455,200 Z',
+            'PE': 'M420,bindPath195 L505,bindPath195 L500,225 L420,230 Z',
+            'AL': 'M470,bindPath225 L500,bindPath225 L495,255 L465,255 Z',
+            'SE': 'M455,bindPath255 L475,bindPath255 L470,280 L450,280 Z',
+            'BA': 'M380,bindPath220 L460,bindPath250 L440,340 L360,320 Z',
+            'TO': 'M320,bindPath200 L380,bindPath200 L375,300 L315,290 Z',
+            'GO': 'M300,bindPath280 L375,bindPath285 L365,365 L290,355 Z',
+            'DF': 'M345,bindPath305 L365,bindPath305 L362,325 L342,325 Z',
+            'MT': 'M190,bindPath220 L300,bindPath230 L295,340 L185,320 Z',
+            'MS': 'M230,bindPath330 L300,bindPath340 L290,420 L220,410 Z',
+            'MG': 'M340,bindPath320 L430,bindPath320 L420,410 L330,400 Z',
+            'ES': 'M425,bindPath360 L465,bindPath355 L460,410 L420,415 Z',
+            'RJ': 'M395,bindPath400 L445,bindPath395 L440,435 L390,440 Z',
+            'SP': 'M290,bindPath380 L380,bindPath390 L370,455 L280,445 Z',
+            'PR': 'M265,bindPath440 L350,bindPath445 L340,500 L255,490 Z',
+            'SC': 'M290,bindPath495 L355,bindPath495 L350,540 L285,535 Z',
+            'RS': 'M255,bindPath520 L340,bindPath530 L300,610 L235,590 Z',
+            'RO': 'M130,bindPath230 L190,bindPath230 L185,310 L125,300 Z'
         },
 
-        // Simplified Brazil state coordinates for D3.js visualization
-        statePositions: {
-            'AC': { x: 120, y: 280, labelPos: 'left' },
-            'AM': { x: 200, y: 180, labelPos: 'left' },
-            'AP': { x: 340, y: 80, labelPos: 'top' },
-            'PA': { x: 340, y: 160, labelPos: 'top' },
-            'RR': { x: 220, y: 60, labelPos: 'top' },
-            'RO': { x: 180, y: 280, labelPos: 'left' },
-            'TO': { x: 380, y: 260, labelPos: 'right' },
-            'MA': { x: 440, y: 170, labelPos: 'top' },
-            'PI': { x: 480, y: 220, labelPos: 'right' },
-            'CE': { x: 530, y: 170, labelPos: 'right' },
-            'RN': { x: 570, y: 180, labelPos: 'right' },
-            'PB': { x: 570, y: 210, labelPos: 'right' },
-            'PE': { x: 550, y: 240, labelPos: 'right' },
-            'AL': { x: 560, y: 270, labelPos: 'right' },
-            'SE': { x: 540, y: 290, labelPos: 'right' },
-            'BA': { x: 480, y: 310, labelPos: 'right' },
-            'MT': { x: 260, y: 290, labelPos: 'left' },
-            'GO': { x: 360, y: 340, labelPos: 'bottom' },
-            'DF': { x: 400, y: 330, labelPos: 'right' },
-            'MS': { x: 280, y: 380, labelPos: 'left' },
-            'MG': { x: 440, y: 380, labelPos: 'right' },
-            'ES': { x: 510, y: 390, labelPos: 'right' },
-            'RJ': { x: 480, y: 430, labelPos: 'right' },
-            'SP': { x: 380, y: 430, labelPos: 'bottom' },
-            'PR': { x: 340, y: 470, labelPos: 'bottom' },
-            'SC': { x: 360, y: 510, labelPos: 'bottom' },
-            'RS': { x: 320, y: 550, labelPos: 'bottom' }
+        // Label positions for each state
+        labelPositions: {
+            'AC': { x: 93, y: 265 }, 'AM': { x: 165, y: 175 }, 'RR': { x: 202, y: 72 },
+            'AP': { x: 327, y: 68 }, 'PA': { x: 305, y: 160 }, 'MA': { x: 385, y: 175 },
+            'PI': { x: 410, y: 220 }, 'CE': { x: 445, y: 160 }, 'RN': { x: 482, y: 158 },
+            'PB': { x: 480, y: 188 }, 'PE': { x: 462, y: 215 }, 'AL': { x: 482, y: 242 },
+            'SE': { x: 462, y: 270 }, 'BA': { x: 420, y: 290 }, 'TO': { x: 347, y: 252 },
+            'GO': { x: 337, y: 330 }, 'DF': { x: 353, y: 318 }, 'MT': { x: 242, y: 285 },
+            'MS': { x: 260, y: 380 }, 'MG': { x: 385, y: 370 }, 'ES': { x: 442, y: 388 },
+            'RJ': { x: 417, y: 420 }, 'SP': { x: 330, y: 425 }, 'PR': { x: 305, y: 475 },
+            'SC': { x: 322, y: 520 }, 'RS': { x: 287, y: 570 }, 'RO': { x: 157, y: 275 }
         },
 
         selectedState: null,
-        svg: null,
 
         init() {
             const page = document.getElementById('page-mapa');
             page.classList.add('active');
-            this.renderCircleMap();
+            this.renderBrazilMap();
+            this.renderTopStates();
             this.renderRanking();
         },
 
-        renderCircleMap() {
+        getStateColor(decisoes) {
+            const maxDecisoes = 4521;
+            const ratio = decisoes / maxDecisoes;
+
+            if (ratio > 0.6) return { fill: '#FFEF4D', opacity: 0.9 };
+            if (ratio > 0.4) return { fill: '#FFD93D', opacity: 0.8 };
+            if (ratio > 0.25) return { fill: '#6BCB77', opacity: 0.75 };
+            if (ratio > 0.1) return { fill: '#4D96FF', opacity: 0.7 };
+            return { fill: '#9D65C9', opacity: 0.6 };
+        },
+
+        renderBrazilMap() {
             const container = document.getElementById('mapa-brasil-container');
             if (!container) return;
 
             container.innerHTML = '';
 
-            const width = container.offsetWidth || 700;
-            const height = 480;
+            // Create SVG with Brazil map
+            const svgNS = 'http://www.w3.org/2000/svg';
+            const svg = document.createElementNS(svgNS, 'svg');
+            svg.setAttribute('viewBox', '0 0 550 650');
+            svg.setAttribute('class', 'brazil-map-svg');
 
-            // Create SVG
-            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-            svg.setAttribute('width', '100%');
-            svg.setAttribute('height', height);
-            svg.setAttribute('viewBox', '0 0 700 520');
-            svg.style.display = 'block';
+            // Add defs for gradients and filters
+            const defs = document.createElementNS(svgNS, 'defs');
 
-            // Draw circles for each state
-            Object.entries(this.statePositions).forEach(([code, pos]) => {
+            // Glow filter
+            const filter = document.createElementNS(svgNS, 'filter');
+            filter.setAttribute('id', 'state-glow');
+            filter.innerHTML = `
+                <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                <feMerge>
+                    <feMergeNode in="coloredBlur"/>
+                    <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+            `;
+            defs.appendChild(filter);
+
+            // Background gradient
+            const bgGradient = document.createElementNS(svgNS, 'linearGradient');
+            bgGradient.setAttribute('id', 'bg-gradient');
+            bgGradient.setAttribute('x1', '0%');
+            bgGradient.setAttribute('y1', '0%');
+            bgGradient.setAttribute('x2', '100%');
+            bgGradient.setAttribute('y2', '100%');
+            bgGradient.innerHTML = `
+                <stop offset="0%" style="stop-color:#1a2f5a;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#233770;stop-opacity:1" />
+            `;
+            defs.appendChild(bgGradient);
+
+            svg.appendChild(defs);
+
+            // Background
+            const bg = document.createElementNS(svgNS, 'rect');
+            bg.setAttribute('width', '100%');
+            bg.setAttribute('height', '100%');
+            bg.setAttribute('fill', 'url(#bg-gradient)');
+            bg.setAttribute('rx', '12');
+            svg.appendChild(bg);
+
+            // States group
+            const statesGroup = document.createElementNS(svgNS, 'g');
+            statesGroup.setAttribute('class', 'states-group');
+
+            // Brazil outline approximation (simplified polygon coordinates)
+            const brazilStates = {
+                'RR': 'M175,40 L215,35 L230,75 L225,95 L185,100 L165,70 Z',
+                'AP': 'M295,25 L340,20 L360,60 L345,100 L295,95 L280,55 Z',
+                'AM': 'M60,100 L175,95 L225,95 L240,130 L250,185 L220,230 L170,245 L120,240 L80,200 L55,150 Z',
+                'PA': 'M225,95 L295,95 L345,100 L380,120 L395,170 L380,220 L330,245 L280,230 L250,185 L240,130 Z',
+                'RO': 'M120,240 L170,245 L180,290 L175,335 L130,340 L100,310 L95,265 Z',
+                'MT': 'M170,245 L220,230 L280,230 L310,250 L315,310 L305,370 L245,380 L180,360 L175,335 L180,290 Z',
+                'AC': 'M55,245 L95,240 L100,310 L70,320 L40,290 Z',
+                'TO': 'M310,200 L355,195 L375,230 L380,290 L355,330 L315,310 L310,250 Z',
+                'MA': 'M355,130 L410,120 L435,155 L425,210 L380,220 L375,170 Z',
+                'PI': 'M380,190 L425,175 L440,215 L445,280 L400,295 L380,250 Z',
+                'CE': 'M425,130 L475,125 L485,165 L465,195 L430,195 L425,160 Z',
+                'RN': 'M465,140 L510,140 L515,175 L475,180 L465,160 Z',
+                'PB': 'M460,180 L515,175 L512,210 L460,215 Z',
+                'PE': 'M420,215 L512,210 L508,250 L430,260 L410,240 Z',
+                'AL': 'M465,255 L508,250 L505,290 L470,295 Z',
+                'SE': 'M450,290 L475,290 L475,325 L455,330 Z',
+                'BA': 'M355,245 L430,260 L465,295 L475,325 L460,395 L395,420 L340,390 L330,320 L355,285 Z',
+                'GO': 'M295,310 L355,310 L355,340 L375,380 L360,430 L300,425 L275,385 L280,340 Z',
+                'DF': 'M335,340 L360,338 L362,365 L337,368 Z',
+                'MS': 'M215,375 L275,385 L290,430 L280,500 L215,495 L195,440 Z',
+                'MG': 'M330,365 L395,360 L445,390 L455,450 L415,490 L355,480 L320,440 L310,390 Z',
+                'ES': 'M445,390 L490,385 L495,445 L455,455 Z',
+                'RJ': 'M415,455 L480,445 L485,495 L430,505 L405,480 Z',
+                'SP': 'M275,440 L355,455 L405,480 L400,540 L335,550 L275,530 L255,490 Z',
+                'PR': 'M255,520 L335,535 L355,575 L335,620 L265,610 L240,560 Z',
+                'SC': 'M275,605 L345,615 L355,655 L310,670 L270,650 Z',
+                'RS': 'M240,640 L310,650 L340,700 L300,760 L235,750 L200,690 Z'
+            };
+
+            // Draw each state
+            Object.entries(brazilStates).forEach(([code, pathD]) => {
                 const estado = this.estados[code];
                 if (!estado) return;
 
-                const maxDecisoes = 4521; // SP
-                const ratio = estado.decisoes / maxDecisoes;
-                const minRadius = 18;
-                const maxRadius = 48;
-                const radius = minRadius + (maxRadius - minRadius) * ratio;
+                const colorInfo = this.getStateColor(estado.decisoes);
 
-                // Determine color based on volume
-                let fillColor, strokeColor, textColor;
-                if (ratio > 0.4) {
-                    fillColor = 'rgba(255, 239, 77, 0.25)';
-                    strokeColor = '#FFEF4D';
-                    textColor = '#FFEF4D';
-                } else if (ratio > 0.15) {
-                    fillColor = 'rgba(96, 165, 250, 0.2)';
-                    strokeColor = '#60a5fa';
-                    textColor = '#60a5fa';
-                } else {
-                    fillColor = 'rgba(96, 165, 250, 0.1)';
-                    strokeColor = 'rgba(96, 165, 250, 0.5)';
-                    textColor = 'rgba(96, 165, 250, 0.8)';
+                const g = document.createElementNS(svgNS, 'g');
+                g.setAttribute('class', 'state-group');
+                g.setAttribute('data-state', code);
+
+                // State path
+                const path = document.createElementNS(svgNS, 'path');
+                path.setAttribute('d', pathD);
+                path.setAttribute('fill', colorInfo.fill);
+                path.setAttribute('fill-opacity', colorInfo.opacity);
+                path.setAttribute('stroke', '#ffffff');
+                path.setAttribute('stroke-width', '1.5');
+                path.setAttribute('stroke-opacity', '0.6');
+                path.setAttribute('class', 'state-path');
+                path.style.cursor = 'pointer';
+                path.style.transition = 'all 0.3s ease';
+
+                g.appendChild(path);
+
+                // State label
+                const labelPos = this.labelPositions[code];
+                if (labelPos) {
+                    const text = document.createElementNS(svgNS, 'text');
+                    text.setAttribute('x', labelPos.x);
+                    text.setAttribute('y', labelPos.y);
+                    text.setAttribute('text-anchor', 'middle');
+                    text.setAttribute('fill', '#ffffff');
+                    text.setAttribute('font-size', '11');
+                    text.setAttribute('font-weight', '600');
+                    text.setAttribute('class', 'state-label');
+                    text.style.pointerEvents = 'none';
+                    text.style.textShadow = '0 1px 3px rgba(0,0,0,0.5)';
+                    text.textContent = code;
+                    g.appendChild(text);
                 }
 
-                // Create group
-                const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-                g.setAttribute('class', 'mapa-estado');
-                g.style.cursor = 'pointer';
+                // Event listeners
+                g.addEventListener('mouseenter', (e) => this.handleStateHover(e, code, true));
+                g.addEventListener('mouseleave', (e) => this.handleStateHover(e, code, false));
+                g.addEventListener('mousemove', (e) => this.moveTooltip(e));
+                g.addEventListener('click', () => this.selectState(code));
 
-                // Circle
-                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-                circle.setAttribute('cx', pos.x);
-                circle.setAttribute('cy', pos.y);
-                circle.setAttribute('r', radius);
-                circle.setAttribute('fill', fillColor);
-                circle.setAttribute('stroke', strokeColor);
-                circle.setAttribute('stroke-width', '2');
-                circle.style.transition = 'all 0.2s ease';
-
-                // Label
-                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                text.setAttribute('x', pos.x);
-                text.setAttribute('y', pos.y + 4);
-                text.setAttribute('text-anchor', 'middle');
-                text.setAttribute('fill', textColor);
-                text.setAttribute('font-size', '11px');
-                text.setAttribute('font-weight', '600');
-                text.style.pointerEvents = 'none';
-                text.textContent = code;
-
-                g.appendChild(circle);
-                g.appendChild(text);
-
-                // Hover effects
-                g.addEventListener('mouseenter', () => {
-                    circle.setAttribute('stroke-width', '3');
-                    circle.style.filter = 'drop-shadow(0 0 10px ' + strokeColor + ')';
-                });
-                g.addEventListener('mouseleave', () => {
-                    circle.setAttribute('stroke-width', '2');
-                    circle.style.filter = 'none';
-                });
-
-                svg.appendChild(g);
+                statesGroup.appendChild(g);
             });
 
+            svg.appendChild(statesGroup);
             container.appendChild(svg);
         },
 
-        renderD3Map() {
-            // Legacy - now uses renderCircleMap
-            this.renderCircleMap();
+        handleStateHover(event, code, isEntering) {
+            const tooltip = document.getElementById('mapa-tooltip');
+            const path = event.currentTarget.querySelector('.state-path');
+            const estado = this.estados[code];
 
-            // Add gradient definitions
-            const defs = this.svg.append('defs');
+            if (isEntering) {
+                path.style.filter = 'url(#state-glow)';
+                path.style.strokeWidth = '2.5';
+                path.style.strokeOpacity = '1';
+                path.style.transform = 'scale(1.02)';
+                path.style.transformOrigin = 'center';
 
-            // Glow filter for active states
-            const glowFilter = defs.append('filter')
-                .attr('id', 'glow-active')
-                .attr('x', '-50%')
-                .attr('y', '-50%')
-                .attr('width', '200%')
-                .attr('height', '200%');
-            glowFilter.append('feGaussianBlur')
-                .attr('stdDeviation', '4')
-                .attr('result', 'coloredBlur');
-            const glowMerge = glowFilter.append('feMerge');
-            glowMerge.append('feMergeNode').attr('in', 'coloredBlur');
-            glowMerge.append('feMergeNode').attr('in', 'SourceGraphic');
+                // Update and show tooltip
+                tooltip.querySelector('.tooltip-state').textContent = estado.nome;
+                tooltip.querySelector('.tooltip-badge').textContent = estado.regiao;
+                tooltip.querySelector('.tooltip-stat-value').textContent = estado.decisoes.toLocaleString('pt-BR');
+                tooltip.querySelector('.tooltip-stat-rate').textContent = estado.taxa + '%';
+                tooltip.style.display = 'block';
+            } else {
+                path.style.filter = 'none';
+                path.style.strokeWidth = '1.5';
+                path.style.strokeOpacity = '0.6';
+                path.style.transform = 'scale(1)';
+                tooltip.style.display = 'none';
+            }
+        },
 
-            // Create state hexagons/circles
-            const statesGroup = this.svg.append('g').attr('class', 'states-group');
-            const labelsGroup = this.svg.append('g').attr('class', 'labels-group');
-            const calloutGroup = this.svg.append('g').attr('class', 'callout-group');
+        moveTooltip(event) {
+            const tooltip = document.getElementById('mapa-tooltip');
+            const x = event.clientX + 15;
+            const y = event.clientY + 15;
+            tooltip.style.left = x + 'px';
+            tooltip.style.top = y + 'px';
+        },
 
-            const maxDecisoes = Math.max(...Object.values(this.estados).map(e => e.decisoes));
-            const tooltip = document.getElementById('map-tooltip');
+        selectState(code) {
+            this.selectedState = code;
+            const estado = this.estados[code];
+            const panel = document.getElementById('mapa-info-panel');
 
-            Object.entries(this.statePositions).forEach(([code, pos]) => {
-                const estado = this.estados[code];
-                if (!estado) return;
-
-                const intensity = estado.decisoes / maxDecisoes;
-                const radius = 20 + (intensity * 15);
-
-                // Create state circle
-                const circle = statesGroup.append('circle')
-                    .attr('cx', pos.x)
-                    .attr('cy', pos.y)
-                    .attr('r', radius)
-                    .attr('class', 'state-path')
-                    .attr('data-state', code)
-                    .style('fill', '#1e3a5f')
-                    .style('stroke', '#38bdf8')
-                    .style('stroke-width', 1.5)
-                    .style('cursor', 'pointer')
-                    .style('transition', 'all 0.3s ease');
-
-                // State label inside circle
-                statesGroup.append('text')
-                    .attr('x', pos.x)
-                    .attr('y', pos.y + 4)
-                    .attr('text-anchor', 'middle')
-                    .attr('class', 'state-code')
-                    .style('fill', '#e2e8f0')
-                    .style('font-size', '11px')
-                    .style('font-weight', '700')
-                    .style('pointer-events', 'none')
-                    .text(code);
-
-                // External labels with callout lines
-                const labelOffset = 60;
-                let labelX, labelY, lineEndX, lineEndY;
-
-                switch (pos.labelPos) {
-                    case 'left':
-                        labelX = pos.x - labelOffset - 40;
-                        labelY = pos.y;
-                        lineEndX = pos.x - radius - 5;
-                        lineEndY = pos.y;
-                        break;
-                    case 'right':
-                        labelX = pos.x + labelOffset + 40;
-                        labelY = pos.y;
-                        lineEndX = pos.x + radius + 5;
-                        lineEndY = pos.y;
-                        break;
-                    case 'top':
-                        labelX = pos.x;
-                        labelY = pos.y - labelOffset;
-                        lineEndX = pos.x;
-                        lineEndY = pos.y - radius - 5;
-                        break;
-                    case 'bottom':
-                        labelX = pos.x;
-                        labelY = pos.y + labelOffset;
-                        lineEndX = pos.x;
-                        lineEndY = pos.y + radius + 5;
-                        break;
+            // Update all state visuals
+            document.querySelectorAll('.state-group').forEach(g => {
+                const statePath = g.querySelector('.state-path');
+                if (g.dataset.state === code) {
+                    statePath.style.stroke = '#FFEF4D';
+                    statePath.style.strokeWidth = '3';
+                    statePath.style.strokeOpacity = '1';
+                } else {
+                    statePath.style.stroke = '#ffffff';
+                    statePath.style.strokeWidth = '1.5';
+                    statePath.style.strokeOpacity = '0.6';
                 }
-
-                // Callout line
-                calloutGroup.append('line')
-                    .attr('x1', lineEndX)
-                    .attr('y1', lineEndY)
-                    .attr('x2', labelX)
-                    .attr('y2', labelY)
-                    .attr('class', 'callout-line')
-                    .attr('data-state', code)
-                    .style('stroke', '#38bdf8')
-                    .style('stroke-width', 1)
-                    .style('stroke-dasharray', '3,2')
-                    .style('opacity', 0);
-
-                // External label group
-                const labelGroup = labelsGroup.append('g')
-                    .attr('class', 'state-label')
-                    .attr('data-state', code)
-                    .style('opacity', 0);
-
-                labelGroup.append('text')
-                    .attr('x', labelX)
-                    .attr('y', labelY - 6)
-                    .attr('text-anchor', 'middle')
-                    .attr('class', 'label-text')
-                    .style('fill', '#e2e8f0')
-                    .style('font-size', '10px')
-                    .style('font-weight', '500')
-                    .text(estado.nome);
-
-                labelGroup.append('text')
-                    .attr('x', labelX)
-                    .attr('y', labelY + 10)
-                    .attr('text-anchor', 'middle')
-                    .attr('class', 'label-value')
-                    .style('fill', '#f0e68c')
-                    .style('font-size', '14px')
-                    .style('font-weight', '700')
-                    .text(estado.decisoes.toLocaleString('pt-BR'));
-
-                // Event handlers
-                circle
-                    .on('mouseenter', (event) => {
-                        d3.select(event.target)
-                            .style('fill', '#2d5a7b')
-                            .style('stroke-width', 2)
-                            .style('filter', 'drop-shadow(0 0 8px rgba(56, 189, 248, 0.5))');
-
-                        // Show callout and label
-                        d3.select(`.callout-line[data-state="${code}"]`).style('opacity', 0.6);
-                        d3.select(`.state-label[data-state="${code}"]`).style('opacity', 1);
-
-                        // Show tooltip
-                        if (tooltip) {
-                            tooltip.innerHTML = `
-                                <div class="tooltip-title">${estado.nome}</div>
-                                <div class="tooltip-stats">
-                                    <div class="tooltip-stat">
-                                        <span class="tooltip-stat-label">Decisoes</span>
-                                        <span class="tooltip-stat-value">${estado.decisoes.toLocaleString('pt-BR')}</span>
-                                    </div>
-                                    <div class="tooltip-stat">
-                                        <span class="tooltip-stat-label">Taxa Aprovacao</span>
-                                        <span class="tooltip-stat-value">${estado.taxa}%</span>
-                                    </div>
-                                </div>
-                            `;
-                            tooltip.classList.add('active');
-                            const rect = container.getBoundingClientRect();
-                            tooltip.style.left = (event.clientX - rect.left + 15) + 'px';
-                            tooltip.style.top = (event.clientY - rect.top + 15) + 'px';
-                        }
-                    })
-                    .on('mousemove', (event) => {
-                        if (tooltip) {
-                            const rect = container.getBoundingClientRect();
-                            tooltip.style.left = (event.clientX - rect.left + 15) + 'px';
-                            tooltip.style.top = (event.clientY - rect.top + 15) + 'px';
-                        }
-                    })
-                    .on('mouseleave', (event) => {
-                        if (this.selectedState !== code) {
-                            d3.select(event.target)
-                                .style('fill', '#1e3a5f')
-                                .style('stroke-width', 1.5)
-                                .style('filter', 'none');
-
-                            d3.select(`.callout-line[data-state="${code}"]`).style('opacity', 0);
-                            d3.select(`.state-label[data-state="${code}"]`).style('opacity', 0);
-                        }
-
-                        if (tooltip) {
-                            tooltip.classList.remove('active');
-                        }
-                    })
-                    .on('click', (event) => {
-                        // Clear previous selection
-                        if (this.selectedState) {
-                            d3.select(`.state-path[data-state="${this.selectedState}"]`)
-                                .style('fill', '#1e3a5f')
-                                .style('stroke', '#38bdf8')
-                                .style('filter', 'none');
-                            d3.select(`.callout-line[data-state="${this.selectedState}"]`).style('opacity', 0);
-                            d3.select(`.state-label[data-state="${this.selectedState}"]`).style('opacity', 0);
-                        }
-
-                        // Set new selection
-                        this.selectedState = code;
-                        d3.select(event.target)
-                            .style('fill', '#f0e68c')
-                            .style('stroke', '#f0e68c')
-                            .style('filter', 'url(#glow-active)');
-
-                        d3.select(`.callout-line[data-state="${code}"]`)
-                            .style('stroke', '#f0e68c')
-                            .style('opacity', 0.8);
-                        d3.select(`.state-label[data-state="${code}"]`).style('opacity', 1);
-                    });
             });
 
-            // Add legend
-            this.renderMapLegend();
-        },
-
-        renderFallbackMap() {
-            const container = document.getElementById('brazil-d3-map');
-            if (!container) return;
-
-            const html = `
-                <div style="text-align: center; padding: 40px; color: #94a3b8;">
-                    <svg width="64" height="64" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
-                    </svg>
-                    <p style="margin-top: 16px;">Carregando mapa interativo...</p>
-                    <p style="font-size: 12px; opacity: 0.7;">Certifique-se de que o D3.js esta carregado</p>
+            // Update info panel
+            panel.innerHTML = `
+                <div class="info-panel-header selected">
+                    <span class="state-code">${code}</span>
+                    <span class="state-name">${estado.nome}</span>
                 </div>
-            `;
-            container.innerHTML = html;
-        },
-
-        renderMapLegend() {
-            const container = document.querySelector('.d3-map-container');
-            if (!container) return;
-
-            // Remove existing legend
-            const existingLegend = container.querySelector('.d3-map-legend');
-            if (existingLegend) existingLegend.remove();
-
-            const legend = document.createElement('div');
-            legend.className = 'd3-map-legend';
-            legend.innerHTML = `
-                <div class="d3-map-legend-title">Decisoes por Estado</div>
-                <div class="d3-map-legend-scale">
-                    <div class="d3-map-legend-item">
-                        <div class="d3-map-legend-color" style="background: #1e3a5f;"></div>
-                        <span>Menor volume</span>
+                <div class="info-panel-stats">
+                    <div class="info-stat">
+                        <div class="info-stat-value">${estado.decisoes.toLocaleString('pt-BR')}</div>
+                        <div class="info-stat-label">Decisoes</div>
                     </div>
-                    <div class="d3-map-legend-item">
-                        <div class="d3-map-legend-color" style="background: #38bdf8;"></div>
-                        <span>Volume medio</span>
-                    </div>
-                    <div class="d3-map-legend-item">
-                        <div class="d3-map-legend-color" style="background: #f0e68c;"></div>
-                        <span>Maior volume</span>
+                    <div class="info-stat">
+                        <div class="info-stat-value">${estado.taxa}%</div>
+                        <div class="info-stat-label">Taxa Deferimento</div>
                     </div>
                 </div>
+                <div class="info-panel-region">
+                    <span class="region-tag">${estado.regiao}</span>
+                </div>
+                <div class="info-panel-chart">
+                    <div class="mini-bar-chart">
+                        <div class="bar-fill" style="width: ${(estado.decisoes / 4521 * 100)}%"></div>
+                    </div>
+                    <span class="chart-label">Volume relativo ao maior (SP)</span>
+                </div>
             `;
-            container.appendChild(legend);
         },
 
-        getRegionColor(stateCode) {
-            for (const [regiao, data] of Object.entries(this.regioes)) {
-                if (data.estados.includes(stateCode)) {
-                    return data.cor;
-                }
-            }
-            return '#FFEF4D';
+        renderTopStates() {
+            const container = document.getElementById('mapa-top-states');
+            if (!container) return;
+
+            const sorted = Object.entries(this.estados)
+                .sort((a, b) => b[1].decisoes - a[1].decisoes)
+                .slice(0, 5);
+
+            container.innerHTML = sorted.map(([code, estado], index) => {
+                const colorInfo = this.getStateColor(estado.decisoes);
+                return `
+                    <div class="top-state-item" onclick="App.PageMapa.selectState('${code}')">
+                        <div class="top-state-rank">${index + 1}</div>
+                        <div class="top-state-info">
+                            <span class="top-state-code" style="background: ${colorInfo.fill}">${code}</span>
+                            <span class="top-state-name">${estado.nome}</span>
+                        </div>
+                        <div class="top-state-value">${estado.decisoes.toLocaleString('pt-BR')}</div>
+                    </div>
+                `;
+            }).join('');
         },
 
         renderRanking() {
