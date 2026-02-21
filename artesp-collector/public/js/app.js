@@ -1,6 +1,6 @@
 /**
  * IRIS Platform - Single Page Application
- * Instituto de Regulacao, Inovacao e Sustentabilidade
+ * Instituto de Regulação, Inovação e Sustentabilidade
  *
  * Main application JavaScript file
  * Handles routing, navigation, and page rendering
@@ -51,34 +51,37 @@
 
             // Update breadcrumb
             const pageNames = {
-                '/hub': 'Hub de Inteligencia Regulatoria',
+                '/hub': 'Hub de Inteligência Regulatória',
                 '/metricas': 'Dashboard Geral',
-                '/deliberacoes': 'Deliberacoes',
-                '/monitor': 'Monitor de Reunioes',
+                '/deliberacoes': 'Deliberações',
+                '/monitor': 'Monitor de Reuniões',
                 '/diretores': 'Diretores e Mandatos',
                 '/jurimetria': 'Jurimetria',
-                '/governanca': 'Governanca Regulatoria',
+                '/governanca': 'Governança Regulatória',
                 '/boletim': 'Boletim Mensal',
                 '/auditoria': 'Auditoria Forense',
                 '/upload': 'Upload de PDFs',
-                '/analise': 'Analise de PDFs',
-                '/agencias': 'Agencias Reguladoras',
+                '/analise': 'Análise de PDFs',
+                '/agencias': 'Agências Reguladoras',
                 '/mapa': 'Mapa do Brasil',
-                '/radar': 'Radar Regulatorio',
-                '/painel-regulatorio': 'Painel Regulatorio',
+                '/radar': 'Radar Regulatório',
+                '/painel-regulatorio': 'Painel Regulatório',
                 '/setores': 'Setores Regulados',
                 '/microtemas': 'Microtemas',
                 '/empresas': 'Empresas',
-                '/historico': 'Historico',
-                '/grafo': 'Grafo de Conexoes',
+                '/historico': 'Histórico',
+                '/grafo': 'Grafo de Conexões',
                 '/monitoramento': 'Monitoramento 24/7',
-                '/dossie': 'Dossies Automaticos',
+                '/dossie': 'Dossiês Automáticos',
                 '/cruzamento': 'Cruzamento de Dados'
             };
             const breadcrumb = document.getElementById('breadcrumb-page');
             if (breadcrumb) {
-                breadcrumb.textContent = pageNames[path] || 'Inteligencia Regulatoria';
+                breadcrumb.textContent = pageNames[path] || 'Inteligência Regulatória';
             }
+
+            // Cleanup before navigation
+            if (typeof PageGrafo !== 'undefined' && PageGrafo.animFrame) { PageGrafo.destroy(); }
 
             // Show page
             document.querySelectorAll('.page-view').forEach(page => {
@@ -273,7 +276,7 @@
 
             const container = document.getElementById('deliberacoes-list');
             if (container) {
-                container.innerHTML = '<div class="loading"><div class="spinner"></div><span>Carregando deliberacoes...</span></div>';
+                container.innerHTML = '<div class="loading"><div class="spinner"></div><span>Carregando deliberações...</span></div>';
             }
 
             try {
@@ -574,15 +577,15 @@
 
         exportCSV() {
             if (this.filtered.length === 0) {
-                alert('Nenhuma deliberacao para exportar');
+                alert('Nenhuma deliberação para exportar');
                 return;
             }
             Utils.exportCSV(this.filtered, [
                 { key: 'processo', label: 'Processo' },
                 { key: 'interessado', label: 'Interessado' },
                 { key: 'microtema', label: 'Microtema' },
-                { key: 'decisao', label: 'Decisao' },
-                { key: 'numero_reuniao', label: 'Reuniao' },
+                { key: 'decisao', label: 'Decisão' },
+                { key: 'numero_reuniao', label: 'Reunião' },
                 { key: 'data_reuniao', label: 'Data' }
             ], 'deliberacoes_iris.csv');
         }
@@ -655,7 +658,7 @@
                     'iniciando': 'Iniciando...',
                     'baixando': 'Baixando PDF...',
                     'extraindo_texto': 'Extraindo Texto...',
-                    'processado': 'Concluido',
+                    'processado': 'Concluído',
                     'erro': 'Erro'
                 };
 
@@ -663,7 +666,7 @@
                     <div class="meeting-header">
                         <div class="meeting-info">
                             <h3>${r.numero_reuniao || 'Reuniao ' + r.id.substring(0, 8)}</h3>
-                            <p>${r.data_reuniao || 'Data nao identificada'} - ${r.tipo || 'deliberacao'}</p>
+                            <p>${r.data_reuniao || 'Data não identificada'} - ${r.tipo || 'deliberacao'}</p>
                             <a href="${r.url_origem}" target="_blank">${r.url_origem.substring(0, 60)}...</a>
                         </div>
                         <div class="meeting-status">
@@ -683,7 +686,7 @@
                 }
 
                 if (r.deliberacoes_count > 0) {
-                    html += `<div class="meeting-delibs"><h4>${r.deliberacoes_count} deliberacoes extraidas</h4></div>`;
+                    html += `<div class="meeting-delibs"><h4>${r.deliberacoes_count} deliberações extraídas</h4></div>`;
                 }
 
                 html += `<div class="meeting-actions">`;
@@ -725,7 +728,7 @@
         },
 
         async excluir(id) {
-            if (!confirm('Excluir esta reuniao e todas suas deliberacoes?')) return;
+            if (!confirm('Excluir esta reunião e todas suas deliberações?')) return;
             await API.delete(`/api/reunioes-monitoradas/${id}`);
             await this.load();
         }
@@ -1261,7 +1264,7 @@
                     <div class="participation-rank">${i + 1}</div>
                     <div class="participation-info">
                         <div class="participation-name">${d.nome}</div>
-                        <div class="participation-count">${d.participacoes} participacoes</div>
+                        <div class="participation-count">${d.participacoes} participações</div>
                     </div>
                     <span class="relatorias-badge">${d.relatorias} relatorias</span>
                 </div>
@@ -2146,7 +2149,7 @@
                         <div class="mandato-info">
                             <div class="mandato-name">${d.nome}</div>
                             <div class="mandato-role">${d.cargo}</div>
-                            <span class="mandato-status ${d.ativo ? 'active' : 'inactive'}">${d.ativo ? 'Em Exercicio' : 'Encerrado'}</span>
+                            <span class="mandato-status ${d.ativo ? 'active' : 'inactive'}">${d.ativo ? 'Em Exercício' : 'Encerrado'}</span>
                         </div>
                     </div>
                     <div class="mandato-body">
@@ -2237,7 +2240,7 @@
                         <div class="participation-rank">${i + 1}</div>
                         <div class="participation-info">
                             <div class="participation-name">${d.nome}</div>
-                            <div class="participation-count">${d.participacoes} participacoes</div>
+                            <div class="participation-count">${d.participacoes} participações</div>
                         </div>
                     </div>
                     <span class="participation-badge">${d.relatorias} relatorias</span>
@@ -2253,7 +2256,7 @@
                 <div class="director-option ${i === this.selectedDirector ? 'active' : ''}" data-index="${i}" onclick="App.PageJurimetria.selectDirector(${i})">
                     <div class="director-option-info">
                         <div class="director-option-name">${d.nome}</div>
-                        <div class="director-option-stats">${d.participacoes} participacoes colegiadas</div>
+                        <div class="director-option-stats">${d.participacoes} participações colegiadas</div>
                     </div>
                     <span class="director-option-badge">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
@@ -2291,7 +2294,7 @@
                     <div class="profile-info">
                         <div class="profile-name">${d.nome}</div>
                         <div class="profile-role">${d.cargo}</div>
-                        <span class="profile-status">${d.ativo ? 'Em Exercicio' : 'Encerrado'}</span>
+                        <span class="profile-status">${d.ativo ? 'Em Exercício' : 'Encerrado'}</span>
                     </div>
                 </div>
 
@@ -2537,7 +2540,7 @@
 
         gerar() {
             const mes = document.getElementById('boletim-mes')?.value;
-            alert('Gerando boletim para ' + mes + '...\nEsta funcionalidade sera conectada a API de geracao de boletins.');
+            alert('Gerando boletim para ' + mes + '...\nEsta funcionalidade será conectada à API de geração de boletins.');
         },
 
         imprimir() {
@@ -2556,446 +2559,189 @@
     };
 
     // ============================================
-    // PAGE: Grafo de Conexoes - Search-First Network Explorer
+    // PAGE: Grafo de Conexões - CIA Intelligence Network
     // ============================================
     const PageGrafo = {
-        allEntities: [],
-        allConnections: [],
-        visibleNodes: [],
-        visibleLinks: [],
-        selectedEntity: null,
-        searchTerm: '',
-        activeCategory: 'todos',
-        zoom: 1,
-        containerWidth: 1000,
-        containerHeight: 600,
-
+        canvas: null, ctx: null, nodes: [], edges: [], animFrame: null,
+        dragging: null, hovering: null, selected: null,
+        mouse: { x: 0, y: 0 }, camera: { x: 0, y: 0, zoom: 1 },
+        width: 0, height: 0, time: 0,
+        graphData: {
+            directors: [
+                { id:'d1',label:'André Isper',full:'André Isper Rodrigues Barnabé',role:'Diretor-Presidente',initials:'AI' },
+                { id:'d2',label:'Diego Zanatto',full:'Diego Albert Zanatto',role:'Diretor de Fiscalização',initials:'DZ' },
+                { id:'d3',label:'Fernanda Rudnik',full:'Fernanda Esbizaro Rodrigues Rudnik',role:'Diretora de Planejamento',initials:'FR' },
+                { id:'d4',label:'Raquel Carneiro',full:'Raquel França Carneiro',role:'Diretora de Investimentos',initials:'RC' }
+            ],
+            companies: [
+                { id:'c1',label:'Ecovias',full:'Ecovias dos Imigrantes S.A.',sector:'Rodovias',contracts:12 },
+                { id:'c2',label:'CCR AutoBAn',full:'CCR AutoBAn S.A.',sector:'Rodovias',contracts:8 },
+                { id:'c3',label:'EcoRodovias',full:'EcoRodovias Infraestrutura',sector:'Rodovias',contracts:6 },
+                { id:'c4',label:'Arteris',full:'Arteris S.A.',sector:'Rodovias',contracts:9 },
+                { id:'c5',label:'ViaQuatro',full:'ViaQuatro - Metrô Linha 4',sector:'Metroviário',contracts:5 },
+                { id:'c6',label:'ViaMobilidade',full:'ViaMobilidade Linhas 8 e 9',sector:'Ferroviário',contracts:7 },
+                { id:'c7',label:'Tamoios',full:'Concessionária Tamoios',sector:'Rodovias',contracts:4 },
+                { id:'c8',label:'CART',full:'Conc. Auto Raposo Tavares',sector:'Rodovias',contracts:5 }
+            ],
+            themes: [
+                { id:'t1',label:'Revisão Tarifária',count:45,category:'financeiro' },
+                { id:'t2',label:'Obras/Investimentos',count:67,category:'infraestrutura' },
+                { id:'t3',label:'Reequilíbrio Econômico',count:34,category:'financeiro' },
+                { id:'t4',label:'Fiscalização',count:56,category:'regulação' },
+                { id:'t5',label:'Multas e Sanções',count:28,category:'regulação' },
+                { id:'t6',label:'Contrato/Aditivo',count:23,category:'contratual' },
+                { id:'t7',label:'Qualidade de Serviço',count:19,category:'operacional' },
+                { id:'t8',label:'Segurança Viária',count:15,category:'operacional' }
+            ],
+            agencies: [
+                { id:'a1',label:'ARTESP',full:'Agência de Transporte do Estado de SP',deliberations:1247 },
+                { id:'a2',label:'ANTT',full:'Agência Nacional de Transportes Terrestres',deliberations:3456 }
+            ],
+            connections: [
+                {source:'d1',target:'c1',strength:0.9,label:'23 deliberações'},{source:'d1',target:'c2',strength:0.7,label:'15 deliberações'},
+                {source:'d1',target:'c4',strength:0.6,label:'11 deliberações'},{source:'d1',target:'c6',strength:0.4,label:'7 deliberações'},
+                {source:'d2',target:'c1',strength:0.8,label:'19 deliberações'},{source:'d2',target:'c3',strength:0.7,label:'14 deliberações'},
+                {source:'d2',target:'c5',strength:0.5,label:'9 deliberações'},{source:'d2',target:'c7',strength:0.4,label:'6 deliberações'},
+                {source:'d3',target:'c2',strength:0.8,label:'18 deliberações'},{source:'d3',target:'c4',strength:0.6,label:'12 deliberações'},
+                {source:'d3',target:'c8',strength:0.5,label:'8 deliberações'},{source:'d3',target:'c6',strength:0.3,label:'5 deliberações'},
+                {source:'d4',target:'c1',strength:0.7,label:'16 deliberações'},{source:'d4',target:'c3',strength:0.6,label:'10 deliberações'},
+                {source:'d4',target:'c5',strength:0.5,label:'8 deliberações'},{source:'d4',target:'c8',strength:0.4,label:'6 deliberações'},
+                {source:'d1',target:'t1',strength:0.8,label:'34 votos'},{source:'d1',target:'t2',strength:0.9,label:'41 votos'},
+                {source:'d2',target:'t4',strength:0.9,label:'48 votos'},{source:'d2',target:'t5',strength:0.7,label:'22 votos'},
+                {source:'d3',target:'t2',strength:0.8,label:'35 votos'},{source:'d3',target:'t6',strength:0.6,label:'14 votos'},
+                {source:'d4',target:'t3',strength:0.8,label:'28 votos'},{source:'d4',target:'t1',strength:0.7,label:'20 votos'},
+                {source:'c1',target:'t1',strength:0.7,label:'18 processos'},{source:'c1',target:'t2',strength:0.8,label:'24 processos'},
+                {source:'c2',target:'t3',strength:0.6,label:'9 processos'},{source:'c4',target:'t4',strength:0.5,label:'7 processos'},
+                {source:'c5',target:'t7',strength:0.7,label:'12 processos'},{source:'c3',target:'t5',strength:0.6,label:'8 processos'},
+                {source:'c6',target:'t8',strength:0.5,label:'6 processos'},{source:'c7',target:'t2',strength:0.4,label:'5 processos'},
+                {source:'a1',target:'d1',strength:1.0,label:'Presidente'},{source:'a1',target:'d2',strength:0.9,label:'Diretor'},
+                {source:'a1',target:'d3',strength:0.9,label:'Diretora'},{source:'a1',target:'d4',strength:0.9,label:'Diretora'}
+            ]
+        },
         init() {
             const page = document.getElementById('page-grafo');
             page.classList.add('active');
-            this.initDatabase();
-            this.renderSearchInterface();
-            this.bindEvents();
+            this.setupCanvas();
+            this.buildGraph();
+            this.setupEvents();
+            this.animate();
+            document.getElementById('intel-total-nodes').textContent = this.nodes.length;
+            document.getElementById('intel-total-edges').textContent = this.edges.length;
         },
-
-        initDatabase() {
-            // Database of all entities
-            this.allEntities = [
-                // Agencias
-                { id: 'ag1', name: 'ARTESP', type: 'agencia', sigla: 'ARTESP', setor: 'Transporte', estado: 'SP', deliberacoes: 4521, diretores: 4 },
-                { id: 'ag2', name: 'ANEEL', type: 'agencia', sigla: 'ANEEL', setor: 'Energia', estado: 'Federal', deliberacoes: 3245, diretores: 5 },
-                { id: 'ag3', name: 'ANATEL', type: 'agencia', sigla: 'ANATEL', setor: 'Telecom', estado: 'Federal', deliberacoes: 2876, diretores: 5 },
-                { id: 'ag4', name: 'ANP', type: 'agencia', sigla: 'ANP', setor: 'Petroleo', estado: 'Federal', deliberacoes: 1543, diretores: 4 },
-
-                // Diretores ARTESP
-                { id: 'dir1', name: 'Andre Isper R. Barnabe', type: 'diretor', cargo: 'Diretor-Presidente', agencia: 'ARTESP', desde: '2023', deliberacoes: 156, cpf: '687.***.***-08' },
-                { id: 'dir2', name: 'Diego Albert Zanatto', type: 'diretor', cargo: 'Diretor de Fiscalizacao', agencia: 'ARTESP', desde: '2022', deliberacoes: 89, cpf: '345.***.***-12' },
-                { id: 'dir3', name: 'Fernanda Esbizaro', type: 'diretor', cargo: 'Diretora Tecnica', agencia: 'ARTESP', desde: '2023', deliberacoes: 112, cpf: '456.***.***-34' },
-                { id: 'dir4', name: 'Raquel Franca Carneiro', type: 'diretor', cargo: 'Diretora Administrativa', agencia: 'ARTESP', desde: '2022', deliberacoes: 78, cpf: '567.***.***-45' },
-
-                // Empresas
-                { id: 'emp1', name: 'CCR S.A.', type: 'empresa', cnpj: '02.846.056/0001-97', setor: 'Concessoes', capital: 'R$ 8.5 bi', deliberacoes: 245, alertas: 2 },
-                { id: 'emp2', name: 'Ecorodovias', type: 'empresa', cnpj: '04.149.454/0001-80', setor: 'Concessoes', capital: 'R$ 2.1 bi', deliberacoes: 187, alertas: 3 },
-                { id: 'emp3', name: 'ViaOeste', type: 'empresa', cnpj: '02.748.567/0001-45', setor: 'Concessoes', capital: 'R$ 320 mi', deliberacoes: 98, alertas: 1, controlador: 'CCR S.A.' },
-                { id: 'emp4', name: 'AutoBAn', type: 'empresa', cnpj: '02.695.324/0001-89', setor: 'Concessoes', capital: 'R$ 450 mi', deliberacoes: 76, alertas: 0, controlador: 'CCR S.A.' },
-                { id: 'emp5', name: 'Ecovias', type: 'empresa', cnpj: '03.158.863/0001-92', setor: 'Concessoes', capital: 'R$ 500 mi', deliberacoes: 112, alertas: 2, controlador: 'Ecorodovias' },
-                { id: 'emp6', name: 'SPVias', type: 'empresa', cnpj: '04.156.487/0001-23', setor: 'Concessoes', capital: 'R$ 280 mi', deliberacoes: 54, alertas: 0 },
-
-                // Processos
-                { id: 'proc1', name: 'ARTESP-PRC-2024/00123', type: 'processo', assunto: 'Reequilibrio Economico', empresa: 'CCR S.A.', valor: 'R$ 45 milhoes', status: 'Em analise' },
-                { id: 'proc2', name: 'ARTESP-PRC-2024/00456', type: 'processo', assunto: 'Multa Contratual', empresa: 'ViaOeste', valor: 'R$ 2.3 milhoes', status: 'Deferido' },
-                { id: 'proc3', name: 'ARTESP-PRC-2024/00789', type: 'processo', assunto: 'Obras de Duplicacao', empresa: 'Ecovias', valor: 'R$ 120 milhoes', status: 'Indeferido' }
-            ];
-
-            // Database of all connections
-            this.allConnections = [
-                // Diretores -> Agencia
-                { source: 'dir1', target: 'ag1', type: 'dirige', label: 'Dirige' },
-                { source: 'dir2', target: 'ag1', type: 'dirige', label: 'Dirige' },
-                { source: 'dir3', target: 'ag1', type: 'dirige', label: 'Dirige' },
-                { source: 'dir4', target: 'ag1', type: 'dirige', label: 'Dirige' },
-
-                // Empresas -> Agencia (reguladas por)
-                { source: 'emp1', target: 'ag1', type: 'regulada', label: 'Regulada por' },
-                { source: 'emp2', target: 'ag1', type: 'regulada', label: 'Regulada por' },
-                { source: 'emp3', target: 'ag1', type: 'regulada', label: 'Regulada por' },
-                { source: 'emp4', target: 'ag1', type: 'regulada', label: 'Regulada por' },
-                { source: 'emp5', target: 'ag1', type: 'regulada', label: 'Regulada por' },
-                { source: 'emp6', target: 'ag1', type: 'regulada', label: 'Regulada por' },
-
-                // Controle societario
-                { source: 'emp1', target: 'emp3', type: 'controla', label: 'Controla' },
-                { source: 'emp1', target: 'emp4', type: 'controla', label: 'Controla' },
-                { source: 'emp2', target: 'emp5', type: 'controla', label: 'Controla' },
-
-                // Processos -> Empresas
-                { source: 'proc1', target: 'emp1', type: 'processo', label: 'Interessado' },
-                { source: 'proc2', target: 'emp3', type: 'processo', label: 'Interessado' },
-                { source: 'proc3', target: 'emp5', type: 'processo', label: 'Interessado' },
-
-                // Diretores votaram em processos
-                { source: 'dir1', target: 'proc1', type: 'votou', label: 'Votou' },
-                { source: 'dir2', target: 'proc2', type: 'votou', label: 'Votou' },
-                { source: 'dir1', target: 'proc3', type: 'votou', label: 'Votou' },
-
-                // Vinculo oculto (exemplo de alerta)
-                { source: 'dir2', target: 'emp3', type: 'vinculo_oculto', label: 'Vinculo Detectado', hidden: true }
-            ];
+        destroy() { if (this.animFrame) { cancelAnimationFrame(this.animFrame); this.animFrame = null; } },
+        setupCanvas() {
+            this.canvas = document.getElementById('intel-canvas');
+            this.ctx = this.canvas.getContext('2d');
+            const wrapper = this.canvas.parentElement;
+            this.width = wrapper.clientWidth; this.height = wrapper.clientHeight;
+            this.canvas.width = this.width * 2; this.canvas.height = this.height * 2;
+            this.canvas.style.width = this.width + 'px'; this.canvas.style.height = this.height + 'px';
+            this.ctx.scale(2, 2);
+            this.camera = { x: this.width / 2, y: this.height / 2, zoom: 1 };
         },
-
-        renderSearchInterface() {
-            const container = document.getElementById('grafo-container');
-            if (!container) return;
-
-            const categories = [
-                { id: 'todos', label: 'Todos', icon: 'M4 6h16M4 12h16M4 18h16' },
-                { id: 'agencia', label: 'Agencias', icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4' },
-                { id: 'diretor', label: 'Diretores', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' },
-                { id: 'empresa', label: 'Empresas', icon: 'M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' },
-                { id: 'processo', label: 'Processos', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' }
-            ];
-
-            container.innerHTML = `
-                <div class="grafo-explorer">
-                    <!-- Search Panel -->
-                    <div class="grafo-search-panel">
-                        <div class="search-header">
-                            <h3>Explorar Conexoes</h3>
-                            <p>Selecione uma entidade para visualizar suas conexoes</p>
-                        </div>
-
-                        <div class="search-input-wrapper">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-                            <input type="text" id="grafo-search-input" placeholder="Buscar agencia, diretor, empresa...">
-                        </div>
-
-                        <div class="category-tabs">
-                            ${categories.map(cat => `
-                                <button class="category-tab ${cat.id === 'todos' ? 'active' : ''}" data-category="${cat.id}">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="${cat.icon}"/></svg>
-                                    <span>${cat.label}</span>
-                                </button>
-                            `).join('')}
-                        </div>
-
-                        <div class="entity-list" id="grafo-entities-list">
-                            ${this.renderEntitiesList()}
-                        </div>
-                    </div>
-
-                    <!-- Graph Canvas -->
-                    <div class="grafo-canvas-area" id="grafo-canvas-area">
-                        <div class="grafo-empty-state" id="grafo-empty-state">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="64" height="64">
-                                <circle cx="12" cy="12" r="3"/>
-                                <path d="M12 2v4m0 12v4m10-10h-4M6 12H2m15.364-6.364l-2.828 2.828M9.464 14.536l-2.828 2.828m12.728 0l-2.828-2.828M9.464 9.464L6.636 6.636"/>
-                            </svg>
-                            <h3>Selecione uma Entidade</h3>
-                            <p>Escolha uma agencia, diretor, empresa ou processo na lista ao lado para visualizar suas conexoes no grafo.</p>
-                        </div>
-                        <div class="grafo-canvas" id="grafo-canvas" style="display: none;">
-                            <svg class="grafo-svg-lines" id="grafo-svg-lines" viewBox="0 0 ${this.containerWidth} ${this.containerHeight}">
-                                <defs>
-                                    <marker id="arrow-yellow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#FFEF4D"/></marker>
-                                    <marker id="arrow-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#60a5fa"/></marker>
-                                    <marker id="arrow-green" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#4ade80"/></marker>
-                                    <marker id="arrow-purple" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#a855f7"/></marker>
-                                    <marker id="arrow-red" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#ef4444"/></marker>
-                                </defs>
-                                <g id="grafo-links-group"></g>
-                            </svg>
-                            <div class="grafo-nodes-container" id="grafo-nodes-container"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Legend -->
-                <div class="grafo-legend-bottom">
-                    <div class="legend-item"><span class="legend-dot" style="background: #FFEF4D;"></span> Agencia</div>
-                    <div class="legend-item"><span class="legend-dot" style="background: #60a5fa;"></span> Diretor</div>
-                    <div class="legend-item"><span class="legend-dot" style="background: #4ade80;"></span> Empresa</div>
-                    <div class="legend-item"><span class="legend-dot" style="background: #a855f7;"></span> Processo</div>
-                    <div class="legend-item"><span class="legend-line dashed" style="background: #ef4444;"></span> Alerta</div>
-                </div>`;
-        },
-
-        renderEntitiesList() {
-            let filtered = this.allEntities;
-
-            // Filter by category
-            if (this.activeCategory !== 'todos') {
-                filtered = filtered.filter(e => e.type === this.activeCategory);
-            }
-
-            // Filter by search term
-            if (this.searchTerm) {
-                const term = this.searchTerm.toLowerCase();
-                filtered = filtered.filter(e =>
-                    e.name.toLowerCase().includes(term) ||
-                    (e.sigla && e.sigla.toLowerCase().includes(term)) ||
-                    (e.cnpj && e.cnpj.includes(term)) ||
-                    (e.setor && e.setor.toLowerCase().includes(term))
-                );
-            }
-
-            if (filtered.length === 0) {
-                return '<div class="entities-empty">Nenhuma entidade encontrada</div>';
-            }
-
-            return filtered.map(entity => {
-                const typeColors = { agencia: '#FFEF4D', diretor: '#60a5fa', empresa: '#4ade80', processo: '#a855f7' };
-                const color = typeColors[entity.type] || '#64748b';
-                const isSelected = this.selectedEntity?.id === entity.id;
-
-                return `
-                    <div class="entity-item ${isSelected ? 'selected' : ''}" data-entity-id="${entity.id}">
-                        <div class="entity-icon" style="background: ${color}20; color: ${color};">
-                            ${this.getTypeIcon(entity.type)}
-                        </div>
-                        <div class="entity-info">
-                            <div class="entity-name">${entity.name}</div>
-                            <div class="entity-subtitle">${this.getEntityMeta(entity)}</div>
-                        </div>
-                        <div class="entity-badge" style="background: ${color}20; color: ${color};">
-                            ${entity.deliberacoes || 0}
-                        </div>
-                    </div>`;
-            }).join('');
-        },
-
-        getTypeIcon(type) {
-            const icons = {
-                agencia: '<svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 01-1 1h-2a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/></svg>',
-                diretor: '<svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/></svg>',
-                empresa: '<svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fill-rule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clip-rule="evenodd"/></svg>',
-                processo: '<svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/></svg>'
-            };
-            return icons[type] || icons.empresa;
-        },
-
-        getEntityMeta(entity) {
-            switch (entity.type) {
-                case 'agencia': return `${entity.setor} • ${entity.estado}`;
-                case 'diretor': return `${entity.cargo} • ${entity.agencia}`;
-                case 'empresa': return entity.cnpj || entity.setor;
-                case 'processo': return `${entity.assunto} • ${entity.status}`;
-                default: return '';
-            }
-        },
-
-        bindEvents() {
-            // Search input
-            const searchInput = document.getElementById('grafo-search-input');
-            if (searchInput) {
-                searchInput.addEventListener('input', (e) => {
-                    this.searchTerm = e.target.value;
-                    this.updateEntitiesList();
-                });
-            }
-
-            // Category tabs
-            document.querySelectorAll('.category-tab').forEach(tab => {
-                tab.addEventListener('click', (e) => {
-                    document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
-                    e.currentTarget.classList.add('active');
-                    this.activeCategory = e.currentTarget.dataset.category;
-                    this.updateEntitiesList();
+        buildGraph() {
+            this.nodes = []; this.edges = [];
+            const cx = this.width / 2, cy = this.height / 2;
+            [{data:this.graphData.directors,type:'director',color:'#60a5fa',radius:28,ring:120},
+             {data:this.graphData.companies,type:'company',color:'#fbbf24',radius:20,ring:250},
+             {data:this.graphData.themes,type:'theme',color:'#4ade80',radius:16,ring:200},
+             {data:this.graphData.agencies,type:'agency',color:'#a78bfa',radius:32,ring:60}
+            ].forEach(({data,type,color,radius,ring}) => {
+                data.forEach((item,i) => {
+                    const angle = (i/data.length)*Math.PI*2 - Math.PI/2;
+                    const jitter = (Math.random()-0.5)*60;
+                    this.nodes.push({...item,type,color,radius,x:cx+Math.cos(angle)*(ring+jitter),y:cy+Math.sin(angle)*(ring+jitter),vx:0,vy:0,pulsePhase:Math.random()*Math.PI*2,connections:0});
                 });
             });
-
-            // Entity selection (event delegation)
-            const entitiesList = document.getElementById('grafo-entities-list');
-            if (entitiesList) {
-                entitiesList.addEventListener('click', (e) => {
-                    const item = e.target.closest('.entity-item');
-                    if (item) {
-                        const entityId = item.dataset.entityId;
-                        this.selectEntity(entityId);
-                    }
-                });
+            this.graphData.connections.forEach(conn => {
+                const source = this.nodes.find(n=>n.id===conn.source), target = this.nodes.find(n=>n.id===conn.target);
+                if(source&&target){source.connections++;target.connections++;this.edges.push({source,target,strength:conn.strength,label:conn.label,phase:Math.random()*Math.PI*2});}
+            });
+            for(let i=0;i<150;i++) this.simulateForces(0.3*(1-i/150));
+        },
+        simulateForces(alpha) {
+            const cx=this.width/2,cy=this.height/2;
+            for(let i=0;i<this.nodes.length;i++) for(let j=i+1;j<this.nodes.length;j++){
+                const a=this.nodes[i],b=this.nodes[j];let dx=b.x-a.x,dy=b.y-a.y,dist=Math.sqrt(dx*dx+dy*dy)||1,force=2000/(dist*dist),fx=(dx/dist)*force*alpha,fy=(dy/dist)*force*alpha;
+                a.vx-=fx;a.vy-=fy;b.vx+=fx;b.vy+=fy;
             }
+            this.edges.forEach(e=>{let dx=e.target.x-e.source.x,dy=e.target.y-e.source.y,dist=Math.sqrt(dx*dx+dy*dy)||1,force=(dist-150)*0.005*e.strength*alpha,fx=(dx/dist)*force,fy=(dy/dist)*force;e.source.vx+=fx;e.source.vy+=fy;e.target.vx-=fx;e.target.vy-=fy;});
+            this.nodes.forEach(n=>{n.vx+=(cx-n.x)*0.001*alpha;n.vy+=(cy-n.y)*0.001*alpha;n.x+=n.vx;n.y+=n.vy;n.vx*=0.9;n.vy*=0.9;});
         },
-
-        updateEntitiesList() {
-            const container = document.getElementById('grafo-entities-list');
-            if (container) {
-                container.innerHTML = this.renderEntitiesList();
-            }
-        },
-
-        selectEntity(entityId) {
-            this.selectedEntity = this.allEntities.find(e => e.id === entityId);
-            if (!this.selectedEntity) return;
-
-            // Update list to show selection
-            this.updateEntitiesList();
-
-            // Show graph canvas, hide empty state
-            document.getElementById('grafo-empty-state').style.display = 'none';
-            document.getElementById('grafo-canvas').style.display = 'block';
-
-            // Build visible nodes and links
-            this.buildGraphFromEntity(entityId);
-
-            // Render the graph
-            this.renderGraph();
-        },
-
-        buildGraphFromEntity(entityId) {
-            const centerEntity = this.allEntities.find(e => e.id === entityId);
-            if (!centerEntity) return;
-
-            // Find all connections involving this entity
-            const relatedConnections = this.allConnections.filter(c =>
-                c.source === entityId || c.target === entityId
-            );
-
-            // Get all related entity IDs
-            const relatedIds = new Set([entityId]);
-            relatedConnections.forEach(c => {
-                relatedIds.add(c.source);
-                relatedIds.add(c.target);
+        setupEvents() {
+            const canvas=this.canvas;
+            canvas.addEventListener('mousemove',(e)=>{
+                const rect=canvas.getBoundingClientRect();
+                this.mouse.x=(e.clientX-rect.left-this.camera.x+this.width/2)/this.camera.zoom;
+                this.mouse.y=(e.clientY-rect.top-this.camera.y+this.height/2)/this.camera.zoom;
+                if(this.dragging){this.dragging.x=this.mouse.x;this.dragging.y=this.mouse.y;return;}
+                let found=null;
+                for(let i=this.nodes.length-1;i>=0;i--){const n=this.nodes[i],dx=this.mouse.x-n.x,dy=this.mouse.y-n.y;if(Math.sqrt(dx*dx+dy*dy)<n.radius+5){found=n;break;}}
+                if(found!==this.hovering){
+                    this.hovering=found;canvas.style.cursor=found?'pointer':'grab';
+                    const tooltip=document.getElementById('intel-tooltip');
+                    if(found){const tl={director:'Diretor',company:'Empresa',theme:'Tema',agency:'Agência'};tooltip.innerHTML=`<strong>${found.label}</strong>${tl[found.type]} | ${found.connections} conexões`;tooltip.style.display='block';const rx=e.clientX-rect.left,ry=e.clientY-rect.top;tooltip.style.left=(rx+15)+'px';tooltip.style.top=(ry-10)+'px';}
+                    else{tooltip.style.display='none';}
+                } else if(found){const tooltip=document.getElementById('intel-tooltip'),rx=e.clientX-canvas.getBoundingClientRect().left,ry=e.clientY-canvas.getBoundingClientRect().top;tooltip.style.left=(rx+15)+'px';tooltip.style.top=(ry-10)+'px';}
             });
-
-            // Build visible nodes
-            this.visibleNodes = Array.from(relatedIds).map(id => {
-                const entity = this.allEntities.find(e => e.id === id);
-                return entity ? { ...entity, isCenter: id === entityId } : null;
-            }).filter(Boolean);
-
-            // Build visible links
-            this.visibleLinks = relatedConnections;
-
-            // Calculate positions (center node in middle, others around)
-            this.calculatePositions();
-        },
-
-        calculatePositions() {
-            const centerX = this.containerWidth / 2;
-            const centerY = this.containerHeight / 2;
-            const radius = 200;
-
-            const centerNode = this.visibleNodes.find(n => n.isCenter);
-            const otherNodes = this.visibleNodes.filter(n => !n.isCenter);
-
-            if (centerNode) {
-                centerNode.x = centerX;
-                centerNode.y = centerY;
-            }
-
-            otherNodes.forEach((node, i) => {
-                const angle = (i / otherNodes.length) * 2 * Math.PI - Math.PI / 2;
-                node.x = centerX + Math.cos(angle) * radius;
-                node.y = centerY + Math.sin(angle) * radius;
+            canvas.addEventListener('mousedown',(e)=>{
+                if(this.hovering){this.dragging=this.hovering;canvas.style.cursor='grabbing';}
+                else{const sx=e.clientX,sy=e.clientY,cx=this.camera.x,cy=this.camera.y;const onM=(ev)=>{this.camera.x=cx+(ev.clientX-sx);this.camera.y=cy+(ev.clientY-sy);};const onU=()=>{window.removeEventListener('mousemove',onM);window.removeEventListener('mouseup',onU);};window.addEventListener('mousemove',onM);window.addEventListener('mouseup',onU);}
             });
+            canvas.addEventListener('mouseup',()=>{this.dragging=null;canvas.style.cursor=this.hovering?'pointer':'grab';});
+            canvas.addEventListener('click',()=>{if(this.hovering){this.selected=this.hovering;this.showNodeInfo(this.hovering);}});
+            canvas.addEventListener('wheel',(e)=>{e.preventDefault();const d=e.deltaY>0?0.9:1.1;this.camera.zoom=Math.max(0.3,Math.min(3,this.camera.zoom*d));});
+            document.getElementById('intel-filter-type')?.addEventListener('change',(e)=>{this.nodes.forEach(n=>{n._hidden=e.target.value!=='all'&&n.type!==e.target.value;});});
         },
-
-        renderGraph() {
-            this.renderLinks();
-            this.renderNodes();
+        showNodeInfo(node) {
+            document.getElementById('intel-info-title').textContent=node.label;
+            const connEdges=this.edges.filter(e=>e.source===node||e.target===node);
+            let html='';const tc={director:'#60a5fa',company:'#fbbf24',theme:'#4ade80',agency:'#a78bfa'};
+            if(node.type==='director') html=`<div class="info-row"><span class="info-label">Cargo</span><span class="info-value">${node.role}</span></div><div class="info-row"><span class="info-label">Conexões</span><span class="info-value">${node.connections}</span></div>`;
+            else if(node.type==='company') html=`<div class="info-row"><span class="info-label">Razão Social</span><span class="info-value" style="font-size:10px">${node.full}</span></div><div class="info-row"><span class="info-label">Setor</span><span class="info-value">${node.sector}</span></div><div class="info-row"><span class="info-label">Contratos</span><span class="info-value">${node.contracts}</span></div>`;
+            else if(node.type==='theme') html=`<div class="info-row"><span class="info-label">Categoria</span><span class="info-value">${node.category}</span></div><div class="info-row"><span class="info-label">Ocorrências</span><span class="info-value">${node.count}</span></div>`;
+            else if(node.type==='agency') html=`<div class="info-row"><span class="info-label">Nome</span><span class="info-value" style="font-size:10px">${node.full}</span></div><div class="info-row"><span class="info-label">Deliberações</span><span class="info-value">${node.deliberations}</span></div>`;
+            html+='<hr style="border-color:rgba(96,165,250,0.1);margin:8px 0"><div style="font-size:11px;color:#64748b;margin-bottom:6px">ENTIDADES CONECTADAS</div>';
+            connEdges.forEach(edge=>{const other=edge.source===node?edge.target:edge.source;html+=`<div class="info-row"><span class="info-label" style="display:flex;align-items:center;gap:4px"><span style="width:6px;height:6px;border-radius:50%;background:${tc[other.type]};display:inline-block"></span>${other.label}</span><span class="info-value" style="font-size:10px">${edge.label}</span></div>`;});
+            document.getElementById('intel-info-body').innerHTML=html;
         },
-
-        renderLinks() {
-            const linksGroup = document.getElementById('grafo-links-group');
-            if (!linksGroup) return;
-
-            const linkColors = {
-                dirige: { color: '#60a5fa', marker: 'blue' },
-                regulada: { color: '#FFEF4D', marker: 'yellow' },
-                controla: { color: '#4ade80', marker: 'green' },
-                processo: { color: '#a855f7', marker: 'purple' },
-                votou: { color: '#64748b', marker: 'gray' },
-                vinculo_oculto: { color: '#ef4444', marker: 'red' }
-            };
-
-            let svgContent = '';
-            this.visibleLinks.forEach((link, idx) => {
-                const source = this.visibleNodes.find(n => n.id === link.source);
-                const target = this.visibleNodes.find(n => n.id === link.target);
-                if (!source || !target) return;
-
-                const style = linkColors[link.type] || linkColors.regulada;
-                const dashArray = link.hidden ? '6,4' : 'none';
-
-                // Curve calculation
-                const midX = (source.x + target.x) / 2;
-                const midY = (source.y + target.y) / 2;
-                const dx = target.x - source.x;
-                const dy = target.y - source.y;
-                const len = Math.sqrt(dx * dx + dy * dy) || 1;
-                const offset = 30;
-                const perpX = -dy / len * offset;
-                const perpY = dx / len * offset;
-
-                svgContent += `
-                    <g class="link-group">
-                        <path d="M ${source.x} ${source.y} Q ${midX + perpX} ${midY + perpY} ${target.x} ${target.y}"
-                              fill="none" stroke="${style.color}" stroke-width="2"
-                              stroke-dasharray="${dashArray}" opacity="0.7"
-                              marker-end="url(#arrow-${style.marker})"/>
-                        <circle cx="${midX + perpX * 0.5}" cy="${midY + perpY * 0.5}" r="22"
-                                fill="rgba(15, 23, 42, 0.95)" stroke="${style.color}" stroke-width="1"/>
-                        <text x="${midX + perpX * 0.5}" y="${midY + perpY * 0.5 + 4}"
-                              text-anchor="middle" fill="${style.color}" font-size="9" font-weight="500">${link.label}</text>
-                    </g>`;
+        search(q) {
+            q=q.toLowerCase().trim();this.nodes.forEach(n=>{n._highlighted=q&&n.label.toLowerCase().includes(q);n._dimmed=q&&!n._highlighted;});
+            if(q){const m=this.nodes.find(n=>n._highlighted);if(m){this.camera.x=this.width/2-(m.x-this.width/2)*this.camera.zoom;this.camera.y=this.height/2-(m.y-this.height/2)*this.camera.zoom;}}
+        },
+        zoomIn(){this.camera.zoom=Math.min(3,this.camera.zoom*1.2);},
+        zoomOut(){this.camera.zoom=Math.max(0.3,this.camera.zoom/1.2);},
+        resetView(){
+            this.camera={x:this.width/2,y:this.height/2,zoom:1};this.nodes.forEach(n=>{n._hidden=false;n._highlighted=false;n._dimmed=false;});
+            this.selected=null;document.getElementById('intel-filter-type').value='all';document.getElementById('intel-search-input').value='';
+            document.getElementById('intel-info-title').textContent='Selecione uma Entidade';
+            document.getElementById('intel-info-body').innerHTML='<p style="color:#475569">Clique em um nó do grafo para visualizar informações detalhadas.</p>';
+        },
+        animate(){this.time+=0.016;this.simulateForces(0.01);this.draw();this.animFrame=requestAnimationFrame(()=>this.animate());},
+        draw() {
+            const ctx=this.ctx,w=this.width,h=this.height;ctx.clearRect(0,0,w,h);ctx.save();
+            ctx.translate(this.camera.x-w/2+(w/2)*(1-this.camera.zoom),this.camera.y-h/2+(h/2)*(1-this.camera.zoom));ctx.scale(this.camera.zoom,this.camera.zoom);
+            this.edges.forEach(edge=>{if(edge.source._hidden||edge.target._hidden)return;const dimmed=edge.source._dimmed&&edge.target._dimmed,hl=this.selected&&(edge.source===this.selected||edge.target===this.selected),hv=this.hovering&&(edge.source===this.hovering||edge.target===this.hovering);
+                const alpha=dimmed?0.03:hl?0.6:hv?0.4:0.12;ctx.beginPath();ctx.moveTo(edge.source.x,edge.source.y);ctx.lineTo(edge.target.x,edge.target.y);ctx.strokeStyle=hl||hv?`rgba(96,165,250,${alpha})`:`rgba(100,116,139,${alpha})`;ctx.lineWidth=hl?2:hv?1.5:0.8;ctx.stroke();
+                if(!dimmed){const t=((this.time*0.5+edge.phase)%1),px=edge.source.x+(edge.target.x-edge.source.x)*t,py=edge.source.y+(edge.target.y-edge.source.y)*t;ctx.beginPath();ctx.arc(px,py,hl?2.5:1.5,0,Math.PI*2);ctx.fillStyle=hl?'rgba(96,165,250,0.8)':'rgba(96,165,250,0.3)';ctx.fill();}
             });
-
-            linksGroup.innerHTML = svgContent;
-        },
-
-        renderNodes() {
-            const nodesContainer = document.getElementById('grafo-nodes-container');
-            if (!nodesContainer) return;
-
-            const typeColors = { agencia: '#FFEF4D', diretor: '#60a5fa', empresa: '#4ade80', processo: '#a855f7' };
-
-            let html = '';
-            this.visibleNodes.forEach(node => {
-                const color = typeColors[node.type] || '#64748b';
-                const size = node.isCenter ? 'large' : 'normal';
-
-                html += `
-                    <div class="grafo-node ${size} ${node.isCenter ? 'center' : ''}" data-node-id="${node.id}"
-                         style="left: ${node.x}px; top: ${node.y}px; --node-color: ${color};">
-                        <div class="node-icon">${this.getTypeIcon(node.type)}</div>
-                        <div class="node-label">${node.name}</div>
-                        ${node.alertas > 0 ? `<div class="node-alert">${node.alertas}</div>` : ''}
-                    </div>`;
+            this.nodes.forEach(node=>{if(node._hidden)return;const dimmed=node._dimmed,isSel=node===this.selected,isHov=node===this.hovering,isHl=node._highlighted,pulse=Math.sin(this.time*2+node.pulsePhase)*0.15+1;
+                const r=node.radius*(isHov?1.15:1)*(isHl?1.2:1),alpha=dimmed?0.15:1;
+                if((isSel||isHov||isHl)&&!dimmed){const glR=r*2.5*pulse,glow=ctx.createRadialGradient(node.x,node.y,r,node.x,node.y,glR);glow.addColorStop(0,node.color+'30');glow.addColorStop(1,node.color+'00');ctx.beginPath();ctx.arc(node.x,node.y,glR,0,Math.PI*2);ctx.fillStyle=glow;ctx.fill();}
+                if(!dimmed){const ambR=r*1.8*pulse,amb=ctx.createRadialGradient(node.x,node.y,r*0.5,node.x,node.y,ambR);amb.addColorStop(0,node.color+'15');amb.addColorStop(1,node.color+'00');ctx.beginPath();ctx.arc(node.x,node.y,ambR,0,Math.PI*2);ctx.fillStyle=amb;ctx.fill();}
+                ctx.beginPath();
+                if(node.type==='company'){for(let i=0;i<6;i++){const a=(Math.PI/3)*i-Math.PI/6,px=node.x+r*Math.cos(a),py=node.y+r*Math.sin(a);i===0?ctx.moveTo(px,py):ctx.lineTo(px,py);}ctx.closePath();}
+                else if(node.type==='theme'){ctx.moveTo(node.x,node.y-r);ctx.lineTo(node.x+r*0.8,node.y);ctx.lineTo(node.x,node.y+r);ctx.lineTo(node.x-r*0.8,node.y);ctx.closePath();}
+                else ctx.arc(node.x,node.y,r,0,Math.PI*2);
+                const num=parseInt(node.color.slice(1),16),cr=(num>>16)&255,cg=(num>>8)&255,cb=num&255;
+                const bg=ctx.createRadialGradient(node.x-r*0.3,node.y-r*0.3,0,node.x,node.y,r);bg.addColorStop(0,`rgba(${Math.min(255,cr+30)},${Math.min(255,cg+30)},${Math.min(255,cb+30)},${alpha*0.4})`);bg.addColorStop(1,`rgba(${cr},${cg},${cb},${alpha*0.2})`);ctx.fillStyle=bg;ctx.fill();
+                ctx.strokeStyle=`rgba(${cr},${cg},${cb},${alpha*(isSel?1:0.7)})`;ctx.lineWidth=isSel?2.5:isHov?2:1;ctx.stroke();
+                if(!dimmed||isHl){ctx.font=`${node.type==='agency'?'600 11px':node.type==='director'?'600 10px':'500 9px'} -apple-system,BlinkMacSystemFont,sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='rgba(0,0,0,0.6)';ctx.fillText(node.type==='director'?node.initials:node.label,node.x+0.5,node.y+0.5);ctx.fillStyle=`rgba(226,232,240,${alpha})`;ctx.fillText(node.type==='director'?node.initials:node.label,node.x,node.y);
+                    if(node.type==='director'||node.type==='agency'){ctx.font='500 9px -apple-system,BlinkMacSystemFont,sans-serif';ctx.fillStyle=`rgba(${cr},${cg},${cb},${alpha*0.8})`;ctx.fillText(node.label,node.x,node.y+r+14);}
+                }
             });
-
-            nodesContainer.innerHTML = html;
-
-            // Bind click events for expansion
-            nodesContainer.querySelectorAll('.grafo-node').forEach(nodeEl => {
-                nodeEl.addEventListener('click', () => {
-                    const nodeId = nodeEl.dataset.nodeId;
-                    if (nodeId !== this.selectedEntity?.id) {
-                        this.selectEntity(nodeId);
-                    }
-                });
-            });
-        },
-
-        setupFilters() {
-            // No longer needed with new design
-        },
-
-        initData() {
-            // Legacy - now uses initDatabase
-            this.initDatabase();
-        },
-
-        zoomIn() { },
-        zoomOut() { },
-        resetView() {
-            this.selectedEntity = null;
-            this.visibleNodes = [];
-            this.visibleLinks = [];
-            document.getElementById('grafo-empty-state').style.display = 'flex';
-            document.getElementById('grafo-canvas').style.display = 'none';
-            this.updateEntitiesList();
-        },
-        exportar() { alert('Exportando grafo...'); }
+            ctx.restore();
+        }
     };
 
     // ============================================
@@ -3219,7 +2965,7 @@
                 }
             }
 
-            progressText.textContent = 'Upload concluido!';
+            progressText.textContent = 'Upload concluído!';
             progressPercent.textContent = '100%';
             progressBar.style.width = '100%';
 
@@ -3236,7 +2982,7 @@
             const url = urlInput?.value?.trim();
 
             if (!url) {
-                alert('Digite uma URL valida');
+                alert('Digite uma URL válida');
                 return;
             }
 
@@ -3437,7 +3183,7 @@
             document.getElementById('batch-progress-title').textContent =
                 this.batchCancelled
                     ? 'Analise cancelada!'
-                    : `Analise concluida! ${completed} sucesso, ${errors} erros`;
+                    : `Análise concluída! ${completed} sucesso, ${errors} erros`;
             document.getElementById('batch-current-files').innerHTML = '';
 
             // Reload the list
@@ -3590,7 +3336,7 @@
                 clearInterval(progressInterval);
 
                 if (response?.sucesso) {
-                    statusText.textContent = 'Analise concluida!';
+                    statusText.textContent = 'Análise concluída!';
                     statusPercent.textContent = '100%';
                     progressBar.style.width = '100%';
 
@@ -3616,7 +3362,7 @@
             const pendentes = this.pdfs.filter(p => p.status === 'pendente');
 
             if (pendentes.length === 0) {
-                alert('Nenhum PDF pendente para analisar');
+                alert('Nenhum PDF pendente para análise');
                 return;
             }
 
@@ -3632,7 +3378,7 @@
                 const response = await API.post('/api/analisar-todos');
 
                 if (response?.sucesso) {
-                    statusText.textContent = `Analise concluida! ${response.total_deliberacoes || 0} deliberacoes extraidas.`;
+                    statusText.textContent = `Análise concluída! ${response.total_deliberacoes || 0} deliberações extraídas.`;
                     statusPercent.textContent = '100%';
                     progressBar.style.width = '100%';
 
@@ -4688,6 +4434,10 @@
         PageMicrotemas,
         PageEmpresas,
         PageHistorico,
+        PageGrafo,
+        PageMonitoramento,
+        PageDossie,
+        PageCruzamento,
 
         init() {
             // Register routes

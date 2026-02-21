@@ -8410,13 +8410,13 @@ tr:hover {
 }
 
 /* ============================================
-   IMPROVED GRAPH STYLES - Card-based Network
+   CIA-STYLE INTELLIGENCE NETWORK GRAPH
    ============================================ */
 #grafo-container {
     position: relative;
     border-radius: var(--radius-lg);
     overflow: hidden;
-    background: radial-gradient(ellipse at center, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 1) 100%);
+    background: #060a14;
     min-height: 600px;
 }
 
@@ -9360,6 +9360,260 @@ tr:hover {
         min-height: 400px;
     }
 }
+
+/* ============================================
+   CIA-STYLE INTELLIGENCE GRAPH OVERLAY
+   ============================================ */
+.intel-graph-wrapper {
+    position: relative;
+    width: 100%;
+    height: 650px;
+    background: #060a14;
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+    overflow: hidden;
+}
+
+.intel-graph-wrapper::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(rgba(42, 66, 140, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(42, 66, 140, 0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.intel-graph-wrapper::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, transparent 40%, #060a14 100%);
+    pointer-events: none;
+    z-index: 2;
+}
+
+#intel-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 3;
+    cursor: grab;
+}
+
+#intel-canvas:active {
+    cursor: grabbing;
+}
+
+.intel-tooltip {
+    position: absolute;
+    display: none;
+    padding: 10px 14px;
+    background: rgba(6, 10, 20, 0.95);
+    border: 1px solid rgba(96, 165, 250, 0.4);
+    border-radius: 8px;
+    color: #e2e8f0;
+    font-size: 12px;
+    line-height: 1.5;
+    pointer-events: none;
+    z-index: 20;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 0 20px rgba(96, 165, 250, 0.15);
+    max-width: 250px;
+}
+
+.intel-tooltip strong {
+    color: #60a5fa;
+    display: block;
+    margin-bottom: 4px;
+    font-size: 13px;
+}
+
+.intel-info-panel {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 280px;
+    background: rgba(6, 10, 20, 0.92);
+    border: 1px solid rgba(96, 165, 250, 0.2);
+    border-radius: 12px;
+    z-index: 15;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 0 40px rgba(96, 165, 250, 0.08);
+    overflow: hidden;
+}
+
+.intel-info-header {
+    padding: 16px;
+    border-bottom: 1px solid rgba(96, 165, 250, 0.15);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.intel-info-header h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #e2e8f0;
+    margin: 0;
+}
+
+.classified-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    background: rgba(248, 113, 113, 0.15);
+    border: 1px solid rgba(248, 113, 113, 0.3);
+    color: #f87171;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    border-radius: 3px;
+    width: fit-content;
+    font-family: 'Courier New', monospace;
+}
+
+.intel-info-body {
+    padding: 16px;
+    color: var(--text-secondary);
+    font-size: 12px;
+    line-height: 1.6;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.intel-info-body .info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.intel-info-body .info-row:last-child { border-bottom: none; }
+.intel-info-body .info-label { color: var(--text-muted); font-size: 11px; }
+.intel-info-body .info-value { color: #e2e8f0; font-weight: 600; font-size: 12px; font-family: 'Courier New', monospace; }
+
+.intel-controls {
+    position: absolute;
+    bottom: 16px;
+    left: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    z-index: 15;
+}
+
+.intel-controls button {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: 1px solid rgba(96, 165, 250, 0.2);
+    background: rgba(6, 10, 20, 0.85);
+    color: #94a3b8;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    transition: all 0.2s;
+    backdrop-filter: blur(8px);
+}
+
+.intel-controls button:hover {
+    background: rgba(96, 165, 250, 0.15);
+    color: #60a5fa;
+    border-color: rgba(96, 165, 250, 0.4);
+}
+
+.intel-classification {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    z-index: 15;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.intel-classification .classification-label {
+    padding: 4px 12px;
+    background: rgba(6, 10, 20, 0.85);
+    border: 1px solid rgba(96, 165, 250, 0.15);
+    border-radius: 6px;
+    color: #64748b;
+    font-size: 10px;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 1px;
+    backdrop-filter: blur(8px);
+}
+
+.intel-scan-line {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(96, 165, 250, 0.3), transparent);
+    z-index: 4;
+    animation: intelScanLine 4s linear infinite;
+}
+
+@keyframes intelScanLine {
+    0% { top: 0; }
+    100% { top: 100%; }
+}
+
+.intel-legend-bar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.intel-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.intel-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.intel-search {
+    position: absolute;
+    bottom: 16px;
+    right: 16px;
+    z-index: 15;
+}
+
+.intel-search input {
+    padding: 8px 14px;
+    background: rgba(6, 10, 20, 0.85);
+    border: 1px solid rgba(96, 165, 250, 0.2);
+    border-radius: 8px;
+    color: #e2e8f0;
+    font-size: 12px;
+    width: 200px;
+    outline: none;
+    backdrop-filter: blur(8px);
+    transition: border-color 0.2s;
+}
+
+.intel-search input:focus {
+    border-color: rgba(96, 165, 250, 0.5);
+    box-shadow: 0 0 12px rgba(96, 165, 250, 0.1);
+}
+
+.intel-search input::placeholder { color: #475569; }
 
 /* ============================================
    MODERN UI ENHANCEMENTS
