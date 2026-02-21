@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IRIS - Plataforma de Inteligencia Regulatoria</title>
+    <title>IRIS - Plataforma de Inteligência Regulatória</title>
     <style>
 /**
  * IRIS Platform - Identidade Visual Oficial
- * Instituto de Regulacao, Inovacao e Sustentabilidade
+ * Instituto de Regulação, Inovação e Sustentabilidade
  * Tema: Sandy Yellow (#FFEF4D) + Ebony Clay (#2A428C)
  */
 
@@ -2532,7 +2532,7 @@ tr:hover {
     background: linear-gradient(90deg, var(--text-muted), var(--text-secondary));
 }
 
-/* Fidelidade Juridica Badge */
+/* Fidelidade Jurídica Badge */
 .fidelity-badge {
     display: inline-flex;
     align-items: center;
@@ -2964,6 +2964,274 @@ tr:hover {
     font-weight: 700;
     color: var(--primary);
 }
+
+/* ============================================
+   INTELLIGENCE NETWORK GRAPH - CIA Style
+   ============================================ */
+.graph-wrapper {
+    position: relative;
+    width: 100%;
+    height: 650px;
+    background: #060a14;
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+    overflow: hidden;
+}
+
+.graph-wrapper::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(rgba(42, 66, 140, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(42, 66, 140, 0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.graph-wrapper::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, transparent 40%, #060a14 100%);
+    pointer-events: none;
+    z-index: 2;
+}
+
+#graph-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 3;
+    cursor: grab;
+}
+
+#graph-canvas:active {
+    cursor: grabbing;
+}
+
+.graph-tooltip {
+    position: absolute;
+    display: none;
+    padding: 10px 14px;
+    background: rgba(6, 10, 20, 0.95);
+    border: 1px solid rgba(96, 165, 250, 0.4);
+    border-radius: 8px;
+    color: #e2e8f0;
+    font-size: 12px;
+    line-height: 1.5;
+    pointer-events: none;
+    z-index: 20;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 0 20px rgba(96, 165, 250, 0.15);
+    max-width: 250px;
+}
+
+.graph-tooltip strong {
+    color: #60a5fa;
+    display: block;
+    margin-bottom: 4px;
+    font-size: 13px;
+}
+
+.graph-info-panel {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 280px;
+    background: rgba(6, 10, 20, 0.92);
+    border: 1px solid rgba(96, 165, 250, 0.2);
+    border-radius: 12px;
+    z-index: 15;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 0 40px rgba(96, 165, 250, 0.08);
+    overflow: hidden;
+}
+
+.graph-info-header {
+    padding: 16px;
+    border-bottom: 1px solid rgba(96, 165, 250, 0.15);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.graph-info-header h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #e2e8f0;
+    margin: 0;
+}
+
+.classified-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    background: rgba(248, 113, 113, 0.15);
+    border: 1px solid rgba(248, 113, 113, 0.3);
+    color: #f87171;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    border-radius: 3px;
+    width: fit-content;
+    font-family: 'Courier New', monospace;
+}
+
+.graph-info-body {
+    padding: 16px;
+    color: var(--text-secondary);
+    font-size: 12px;
+    line-height: 1.6;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.graph-info-body .info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.graph-info-body .info-row:last-child {
+    border-bottom: none;
+}
+
+.graph-info-body .info-label {
+    color: var(--text-muted);
+    font-size: 11px;
+}
+
+.graph-info-body .info-value {
+    color: #e2e8f0;
+    font-weight: 600;
+    font-size: 12px;
+    font-family: 'Courier New', monospace;
+}
+
+.graph-controls {
+    position: absolute;
+    bottom: 16px;
+    left: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    z-index: 15;
+}
+
+.graph-controls button {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: 1px solid rgba(96, 165, 250, 0.2);
+    background: rgba(6, 10, 20, 0.85);
+    color: #94a3b8;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    transition: all 0.2s;
+    backdrop-filter: blur(8px);
+}
+
+.graph-controls button:hover {
+    background: rgba(96, 165, 250, 0.15);
+    color: #60a5fa;
+    border-color: rgba(96, 165, 250, 0.4);
+}
+
+.graph-classification {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    z-index: 15;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.graph-classification .classification-label {
+    padding: 4px 12px;
+    background: rgba(6, 10, 20, 0.85);
+    border: 1px solid rgba(96, 165, 250, 0.15);
+    border-radius: 6px;
+    color: #64748b;
+    font-size: 10px;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 1px;
+    backdrop-filter: blur(8px);
+}
+
+.graph-scan-line {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(96, 165, 250, 0.3), transparent);
+    z-index: 4;
+    animation: scanLine 4s linear infinite;
+}
+
+@keyframes scanLine {
+    0% { top: 0; }
+    100% { top: 100%; }
+}
+
+.graph-legend-bar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.graph-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.graph-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.graph-search {
+    position: absolute;
+    bottom: 16px;
+    right: 16px;
+    z-index: 15;
+}
+
+.graph-search input {
+    padding: 8px 14px;
+    background: rgba(6, 10, 20, 0.85);
+    border: 1px solid rgba(96, 165, 250, 0.2);
+    border-radius: 8px;
+    color: #e2e8f0;
+    font-size: 12px;
+    width: 200px;
+    outline: none;
+    backdrop-filter: blur(8px);
+    transition: border-color 0.2s;
+}
+
+.graph-search input:focus {
+    border-color: rgba(96, 165, 250, 0.5);
+    box-shadow: 0 0 12px rgba(96, 165, 250, 0.1);
+}
+
+.graph-search input::placeholder {
+    color: #475569;
+}
     </style>
 </head>
 <body>
@@ -2990,7 +3258,7 @@ tr:hover {
                 </div>
                 <div class="sidebar-brand">
                     <span class="sidebar-brand-name">IRIS</span>
-                    <span class="sidebar-brand-subtitle">Instituto de Regulacao</span>
+                    <span class="sidebar-brand-subtitle">Instituto de Regulação</span>
                 </div>
             </div>
 
@@ -2999,7 +3267,7 @@ tr:hover {
                     <div class="nav-section-title">Decisoes</div>
                     <a data-route="/deliberacoes" class="nav-item">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                        Deliberacoes
+                        Deliberações
                     </a>
                     <a data-route="/monitor" class="nav-item">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
@@ -3019,7 +3287,7 @@ tr:hover {
                     </a>
                     <a data-route="/governanca" class="nav-item">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-                        Governanca
+                        Governança
                     </a>
                 </div>
 
@@ -3031,15 +3299,15 @@ tr:hover {
                     </a>
                     <a data-route="/analise" class="nav-item">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
-                        Analise de PDFs
+                        Análise de PDFs
                     </a>
                 </div>
 
                 <div class="nav-section">
-                    <div class="nav-section-title">Agencias</div>
+                    <div class="nav-section-title">Agências</div>
                     <a data-route="/agencias" class="nav-item">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-                        Visao Geral
+                        Visão Geral
                     </a>
                     <a data-route="/mapa" class="nav-item">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg>
@@ -3048,7 +3316,7 @@ tr:hover {
                 </div>
 
                 <div class="nav-section">
-                    <div class="nav-section-title">Inteligencia</div>
+                    <div class="nav-section-title">Inteligência</div>
                     <a data-route="/metricas" class="nav-item">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path></svg>
                         Dashboard Geral
@@ -3060,6 +3328,10 @@ tr:hover {
                     <a data-route="/auditoria" class="nav-item">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
                         Auditoria Forense
+                    </a>
+                    <a data-route="/conexoes" class="nav-item">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                        Rede de Conexões
                     </a>
                 </div>
             </div>
@@ -3080,7 +3352,7 @@ tr:hover {
                     <div class="breadcrumb">
                         <span class="breadcrumb-item">Plataforma IRIS</span>
                         <span class="breadcrumb-separator">/</span>
-                        <span class="breadcrumb-current" id="breadcrumb-page">Inteligencia Regulatoria</span>
+                        <span class="breadcrumb-current" id="breadcrumb-page">Inteligência Regulatória</span>
                     </div>
                 </div>
                 <div class="header-right">
@@ -3108,7 +3380,7 @@ tr:hover {
                     <div class="page-header">
                         <div class="page-title-section">
                             <h1 class="page-title">Dashboard Geral</h1>
-                            <p class="page-subtitle">Visao consolidada das deliberacoes regulatorias</p>
+                            <p class="page-subtitle">Visão consolidada das deliberações regulatórias</p>
                         </div>
                         <div class="page-actions">
                             <div class="filter-group">
@@ -3119,7 +3391,7 @@ tr:hover {
                             </div>
                             <div class="filter-group">
                                 <select class="filter-select">
-                                    <option>Todas Agencias</option>
+                                    <option>Todas Agências</option>
                                     <option>ARTESP</option>
                                 </select>
                             </div>
@@ -3155,13 +3427,13 @@ tr:hover {
                     <div class="stats-grid">
                         <div class="stat-card">
                             <div class="stat-card-header">
-                                <span class="stat-card-title">Total de Deliberacoes</span>
+                                <span class="stat-card-title">Total de Deliberações</span>
                                 <div class="stat-card-icon">
                                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                                 </div>
                             </div>
                             <div class="stat-card-value">109</div>
-                            <div class="stat-card-subtitle">Em 5 reunioes</div>
+                            <div class="stat-card-subtitle">Em 5 reuniões</div>
                         </div>
 
                         <div class="stat-card">
@@ -3188,27 +3460,27 @@ tr:hover {
 
                         <div class="stat-card">
                             <div class="stat-card-header">
-                                <span class="stat-card-title">Total de Reunioes</span>
+                                <span class="stat-card-title">Total de Reuniões</span>
                                 <div class="stat-card-icon">
                                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                                 </div>
                             </div>
                             <div class="stat-card-value">5</div>
-                            <div class="stat-card-subtitle">Reunioes ordinarias</div>
+                            <div class="stat-card-subtitle">Reuniões ordinárias</div>
                         </div>
                     </div>
 
                     <!-- Charts Row - Graficos lado a lado -->
                     <div class="grid-2" style="margin-bottom: 24px;">
-                        <!-- Grafico de Barras - Deliberacoes por Microtema -->
+                        <!-- Grafico de Barras - Deliberações por Microtema -->
                         <div class="card">
                             <div class="card-header">
                                 <div>
                                     <h2 class="card-title">
                                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path></svg>
-                                        Deliberacoes por Microtema
+                                        Deliberações por Microtema
                                     </h2>
-                                    <p class="card-subtitle">Distribuicao tematica das decisoes</p>
+                                    <p class="card-subtitle">Distribuição temática das decisões</p>
                                 </div>
                             </div>
                             <div class="card-body">
@@ -3224,7 +3496,7 @@ tr:hover {
                                         <span class="bar-value">28</span>
                                     </div>
                                     <div class="bar-item">
-                                        <span class="bar-label">Reequilibrio Economico-Financeiro</span>
+                                        <span class="bar-label">Reequilíbrio Econômico-Financeiro</span>
                                         <div class="bar-track"><div class="bar-fill" style="width: 45%;"></div></div>
                                         <span class="bar-value">18</span>
                                     </div>
@@ -3234,17 +3506,17 @@ tr:hover {
                                         <span class="bar-value">15</span>
                                     </div>
                                     <div class="bar-item">
-                                        <span class="bar-label">Revisao Tarifaria</span>
+                                        <span class="bar-label">Revisão Tarifária</span>
                                         <div class="bar-track"><div class="bar-fill" style="width: 30%;"></div></div>
                                         <span class="bar-value">12</span>
                                     </div>
                                     <div class="bar-item">
-                                        <span class="bar-label">Autorizacao</span>
+                                        <span class="bar-label">Autorização</span>
                                         <div class="bar-track"><div class="bar-fill" style="width: 22%;"></div></div>
                                         <span class="bar-value">9</span>
                                     </div>
                                     <div class="bar-item">
-                                        <span class="bar-label">Concessao</span>
+                                        <span class="bar-label">Concessão</span>
                                         <div class="bar-track"><div class="bar-fill" style="width: 18%;"></div></div>
                                         <span class="bar-value">7</span>
                                     </div>
@@ -3262,7 +3534,7 @@ tr:hover {
                             <div class="card-header">
                                 <div>
                                     <h2 class="card-title">Pauta Interna vs Externa</h2>
-                                    <p class="card-subtitle">Proporcao de assuntos</p>
+                                    <p class="card-subtitle">Proporção de assuntos</p>
                                 </div>
                             </div>
                             <div class="card-body">
@@ -3301,7 +3573,7 @@ tr:hover {
                                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                                     Votos por Diretor
                                 </h2>
-                                <p class="card-subtitle">Top 10 diretores com mais participacoes</p>
+                                <p class="card-subtitle">Top 10 diretores com mais participações</p>
                             </div>
                         </div>
                         <div class="card-body" style="padding: 0;">
@@ -3311,8 +3583,8 @@ tr:hover {
                                         <th>Diretor</th>
                                         <th>Cargo</th>
                                         <th>Total Votos</th>
-                                        <th>Favoraveis</th>
-                                        <th>Contrarios</th>
+                                        <th>Favoráveis</th>
+                                        <th>Contrários</th>
                                         <th>Taxa Aprovacao</th>
                                     </tr>
                                 </thead>
@@ -3327,7 +3599,7 @@ tr:hover {
                                     </tr>
                                     <tr>
                                         <td><strong>Marcos Antonio Ribeiro</strong></td>
-                                        <td>Diretor de Fiscalizacao</td>
+                                        <td>Diretor de Fiscalização</td>
                                         <td>198</td>
                                         <td><span class="badge badge-success">130</span></td>
                                         <td><span class="badge badge-danger">56</span></td>
@@ -3356,13 +3628,13 @@ tr:hover {
                 </div>
 
                 <!-- ============================================
-                     PAGE: Deliberacoes
+                     PAGE: Deliberações
                      ============================================ -->
                 <div id="page-deliberacoes" class="page-view">
                     <div class="page-header">
                         <div class="page-title-section">
-                            <h1 class="page-title">Deliberacoes</h1>
-                            <p class="page-subtitle">Lista completa de todas as deliberacoes processadas da ARTESP</p>
+                            <h1 class="page-title">Deliberações</h1>
+                            <p class="page-subtitle">Lista completa de todas as deliberações processadas da ARTESP</p>
                         </div>
                         <div class="page-actions">
                             <button class="btn btn-primary" onclick="App.PageDeliberacoes.exportCSV()">
@@ -3375,7 +3647,7 @@ tr:hover {
                     <div class="filters-bar">
                         <div class="filter-group">
                             <select class="filter-select" id="filtro-decisao" onchange="App.PageDeliberacoes.filter()">
-                                <option value="">Todas Decisoes</option>
+                                <option value="">Todas Decisões</option>
                                 <option value="Deferido">Deferido</option>
                                 <option value="Indeferido">Indeferido</option>
                             </select>
@@ -3398,7 +3670,7 @@ tr:hover {
                     <div class="stats-grid">
                         <div class="stat-card">
                             <div class="stat-card-header">
-                                <span class="stat-card-title">Total de Deliberacoes</span>
+                                <span class="stat-card-title">Total de Deliberações</span>
                             </div>
                             <div class="stat-card-value" id="stat-total-delibs">-</div>
                         </div>
@@ -3416,7 +3688,7 @@ tr:hover {
                         </div>
                         <div class="stat-card">
                             <div class="stat-card-header">
-                                <span class="stat-card-title">Taxa de Aprovacao</span>
+                                <span class="stat-card-title">Taxa de Aprovação</span>
                             </div>
                             <div class="stat-card-value primary" id="stat-taxa">-</div>
                         </div>
@@ -3437,7 +3709,7 @@ tr:hover {
                                     </tr>
                                 </thead>
                                 <tbody id="deliberacoes-table-body">
-                                    <tr><td colspan="7"><div class="loading"><div class="spinner"></div><span>Carregando deliberacoes...</span></div></td></tr>
+                                    <tr><td colspan="7"><div class="loading"><div class="spinner"></div><span>Carregando deliberações...</span></div></td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -3450,7 +3722,7 @@ tr:hover {
                 <div id="page-monitor" class="page-view">
                     <div class="page-header">
                         <div class="page-title-section">
-                            <h1 class="page-title">Monitor de Reunioes</h1>
+                            <h1 class="page-title">Monitor de Reuniões</h1>
                             <p class="page-subtitle">Acompanhe o processamento de documentos da ARTESP em tempo real</p>
                         </div>
                         <div class="page-actions">
@@ -3471,15 +3743,15 @@ tr:hover {
                         <div class="card-body">
                             <div class="form-row">
                                 <div class="form-group" style="flex: 3;">
-                                    <label class="form-label">URL do PDF ou Pagina da ARTESP</label>
+                                    <label class="form-label">URL do PDF ou Página da ARTESP</label>
                                     <input type="text" class="form-input" id="monitor-url" placeholder="https://www.artesp.sp.gov.br/...">
                                 </div>
                                 <div class="form-group" style="flex: 1;">
                                     <label class="form-label">Tipo de Documento</label>
                                     <select class="form-select" id="monitor-tipo">
-                                        <option value="deliberacao">Deliberacao</option>
-                                        <option value="ata">Ata de Reuniao</option>
-                                        <option value="retificacao">Retificacao</option>
+                                        <option value="deliberacao">Deliberação</option>
+                                        <option value="ata">Ata de Reunião</option>
+                                        <option value="retificacao">Retificação</option>
                                     </select>
                                 </div>
                                 <button class="btn btn-primary" onclick="App.PageMonitor.adicionar()" style="height: 42px; margin-top: auto;">
@@ -3511,7 +3783,7 @@ tr:hover {
                         </div>
                         <div class="stat-card">
                             <div class="stat-card-header">
-                                <span class="stat-card-title">Concluidos</span>
+                                <span class="stat-card-title">Concluídos</span>
                             </div>
                             <div class="stat-card-value success" id="monitor-processados">0</div>
                         </div>
@@ -3525,8 +3797,8 @@ tr:hover {
                             <div class="meetings-list" id="monitor-list">
                                 <div class="empty-state">
                                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                    <h3>Nenhuma reuniao monitorada</h3>
-                                    <p>Adicione uma URL de documento acima para comecar o monitoramento</p>
+                                    <h3>Nenhuma reunião monitorada</h3>
+                                    <p>Adicione uma URL de documento acima para começar o monitoramento</p>
                                 </div>
                             </div>
                         </div>
@@ -3540,7 +3812,7 @@ tr:hover {
                     <div class="page-header">
                         <div class="page-title-section">
                             <h1 class="page-title">Diretores e Mandatos</h1>
-                            <p class="page-subtitle">Composicao atual e historico do Conselho Diretor da ARTESP</p>
+                            <p class="page-subtitle">Composição atual e histórico do Conselho Diretor da ARTESP</p>
                         </div>
                     </div>
 
@@ -3559,13 +3831,13 @@ tr:hover {
                         </div>
                         <div class="stat-card">
                             <div class="stat-card-header">
-                                <span class="stat-card-title">Media de Votos</span>
+                                <span class="stat-card-title">Média de Votos</span>
                             </div>
                             <div class="stat-card-value">210</div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-card-header">
-                                <span class="stat-card-title">Taxa Media Aprovacao</span>
+                                <span class="stat-card-title">Taxa Média Aprovação</span>
                             </div>
                             <div class="stat-card-value success">74.2%</div>
                         </div>
@@ -3583,7 +3855,7 @@ tr:hover {
                     <div class="page-header">
                         <div class="page-title-section">
                             <h1 class="page-title">Jurimetria</h1>
-                            <p class="page-subtitle">Analise estatistica de votos e padroes de decisao dos diretores da ARTESP</p>
+                            <p class="page-subtitle">Análise estatística de votos e padrões de decisão dos diretores da ARTESP</p>
                         </div>
                     </div>
 
@@ -3591,8 +3863,8 @@ tr:hover {
                     <div class="tabs-container">
                         <div class="tabs-nav">
                             <button class="tab-btn active" data-tab="mandatos">Mandatos</button>
-                            <button class="tab-btn" data-tab="visao-institucional">Visao Institucional</button>
-                            <button class="tab-btn" data-tab="analise-avancada">Analise Avancada</button>
+                            <button class="tab-btn" data-tab="visao-institucional">Visão Institucional</button>
+                            <button class="tab-btn" data-tab="analise-avancada">Análise Avançada</button>
                             <button class="tab-btn" data-tab="perfil-individual">Perfil Individual</button>
                         </div>
 
@@ -3601,7 +3873,7 @@ tr:hover {
                             <div class="stats-grid">
                                 <div class="stat-card">
                                     <div class="stat-card-header">
-                                        <span class="stat-card-title">Diretores em Exercicio</span>
+                                        <span class="stat-card-title">Diretores em Exercício</span>
                                     </div>
                                     <div class="stat-card-value primary">4</div>
                                 </div>
@@ -3613,13 +3885,13 @@ tr:hover {
                                 </div>
                                 <div class="stat-card">
                                     <div class="stat-card-header">
-                                        <span class="stat-card-title">Media de Participacoes</span>
+                                        <span class="stat-card-title">Média de Participações</span>
                                     </div>
                                     <div class="stat-card-value">40</div>
                                 </div>
                                 <div class="stat-card">
                                     <div class="stat-card-header">
-                                        <span class="stat-card-title">Taxa Media Unanimidade</span>
+                                        <span class="stat-card-title">Taxa Média Unanimidade</span>
                                     </div>
                                     <div class="stat-card-value success">100%</div>
                                 </div>
@@ -3650,15 +3922,15 @@ tr:hover {
                             </div>
                         </div>
 
-                        <!-- Tab: Visao Institucional -->
+                        <!-- Tab: Visão Institucional -->
                         <div id="tab-visao-institucional" class="tab-content">
                             <!-- Graficos de Donut lado a lado -->
                             <div class="charts-row">
-                                <!-- Distribuicao de Votos -->
+                                <!-- Distribuição de Votos -->
                                 <div class="card">
                                     <div class="card-header">
                                         <div>
-                                            <h2 class="card-title">Distribuicao de Votos</h2>
+                                            <h2 class="card-title">Distribuição de Votos</h2>
                                             <p class="card-subtitle">Por tipo de posicionamento</p>
                                         </div>
                                     </div>
@@ -3671,17 +3943,17 @@ tr:hover {
                                                 </svg>
                                                 <div class="donut-center">
                                                     <div class="donut-value">161</div>
-                                                    <div class="donut-label">Favoravel</div>
+                                                    <div class="donut-label">Favorável</div>
                                                 </div>
                                             </div>
                                             <div class="chart-legend">
                                                 <div class="legend-item">
                                                     <div class="legend-dot green"></div>
-                                                    <span>Favoravel: 161</span>
+                                                    <span>Favorável: 161</span>
                                                 </div>
                                                 <div class="legend-item">
                                                     <div class="legend-dot red"></div>
-                                                    <span>Desfavoravel: 0</span>
+                                                    <span>Desfavorável: 0</span>
                                                 </div>
                                                 <div class="legend-item">
                                                     <div class="legend-dot orange"></div>
@@ -3701,7 +3973,7 @@ tr:hover {
                                     <div class="card-header">
                                         <div>
                                             <h2 class="card-title">Votos por Setor</h2>
-                                            <p class="card-subtitle">Classificacao de assuntos</p>
+                                            <p class="card-subtitle">Classificação de assuntos</p>
                                         </div>
                                     </div>
                                     <div class="card-body">
@@ -3711,9 +3983,9 @@ tr:hover {
                                                     <circle class="donut-bg" cx="100" cy="100" r="70"/>
                                                     <!-- Rodovias - 48 -->
                                                     <circle cx="100" cy="100" r="70" fill="none" stroke="#f472b6" stroke-width="30" stroke-dasharray="165 275" stroke-dashoffset="0" style="transform: rotate(-90deg); transform-origin: center;"/>
-                                                    <!-- Onibus - 21 -->
+                                                    <!-- Ônibus - 21 -->
                                                     <circle cx="100" cy="100" r="70" fill="none" stroke="#4ade80" stroke-width="30" stroke-dasharray="72 368" stroke-dashoffset="-165" style="transform: rotate(-90deg); transform-origin: center;"/>
-                                                    <!-- Regulacao - 12 -->
+                                                    <!-- Regulação - 12 -->
                                                     <circle cx="100" cy="100" r="70" fill="none" stroke="#fbbf24" stroke-width="30" stroke-dasharray="41 399" stroke-dashoffset="-237" style="transform: rotate(-90deg); transform-origin: center;"/>
                                                     <!-- Marcos Legais - 5 -->
                                                     <circle cx="100" cy="100" r="70" fill="none" stroke="#a855f7" stroke-width="30" stroke-dasharray="17 423" stroke-dashoffset="-278" style="transform: rotate(-90deg); transform-origin: center;"/>
@@ -3732,11 +4004,11 @@ tr:hover {
                                                 </div>
                                                 <div class="legend-item">
                                                     <div class="legend-dot green"></div>
-                                                    <span>Onibus: 21</span>
+                                                    <span>Ônibus: 21</span>
                                                 </div>
                                                 <div class="legend-item">
                                                     <div class="legend-dot orange"></div>
-                                                    <span>Regulacao: 12</span>
+                                                    <span>Regulação: 12</span>
                                                 </div>
                                                 <div class="legend-item">
                                                     <div class="legend-dot purple"></div>
@@ -3752,13 +4024,13 @@ tr:hover {
                                 </div>
                             </div>
 
-                            <!-- Matriz de Votacao por Diretor -->
+                            <!-- Matriz de Votação por Diretor -->
                             <div class="voting-matrix-card">
                                 <div class="voting-matrix-header">
-                                    <h3>Matriz de Votacao por Diretor</h3>
+                                    <h3>Matriz de Votação por Diretor</h3>
                                     <span class="fidelity-badge">
                                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
-                                        Fidelidade Juridica
+                                        Fidelidade Jurídica
                                     </span>
                                 </div>
                                 <div class="voting-matrix-stats">
@@ -3767,7 +4039,7 @@ tr:hover {
                                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                                         </div>
                                         <div class="matrix-stat-text">
-                                            <span class="matrix-stat-label">Votos Nominais Explicitos</span>
+                                            <span class="matrix-stat-label">Votos Nominais Explícitos</span>
                                             <span class="matrix-stat-value">0 (0%)</span>
                                         </div>
                                     </div>
@@ -3776,7 +4048,7 @@ tr:hover {
                                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                                         </div>
                                         <div class="matrix-stat-text">
-                                            <span class="matrix-stat-label">Participacoes Colegiadas</span>
+                                            <span class="matrix-stat-label">Participações Colegiadas</span>
                                             <span class="matrix-stat-value">161 (100%)</span>
                                         </div>
                                     </div>
@@ -3785,7 +4057,7 @@ tr:hover {
                                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                         </div>
                                         <div class="matrix-stat-text">
-                                            <span class="matrix-stat-label">Alta Confianca</span>
+                                            <span class="matrix-stat-label">Alta Confiança</span>
                                             <span class="matrix-stat-value">0</span>
                                         </div>
                                     </div>
@@ -3821,8 +4093,8 @@ tr:hover {
                                     </table>
                                 </div>
                                 <div class="voting-legend">
-                                    <div class="legend-item"><div class="legend-dot green"></div> Favoravel</div>
-                                    <div class="legend-item"><div class="legend-dot red"></div> Desfavoravel</div>
+                                    <div class="legend-item"><div class="legend-dot green"></div> Favorável</div>
+                                    <div class="legend-item"><div class="legend-dot red"></div> Desfavorável</div>
                                     <div class="legend-item"><div class="legend-dot orange"></div> Vista</div>
                                     <div class="legend-item"><div class="legend-dot purple"></div> Relator / Nominal</div>
                                     <div class="legend-item"><div class="legend-dot blue"></div> Acompanhou</div>
@@ -3834,8 +4106,8 @@ tr:hover {
                             <div class="info-alert">
                                 <svg class="info-alert-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                 <div class="info-alert-content">
-                                    <h4>Votos nominais explicitos identificados: 0</h4>
-                                    <p>As atas da ARTESP (2025) registram decisoes colegiadas, sem identificacao publica de voto individual por diretor. Os dados acima representam <strong>participacoes em decisoes colegiadas</strong>, nao votos individuais nominais.</p>
+                                    <h4>Votos nominais explícitos identificados: 0</h4>
+                                    <p>As atas da ARTESP (2025) registram decisões colegiadas, sem identificação pública de voto individual por diretor. Os dados acima representam <strong>participações em decisões colegiadas</strong>, não votos individuais nominais.</p>
                                 </div>
                             </div>
 
@@ -3843,12 +4115,12 @@ tr:hover {
                                 <svg class="info-alert-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                 <div class="info-alert-content">
                                     <h4>Nota sobre fidelidade juridica:</h4>
-                                    <p>Participacoes "colegiadas" sao inferidas de decisoes unanimes sem identificacao nominal no texto. Analises de divergencia, aprovacao individual e perfil comportamental so estarao disponiveis quando votos nominais explicitos forem identificados nos PDFs.</p>
+                                    <p>Participações "colegiadas" são inferidas de decisões unânimes sem identificação nominal no texto. Análises de divergência, aprovação individual e perfil comportamental só estarão disponíveis quando votos nominais explícitos forem identificados nos PDFs.</p>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Tab: Analise Avancada -->
+                        <!-- Tab: Análise Avançada -->
                         <div id="tab-analise-avancada" class="tab-content">
                             <!-- Metricas principais -->
                             <div class="metrics-row">
@@ -3857,7 +4129,7 @@ tr:hover {
                                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                                     </div>
                                     <div class="metric-info">
-                                        <div class="metric-title">Total Deliberacoes</div>
+                                        <div class="metric-title">Total Deliberações</div>
                                         <div class="metric-value">89</div>
                                     </div>
                                 </div>
@@ -3866,7 +4138,7 @@ tr:hover {
                                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"></path></svg>
                                     </div>
                                     <div class="metric-info">
-                                        <div class="metric-title">Taxa de Litigio</div>
+                                        <div class="metric-title">Taxa de Litígio</div>
                                         <div class="metric-value red">0.0%</div>
                                     </div>
                                 </div>
@@ -3884,7 +4156,7 @@ tr:hover {
                                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                                     </div>
                                     <div class="metric-info">
-                                        <div class="metric-title">Taxa de Sancao</div>
+                                        <div class="metric-title">Taxa de Sanção</div>
                                         <div class="metric-value orange">10.1%</div>
                                     </div>
                                 </div>
@@ -3892,13 +4164,13 @@ tr:hover {
 
                             <!-- Graficos Distribuicao e Consenso -->
                             <div class="charts-row">
-                                <!-- Distribuicao por Tipo de Decisao -->
+                                <!-- Distribuição por Tipo de Decisão -->
                                 <div class="card">
                                     <div class="card-header">
                                         <div>
                                             <h2 class="card-title">
                                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path></svg>
-                                                Distribuicao por Tipo de Decisao
+                                                Distribuição por Tipo de Decisão
                                             </h2>
                                         </div>
                                     </div>
@@ -3907,13 +4179,13 @@ tr:hover {
                                             <div class="donut-chart">
                                                 <svg width="200" height="200" viewBox="0 0 200 200">
                                                     <circle class="donut-bg" cx="100" cy="100" r="70"/>
-                                                    <!-- Decisao Tecnica 33% -->
+                                                    <!-- Decisão Técnica 33% -->
                                                     <circle cx="100" cy="100" r="70" fill="none" stroke="#0f172a" stroke-width="30" stroke-dasharray="145 295" stroke-dashoffset="0" style="transform: rotate(-90deg); transform-origin: center;"/>
                                                     <!-- Contrato 31% -->
                                                     <circle cx="100" cy="100" r="70" fill="none" stroke="#f472b6" stroke-width="30" stroke-dasharray="136 304" stroke-dashoffset="-145" style="transform: rotate(-90deg); transform-origin: center;"/>
-                                                    <!-- Regulacao 16% -->
+                                                    <!-- Regulação 16% -->
                                                     <circle cx="100" cy="100" r="70" fill="none" stroke="#c9a227" stroke-width="30" stroke-dasharray="70 370" stroke-dashoffset="-281" style="transform: rotate(-90deg); transform-origin: center;"/>
-                                                    <!-- Sancao 10% -->
+                                                    <!-- Sanção 10% -->
                                                     <circle cx="100" cy="100" r="70" fill="none" stroke="#4ade80" stroke-width="30" stroke-dasharray="44 396" stroke-dashoffset="-351" style="transform: rotate(-90deg); transform-origin: center;"/>
                                                     <!-- Marcos Legais 9% -->
                                                     <circle cx="100" cy="100" r="70" fill="none" stroke="#60a5fa" stroke-width="30" stroke-dasharray="40 400" stroke-dashoffset="-395" style="transform: rotate(-90deg); transform-origin: center;"/>
@@ -3924,32 +4196,32 @@ tr:hover {
                                                 </div>
                                             </div>
                                             <div class="chart-legend">
-                                                <div class="legend-item"><div class="legend-color" style="background: #0f172a;"></div>Decisao Tecnica (33%)</div>
+                                                <div class="legend-item"><div class="legend-color" style="background: #0f172a;"></div>Decisão Técnica (33%)</div>
                                                 <div class="legend-item"><div class="legend-color" style="background: #f472b6;"></div>Contrato (31%)</div>
-                                                <div class="legend-item"><div class="legend-color" style="background: #c9a227;"></div>Regulacao (16%)</div>
-                                                <div class="legend-item"><div class="legend-color" style="background: #4ade80;"></div>Sancao (10%)</div>
+                                                <div class="legend-item"><div class="legend-color" style="background: #c9a227;"></div>Regulação (16%)</div>
+                                                <div class="legend-item"><div class="legend-color" style="background: #4ade80;"></div>Sanção (10%)</div>
                                                 <div class="legend-item"><div class="legend-color" style="background: #60a5fa;"></div>Marcos Legais (9%)</div>
-                                                <div class="legend-item"><div class="legend-color" style="background: #f87171;"></div>Fiscalizacao (1%)</div>
+                                                <div class="legend-item"><div class="legend-color" style="background: #f87171;"></div>Fiscalização (1%)</div>
                                             </div>
                                         </div>
                                         <div class="decision-tags">
-                                            <span class="decision-tag">Decisao Tecnica: 29</span>
+                                            <span class="decision-tag">Decisão Técnica: 29</span>
                                             <span class="decision-tag">Contrato: 28</span>
-                                            <span class="decision-tag">Regulacao: 14</span>
-                                            <span class="decision-tag">Sancao: 9</span>
+                                            <span class="decision-tag">Regulação: 14</span>
+                                            <span class="decision-tag">Sanção: 9</span>
                                             <span class="decision-tag">Marcos Legais: 8</span>
-                                            <span class="decision-tag">Fiscalizacao: 1</span>
+                                            <span class="decision-tag">Fiscalização: 1</span>
                                         </div>
                                     </div>
                                 </div>
 
-                                <!-- Consenso vs Divergencia -->
+                                <!-- Consenso vs Divergência -->
                                 <div class="card">
                                     <div class="card-header">
                                         <div>
                                             <h2 class="card-title">
                                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                                                Consenso vs Divergencia
+                                                Consenso vs Divergência
                                             </h2>
                                         </div>
                                     </div>
@@ -3975,12 +4247,12 @@ tr:hover {
                                 </div>
                             </div>
 
-                            <!-- Deliberacoes por Setor e Participacao -->
+                            <!-- Deliberações por Setor e Participacao -->
                             <div class="charts-row">
-                                <!-- Deliberacoes por Setor -->
+                                <!-- Deliberações por Setor -->
                                 <div class="card">
                                     <div class="card-header">
-                                        <h2 class="card-title">Deliberacoes por Setor</h2>
+                                        <h2 class="card-title">Deliberações por Setor</h2>
                                     </div>
                                     <div class="card-body">
                                         <div class="horizontal-bar-chart">
@@ -3992,14 +4264,14 @@ tr:hover {
                                                 <span style="width: 30px; text-align: right; font-weight: 600;">48</span>
                                             </div>
                                             <div class="h-bar-item">
-                                                <span class="h-bar-label">Onibus</span>
+                                                <span class="h-bar-label">Ônibus</span>
                                                 <div class="h-bar-track">
                                                     <div class="h-bar-fill" style="width: 37%;"></div>
                                                 </div>
                                                 <span style="width: 30px; text-align: right; font-weight: 600;">21</span>
                                             </div>
                                             <div class="h-bar-item">
-                                                <span class="h-bar-label">Regulacao</span>
+                                                <span class="h-bar-label">Regulação</span>
                                                 <div class="h-bar-track">
                                                     <div class="h-bar-fill" style="width: 21%;"></div>
                                                 </div>
@@ -4030,12 +4302,12 @@ tr:hover {
                                     </div>
                                 </div>
 
-                                <!-- Participacao em Decisoes Colegiadas -->
+                                <!-- Participação em Decisões Colegiadas -->
                                 <div class="card">
                                     <div class="card-header">
                                         <h2 class="card-title">
                                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                                            Participacao em Decisoes Colegiadas
+                                            Participação em Decisões Colegiadas
                                         </h2>
                                     </div>
                                     <div class="card-body">
@@ -4045,7 +4317,7 @@ tr:hover {
                                         <div class="info-alert warning" style="margin-top: 16px;">
                                             <svg class="info-alert-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                             <div class="info-alert-content">
-                                                <p><strong>Nota:</strong> Taxas de divergencia individual nao sao exibidas pois as atas de 2025 registram apenas decisoes colegiadas unanimes, sem identificacao de votos nominais.</p>
+                                                <p><strong>Nota:</strong> Taxas de divergência individual não são exibidas pois as atas de 2025 registram apenas decisões colegiadas unânimes, sem identificação de votos nominais.</p>
                                             </div>
                                         </div>
                                     </div>
@@ -4057,13 +4329,13 @@ tr:hover {
                                 <div class="card-header">
                                     <h2 class="card-title">
                                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
-                                        Evolucao Mensal de Decisoes
+                                        Evolução Mensal de Decisões
                                     </h2>
                                 </div>
                                 <div class="card-body">
                                     <div style="text-align: center; padding: 40px; color: var(--text-secondary);">
                                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="48" height="48" style="margin-bottom: 16px; opacity: 0.5;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-                                        <p>Grafico de evolucao mensal sera exibido quando houver dados de multiplos meses.</p>
+                                        <p>Gráfico de evolução mensal será exibido quando houver dados de múltiplos meses.</p>
                                         <p style="font-size: 12px; margin-top: 8px;">Dados atuais: Dez/25</p>
                                     </div>
                                 </div>
@@ -4091,12 +4363,12 @@ tr:hover {
                 </div>
 
                 <!-- ============================================
-                     PAGE: Governanca
+                     PAGE: Governança
                      ============================================ -->
                 <div id="page-governanca" class="page-view">
                     <div class="page-header">
                         <div class="page-title-section">
-                            <h1 class="page-title">Governanca Regulatoria</h1>
+                            <h1 class="page-title">Governança Regulatória</h1>
                             <p class="page-subtitle">Indicadores de qualidade institucional e conformidade da ARTESP</p>
                         </div>
                     </div>
@@ -4104,7 +4376,7 @@ tr:hover {
                     <div class="stats-grid">
                         <div class="stat-card">
                             <div class="stat-card-header">
-                                <span class="stat-card-title">Indice de Governanca</span>
+                                <span class="stat-card-title">Índice de Governança</span>
                             </div>
                             <div class="stat-card-value primary">78</div>
                             <div class="stat-card-subtitle">de 100 pontos</div>
@@ -4141,7 +4413,7 @@ tr:hover {
                                 <div style="display: flex; flex-direction: column; gap: 12px;">
                                     <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--background); border-radius: var(--radius); border-left: 4px solid var(--primary);">
                                         <div>
-                                            <div style="font-weight: 600; margin-bottom: 4px;">Tempo Medio de Decisao</div>
+                                            <div style="font-weight: 600; margin-bottom: 4px;">Tempo Médio de Decisão</div>
                                             <div style="font-size: 12px; color: var(--text-muted);">Da entrada ao julgamento</div>
                                         </div>
                                         <div style="font-size: 24px; font-weight: 700; color: var(--primary);">45 dias</div>
@@ -4149,14 +4421,14 @@ tr:hover {
                                     <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--background); border-radius: var(--radius); border-left: 4px solid var(--success);">
                                         <div>
                                             <div style="font-weight: 600; margin-bottom: 4px;">Taxa de Unanimidade</div>
-                                            <div style="font-size: 12px; color: var(--text-muted);">Decisoes sem divergencia</div>
+                                            <div style="font-size: 12px; color: var(--text-muted);">Decisões sem divergência</div>
                                         </div>
                                         <div style="font-size: 24px; font-weight: 700; color: var(--success);">87%</div>
                                     </div>
                                     <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--background); border-radius: var(--radius); border-left: 4px solid var(--warning);">
                                         <div>
                                             <div style="font-weight: 600; margin-bottom: 4px;">Pedidos de Vista</div>
-                                            <div style="font-size: 12px; color: var(--text-muted);">Media por reuniao</div>
+                                            <div style="font-size: 12px; color: var(--text-muted);">Média por reunião</div>
                                         </div>
                                         <div style="font-size: 24px; font-weight: 700; color: var(--warning);">1.2</div>
                                     </div>
@@ -4168,7 +4440,7 @@ tr:hover {
                             <div class="card-header">
                                 <h2 class="card-title">
                                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                    Conformidade Regulatoria
+                                    Conformidade Regulatória
                                 </h2>
                             </div>
                             <div class="card-body" style="padding: 0;">
@@ -4177,32 +4449,32 @@ tr:hover {
                                         <tr>
                                             <th>Requisito</th>
                                             <th>Status</th>
-                                            <th>Ultima Verificacao</th>
+                                            <th>Última Verificação</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <tr>
-                                            <td>Publicacao de Atas em 48h</td>
+                                            <td>Publicação de Atas em 48h</td>
                                             <td><span class="badge badge-success">Conforme</span></td>
                                             <td>08/02/2026</td>
                                         </tr>
                                         <tr>
-                                            <td>Fundamentacao de Decisoes</td>
+                                            <td>Fundamentação de Decisões</td>
                                             <td><span class="badge badge-success">Conforme</span></td>
                                             <td>08/02/2026</td>
                                         </tr>
                                         <tr>
-                                            <td>Quorum Minimo</td>
+                                            <td>Quórum Mínimo</td>
                                             <td><span class="badge badge-success">Conforme</span></td>
                                             <td>08/02/2026</td>
                                         </tr>
                                         <tr>
                                             <td>Prazo de Resposta a Recursos</td>
-                                            <td><span class="badge badge-warning">Atencao</span></td>
+                                            <td><span class="badge badge-warning">Atenção</span></td>
                                             <td>05/02/2026</td>
                                         </tr>
                                         <tr>
-                                            <td>Audiencias Publicas</td>
+                                            <td>Audiências Públicas</td>
                                             <td><span class="badge badge-success">Conforme</span></td>
                                             <td>01/02/2026</td>
                                         </tr>
@@ -4220,7 +4492,7 @@ tr:hover {
                     <div class="page-header">
                         <div class="page-title-section">
                             <h1 class="page-title">Boletim Mensal</h1>
-                            <p class="page-subtitle">Resumo executivo das atividades regulatorias da ARTESP</p>
+                            <p class="page-subtitle">Resumo executivo das atividades regulatórias da ARTESP</p>
                         </div>
                         <div class="page-actions">
                             <div class="filter-group">
@@ -4244,13 +4516,13 @@ tr:hover {
                     <div class="stats-grid">
                         <div class="stat-card">
                             <div class="stat-card-header">
-                                <span class="stat-card-title">Reunioes Realizadas</span>
+                                <span class="stat-card-title">Reuniões Realizadas</span>
                             </div>
                             <div class="stat-card-value">4</div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-card-header">
-                                <span class="stat-card-title">Total Deliberacoes</span>
+                                <span class="stat-card-title">Total Deliberações</span>
                             </div>
                             <div class="stat-card-value">87</div>
                         </div>
@@ -4273,22 +4545,22 @@ tr:hover {
                             <div class="card-header">
                                 <h2 class="card-title">
                                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                                    Destaques do Mes
+                                    Destaques do Mês
                                 </h2>
                             </div>
                             <div class="card-body">
                                 <div class="alert-list">
                                     <div class="alert-item info">
-                                        <div class="alert-title">Revisao Tarifaria Extraordinaria</div>
-                                        <div class="alert-body">Aprovada revisao de 4.2% para o Sistema Anchieta-Imigrantes devido a variacao do IPCA acumulado.</div>
+                                        <div class="alert-title">Revisão Tarifária Extraordinária</div>
+                                        <div class="alert-body">Aprovada revisão de 4.2% para o Sistema Anchieta-Imigrantes devido a variação do IPCA acumulado.</div>
                                     </div>
                                     <div class="alert-item info">
                                         <div class="alert-title">Novos Investimentos Aprovados</div>
                                         <div class="alert-body">Homologado pacote de R$ 234 milhoes em melhorias para rodovias do interior paulista.</div>
                                     </div>
                                     <div class="alert-item warning">
-                                        <div class="alert-title">Fiscalizacao Intensificada</div>
-                                        <div class="alert-body">12 autos de infracao lavrados contra concessionarias por irregularidades em sinalizacao.</div>
+                                        <div class="alert-title">Fiscalização Intensificada</div>
+                                        <div class="alert-body">12 autos de infração lavrados contra concessionárias por irregularidades em sinalização.</div>
                                     </div>
                                 </div>
                             </div>
@@ -4304,12 +4576,12 @@ tr:hover {
                             <div class="card-body">
                                 <div class="bar-chart">
                                     <div class="bar-item">
-                                        <span class="bar-label">Revisao Tarifaria</span>
+                                        <span class="bar-label">Revisão Tarifária</span>
                                         <div class="bar-track"><div class="bar-fill" style="width: 85%;"></div></div>
                                         <span class="bar-value">23</span>
                                     </div>
                                     <div class="bar-item">
-                                        <span class="bar-label">Multas e Sancoes</span>
+                                        <span class="bar-label">Multas e Sanções</span>
                                         <div class="bar-track"><div class="bar-fill" style="width: 65%;"></div></div>
                                         <span class="bar-value">18</span>
                                     </div>
@@ -4341,7 +4613,7 @@ tr:hover {
                     <div class="page-header">
                         <div class="page-title-section">
                             <h1 class="page-title">Upload de PDFs</h1>
-                            <p class="page-subtitle">Faca upload de documentos da ARTESP para analise e extracao de dados</p>
+                            <p class="page-subtitle">Faça upload de documentos da ARTESP para análise e extração de dados</p>
                         </div>
                     </div>
 
@@ -4459,8 +4731,8 @@ tr:hover {
                                         <th>Arquivo</th>
                                         <th>Tamanho</th>
                                         <th>Status</th>
-                                        <th>Deliberacoes</th>
-                                        <th>Acoes</th>
+                                        <th>Deliberações</th>
+                                        <th>Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody id="upload-table-body">
@@ -4472,13 +4744,13 @@ tr:hover {
                 </div>
 
                 <!-- ============================================
-                     PAGE: Analise de PDFs
+                     PAGE: Análise de PDFs
                      ============================================ -->
                 <div id="page-analise" class="page-view">
                     <div class="page-header">
                         <div class="page-title-section">
-                            <h1 class="page-title">Analise de PDFs</h1>
-                            <p class="page-subtitle">Analise os PDFs carregados para extrair deliberacoes e dados estruturados</p>
+                            <h1 class="page-title">Análise de PDFs</h1>
+                            <p class="page-subtitle">Analise os PDFs carregados para extrair deliberações e dados estruturados</p>
                         </div>
                         <div class="page-actions">
                             <button class="btn btn-primary" onclick="App.PageAnalise.analisarTodos()">
@@ -4497,7 +4769,7 @@ tr:hover {
                         </div>
                         <div class="stat-card">
                             <div class="stat-card-header">
-                                <span class="stat-card-title">Aguardando Analise</span>
+                                <span class="stat-card-title">Aguardando Análise</span>
                             </div>
                             <div class="stat-card-value warning" id="analise-pendentes">0</div>
                         </div>
@@ -4505,11 +4777,11 @@ tr:hover {
                             <div class="stat-card-header">
                                 <span class="stat-card-title">Analisados</span>
                             </div>
-                            <div class="stat-card-value success" id="analise-concluidos">0</div>
+                            <div class="stat-card-value success" id="analise-concluídos">0</div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-card-header">
-                                <span class="stat-card-title">Deliberacoes Extraidas</span>
+                                <span class="stat-card-title">Deliberações Extraídas</span>
                             </div>
                             <div class="stat-card-value primary" id="analise-deliberacoes">0</div>
                         </div>
@@ -4520,7 +4792,7 @@ tr:hover {
                         <div class="card-header">
                             <h2 class="card-title">
                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                                Analise em Andamento
+                                Análise em Andamento
                             </h2>
                         </div>
                         <div class="card-body">
@@ -4536,12 +4808,12 @@ tr:hover {
                         </div>
                     </div>
 
-                    <!-- Lista de PDFs para Analise -->
+                    <!-- Lista de PDFs para Análise -->
                     <div class="card">
                         <div class="card-header">
                             <h2 class="card-title">
                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
-                                PDFs para Analise
+                                PDFs para Análise
                             </h2>
                             <div class="card-actions">
                                 <button class="btn btn-secondary btn-sm" onclick="App.PageAnalise.load()">
@@ -4557,13 +4829,13 @@ tr:hover {
                                         <th>#</th>
                                         <th>Arquivo</th>
                                         <th>Status</th>
-                                        <th>Deliberacoes</th>
-                                        <th>Ultima Analise</th>
-                                        <th>Acoes</th>
+                                        <th>Deliberações</th>
+                                        <th>Última Análise</th>
+                                        <th>Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody id="analise-table-body">
-                                    <tr><td colspan="6"><div class="empty-state">Nenhum PDF disponivel para analise</div></td></tr>
+                                    <tr><td colspan="6"><div class="empty-state">Nenhum PDF disponível para analise</div></td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -4574,7 +4846,7 @@ tr:hover {
                         <div class="card-header">
                             <h2 class="card-title">
                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                Resultado da Analise
+                                Resultado da Análise
                             </h2>
                         </div>
                         <div class="card-body" id="analise-resultados-content">
@@ -4589,26 +4861,26 @@ tr:hover {
                     <div class="page-header">
                         <div class="page-title-section">
                             <h1 class="page-title">Auditoria Forense</h1>
-                            <p class="page-subtitle">Deteccao de anomalias e padroes suspeitos nas deliberacoes</p>
+                            <p class="page-subtitle">Detecção de anomalias e padrões suspeitos nas deliberações</p>
                         </div>
                     </div>
 
                     <div class="stats-grid">
                         <div class="stat-card">
                             <div class="stat-card-header">
-                                <span class="stat-card-title">Alertas Criticos</span>
+                                <span class="stat-card-title">Alertas Críticos</span>
                             </div>
                             <div class="stat-card-value danger">3</div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-card-header">
-                                <span class="stat-card-title">Alertas Medios</span>
+                                <span class="stat-card-title">Alertas Médios</span>
                             </div>
                             <div class="stat-card-value warning">8</div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-card-header">
-                                <span class="stat-card-title">Deliberacoes Analisadas</span>
+                                <span class="stat-card-title">Deliberações Analisadas</span>
                             </div>
                             <div class="stat-card-value">156</div>
                         </div>
@@ -4632,22 +4904,22 @@ tr:hover {
                             <div class="alert-list">
                                 <div class="alert-item">
                                     <div class="alert-header">
-                                        <div class="alert-title">Padrao de votacao incomum detectado</div>
+                                        <div class="alert-title">Padrão de votação incomum detectado</div>
                                         <span class="alert-severity severity-high">ALTA</span>
                                     </div>
-                                    <div class="alert-body">Diretor Marcos Ribeiro votou contrario em 8 de 10 deliberacoes consecutivas sobre o mesmo tema (Revisao Tarifaria), desviando significativamente do padrao historico de 23% de votos contrarios.</div>
+                                    <div class="alert-body">Diretor Marcos Ribeiro votou contrário em 8 de 10 deliberações consecutivas sobre o mesmo tema (Revisão Tarifária), desviando significativamente do padrão histórico de 23% de votos contrários.</div>
                                     <div class="alert-meta">
                                         <span>Detectado: 07/02/2026</span>
-                                        <span>Reunioes: RO-248, RO-249</span>
+                                        <span>Reuniões: RO-248, RO-249</span>
                                         <span>Confianca: 87%</span>
                                     </div>
                                 </div>
                                 <div class="alert-item warning">
                                     <div class="alert-header">
-                                        <div class="alert-title">Concentracao de relatorias</div>
+                                        <div class="alert-title">Concentração de relatorias</div>
                                         <span class="alert-severity severity-medium">MEDIA</span>
                                     </div>
-                                    <div class="alert-body">Um mesmo diretor (Patricia Vanzolini) foi designado relator em 12 casos consecutivos envolvendo a Concessionaria Ecovias, representando 100% das relatorias para esta empresa no periodo.</div>
+                                    <div class="alert-body">Um mesmo diretor (Patricia Vanzolini) foi designado relator em 12 casos consecutivos envolvendo a Concessionária Ecovias, representando 100% das relatorias para esta empresa no período.</div>
                                     <div class="alert-meta">
                                         <span>Detectado: 05/02/2026</span>
                                         <span>Periodo: Jan-Fev 2026</span>
@@ -4673,12 +4945,12 @@ tr:hover {
                     <div class="grid-2" style="margin-top: 24px;">
                         <div class="card">
                             <div class="card-header">
-                                <h2 class="card-title">Analise de Padroes</h2>
+                                <h2 class="card-title">Análise de Padrões</h2>
                             </div>
                             <div class="card-body">
                                 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
                                     <div style="padding: 16px; background: var(--background); border-radius: var(--radius);">
-                                        <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">Indice de Consistencia</div>
+                                        <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">Índice de Consistência</div>
                                         <div style="font-size: 28px; font-weight: 700; color: var(--primary);">87%</div>
                                         <div style="font-size: 12px; color: var(--success);">-2.3% vs mes anterior</div>
                                     </div>
@@ -4688,12 +4960,12 @@ tr:hover {
                                         <div style="font-size: 12px; color: var(--danger);">+4.1% vs mes anterior</div>
                                     </div>
                                     <div style="padding: 16px; background: var(--background); border-radius: var(--radius);">
-                                        <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">Concentracao Relatorias</div>
+                                        <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">Concentração Relatorias</div>
                                         <div style="font-size: 28px; font-weight: 700; color: var(--text-primary);">0.34</div>
-                                        <div style="font-size: 12px; color: var(--text-muted);">Indice Herfindahl</div>
+                                        <div style="font-size: 12px; color: var(--text-muted);">Índice Herfindahl</div>
                                     </div>
                                     <div style="padding: 16px; background: var(--background); border-radius: var(--radius);">
-                                        <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">Tempo Medio Decisao</div>
+                                        <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">Tempo Médio Decisão</div>
                                         <div style="font-size: 28px; font-weight: 700; color: var(--success);">45d</div>
                                         <div style="font-size: 12px; color: var(--success);">-3 dias vs media</div>
                                     </div>
@@ -4703,7 +4975,7 @@ tr:hover {
 
                         <div class="card">
                             <div class="card-header">
-                                <h2 class="card-title">Historico de Auditorias</h2>
+                                <h2 class="card-title">Histórico de Auditorias</h2>
                             </div>
                             <div class="card-body" style="padding: 0;">
                                 <table>
@@ -4717,22 +4989,22 @@ tr:hover {
                                     <tbody>
                                         <tr>
                                             <td>08/02/2026</td>
-                                            <td>Alerta de padrao de votacao</td>
+                                            <td>Alerta de padrão de votação</td>
                                             <td><span class="badge badge-danger">Alerta</span></td>
                                         </tr>
                                         <tr>
                                             <td>05/02/2026</td>
-                                            <td>Revisao de relatorias</td>
+                                            <td>Revisão de relatorias</td>
                                             <td><span class="badge badge-warning">Analise</span></td>
                                         </tr>
                                         <tr>
                                             <td>01/02/2026</td>
-                                            <td>Auditoria mensal concluida</td>
+                                            <td>Auditoria mensal concluída</td>
                                             <td><span class="badge badge-success">OK</span></td>
                                         </tr>
                                         <tr>
                                             <td>25/01/2026</td>
-                                            <td>Atualizacao de algoritmos</td>
+                                            <td>Atualização de algoritmos</td>
                                             <td><span class="badge badge-success">OK</span></td>
                                         </tr>
                                     </tbody>
@@ -4748,8 +5020,8 @@ tr:hover {
                 <div id="page-agencias" class="page-view">
                     <div class="page-header">
                         <div class="page-title-section">
-                            <h1 class="page-title">Agencias Reguladoras</h1>
-                            <p class="page-subtitle">Visao isometrica das agencias e suas metricas</p>
+                            <h1 class="page-title">Agências Reguladoras</h1>
+                            <p class="page-subtitle">Visão isométrica das agências e suas métricas</p>
                         </div>
                         <div class="page-actions">
                             <select class="filter-select" id="filtro-esfera">
@@ -4760,7 +5032,7 @@ tr:hover {
                             <select class="filter-select" id="filtro-setor">
                                 <option value="">Todos Setores</option>
                                 <option value="transporte">Transporte</option>
-                                <option value="mineracao">Mineracao</option>
+                                <option value="mineracao">Mineração</option>
                                 <option value="energia">Energia</option>
                             </select>
                         </div>
@@ -4770,14 +5042,14 @@ tr:hover {
                     <div class="stats-grid">
                         <div class="stat-card">
                             <div class="stat-card-header">
-                                <span class="stat-card-title">Agencias Monitoradas</span>
+                                <span class="stat-card-title">Agências Monitoradas</span>
                             </div>
                             <div class="stat-card-value">6</div>
                             <div class="stat-card-subtitle">4 federais, 2 estaduais</div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-card-header">
-                                <span class="stat-card-title">Total Deliberacoes</span>
+                                <span class="stat-card-title">Total Deliberações</span>
                             </div>
                             <div class="stat-card-value">1.247</div>
                             <div class="stat-card-subtitle">Ultimos 12 meses</div>
@@ -4803,7 +5075,7 @@ tr:hover {
                         <div class="card-header">
                             <h2 class="card-title">
                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-                                Panorama das Agencias
+                                Panorama das Agências
                             </h2>
                         </div>
                         <div class="card-body">
@@ -4822,11 +5094,11 @@ tr:hover {
                                         </div>
                                         <div class="iso-card-front">
                                             <div class="iso-title">ARTESP</div>
-                                            <div class="iso-subtitle">Sao Paulo</div>
+                                            <div class="iso-subtitle">São Paulo</div>
                                         </div>
                                         <div class="iso-card-right">
                                             <div class="iso-stat">109</div>
-                                            <div class="iso-stat-label">deliberacoes</div>
+                                            <div class="iso-stat-label">deliberações</div>
                                         </div>
                                         <div class="iso-glow"></div>
                                         <div class="iso-connection iso-conn-right"></div>
@@ -4847,7 +5119,7 @@ tr:hover {
                                         </div>
                                         <div class="iso-card-right">
                                             <div class="iso-stat">342</div>
-                                            <div class="iso-stat-label">deliberacoes</div>
+                                            <div class="iso-stat-label">deliberações</div>
                                         </div>
                                         <div class="iso-glow"></div>
                                         <div class="iso-connection iso-conn-down"></div>
@@ -4868,7 +5140,7 @@ tr:hover {
                                         </div>
                                         <div class="iso-card-right">
                                             <div class="iso-stat">187</div>
-                                            <div class="iso-stat-label">deliberacoes</div>
+                                            <div class="iso-stat-label">deliberações</div>
                                         </div>
                                         <div class="iso-glow"></div>
                                     </div>
@@ -4888,7 +5160,7 @@ tr:hover {
                                         </div>
                                         <div class="iso-card-right">
                                             <div class="iso-stat">456</div>
-                                            <div class="iso-stat-label">deliberacoes</div>
+                                            <div class="iso-stat-label">deliberações</div>
                                         </div>
                                         <div class="iso-glow"></div>
                                     </div>
@@ -4908,7 +5180,7 @@ tr:hover {
                                         </div>
                                         <div class="iso-card-right">
                                             <div class="iso-stat">98</div>
-                                            <div class="iso-stat-label">deliberacoes</div>
+                                            <div class="iso-stat-label">deliberações</div>
                                         </div>
                                         <div class="iso-glow"></div>
                                     </div>
@@ -4924,11 +5196,11 @@ tr:hover {
                                         </div>
                                         <div class="iso-card-front">
                                             <div class="iso-title">ARSESP</div>
-                                            <div class="iso-subtitle">Sao Paulo</div>
+                                            <div class="iso-subtitle">São Paulo</div>
                                         </div>
                                         <div class="iso-card-right">
                                             <div class="iso-stat">55</div>
-                                            <div class="iso-stat-label">deliberacoes</div>
+                                            <div class="iso-stat-label">deliberações</div>
                                         </div>
                                         <div class="iso-glow"></div>
                                     </div>
@@ -4937,7 +5209,7 @@ tr:hover {
                                 <!-- Info Panel -->
                                 <div class="iso-info-panel" id="iso-info-panel">
                                     <div class="iso-info-header">
-                                        <span class="iso-info-title">Selecione uma agencia</span>
+                                        <span class="iso-info-title">Selecione uma agência</span>
                                     </div>
                                     <div class="iso-info-body">
                                         <p>Passe o mouse sobre os cards para ver detalhes</p>
@@ -4950,7 +5222,7 @@ tr:hover {
                     <!-- Tabela Comparativa -->
                     <div class="card">
                         <div class="card-header">
-                            <h2 class="card-title">Comparativo entre Agencias</h2>
+                            <h2 class="card-title">Comparativo entre Agências</h2>
                         </div>
                         <div class="card-body" style="padding: 0;">
                             <table>
@@ -4959,7 +5231,7 @@ tr:hover {
                                         <th>Agencia</th>
                                         <th>Esfera</th>
                                         <th>Setor</th>
-                                        <th>Deliberacoes</th>
+                                        <th>Deliberações</th>
                                         <th>Deferidas</th>
                                         <th>Taxa</th>
                                         <th>Diretores</th>
@@ -4969,7 +5241,7 @@ tr:hover {
                                     <tr>
                                         <td><strong style="color: var(--primary);">ARTESP</strong></td>
                                         <td><span class="badge badge-info">Estadual</span></td>
-                                        <td>Transporte Rodoviario</td>
+                                        <td>Transporte Rodoviário</td>
                                         <td>109</td>
                                         <td>63</td>
                                         <td><span style="color: var(--success);">58%</span></td>
@@ -4987,7 +5259,7 @@ tr:hover {
                                     <tr>
                                         <td><strong style="color: var(--primary);">ANM</strong></td>
                                         <td><span class="badge badge-warning">Federal</span></td>
-                                        <td>Mineracao</td>
+                                        <td>Mineração</td>
                                         <td>187</td>
                                         <td>112</td>
                                         <td><span style="color: var(--success);">60%</span></td>
@@ -4996,7 +5268,7 @@ tr:hover {
                                     <tr>
                                         <td><strong style="color: var(--primary);">ANEEL</strong></td>
                                         <td><span class="badge badge-warning">Federal</span></td>
-                                        <td>Energia Eletrica</td>
+                                        <td>Energia Elétrica</td>
                                         <td>456</td>
                                         <td>342</td>
                                         <td><span style="color: var(--success);">75%</span></td>
@@ -5005,7 +5277,7 @@ tr:hover {
                                     <tr>
                                         <td><strong style="color: var(--primary);">ANTAQ</strong></td>
                                         <td><span class="badge badge-warning">Federal</span></td>
-                                        <td>Transporte Aquaviario</td>
+                                        <td>Transporte Aquaviário</td>
                                         <td>98</td>
                                         <td>67</td>
                                         <td><span style="color: var(--success);">68%</span></td>
@@ -5033,7 +5305,7 @@ tr:hover {
                     <div class="page-header">
                         <div class="page-title-section">
                             <h1 class="page-title">Mapa do Brasil</h1>
-                            <p class="page-subtitle">Distribuicao geografica das deliberacoes por estado</p>
+                            <p class="page-subtitle">Distribuição geográfica das deliberações por estado</p>
                         </div>
                         <div class="page-actions">
                             <select class="filter-select" id="mapa-filtro-ano">
@@ -5091,20 +5363,20 @@ tr:hover {
                                         <!-- Norte -->
                                         <g class="region-norte">
                                             <path id="AM" class="estado" d="M80,120 L180,100 L200,150 L180,200 L120,220 L60,180 Z" data-estado="Amazonas" data-deliberacoes="23"/>
-                                            <path id="PA" class="estado" d="M200,150 L320,130 L340,200 L280,240 L180,200 Z" data-estado="Para" data-deliberacoes="45"/>
+                                            <path id="PA" class="estado" d="M200,150 L320,130 L340,200 L280,240 L180,200 Z" data-estado="Pará" data-deliberacoes="45"/>
                                             <path id="AC" class="estado" d="M40,180 L80,160 L100,200 L60,220 Z" data-estado="Acre" data-deliberacoes="8"/>
-                                            <path id="RO" class="estado" d="M100,200 L140,190 L160,240 L120,260 Z" data-estado="Rondonia" data-deliberacoes="12"/>
+                                            <path id="RO" class="estado" d="M100,200 L140,190 L160,240 L120,260 Z" data-estado="Rondônia" data-deliberacoes="12"/>
                                             <path id="RR" class="estado" d="M140,60 L180,50 L200,100 L160,110 Z" data-estado="Roraima" data-deliberacoes="5"/>
-                                            <path id="AP" class="estado" d="M280,80 L320,70 L330,120 L290,130 Z" data-estado="Amapa" data-deliberacoes="7"/>
+                                            <path id="AP" class="estado" d="M280,80 L320,70 L330,120 L290,130 Z" data-estado="Amapá" data-deliberacoes="7"/>
                                             <path id="TO" class="estado" d="M280,240 L320,230 L340,310 L300,320 Z" data-estado="Tocantins" data-deliberacoes="18"/>
                                         </g>
                                         <!-- Nordeste -->
                                         <g class="region-nordeste">
-                                            <path id="MA" class="estado" d="M340,200 L400,180 L420,240 L360,260 Z" data-estado="Maranhao" data-deliberacoes="34"/>
-                                            <path id="PI" class="estado" d="M360,260 L400,250 L420,320 L380,330 Z" data-estado="Piaui" data-deliberacoes="21"/>
-                                            <path id="CE" class="estado" d="M420,220 L480,200 L490,260 L440,270 Z" data-estado="Ceara" data-deliberacoes="67"/>
+                                            <path id="MA" class="estado" d="M340,200 L400,180 L420,240 L360,260 Z" data-estado="Maranhão" data-deliberacoes="34"/>
+                                            <path id="PI" class="estado" d="M360,260 L400,250 L420,320 L380,330 Z" data-estado="Piauí" data-deliberacoes="21"/>
+                                            <path id="CE" class="estado" d="M420,220 L480,200 L490,260 L440,270 Z" data-estado="Ceará" data-deliberacoes="67"/>
                                             <path id="RN" class="estado" d="M490,230 L530,220 L540,260 L500,270 Z" data-estado="Rio Grande do Norte" data-deliberacoes="28"/>
-                                            <path id="PB" class="estado" d="M490,270 L540,260 L550,300 L500,310 Z" data-estado="Paraiba" data-deliberacoes="31"/>
+                                            <path id="PB" class="estado" d="M490,270 L540,260 L550,300 L500,310 Z" data-estado="Paraíba" data-deliberacoes="31"/>
                                             <path id="PE" class="estado" d="M440,300 L520,290 L530,340 L450,350 Z" data-estado="Pernambuco" data-deliberacoes="89"/>
                                             <path id="AL" class="estado" d="M500,340 L540,330 L550,370 L510,380 Z" data-estado="Alagoas" data-deliberacoes="19"/>
                                             <path id="SE" class="estado" d="M490,380 L530,370 L540,400 L500,410 Z" data-estado="Sergipe" data-deliberacoes="15"/>
@@ -5114,19 +5386,19 @@ tr:hover {
                                         <g class="region-centro-oeste">
                                             <path id="MT" class="estado" d="M160,240 L280,220 L300,340 L180,360 Z" data-estado="Mato Grosso" data-deliberacoes="42"/>
                                             <path id="MS" class="estado" d="M180,360 L260,350 L280,440 L200,450 Z" data-estado="Mato Grosso do Sul" data-deliberacoes="38"/>
-                                            <path id="GO" class="estado" d="M280,340 L380,320 L400,420 L300,440 Z" data-estado="Goias" data-deliberacoes="56"/>
+                                            <path id="GO" class="estado" d="M280,340 L380,320 L400,420 L300,440 Z" data-estado="Goiás" data-deliberacoes="56"/>
                                             <path id="DF" class="estado" d="M340,370 L360,365 L365,390 L345,395 Z" data-estado="Distrito Federal" data-deliberacoes="234"/>
                                         </g>
                                         <!-- Sudeste -->
                                         <g class="region-sudeste">
                                             <path id="MG" class="estado estado-destaque" d="M320,420 L440,400 L460,500 L340,520 Z" data-estado="Minas Gerais" data-deliberacoes="187"/>
-                                            <path id="ES" class="estado" d="M460,440 L500,430 L510,490 L470,500 Z" data-estado="Espirito Santo" data-deliberacoes="45"/>
+                                            <path id="ES" class="estado" d="M460,440 L500,430 L510,490 L470,500 Z" data-estado="Espírito Santo" data-deliberacoes="45"/>
                                             <path id="RJ" class="estado estado-destaque" d="M420,500 L480,490 L490,540 L430,550 Z" data-estado="Rio de Janeiro" data-deliberacoes="156"/>
-                                            <path id="SP" class="estado estado-ativo" d="M280,460 L380,450 L400,540 L300,550 Z" data-estado="Sao Paulo" data-deliberacoes="456"/>
+                                            <path id="SP" class="estado estado-ativo" d="M280,460 L380,450 L400,540 L300,550 Z" data-estado="São Paulo" data-deliberacoes="456"/>
                                         </g>
                                         <!-- Sul -->
                                         <g class="region-sul">
-                                            <path id="PR" class="estado" d="M260,520 L340,510 L360,580 L280,590 Z" data-estado="Parana" data-deliberacoes="98"/>
+                                            <path id="PR" class="estado" d="M260,520 L340,510 L360,580 L280,590 Z" data-estado="Paraná" data-deliberacoes="98"/>
                                             <path id="SC" class="estado" d="M300,580 L360,570 L375,620 L315,630 Z" data-estado="Santa Catarina" data-deliberacoes="67"/>
                                             <path id="RS" class="estado" d="M280,620 L360,610 L380,700 L300,710 Z" data-estado="Rio Grande do Sul" data-deliberacoes="89"/>
                                         </g>
@@ -5134,7 +5406,7 @@ tr:hover {
 
                                     <!-- Legenda -->
                                     <div class="map-legend">
-                                        <div class="legend-title">Deliberacoes</div>
+                                        <div class="legend-title">Deliberações</div>
                                         <div class="legend-scale">
                                             <div class="legend-item">
                                                 <span class="legend-color" style="background: rgba(255,239,77,0.2);"></span>
@@ -5175,7 +5447,7 @@ tr:hover {
                                     <div class="state-item">
                                         <div class="state-rank">1</div>
                                         <div class="state-info">
-                                            <div class="state-name">Sao Paulo</div>
+                                            <div class="state-name">São Paulo</div>
                                             <div class="state-bar">
                                                 <div class="state-bar-fill" style="width: 100%;"></div>
                                             </div>
@@ -5225,7 +5497,7 @@ tr:hover {
                                     <div class="state-item">
                                         <div class="state-rank">6</div>
                                         <div class="state-info">
-                                            <div class="state-name">Parana</div>
+                                            <div class="state-name">Paraná</div>
                                             <div class="state-bar">
                                                 <div class="state-bar-fill" style="width: 21%;"></div>
                                             </div>
@@ -5257,10 +5529,10 @@ tr:hover {
                         </div>
                     </div>
 
-                    <!-- Distribuicao por Regiao -->
+                    <!-- Distribuição por Região -->
                     <div class="card">
                         <div class="card-header">
-                            <h2 class="card-title">Distribuicao por Regiao</h2>
+                            <h2 class="card-title">Distribuição por Região</h2>
                         </div>
                         <div class="card-body">
                             <div class="region-grid">
@@ -5309,13 +5581,109 @@ tr:hover {
                     </div>
                 </div>
 
+                <!-- ============================================
+                     PAGE: Rede de Conexões - Intelligence Network
+                     ============================================ -->
+                <div id="page-conexoes" class="page-view">
+                    <div class="page-header">
+                        <div class="page-title-section">
+                            <h1 class="page-title">Rede de Conexões</h1>
+                            <p class="page-subtitle">Mapa de inteligência das relações entre diretores, empresas e temas regulatórios</p>
+                        </div>
+                        <div class="page-actions">
+                            <select class="filter-select" id="graph-filter-type">
+                                <option value="all">Todos os Nós</option>
+                                <option value="director">Diretores</option>
+                                <option value="company">Empresas</option>
+                                <option value="theme">Temas</option>
+                            </select>
+                            <button class="btn btn-outline" id="graph-reset-btn">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                Resetar Visão
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Entidades Mapeadas</span>
+                            </div>
+                            <div class="stat-card-value primary" id="graph-total-nodes">22</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Conexões Identificadas</span>
+                            </div>
+                            <div class="stat-card-value" id="graph-total-edges">38</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Clusters Detectados</span>
+                            </div>
+                            <div class="stat-card-value warning">4</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Grau Máximo de Conexão</span>
+                            </div>
+                            <div class="stat-card-value success">8</div>
+                        </div>
+                    </div>
+
+                    <div class="card" style="overflow: hidden;">
+                        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                            <h2 class="card-title">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                                Grafo de Inteligência
+                            </h2>
+                            <div class="graph-legend-bar">
+                                <span class="graph-legend-item"><span class="graph-dot" style="background: #60a5fa;"></span> Diretores</span>
+                                <span class="graph-legend-item"><span class="graph-dot" style="background: #fbbf24;"></span> Empresas</span>
+                                <span class="graph-legend-item"><span class="graph-dot" style="background: #4ade80;"></span> Temas</span>
+                                <span class="graph-legend-item"><span class="graph-dot" style="background: #a78bfa;"></span> Agências</span>
+                            </div>
+                        </div>
+                        <div class="graph-wrapper">
+                            <div class="graph-scan-line"></div>
+                            <canvas id="graph-canvas"></canvas>
+                            <div id="graph-tooltip" class="graph-tooltip"></div>
+
+                            <div class="graph-classification">
+                                <div class="classification-label">IRIS // INTELIGÊNCIA REGULATÓRIA</div>
+                                <div class="classification-label">ANÁLISE DE VÍNCULOS v2.1</div>
+                            </div>
+
+                            <div id="graph-info-panel" class="graph-info-panel">
+                                <div class="graph-info-header">
+                                    <span class="classified-badge">CLASSIFICADO</span>
+                                    <h3 id="graph-info-title">Selecione uma Entidade</h3>
+                                </div>
+                                <div id="graph-info-body" class="graph-info-body">
+                                    <p style="color: #475569;">Clique em um nó do grafo para visualizar informações detalhadas sobre a entidade e suas conexões.</p>
+                                </div>
+                            </div>
+
+                            <div class="graph-controls">
+                                <button onclick="App.PageConexoes.zoomIn()" title="Zoom In">+</button>
+                                <button onclick="App.PageConexoes.zoomOut()" title="Zoom Out">−</button>
+                                <button onclick="App.PageConexoes.resetView()" title="Centralizar">⊙</button>
+                            </div>
+
+                            <div class="graph-search">
+                                <input type="text" id="graph-search-input" placeholder="Buscar entidade..." oninput="App.PageConexoes.search(this.value)">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </main>
     </div>
     <script>
 /**
  * IRIS Platform - Single Page Application
- * Instituto de Regulacao, Inovacao e Sustentabilidade
+ * Instituto de Regulação, Inovação e Sustentabilidade
  *
  * Main application JavaScript file
  * Handles routing, navigation, and page rendering
@@ -5367,21 +5735,22 @@ tr:hover {
             // Update breadcrumb
             const pageNames = {
                 '/metricas': 'Dashboard Geral',
-                '/deliberacoes': 'Deliberacoes',
-                '/monitor': 'Monitor de Reunioes',
+                '/deliberacoes': 'Deliberações',
+                '/monitor': 'Monitor de Reuniões',
                 '/diretores': 'Diretores e Mandatos',
                 '/jurimetria': 'Jurimetria',
-                '/governanca': 'Governanca Regulatoria',
+                '/governanca': 'Governança Regulatória',
                 '/boletim': 'Boletim Mensal',
                 '/auditoria': 'Auditoria Forense',
                 '/upload': 'Upload de PDFs',
-                '/analise': 'Analise de PDFs',
-                '/agencias': 'Agencias Reguladoras',
-                '/mapa': 'Mapa do Brasil'
+                '/analise': 'Análise de PDFs',
+                '/agencias': 'Agências Reguladoras',
+                '/mapa': 'Mapa do Brasil',
+                '/conexoes': 'Rede de Conexões'
             };
             const breadcrumb = document.getElementById('breadcrumb-page');
             if (breadcrumb) {
-                breadcrumb.textContent = pageNames[path] || 'Inteligencia Regulatoria';
+                breadcrumb.textContent = pageNames[path] || 'Inteligência Regulatória';
             }
 
             // Show page
@@ -5505,7 +5874,7 @@ tr:hover {
     };
 
     // ============================================
-    // PAGE: Deliberacoes
+    // PAGE: Deliberações
     // ============================================
     const PageDeliberacoes = {
         data: [],
@@ -5573,7 +5942,7 @@ tr:hover {
             const tbody = document.getElementById('deliberacoes-table-body');
 
             if (this.filtered.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state">Nenhuma deliberacao encontrada</div></td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state">Nenhuma deliberação encontrada</div></td></tr>';
                 return;
             }
 
@@ -5597,7 +5966,7 @@ tr:hover {
 
         exportCSV() {
             if (this.filtered.length === 0) {
-                alert('Nenhuma deliberacao para exportar');
+                alert('Nenhuma deliberação para exportar');
                 return;
             }
             Utils.exportCSV(this.filtered, [
@@ -5605,7 +5974,7 @@ tr:hover {
                 { key: 'interessado', label: 'Interessado' },
                 { key: 'microtema', label: 'Microtema' },
                 { key: 'decisao', label: 'Decisao' },
-                { key: 'numero_reuniao', label: 'Reuniao' },
+                { key: 'numero_reuniao', label: 'Reunião' },
                 { key: 'data_reuniao', label: 'Data' }
             ], 'deliberacoes_iris.csv');
         }
@@ -5660,7 +6029,7 @@ tr:hover {
             const container = document.getElementById('monitor-list');
 
             if (this.reunioes.length === 0) {
-                container.innerHTML = '<div class="empty-state">Nenhuma reuniao monitorada. Adicione uma URL acima.</div>';
+                container.innerHTML = '<div class="empty-state">Nenhuma reunião monitorada. Adicione uma URL acima.</div>';
                 return;
             }
 
@@ -5685,8 +6054,8 @@ tr:hover {
                 let html = `<div class="meeting-card ${statusClass}">
                     <div class="meeting-header">
                         <div class="meeting-info">
-                            <h3>${r.numero_reuniao || 'Reuniao ' + r.id.substring(0, 8)}</h3>
-                            <p>${r.data_reuniao || 'Data nao identificada'} - ${r.tipo || 'deliberacao'}</p>
+                            <h3>${r.numero_reuniao || 'Reunião ' + r.id.substring(0, 8)}</h3>
+                            <p>${r.data_reuniao || 'Data não identificada'} - ${r.tipo || 'deliberação'}</p>
                             <a href="${r.url_origem}" target="_blank">${r.url_origem.substring(0, 60)}...</a>
                         </div>
                         <div class="meeting-status">
@@ -5697,7 +6066,7 @@ tr:hover {
                 if (r.status !== 'processado' && r.status !== 'erro' && r.status !== 'pendente') {
                     html += `<div class="meeting-progress">
                         <div class="progress-bar"><div class="progress-fill" style="width: ${r.progresso || 0}%;"></div></div>
-                        <div class="progress-text">${r.progresso || 0}% concluido</div>
+                        <div class="progress-text">${r.progresso || 0}% concluído</div>
                     </div>`;
                 }
 
@@ -5706,7 +6075,7 @@ tr:hover {
                 }
 
                 if (r.deliberacoes_count > 0) {
-                    html += `<div class="meeting-delibs"><h4>${r.deliberacoes_count} deliberacoes extraidas</h4></div>`;
+                    html += `<div class="meeting-delibs"><h4>${r.deliberacoes_count} deliberações extraídas</h4></div>`;
                 }
 
                 html += `<div class="meeting-actions">`;
@@ -5748,7 +6117,7 @@ tr:hover {
         },
 
         async excluir(id) {
-            if (!confirm('Excluir esta reuniao e todas suas deliberacoes?')) return;
+            if (!confirm('Excluir esta reunião e todas suas deliberações?')) return;
             await API.delete(`/api/reunioes-monitoradas/${id}`);
             await this.load();
         }
@@ -5760,10 +6129,10 @@ tr:hover {
     const PageDiretores = {
         diretores: [
             { nome: 'Milton Persoli', iniciais: 'MP', cargo: 'Diretor-Presidente', inicio: '2021-01-15', fim: null, ativo: true, reunioes: 156, votos: 245, favoravel: 78.2, contrario: 15.5 },
-            { nome: 'Marcos Antonio Ribeiro', iniciais: 'MR', cargo: 'Diretor de Fiscalizacao', inicio: '2020-06-01', fim: null, ativo: true, reunioes: 178, votos: 198, favoravel: 65.4, contrario: 28.3 },
+            { nome: 'Marcos Antonio Ribeiro', iniciais: 'MR', cargo: 'Diretor de Fiscalização', inicio: '2020-06-01', fim: null, ativo: true, reunioes: 178, votos: 198, favoravel: 65.4, contrario: 28.3 },
             { nome: 'Patricia Vanzolini', iniciais: 'PV', cargo: 'Diretora de Planejamento', inicio: '2022-03-10', fim: null, ativo: true, reunioes: 98, votos: 212, favoravel: 82.1, contrario: 12.3 },
             { nome: 'Carlos Eduardo Silva', iniciais: 'CS', cargo: 'Diretor de Investimentos', inicio: '2021-08-20', fim: null, ativo: true, reunioes: 134, votos: 187, favoravel: 71.2, contrario: 22.4 },
-            { nome: 'Ana Maria Santos', iniciais: 'AS', cargo: 'Diretora de Regulacao', inicio: '2019-01-10', fim: '2023-06-30', ativo: false, reunioes: 210, votos: 312, favoravel: 74.5, contrario: 18.2 }
+            { nome: 'Ana Maria Santos', iniciais: 'AS', cargo: 'Diretora de Regulação', inicio: '2019-01-10', fim: '2023-06-30', ativo: false, reunioes: 210, votos: 312, favoravel: 74.5, contrario: 18.2 }
         ],
 
         init() {
@@ -5793,13 +6162,13 @@ tr:hover {
                     </div>
                     <div class="director-body">
                         <div class="director-stats">
-                            <div class="stat-item"><div class="value">${d.reunioes}</div><div class="label">Reunioes</div></div>
+                            <div class="stat-item"><div class="value">${d.reunioes}</div><div class="label">Reuniões</div></div>
                             <div class="stat-item"><div class="value">${d.votos}</div><div class="label">Votos</div></div>
-                            <div class="stat-item"><div class="value green">${d.favoravel}%</div><div class="label">Favoravel</div></div>
+                            <div class="stat-item"><div class="value green">${d.favoravel}%</div><div class="label">Favorável</div></div>
                             <div class="stat-item"><div class="value red">${d.contrario}%</div><div class="label">Contrario</div></div>
                         </div>
                         <div class="director-bar">
-                            <div class="director-bar-label"><span>Taxa de Aprovacao</span><span>${d.favoravel}%</span></div>
+                            <div class="director-bar-label"><span>Taxa de Aprovação</span><span>${d.favoravel}%</span></div>
                             <div class="bar-track"><div class="bar-fill green" style="width: ${d.favoravel}%;"></div></div>
                         </div>
                     </div>
@@ -5849,7 +6218,7 @@ tr:hover {
             {
                 nome: 'Diego Albert Zanatto',
                 variantes: ['Diego Zanatto', 'Zanatto'],
-                cargo: 'Diretor de Fiscalizacao',
+                cargo: 'Diretor de Fiscalização',
                 iniciais: 'DZ',
                 inicio: '2024-09-10',
                 ativo: true
@@ -5944,7 +6313,7 @@ tr:hover {
                     };
                 });
 
-                // Adiciona diretores encontrados na API que nao estao na lista base
+                // Adiciona diretores encontrados na API que não estão na lista base
                 this.metricasAPI.forEach(apiDir => {
                     const jaExiste = this.diretores.some(d =>
                         d.nome === apiDir.nome ||
@@ -6055,7 +6424,7 @@ tr:hover {
                         <div class="mandato-info">
                             <div class="mandato-name">${d.nome}</div>
                             <div class="mandato-role">${d.cargo}</div>
-                            <span class="mandato-status ${d.ativo ? 'active' : 'inactive'}">${d.ativo ? 'Em Exercicio' : 'Encerrado'}</span>
+                            <span class="mandato-status ${d.ativo ? 'active' : 'inactive'}">${d.ativo ? 'Em Exercício' : 'Encerrado'}</span>
                         </div>
                     </div>
                     <div class="mandato-body">
@@ -6142,7 +6511,7 @@ tr:hover {
                         <div class="participation-rank">${i + 1}</div>
                         <div class="participation-info">
                             <div class="participation-name">${d.nome}</div>
-                            <div class="participation-count">${d.participacoes} participacoes</div>
+                            <div class="participation-count">${d.participacoes} participações</div>
                         </div>
                     </div>
                     <span class="participation-badge">${d.relatorias} relatorias</span>
@@ -6158,7 +6527,7 @@ tr:hover {
                 <div class="director-option ${i === this.selectedDirector ? 'active' : ''}" data-index="${i}" onclick="App.PageJurimetria.selectDirector(${i})">
                     <div class="director-option-info">
                         <div class="director-option-name">${d.nome}</div>
-                        <div class="director-option-stats">${d.participacoes} participacoes colegiadas</div>
+                        <div class="director-option-stats">${d.participacoes} participações colegiadas</div>
                     </div>
                     <span class="director-option-badge">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
@@ -6196,7 +6565,7 @@ tr:hover {
                     <div class="profile-info">
                         <div class="profile-name">${d.nome}</div>
                         <div class="profile-role">${d.cargo}</div>
-                        <span class="profile-status">${d.ativo ? 'Em Exercicio' : 'Encerrado'}</span>
+                        <span class="profile-status">${d.ativo ? 'Em Exercício' : 'Encerrado'}</span>
                     </div>
                 </div>
 
@@ -6233,7 +6602,7 @@ tr:hover {
 
                 <div class="profile-alert" style="background: rgba(201, 162, 39, 0.1); border-left: 3px solid var(--accent);">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    <p>Dados extraidos automaticamente dos PDFs processados. Os valores refletem a <strong>participacao institucional</strong> identificada nas deliberacoes analisadas.</p>
+                    <p>Dados extraidos automaticamente dos PDFs processados. Os valores refletem a <strong>participação institucional</strong> identificada nas deliberações analisadas.</p>
                 </div>
 
                 <div class="profile-tabs">
@@ -6268,7 +6637,7 @@ tr:hover {
                     </div>
 
                     <div style="margin-top: 20px;">
-                        <h5 style="margin-bottom: 12px; color: var(--text-secondary);">Distribuicao de Votos</h5>
+                        <h5 style="margin-bottom: 12px; color: var(--text-secondary);">Distribuição de Votos</h5>
                         <div class="progress-bar" style="height: 24px; margin-bottom: 8px;">
                             <div class="progress-fill success" style="width: ${d.participacoes > 0 ? (d.favoravel / d.participacoes * 100) : 0}%;">
                                 A Favor: ${d.favoravel}
@@ -6320,7 +6689,7 @@ tr:hover {
                     </div>
 
                     <div style="margin-top: 20px;">
-                        <h5 style="margin-bottom: 12px; color: var(--text-secondary);">Distribuicao de Votos</h5>
+                        <h5 style="margin-bottom: 12px; color: var(--text-secondary);">Distribuição de Votos</h5>
                         <div class="progress-bar" style="height: 24px; margin-bottom: 8px;">
                             <div class="progress-fill success" style="width: ${d.participacoes > 0 ? (d.favoravel / d.participacoes * 100) : 0}%;">
                                 A Favor: ${d.favoravel}
@@ -6346,7 +6715,7 @@ tr:hover {
                 content.innerHTML = `
                     <h4 style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
-                        Temas das Deliberacoes
+                        Temas das Deliberações
                     </h4>
 
                     ${temasHtml}
@@ -6366,12 +6735,12 @@ tr:hover {
                         <div style="background: rgba(74, 222, 128, 0.1); border-radius: 12px; padding: 20px; text-align: center;">
                             <div style="font-size: 2rem; font-weight: 700; color: var(--success);">${taxaDef}%</div>
                             <div style="color: var(--text-secondary); margin-top: 4px;">Taxa de Deferimento</div>
-                            <div style="font-size: 0.9rem; margin-top: 8px;">${d.votosDeferido || 0} decisoes deferidas</div>
+                            <div style="font-size: 0.9rem; margin-top: 8px;">${d.votosDeferido || 0} decisões deferidas</div>
                         </div>
                         <div style="background: rgba(248, 113, 113, 0.1); border-radius: 12px; padding: 20px; text-align: center;">
                             <div style="font-size: 2rem; font-weight: 700; color: var(--danger);">${taxaInd}%</div>
                             <div style="color: var(--text-secondary); margin-top: 4px;">Taxa de Indeferimento</div>
-                            <div style="font-size: 0.9rem; margin-top: 8px;">${d.votosIndeferido || 0} decisoes indeferidas</div>
+                            <div style="font-size: 0.9rem; margin-top: 8px;">${d.votosIndeferido || 0} decisões indeferidas</div>
                         </div>
                     </div>
 
@@ -6403,7 +6772,7 @@ tr:hover {
     };
 
     // ============================================
-    // PAGE: Governanca
+    // PAGE: Governança
     // ============================================
     const PageGovernanca = {
         init() {
@@ -6442,7 +6811,7 @@ tr:hover {
 
         gerar() {
             const mes = document.getElementById('boletim-mes')?.value;
-            alert('Gerando boletim para ' + mes + '...\nEsta funcionalidade sera conectada a API de geracao de boletins.');
+            alert('Gerando boletim para ' + mes + '...\nEsta funcionalidade será conectada à API de geração de boletins.');
         },
 
         imprimir() {
@@ -6614,7 +6983,7 @@ tr:hover {
                 }
             }
 
-            progressText.textContent = 'Upload concluido!';
+            progressText.textContent = 'Upload concluído!';
             progressPercent.textContent = '100%';
             progressBar.style.width = '100%';
 
@@ -6631,7 +7000,7 @@ tr:hover {
             const url = urlInput?.value?.trim();
 
             if (!url) {
-                alert('Digite uma URL valida');
+                alert('Digite uma URL válida');
                 return;
             }
 
@@ -6675,7 +7044,7 @@ tr:hover {
     };
 
     // ============================================
-    // PAGE: Analise de PDFs
+    // PAGE: Análise de PDFs
     // ============================================
     const PageAnalise = {
         pdfs: [],
@@ -6702,7 +7071,7 @@ tr:hover {
 
             document.getElementById('analise-total').textContent = total;
             document.getElementById('analise-pendentes').textContent = pendentes;
-            document.getElementById('analise-concluidos').textContent = concluidos;
+            document.getElementById('analise-concluídos').textContent = concluídos;
             document.getElementById('analise-deliberacoes').textContent = deliberacoes;
         },
 
@@ -6710,7 +7079,7 @@ tr:hover {
             const tbody = document.getElementById('analise-table-body');
 
             if (this.pdfs.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state">Nenhum PDF disponivel. Faca upload na pagina de Upload.</div></td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state">Nenhum PDF disponível. Faça upload na página de Upload.</div></td></tr>';
                 return;
             }
 
@@ -6765,7 +7134,7 @@ tr:hover {
                 clearInterval(progressInterval);
 
                 if (response?.sucesso) {
-                    statusText.textContent = 'Analise concluida!';
+                    statusText.textContent = 'Análise concluída!';
                     statusPercent.textContent = '100%';
                     progressBar.style.width = '100%';
 
@@ -6791,7 +7160,7 @@ tr:hover {
             const pendentes = this.pdfs.filter(p => p.status === 'pendente');
 
             if (pendentes.length === 0) {
-                alert('Nenhum PDF pendente para analisar');
+                alert('Nenhum PDF pendente para análise');
                 return;
             }
 
@@ -6807,7 +7176,7 @@ tr:hover {
                 const response = await API.post('/api/analisar-todos');
 
                 if (response?.sucesso) {
-                    statusText.textContent = `Analise concluida! ${response.total_deliberacoes || 0} deliberacoes extraidas.`;
+                    statusText.textContent = `Análise concluída! ${response.total_deliberacoes || 0} deliberações extraídas.`;
                     statusPercent.textContent = '100%';
                     progressBar.style.width = '100%';
 
@@ -6838,7 +7207,7 @@ tr:hover {
                 <div class="result-summary">
                     <div class="result-stat">
                         <div class="value">${deliberacoes.length}</div>
-                        <div class="label">Deliberacoes Extraidas</div>
+                        <div class="label">Deliberações Extraídas</div>
                     </div>
                 </div>
                 ${deliberacoes.length > 0 ? `
@@ -6871,12 +7240,12 @@ tr:hover {
     // ============================================
     const PageAgencias = {
         agencias: [
-            { id: 'artesp', nome: 'ARTESP', nomeCompleto: 'Agencia de Transporte do Estado de SP', decisoes: 1247, aprovadas: 892, pendentes: 45, cor: '#FFEF4D' },
-            { id: 'antt', nome: 'ANTT', nomeCompleto: 'Agencia Nacional de Transportes Terrestres', decisoes: 3456, aprovadas: 2890, pendentes: 123, cor: '#4ADE80' },
-            { id: 'anm', nome: 'ANM', nomeCompleto: 'Agencia Nacional de Mineracao', decisoes: 892, aprovadas: 654, pendentes: 78, cor: '#60A5FA' },
-            { id: 'aneel', nome: 'ANEEL', nomeCompleto: 'Agencia Nacional de Energia Eletrica', decisoes: 2134, aprovadas: 1823, pendentes: 89, cor: '#F472B6' },
-            { id: 'antaq', nome: 'ANTAQ', nomeCompleto: 'Agencia Nacional de Transp. Aquaviarios', decisoes: 567, aprovadas: 432, pendentes: 34, cor: '#A78BFA' },
-            { id: 'arsesp', nome: 'ARSESP', nomeCompleto: 'Agencia Reguladora de Saneamento SP', decisoes: 345, aprovadas: 298, pendentes: 12, cor: '#FB923C' }
+            { id: 'artesp', nome: 'ARTESP', nomeCompleto: 'Agência de Transporte do Estado de SP', decisoes: 1247, aprovadas: 892, pendentes: 45, cor: '#FFEF4D' },
+            { id: 'antt', nome: 'ANTT', nomeCompleto: 'Agência Nacional de Transportes Terrestres', decisoes: 3456, aprovadas: 2890, pendentes: 123, cor: '#4ADE80' },
+            { id: 'anm', nome: 'ANM', nomeCompleto: 'Agência Nacional de Mineração', decisoes: 892, aprovadas: 654, pendentes: 78, cor: '#60A5FA' },
+            { id: 'aneel', nome: 'ANEEL', nomeCompleto: 'Agência Nacional de Energia Elétrica', decisoes: 2134, aprovadas: 1823, pendentes: 89, cor: '#F472B6' },
+            { id: 'antaq', nome: 'ANTAQ', nomeCompleto: 'Agência Nacional de Transp. Aquaviários', decisoes: 567, aprovadas: 432, pendentes: 34, cor: '#A78BFA' },
+            { id: 'arsesp', nome: 'ARSESP', nomeCompleto: 'Agência Reguladora de Saneamento SP', decisoes: 345, aprovadas: 298, pendentes: 12, cor: '#FB923C' }
         ],
 
         init() {
@@ -6942,32 +7311,32 @@ tr:hover {
     // ============================================
     const PageMapa = {
         estados: {
-            'SP': { nome: 'Sao Paulo', decisoes: 4521, taxa: 78.5 },
+            'SP': { nome: 'São Paulo', decisoes: 4521, taxa: 78.5 },
             'RJ': { nome: 'Rio de Janeiro', decisoes: 2134, taxa: 72.3 },
             'MG': { nome: 'Minas Gerais', decisoes: 1876, taxa: 81.2 },
             'RS': { nome: 'Rio Grande do Sul', decisoes: 1245, taxa: 75.8 },
-            'PR': { nome: 'Parana', decisoes: 1123, taxa: 79.4 },
+            'PR': { nome: 'Paraná', decisoes: 1123, taxa: 79.4 },
             'BA': { nome: 'Bahia', decisoes: 987, taxa: 68.9 },
             'SC': { nome: 'Santa Catarina', decisoes: 876, taxa: 82.1 },
-            'GO': { nome: 'Goias', decisoes: 654, taxa: 71.5 },
+            'GO': { nome: 'Goiás', decisoes: 654, taxa: 71.5 },
             'PE': { nome: 'Pernambuco', decisoes: 543, taxa: 65.7 },
-            'CE': { nome: 'Ceara', decisoes: 432, taxa: 69.2 },
+            'CE': { nome: 'Ceará', decisoes: 432, taxa: 69.2 },
             'DF': { nome: 'Distrito Federal', decisoes: 398, taxa: 84.3 },
-            'PA': { nome: 'Para', decisoes: 321, taxa: 62.8 },
+            'PA': { nome: 'Pará', decisoes: 321, taxa: 62.8 },
             'MT': { nome: 'Mato Grosso', decisoes: 287, taxa: 73.4 },
-            'ES': { nome: 'Espirito Santo', decisoes: 265, taxa: 77.1 },
+            'ES': { nome: 'Espírito Santo', decisoes: 265, taxa: 77.1 },
             'MS': { nome: 'Mato Grosso do Sul', decisoes: 234, taxa: 74.6 },
-            'MA': { nome: 'Maranhao', decisoes: 198, taxa: 61.3 },
+            'MA': { nome: 'Maranhão', decisoes: 198, taxa: 61.3 },
             'AM': { nome: 'Amazonas', decisoes: 176, taxa: 58.9 },
             'RN': { nome: 'Rio Grande do Norte', decisoes: 154, taxa: 66.4 },
-            'PB': { nome: 'Paraiba', decisoes: 143, taxa: 64.8 },
+            'PB': { nome: 'Paraíba', decisoes: 143, taxa: 64.8 },
             'AL': { nome: 'Alagoas', decisoes: 121, taxa: 63.2 },
-            'PI': { nome: 'Piaui', decisoes: 98, taxa: 59.7 },
+            'PI': { nome: 'Piauí', decisoes: 98, taxa: 59.7 },
             'SE': { nome: 'Sergipe', decisoes: 87, taxa: 67.3 },
-            'RO': { nome: 'Rondonia', decisoes: 76, taxa: 71.2 },
+            'RO': { nome: 'Rondônia', decisoes: 76, taxa: 71.2 },
             'TO': { nome: 'Tocantins', decisoes: 65, taxa: 68.5 },
             'AC': { nome: 'Acre', decisoes: 43, taxa: 55.8 },
-            'AP': { nome: 'Amapa', decisoes: 32, taxa: 53.1 },
+            'AP': { nome: 'Amapá', decisoes: 32, taxa: 53.1 },
             'RR': { nome: 'Roraima', decisoes: 21, taxa: 52.4 }
         },
 
@@ -6997,7 +7366,7 @@ tr:hover {
 
                 if (!estado) return;
 
-                // Cor baseada na quantidade de decisoes
+                // Cor baseada na quantidade de decisões
                 const maxDecisoes = 4521; // SP
                 const intensity = Math.min(1, estado.decisoes / maxDecisoes);
                 const baseColor = this.getRegionColor(stateCode);
@@ -7075,7 +7444,7 @@ tr:hover {
                     <div class="ranking-position">${index + 1}</div>
                     <div class="ranking-info">
                         <div class="ranking-state">${data.nome}</div>
-                        <div class="ranking-stats">${data.decisoes.toLocaleString('pt-BR')} decisoes</div>
+                        <div class="ranking-stats">${data.decisoes.toLocaleString('pt-BR')} decisões</div>
                     </div>
                     <div class="ranking-badge" style="background: ${this.getRegionColor(code)}20; color: ${this.getRegionColor(code)};">
                         ${data.taxa}%
@@ -7085,7 +7454,608 @@ tr:hover {
         },
 
         showStateDetails(code, estado) {
-            alert(`${estado.nome} (${code})\n\nDecisoes: ${estado.decisoes.toLocaleString('pt-BR')}\nTaxa de Aprovacao: ${estado.taxa}%`);
+            alert(`${estado.nome} (${code})\n\nDecisoes: ${estado.decisoes.toLocaleString('pt-BR')}\nTaxa de Aprovação: ${estado.taxa}%`);
+        }
+    };
+
+    // ============================================
+    // PAGE: Rede de Conexões - Intelligence Network
+    // ============================================
+    const PageConexoes = {
+        canvas: null,
+        ctx: null,
+        nodes: [],
+        edges: [],
+        animFrame: null,
+        dragging: null,
+        hovering: null,
+        selected: null,
+        mouse: { x: 0, y: 0 },
+        camera: { x: 0, y: 0, zoom: 1 },
+        width: 0,
+        height: 0,
+        time: 0,
+
+        // Intelligence network data
+        graphData: {
+            directors: [
+                { id: 'd1', label: 'André Isper', full: 'André Isper Rodrigues Barnabé', role: 'Diretor-Presidente', votes: 0, initials: 'AI' },
+                { id: 'd2', label: 'Diego Zanatto', full: 'Diego Albert Zanatto', role: 'Diretor de Fiscalização', votes: 0, initials: 'DZ' },
+                { id: 'd3', label: 'Fernanda Rudnik', full: 'Fernanda Esbizaro Rodrigues Rudnik', role: 'Diretora de Planejamento', votes: 0, initials: 'FR' },
+                { id: 'd4', label: 'Raquel Carneiro', full: 'Raquel França Carneiro', role: 'Diretora de Investimentos', votes: 0, initials: 'RC' }
+            ],
+            companies: [
+                { id: 'c1', label: 'Ecovias', full: 'Ecovias dos Imigrantes S.A.', sector: 'Rodovias', contracts: 12 },
+                { id: 'c2', label: 'CCR AutoBAn', full: 'CCR AutoBAn S.A.', sector: 'Rodovias', contracts: 8 },
+                { id: 'c3', label: 'EcoRodovias', full: 'EcoRodovias Infraestrutura', sector: 'Rodovias', contracts: 6 },
+                { id: 'c4', label: 'Arteris', full: 'Arteris S.A.', sector: 'Rodovias', contracts: 9 },
+                { id: 'c5', label: 'ViaQuatro', full: 'ViaQuatro - Metrô Linha 4', sector: 'Metroviário', contracts: 5 },
+                { id: 'c6', label: 'ViaMobilidade', full: 'ViaMobilidade Linhas 8 e 9', sector: 'Ferroviário', contracts: 7 },
+                { id: 'c7', label: 'Tamoios', full: 'Concessionária Tamoios', sector: 'Rodovias', contracts: 4 },
+                { id: 'c8', label: 'CART', full: 'Conc. Auto Raposo Tavares', sector: 'Rodovias', contracts: 5 }
+            ],
+            themes: [
+                { id: 't1', label: 'Revisão Tarifária', count: 45, category: 'financeiro' },
+                { id: 't2', label: 'Obras/Investimentos', count: 67, category: 'infraestrutura' },
+                { id: 't3', label: 'Reequilíbrio Econômico', count: 34, category: 'financeiro' },
+                { id: 't4', label: 'Fiscalização', count: 56, category: 'regulação' },
+                { id: 't5', label: 'Multas e Sanções', count: 28, category: 'regulação' },
+                { id: 't6', label: 'Contrato/Aditivo', count: 23, category: 'contratual' },
+                { id: 't7', label: 'Qualidade de Serviço', count: 19, category: 'operacional' },
+                { id: 't8', label: 'Segurança Viária', count: 15, category: 'operacional' }
+            ],
+            agencies: [
+                { id: 'a1', label: 'ARTESP', full: 'Agência de Transporte do Estado de SP', deliberations: 1247 },
+                { id: 'a2', label: 'ANTT', full: 'Agência Nacional de Transportes Terrestres', deliberations: 3456 }
+            ],
+            connections: [
+                // Directors ↔ Companies (involvement in deliberations)
+                { source: 'd1', target: 'c1', strength: 0.9, label: '23 deliberações' },
+                { source: 'd1', target: 'c2', strength: 0.7, label: '15 deliberações' },
+                { source: 'd1', target: 'c4', strength: 0.6, label: '11 deliberações' },
+                { source: 'd1', target: 'c6', strength: 0.4, label: '7 deliberações' },
+                { source: 'd2', target: 'c1', strength: 0.8, label: '19 deliberações' },
+                { source: 'd2', target: 'c3', strength: 0.7, label: '14 deliberações' },
+                { source: 'd2', target: 'c5', strength: 0.5, label: '9 deliberações' },
+                { source: 'd2', target: 'c7', strength: 0.4, label: '6 deliberações' },
+                { source: 'd3', target: 'c2', strength: 0.8, label: '18 deliberações' },
+                { source: 'd3', target: 'c4', strength: 0.6, label: '12 deliberações' },
+                { source: 'd3', target: 'c8', strength: 0.5, label: '8 deliberações' },
+                { source: 'd3', target: 'c6', strength: 0.3, label: '5 deliberações' },
+                { source: 'd4', target: 'c1', strength: 0.7, label: '16 deliberações' },
+                { source: 'd4', target: 'c3', strength: 0.6, label: '10 deliberações' },
+                { source: 'd4', target: 'c5', strength: 0.5, label: '8 deliberações' },
+                { source: 'd4', target: 'c8', strength: 0.4, label: '6 deliberações' },
+                // Directors ↔ Themes
+                { source: 'd1', target: 't1', strength: 0.8, label: '34 votos' },
+                { source: 'd1', target: 't2', strength: 0.9, label: '41 votos' },
+                { source: 'd1', target: 't3', strength: 0.5, label: '12 votos' },
+                { source: 'd2', target: 't4', strength: 0.9, label: '48 votos' },
+                { source: 'd2', target: 't5', strength: 0.7, label: '22 votos' },
+                { source: 'd2', target: 't2', strength: 0.6, label: '18 votos' },
+                { source: 'd3', target: 't2', strength: 0.8, label: '35 votos' },
+                { source: 'd3', target: 't6', strength: 0.6, label: '14 votos' },
+                { source: 'd3', target: 't1', strength: 0.5, label: '11 votos' },
+                { source: 'd4', target: 't3', strength: 0.8, label: '28 votos' },
+                { source: 'd4', target: 't1', strength: 0.7, label: '20 votos' },
+                { source: 'd4', target: 't7', strength: 0.4, label: '8 votos' },
+                // Companies ↔ Themes
+                { source: 'c1', target: 't1', strength: 0.7, label: '18 processos' },
+                { source: 'c1', target: 't2', strength: 0.8, label: '24 processos' },
+                { source: 'c2', target: 't3', strength: 0.6, label: '9 processos' },
+                { source: 'c4', target: 't4', strength: 0.5, label: '7 processos' },
+                { source: 'c5', target: 't7', strength: 0.7, label: '12 processos' },
+                { source: 'c3', target: 't5', strength: 0.6, label: '8 processos' },
+                { source: 'c6', target: 't8', strength: 0.5, label: '6 processos' },
+                { source: 'c7', target: 't2', strength: 0.4, label: '5 processos' },
+                // Agencies ↔ Directors
+                { source: 'a1', target: 'd1', strength: 1.0, label: 'Presidente' },
+                { source: 'a1', target: 'd2', strength: 0.9, label: 'Diretor' },
+                { source: 'a1', target: 'd3', strength: 0.9, label: 'Diretora' },
+                { source: 'a1', target: 'd4', strength: 0.9, label: 'Diretora' },
+            ]
+        },
+
+        init() {
+            const page = document.getElementById('page-conexoes');
+            page.classList.add('active');
+            this.setupCanvas();
+            this.buildGraph();
+            this.setupEvents();
+            this.animate();
+            this.updateStats();
+        },
+
+        destroy() {
+            if (this.animFrame) {
+                cancelAnimationFrame(this.animFrame);
+                this.animFrame = null;
+            }
+        },
+
+        setupCanvas() {
+            this.canvas = document.getElementById('graph-canvas');
+            this.ctx = this.canvas.getContext('2d');
+            const wrapper = this.canvas.parentElement;
+            this.width = wrapper.clientWidth;
+            this.height = wrapper.clientHeight;
+            this.canvas.width = this.width * 2;
+            this.canvas.height = this.height * 2;
+            this.canvas.style.width = this.width + 'px';
+            this.canvas.style.height = this.height + 'px';
+            this.ctx.scale(2, 2);
+            this.camera = { x: this.width / 2, y: this.height / 2, zoom: 1 };
+        },
+
+        buildGraph() {
+            this.nodes = [];
+            this.edges = [];
+            const cx = this.width / 2;
+            const cy = this.height / 2;
+
+            // Create nodes with positions
+            const types = [
+                { data: this.graphData.directors, type: 'director', color: '#60a5fa', radius: 28, ring: 120 },
+                { data: this.graphData.companies, type: 'company', color: '#fbbf24', radius: 20, ring: 250 },
+                { data: this.graphData.themes, type: 'theme', color: '#4ade80', radius: 16, ring: 200 },
+                { data: this.graphData.agencies, type: 'agency', color: '#a78bfa', radius: 32, ring: 60 }
+            ];
+
+            types.forEach(({ data, type, color, radius, ring }) => {
+                data.forEach((item, i) => {
+                    const angle = (i / data.length) * Math.PI * 2 - Math.PI / 2;
+                    const jitter = (Math.random() - 0.5) * 60;
+                    this.nodes.push({
+                        ...item,
+                        type,
+                        color,
+                        radius,
+                        x: cx + Math.cos(angle) * (ring + jitter),
+                        y: cy + Math.sin(angle) * (ring + jitter),
+                        vx: 0,
+                        vy: 0,
+                        targetX: 0,
+                        targetY: 0,
+                        pulsePhase: Math.random() * Math.PI * 2,
+                        connections: 0
+                    });
+                });
+            });
+
+            // Create edges
+            this.graphData.connections.forEach(conn => {
+                const source = this.nodes.find(n => n.id === conn.source);
+                const target = this.nodes.find(n => n.id === conn.target);
+                if (source && target) {
+                    source.connections++;
+                    target.connections++;
+                    this.edges.push({
+                        source,
+                        target,
+                        strength: conn.strength,
+                        label: conn.label,
+                        phase: Math.random() * Math.PI * 2
+                    });
+                }
+            });
+
+            // Run initial force simulation
+            for (let i = 0; i < 150; i++) {
+                this.simulateForces(0.3 * (1 - i / 150));
+            }
+        },
+
+        simulateForces(alpha) {
+            const cx = this.width / 2;
+            const cy = this.height / 2;
+
+            // Repulsion between all nodes
+            for (let i = 0; i < this.nodes.length; i++) {
+                for (let j = i + 1; j < this.nodes.length; j++) {
+                    const a = this.nodes[i];
+                    const b = this.nodes[j];
+                    let dx = b.x - a.x;
+                    let dy = b.y - a.y;
+                    let dist = Math.sqrt(dx * dx + dy * dy) || 1;
+                    let force = 2000 / (dist * dist);
+                    let fx = (dx / dist) * force * alpha;
+                    let fy = (dy / dist) * force * alpha;
+                    a.vx -= fx;
+                    a.vy -= fy;
+                    b.vx += fx;
+                    b.vy += fy;
+                }
+            }
+
+            // Attraction along edges
+            this.edges.forEach(edge => {
+                let dx = edge.target.x - edge.source.x;
+                let dy = edge.target.y - edge.source.y;
+                let dist = Math.sqrt(dx * dx + dy * dy) || 1;
+                let force = (dist - 150) * 0.005 * edge.strength * alpha;
+                let fx = (dx / dist) * force;
+                let fy = (dy / dist) * force;
+                edge.source.vx += fx;
+                edge.source.vy += fy;
+                edge.target.vx -= fx;
+                edge.target.vy -= fy;
+            });
+
+            // Center gravity
+            this.nodes.forEach(node => {
+                node.vx += (cx - node.x) * 0.001 * alpha;
+                node.vy += (cy - node.y) * 0.001 * alpha;
+                node.x += node.vx;
+                node.y += node.vy;
+                node.vx *= 0.9;
+                node.vy *= 0.9;
+            });
+        },
+
+        setupEvents() {
+            const canvas = this.canvas;
+
+            canvas.addEventListener('mousemove', (e) => {
+                const rect = canvas.getBoundingClientRect();
+                this.mouse.x = (e.clientX - rect.left - this.camera.x + this.width / 2) / this.camera.zoom;
+                this.mouse.y = (e.clientY - rect.top - this.camera.y + this.height / 2) / this.camera.zoom;
+
+                if (this.dragging) {
+                    this.dragging.x = this.mouse.x;
+                    this.dragging.y = this.mouse.y;
+                    return;
+                }
+
+                // Find hovered node
+                let found = null;
+                for (let i = this.nodes.length - 1; i >= 0; i--) {
+                    const n = this.nodes[i];
+                    const dx = this.mouse.x - n.x;
+                    const dy = this.mouse.y - n.y;
+                    if (Math.sqrt(dx * dx + dy * dy) < n.radius + 5) {
+                        found = n;
+                        break;
+                    }
+                }
+
+                if (found !== this.hovering) {
+                    this.hovering = found;
+                    canvas.style.cursor = found ? 'pointer' : 'grab';
+
+                    const tooltip = document.getElementById('graph-tooltip');
+                    if (found) {
+                        const typeLabels = { director: 'Diretor', company: 'Empresa', theme: 'Tema', agency: 'Agência' };
+                        tooltip.innerHTML = `<strong>${found.label}</strong>${typeLabels[found.type]} | ${found.connections} conexões`;
+                        tooltip.style.display = 'block';
+                        const rx = e.clientX - canvas.getBoundingClientRect().left;
+                        const ry = e.clientY - canvas.getBoundingClientRect().top;
+                        tooltip.style.left = (rx + 15) + 'px';
+                        tooltip.style.top = (ry - 10) + 'px';
+                    } else {
+                        tooltip.style.display = 'none';
+                    }
+                } else if (found) {
+                    const tooltip = document.getElementById('graph-tooltip');
+                    const rx = e.clientX - canvas.getBoundingClientRect().left;
+                    const ry = e.clientY - canvas.getBoundingClientRect().top;
+                    tooltip.style.left = (rx + 15) + 'px';
+                    tooltip.style.top = (ry - 10) + 'px';
+                }
+            });
+
+            canvas.addEventListener('mousedown', (e) => {
+                if (this.hovering) {
+                    this.dragging = this.hovering;
+                    canvas.style.cursor = 'grabbing';
+                } else {
+                    // Pan camera
+                    const startX = e.clientX;
+                    const startY = e.clientY;
+                    const camX = this.camera.x;
+                    const camY = this.camera.y;
+                    const onMove = (ev) => {
+                        this.camera.x = camX + (ev.clientX - startX);
+                        this.camera.y = camY + (ev.clientY - startY);
+                    };
+                    const onUp = () => {
+                        window.removeEventListener('mousemove', onMove);
+                        window.removeEventListener('mouseup', onUp);
+                    };
+                    window.addEventListener('mousemove', onMove);
+                    window.addEventListener('mouseup', onUp);
+                }
+            });
+
+            canvas.addEventListener('mouseup', () => {
+                this.dragging = null;
+                canvas.style.cursor = this.hovering ? 'pointer' : 'grab';
+            });
+
+            canvas.addEventListener('click', () => {
+                if (this.hovering) {
+                    this.selected = this.hovering;
+                    this.showNodeInfo(this.hovering);
+                }
+            });
+
+            canvas.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const delta = e.deltaY > 0 ? 0.9 : 1.1;
+                this.camera.zoom = Math.max(0.3, Math.min(3, this.camera.zoom * delta));
+            });
+
+            // Filter
+            document.getElementById('graph-filter-type')?.addEventListener('change', (e) => {
+                this.filterNodes(e.target.value);
+            });
+
+            // Reset button
+            document.getElementById('graph-reset-btn')?.addEventListener('click', () => {
+                this.resetView();
+            });
+        },
+
+        showNodeInfo(node) {
+            const title = document.getElementById('graph-info-title');
+            const body = document.getElementById('graph-info-body');
+            title.textContent = node.label;
+
+            const connectedEdges = this.edges.filter(e => e.source === node || e.target === node);
+            const connectedNodes = connectedEdges.map(e => e.source === node ? e.target : e.source);
+
+            let html = '';
+
+            if (node.type === 'director') {
+                html = `
+                    <div class="info-row"><span class="info-label">Cargo</span><span class="info-value">${node.role}</span></div>
+                    <div class="info-row"><span class="info-label">Nome Completo</span><span class="info-value" style="font-size:10px;">${node.full}</span></div>
+                    <div class="info-row"><span class="info-label">Conexões</span><span class="info-value">${node.connections}</span></div>
+                    <hr style="border-color: rgba(96,165,250,0.1); margin: 8px 0;">
+                    <div style="font-size:11px; color:#64748b; margin-bottom:6px;">ENTIDADES CONECTADAS</div>
+                `;
+            } else if (node.type === 'company') {
+                html = `
+                    <div class="info-row"><span class="info-label">Razão Social</span><span class="info-value" style="font-size:10px;">${node.full}</span></div>
+                    <div class="info-row"><span class="info-label">Setor</span><span class="info-value">${node.sector}</span></div>
+                    <div class="info-row"><span class="info-label">Contratos</span><span class="info-value">${node.contracts}</span></div>
+                    <div class="info-row"><span class="info-label">Conexões</span><span class="info-value">${node.connections}</span></div>
+                    <hr style="border-color: rgba(96,165,250,0.1); margin: 8px 0;">
+                    <div style="font-size:11px; color:#64748b; margin-bottom:6px;">ENTIDADES CONECTADAS</div>
+                `;
+            } else if (node.type === 'theme') {
+                html = `
+                    <div class="info-row"><span class="info-label">Categoria</span><span class="info-value">${node.category}</span></div>
+                    <div class="info-row"><span class="info-label">Ocorrências</span><span class="info-value">${node.count}</span></div>
+                    <div class="info-row"><span class="info-label">Conexões</span><span class="info-value">${node.connections}</span></div>
+                    <hr style="border-color: rgba(96,165,250,0.1); margin: 8px 0;">
+                    <div style="font-size:11px; color:#64748b; margin-bottom:6px;">ENTIDADES CONECTADAS</div>
+                `;
+            } else if (node.type === 'agency') {
+                html = `
+                    <div class="info-row"><span class="info-label">Nome</span><span class="info-value" style="font-size:10px;">${node.full}</span></div>
+                    <div class="info-row"><span class="info-label">Deliberações</span><span class="info-value">${node.deliberations}</span></div>
+                    <div class="info-row"><span class="info-label">Conexões</span><span class="info-value">${node.connections}</span></div>
+                    <hr style="border-color: rgba(96,165,250,0.1); margin: 8px 0;">
+                    <div style="font-size:11px; color:#64748b; margin-bottom:6px;">ENTIDADES CONECTADAS</div>
+                `;
+            }
+
+            connectedEdges.forEach(edge => {
+                const other = edge.source === node ? edge.target : edge.source;
+                const typeColors = { director: '#60a5fa', company: '#fbbf24', theme: '#4ade80', agency: '#a78bfa' };
+                html += `<div class="info-row">
+                    <span class="info-label" style="display:flex;align-items:center;gap:4px;">
+                        <span style="width:6px;height:6px;border-radius:50%;background:${typeColors[other.type]};display:inline-block;"></span>
+                        ${other.label}
+                    </span>
+                    <span class="info-value" style="font-size:10px;">${edge.label}</span>
+                </div>`;
+            });
+
+            body.innerHTML = html;
+        },
+
+        filterNodes(type) {
+            this.nodes.forEach(n => {
+                n._hidden = type !== 'all' && n.type !== type;
+            });
+        },
+
+        search(query) {
+            const q = query.toLowerCase().trim();
+            this.nodes.forEach(n => {
+                n._highlighted = q && n.label.toLowerCase().includes(q);
+                n._dimmed = q && !n.label.toLowerCase().includes(q);
+            });
+            if (q) {
+                const match = this.nodes.find(n => n._highlighted);
+                if (match) {
+                    this.camera.x = this.width / 2 - (match.x - this.width / 2) * this.camera.zoom;
+                    this.camera.y = this.height / 2 - (match.y - this.height / 2) * this.camera.zoom;
+                }
+            }
+        },
+
+        zoomIn() { this.camera.zoom = Math.min(3, this.camera.zoom * 1.2); },
+        zoomOut() { this.camera.zoom = Math.max(0.3, this.camera.zoom / 1.2); },
+        resetView() {
+            this.camera = { x: this.width / 2, y: this.height / 2, zoom: 1 };
+            this.nodes.forEach(n => { n._hidden = false; n._highlighted = false; n._dimmed = false; });
+            this.selected = null;
+            document.getElementById('graph-filter-type').value = 'all';
+            document.getElementById('graph-search-input').value = '';
+            document.getElementById('graph-info-title').textContent = 'Selecione uma Entidade';
+            document.getElementById('graph-info-body').innerHTML = '<p style="color: #475569;">Clique em um nó do grafo para visualizar informações detalhadas sobre a entidade e suas conexões.</p>';
+        },
+
+        updateStats() {
+            const visible = this.nodes.filter(n => !n._hidden).length;
+            document.getElementById('graph-total-nodes').textContent = this.nodes.length;
+            document.getElementById('graph-total-edges').textContent = this.edges.length;
+        },
+
+        animate() {
+            this.time += 0.016;
+            this.simulateForces(0.01);
+            this.draw();
+            this.animFrame = requestAnimationFrame(() => this.animate());
+        },
+
+        draw() {
+            const ctx = this.ctx;
+            const w = this.width;
+            const h = this.height;
+
+            ctx.clearRect(0, 0, w, h);
+
+            ctx.save();
+            // Apply camera transform
+            ctx.translate(
+                this.camera.x - w / 2 + (w / 2) * (1 - this.camera.zoom),
+                this.camera.y - h / 2 + (h / 2) * (1 - this.camera.zoom)
+            );
+            ctx.scale(this.camera.zoom, this.camera.zoom);
+
+            // Draw edges
+            this.edges.forEach(edge => {
+                if (edge.source._hidden || edge.target._hidden) return;
+                const dimmed = edge.source._dimmed && edge.target._dimmed;
+                const highlighted = this.selected && (edge.source === this.selected || edge.target === this.selected);
+                const hovered = this.hovering && (edge.source === this.hovering || edge.target === this.hovering);
+
+                const alpha = dimmed ? 0.03 : highlighted ? 0.6 : hovered ? 0.4 : 0.12;
+                const lineWidth = highlighted ? 2 : hovered ? 1.5 : 0.8;
+
+                ctx.beginPath();
+                ctx.moveTo(edge.source.x, edge.source.y);
+                ctx.lineTo(edge.target.x, edge.target.y);
+                ctx.strokeStyle = highlighted || hovered ? `rgba(96, 165, 250, ${alpha})` : `rgba(100, 116, 139, ${alpha})`;
+                ctx.lineWidth = lineWidth;
+                ctx.stroke();
+
+                // Animated data pulse along edges
+                if (!dimmed) {
+                    const t = ((this.time * 0.5 + edge.phase) % 1);
+                    const px = edge.source.x + (edge.target.x - edge.source.x) * t;
+                    const py = edge.source.y + (edge.target.y - edge.source.y) * t;
+                    ctx.beginPath();
+                    ctx.arc(px, py, highlighted ? 2.5 : 1.5, 0, Math.PI * 2);
+                    ctx.fillStyle = highlighted ? 'rgba(96, 165, 250, 0.8)' : 'rgba(96, 165, 250, 0.3)';
+                    ctx.fill();
+                }
+            });
+
+            // Draw nodes
+            this.nodes.forEach(node => {
+                if (node._hidden) return;
+                const dimmed = node._dimmed;
+                const isSelected = node === this.selected;
+                const isHovered = node === this.hovering;
+                const isHighlighted = node._highlighted;
+                const pulse = Math.sin(this.time * 2 + node.pulsePhase) * 0.15 + 1;
+
+                const r = node.radius * (isHovered ? 1.15 : 1) * (isHighlighted ? 1.2 : 1);
+                const alpha = dimmed ? 0.15 : 1;
+
+                // Outer glow for selected/hovered
+                if ((isSelected || isHovered || isHighlighted) && !dimmed) {
+                    const glowR = r * 2.5 * pulse;
+                    const glow = ctx.createRadialGradient(node.x, node.y, r, node.x, node.y, glowR);
+                    glow.addColorStop(0, node.color + '30');
+                    glow.addColorStop(1, node.color + '00');
+                    ctx.beginPath();
+                    ctx.arc(node.x, node.y, glowR, 0, Math.PI * 2);
+                    ctx.fillStyle = glow;
+                    ctx.fill();
+                }
+
+                // Subtle ambient glow
+                if (!dimmed) {
+                    const ambR = r * 1.8 * pulse;
+                    const amb = ctx.createRadialGradient(node.x, node.y, r * 0.5, node.x, node.y, ambR);
+                    amb.addColorStop(0, node.color + '15');
+                    amb.addColorStop(1, node.color + '00');
+                    ctx.beginPath();
+                    ctx.arc(node.x, node.y, ambR, 0, Math.PI * 2);
+                    ctx.fillStyle = amb;
+                    ctx.fill();
+                }
+
+                // Node body
+                ctx.beginPath();
+                if (node.type === 'company') {
+                    // Hexagon for companies
+                    for (let i = 0; i < 6; i++) {
+                        const angle = (Math.PI / 3) * i - Math.PI / 6;
+                        const px = node.x + r * Math.cos(angle);
+                        const py = node.y + r * Math.sin(angle);
+                        i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+                    }
+                    ctx.closePath();
+                } else if (node.type === 'theme') {
+                    // Diamond for themes
+                    ctx.moveTo(node.x, node.y - r);
+                    ctx.lineTo(node.x + r * 0.8, node.y);
+                    ctx.lineTo(node.x, node.y + r);
+                    ctx.lineTo(node.x - r * 0.8, node.y);
+                    ctx.closePath();
+                } else {
+                    ctx.arc(node.x, node.y, r, 0, Math.PI * 2);
+                }
+
+                // Fill
+                const bg = ctx.createRadialGradient(node.x - r * 0.3, node.y - r * 0.3, 0, node.x, node.y, r);
+                bg.addColorStop(0, this.adjustAlpha(this.lighten(node.color, 30), alpha * 0.4));
+                bg.addColorStop(1, this.adjustAlpha(node.color, alpha * 0.2));
+                ctx.fillStyle = bg;
+                ctx.fill();
+
+                // Border
+                ctx.strokeStyle = this.adjustAlpha(node.color, alpha * (isSelected ? 1 : 0.7));
+                ctx.lineWidth = isSelected ? 2.5 : isHovered ? 2 : 1;
+                ctx.stroke();
+
+                // Label
+                if (!dimmed || isHighlighted) {
+                    ctx.font = `${node.type === 'agency' ? '600 11px' : node.type === 'director' ? '600 10px' : '500 9px'} -apple-system, BlinkMacSystemFont, sans-serif`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+
+                    // Text with shadow
+                    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+                    ctx.fillText(node.type === 'director' ? node.initials : node.label, node.x + 0.5, node.y + 0.5);
+                    ctx.fillStyle = this.adjustAlpha('#e2e8f0', alpha);
+                    ctx.fillText(node.type === 'director' ? node.initials : node.label, node.x, node.y);
+
+                    // External label for directors
+                    if (node.type === 'director' || node.type === 'agency') {
+                        ctx.font = '500 9px -apple-system, BlinkMacSystemFont, sans-serif';
+                        ctx.fillStyle = this.adjustAlpha(node.color, alpha * 0.8);
+                        ctx.fillText(node.label, node.x, node.y + r + 14);
+                    }
+                }
+            });
+
+            ctx.restore();
+        },
+
+        lighten(hex, pct) {
+            const num = parseInt(hex.slice(1), 16);
+            const r = Math.min(255, (num >> 16) + pct);
+            const g = Math.min(255, ((num >> 8) & 0x00FF) + pct);
+            const b = Math.min(255, (num & 0x0000FF) + pct);
+            return '#' + (0x1000000 + (r << 16) + (g << 8) + b).toString(16).slice(1);
+        },
+
+        adjustAlpha(color, alpha) {
+            if (color.startsWith('#')) {
+                const num = parseInt(color.slice(1), 16);
+                const r = (num >> 16) & 255;
+                const g = (num >> 8) & 255;
+                const b = num & 255;
+                return `rgba(${r},${g},${b},${alpha})`;
+            }
+            return color;
         }
     };
 
@@ -7109,6 +8079,7 @@ tr:hover {
         PageAnalise,
         PageAgencias,
         PageMapa,
+        PageConexoes,
 
         init() {
             // Register routes
@@ -7156,6 +8127,11 @@ tr:hover {
             Router.register('/mapa', () => {
                 PageMonitor.destroy();
                 PageMapa.init();
+            });
+            Router.register('/conexoes', () => {
+                PageMonitor.destroy();
+                PageConexoes.destroy();
+                PageConexoes.init();
             });
             Router.register('/', () => {
                 PageMonitor.destroy();
