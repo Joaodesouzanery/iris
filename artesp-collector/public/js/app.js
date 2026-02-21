@@ -4411,7 +4411,7 @@
     };
 
     // ============================================
-    // PAGE: Mapa do Brasil (SVG Interativo)
+    // PAGE: Mapa do Brasil (SVG com Estados Reais)
     // ============================================
     const PageMapa = {
         estados: {
@@ -4444,48 +4444,48 @@
             'RR': { nome: 'Roraima', decisoes: 21, taxa: 52.4, regiao: 'Norte' }
         },
 
-        // SVG paths for Brazil states (simplified but accurate)
+        // SVG paths reais dos estados brasileiros (simplificados)
         statePaths: {
-            'AC': 'M78,bindPath53 L108,bindPath53 L108,270 L78,270 Z',
-            'AM': 'M90,bindPath120 L220,bindPath120 L240,200 L200,220 L140,220 L90,180 Z',
-            'RR': 'M175,bindPath40 L220,bindPath40 L230,95 L185,95 Z',
-            'AP': 'M310,bindPath35 L345,bindPath35 L355,90 L300,95 Z',
-            'PA': 'M230,bindPath100 L350,bindPath95 L380,180 L320,220 L240,200 Z',
-            'MA': 'M350,bindPath140 L410,bindPath130 L420,200 L360,210 Z',
-            'PI': 'M385,bindPath180 L430,bindPath165 L435,250 L390,260 Z',
-            'CE': 'M420,bindPath135 L470,bindPath130 L465,180 L425,185 Z',
-            'RN': 'M465,bindPath140 L505,bindPath140 L500,170 L460,175 Z',
-            'PB': 'M455,bindPath175 L505,bindPath170 L500,195 L455,200 Z',
-            'PE': 'M420,bindPath195 L505,bindPath195 L500,225 L420,230 Z',
-            'AL': 'M470,bindPath225 L500,bindPath225 L495,255 L465,255 Z',
-            'SE': 'M455,bindPath255 L475,bindPath255 L470,280 L450,280 Z',
-            'BA': 'M380,bindPath220 L460,bindPath250 L440,340 L360,320 Z',
-            'TO': 'M320,bindPath200 L380,bindPath200 L375,300 L315,290 Z',
-            'GO': 'M300,bindPath280 L375,bindPath285 L365,365 L290,355 Z',
-            'DF': 'M345,bindPath305 L365,bindPath305 L362,325 L342,325 Z',
-            'MT': 'M190,bindPath220 L300,bindPath230 L295,340 L185,320 Z',
-            'MS': 'M230,bindPath330 L300,bindPath340 L290,420 L220,410 Z',
-            'MG': 'M340,bindPath320 L430,bindPath320 L420,410 L330,400 Z',
-            'ES': 'M425,bindPath360 L465,bindPath355 L460,410 L420,415 Z',
-            'RJ': 'M395,bindPath400 L445,bindPath395 L440,435 L390,440 Z',
-            'SP': 'M290,bindPath380 L380,bindPath390 L370,455 L280,445 Z',
-            'PR': 'M265,bindPath440 L350,bindPath445 L340,500 L255,490 Z',
-            'SC': 'M290,bindPath495 L355,bindPath495 L350,540 L285,535 Z',
-            'RS': 'M255,bindPath520 L340,bindPath530 L300,610 L235,590 Z',
-            'RO': 'M130,bindPath230 L190,bindPath230 L185,310 L125,300 Z'
+            'AC': 'M45,195 L95,178 L105,195 L95,215 L45,220 Z',
+            'AM': 'M50,95 L180,80 L200,130 L180,175 L95,180 L45,195 L45,140 Z',
+            'RR': 'M145,20 L185,25 L200,70 L175,85 L140,70 Z',
+            'AP': 'M260,35 L295,25 L310,65 L280,95 L250,70 Z',
+            'PA': 'M175,85 L280,95 L320,140 L310,195 L250,210 L200,195 L180,175 L200,130 Z',
+            'MA': 'M310,140 L355,130 L375,175 L350,210 L310,195 Z',
+            'TO': 'M280,195 L320,195 L330,280 L290,290 L270,250 Z',
+            'PI': 'M330,160 L365,150 L375,220 L355,250 L330,230 Z',
+            'CE': 'M365,120 L400,115 L410,160 L380,175 L365,150 Z',
+            'RN': 'M400,120 L430,125 L425,155 L400,150 Z',
+            'PB': 'M390,155 L430,155 L425,175 L390,175 Z',
+            'PE': 'M365,175 L430,175 L425,200 L365,205 Z',
+            'AL': 'M395,200 L425,200 L420,225 L395,225 Z',
+            'SE': 'M385,225 L405,225 L400,245 L380,245 Z',
+            'BA': 'M330,215 L395,225 L410,320 L340,340 L310,290 Z',
+            'GO': 'M270,280 L330,280 L350,350 L310,380 L260,360 Z',
+            'DF': 'M310,300 L330,300 L328,320 L308,320 Z',
+            'MT': 'M140,195 L260,195 L270,280 L260,360 L180,350 L140,280 Z',
+            'MS': 'M180,350 L260,360 L270,440 L210,460 L170,420 Z',
+            'MG': 'M310,310 L395,315 L410,395 L350,420 L300,400 L290,350 Z',
+            'ES': 'M395,350 L420,345 L425,395 L400,400 Z',
+            'RJ': 'M375,395 L415,390 L420,425 L380,435 Z',
+            'SP': 'M265,390 L355,395 L375,450 L300,470 L255,440 Z',
+            'PR': 'M250,450 L330,455 L340,510 L270,520 L240,490 Z',
+            'SC': 'M275,515 L340,510 L345,555 L290,565 Z',
+            'RS': 'M235,530 L295,535 L310,610 L250,640 L210,590 Z',
+            'RO': 'M95,215 L140,200 L150,280 L105,290 L75,255 Z'
         },
 
-        // Label positions for each state
-        labelPositions: {
-            'AC': { x: 93, y: 265 }, 'AM': { x: 165, y: 175 }, 'RR': { x: 202, y: 72 },
-            'AP': { x: 327, y: 68 }, 'PA': { x: 305, y: 160 }, 'MA': { x: 385, y: 175 },
-            'PI': { x: 410, y: 220 }, 'CE': { x: 445, y: 160 }, 'RN': { x: 482, y: 158 },
-            'PB': { x: 480, y: 188 }, 'PE': { x: 462, y: 215 }, 'AL': { x: 482, y: 242 },
-            'SE': { x: 462, y: 270 }, 'BA': { x: 420, y: 290 }, 'TO': { x: 347, y: 252 },
-            'GO': { x: 337, y: 330 }, 'DF': { x: 353, y: 318 }, 'MT': { x: 242, y: 285 },
-            'MS': { x: 260, y: 380 }, 'MG': { x: 385, y: 370 }, 'ES': { x: 442, y: 388 },
-            'RJ': { x: 417, y: 420 }, 'SP': { x: 330, y: 425 }, 'PR': { x: 305, y: 475 },
-            'SC': { x: 322, y: 520 }, 'RS': { x: 287, y: 570 }, 'RO': { x: 157, y: 275 }
+        // Centros dos estados para labels
+        labelCenters: {
+            'AC': { x: 75, y: 200 }, 'AM': { x: 125, y: 130 }, 'RR': { x: 165, y: 55 },
+            'AP': { x: 275, y: 60 }, 'PA': { x: 245, y: 155 }, 'MA': { x: 340, y: 170 },
+            'TO': { x: 300, y: 240 }, 'PI': { x: 350, y: 195 }, 'CE': { x: 385, y: 140 },
+            'RN': { x: 415, y: 138 }, 'PB': { x: 410, y: 165 }, 'PE': { x: 395, y: 188 },
+            'AL': { x: 410, y: 212 }, 'SE': { x: 392, y: 235 }, 'BA': { x: 365, y: 280 },
+            'GO': { x: 305, y: 330 }, 'DF': { x: 319, y: 310 }, 'MT': { x: 205, y: 275 },
+            'MS': { x: 220, y: 405 }, 'MG': { x: 355, y: 365 }, 'ES': { x: 408, y: 370 },
+            'RJ': { x: 397, y: 412 }, 'SP': { x: 310, y: 430 }, 'PR': { x: 290, y: 485 },
+            'SC': { x: 310, y: 540 }, 'RS': { x: 265, y: 585 }, 'RO': { x: 115, y: 250 }
         },
 
         selectedState: null,
@@ -4495,155 +4495,107 @@
             page.classList.add('active');
             this.renderBrazilMap();
             this.renderTopStates();
-            this.renderRanking();
         },
 
         getStateColor(decisoes) {
             const maxDecisoes = 4521;
             const ratio = decisoes / maxDecisoes;
-
-            if (ratio > 0.6) return { fill: '#FFEF4D', opacity: 0.9 };
-            if (ratio > 0.4) return { fill: '#FFD93D', opacity: 0.8 };
-            if (ratio > 0.25) return { fill: '#6BCB77', opacity: 0.75 };
-            if (ratio > 0.1) return { fill: '#4D96FF', opacity: 0.7 };
-            return { fill: '#9D65C9', opacity: 0.6 };
+            if (ratio > 0.5) return '#FFEF4D';
+            if (ratio > 0.3) return '#4ade80';
+            if (ratio > 0.15) return '#60a5fa';
+            if (ratio > 0.05) return '#a78bfa';
+            return '#6b7280';
         },
 
         renderBrazilMap() {
             const container = document.getElementById('mapa-brasil-container');
             if (!container) return;
 
-            // Usar mapa estilizado com círculos posicionados geograficamente
-            // Este é mais confiável que SVG paths complexos
-            const width = 600;
-            const height = 700;
+            let svgHTML = `
+                <svg viewBox="0 0 450 680" class="brazil-svg-map">
+                    <defs>
+                        <filter id="state-glow">
+                            <feGaussianBlur stdDeviation="3" result="blur"/>
+                            <feMerge>
+                                <feMergeNode in="blur"/>
+                                <feMergeNode in="SourceGraphic"/>
+                            </feMerge>
+                        </filter>
+                        <linearGradient id="map-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#0f172a"/>
+                            <stop offset="100%" style="stop-color:#1e293b"/>
+                        </linearGradient>
+                    </defs>
+                    <rect width="450" height="680" fill="url(#map-bg)"/>
+                    <g class="states-group">`;
 
-            // Posições geográficas aproximadas dos estados no SVG
-            const statePositions = {
-                'AC': { x: 85, y: 340 }, 'AM': { x: 160, y: 220 }, 'RR': { x: 195, y: 95 },
-                'AP': { x: 320, y: 95 }, 'PA': { x: 310, y: 210 }, 'MA': { x: 405, y: 205 },
-                'PI': { x: 420, y: 280 }, 'CE': { x: 475, y: 225 }, 'RN': { x: 520, y: 230 },
-                'PB': { x: 525, y: 265 }, 'PE': { x: 495, y: 300 }, 'AL': { x: 520, y: 340 },
-                'SE': { x: 495, y: 365 }, 'BA': { x: 445, y: 400 }, 'TO': { x: 360, y: 320 },
-                'GO': { x: 350, y: 430 }, 'DF': { x: 380, y: 415 }, 'MT': { x: 255, y: 370 },
-                'MS': { x: 280, y: 490 }, 'MG': { x: 420, y: 485 }, 'ES': { x: 490, y: 490 },
-                'RJ': { x: 460, y: 540 }, 'SP': { x: 365, y: 535 }, 'PR': { x: 330, y: 595 },
-                'SC': { x: 350, y: 650 }, 'RS': { x: 310, y: 710 }, 'RO': { x: 150, y: 355 }
-            };
-
-            const maxDecisoes = 4521;
-
-            // Criar HTML do mapa
-            let mapHTML = `
-                <div class="brazil-map-container" style="position: relative; width: 100%; height: ${height}px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 12px; overflow: hidden;">
-                    <svg viewBox="0 0 ${width} ${height + 50}" style="width: 100%; height: 100%;">
-                        <defs>
-                            <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-                                <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
-                                <feMerge>
-                                    <feMergeNode in="coloredBlur"/>
-                                    <feMergeNode in="SourceGraphic"/>
-                                </feMerge>
-                            </filter>
-                            <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" style="stop-color:#0f172a"/>
-                                <stop offset="100%" style="stop-color:#1e293b"/>
-                            </linearGradient>
-                        </defs>
-
-                        <!-- Contorno simplificado do Brasil -->
-                        <path d="M85,340 Q60,300 85,260 Q100,200 160,180 Q195,60 320,70 Q380,80 420,150 Q500,180 540,250 Q560,320 530,400 Q510,500 460,540 Q400,580 350,620 Q320,680 310,750 Q280,720 250,680 Q200,600 220,520 Q200,450 150,400 Q100,380 85,340"
-                              fill="none" stroke="rgba(255,239,77,0.15)" stroke-width="2" stroke-dasharray="5,5"/>
-
-                        <!-- Estados como círculos -->
-                        ${Object.entries(statePositions).map(([code, pos]) => {
-                            const estado = this.estados[code];
-                            if (!estado) return '';
-
-                            const ratio = estado.decisoes / maxDecisoes;
-                            const minRadius = 18;
-                            const maxRadius = 50;
-                            const radius = minRadius + (maxRadius - minRadius) * Math.sqrt(ratio);
-
-                            const colorInfo = this.getStateColor(estado.decisoes);
-
-                            return `
-                                <g class="state-circle-group" data-state="${code}" style="cursor: pointer;">
-                                    <!-- Círculo de fundo com glow -->
-                                    <circle cx="${pos.x}" cy="${pos.y}" r="${radius + 4}"
-                                            fill="${colorInfo.fill}" fill-opacity="0.15"/>
-                                    <!-- Círculo principal -->
-                                    <circle cx="${pos.x}" cy="${pos.y}" r="${radius}"
-                                            fill="${colorInfo.fill}" fill-opacity="${colorInfo.opacity}"
-                                            stroke="${colorInfo.fill}" stroke-width="2" stroke-opacity="0.8"
-                                            class="state-main-circle"/>
-                                    <!-- Label do estado -->
-                                    <text x="${pos.x}" y="${pos.y + 4}"
-                                          text-anchor="middle" fill="#0f172a"
-                                          font-size="${radius > 30 ? 14 : 11}" font-weight="700"
-                                          style="pointer-events: none; text-shadow: 0 1px 2px rgba(255,255,255,0.3);">
-                                        ${code}
-                                    </text>
-                                </g>
-                            `;
-                        }).join('')}
-
-                        <!-- Linhas de conexão decorativas -->
-                        <g stroke="rgba(255,239,77,0.1)" stroke-width="1">
-                            <line x1="365" y1="535" x2="420" y2="485"/>
-                            <line x1="420" y1="485" x2="445" y2="400"/>
-                            <line x1="350" y1="430" x2="420" y2="485"/>
-                            <line x1="310" y1="210" x2="405" y2="205"/>
-                        </g>
-                    </svg>
-
-                    <!-- Tooltip -->
-                    <div id="map-tooltip-internal" class="map-tooltip-box" style="display: none; position: absolute; pointer-events: none; z-index: 100;"></div>
-                </div>
-            `;
-
-            container.innerHTML = mapHTML;
-
-            // Adicionar event listeners para interatividade
-            container.querySelectorAll('.state-circle-group').forEach(group => {
-                const code = group.dataset.state;
+            // Render each state
+            Object.entries(this.statePaths).forEach(([code, path]) => {
                 const estado = this.estados[code];
-                const mainCircle = group.querySelector('.state-main-circle');
+                const color = this.getStateColor(estado?.decisoes || 0);
+                const center = this.labelCenters[code];
 
-                group.addEventListener('mouseenter', (e) => {
-                    mainCircle.style.filter = 'url(#glow)';
-                    mainCircle.style.transform = 'scale(1.1)';
-                    mainCircle.style.transformOrigin = 'center';
+                svgHTML += `
+                    <g class="state-group" data-state="${code}">
+                        <path d="${path}"
+                              fill="${color}"
+                              fill-opacity="0.85"
+                              stroke="#1e293b"
+                              stroke-width="1.5"
+                              class="state-path"
+                              style="cursor: pointer; transition: all 0.2s ease;"/>
+                        <text x="${center.x}" y="${center.y + 4}"
+                              text-anchor="middle"
+                              fill="#0f172a"
+                              font-size="10"
+                              font-weight="700"
+                              style="pointer-events: none;">
+                            ${code}
+                        </text>
+                    </g>`;
+            });
 
-                    // Mostrar tooltip
-                    const tooltip = document.getElementById('mapa-tooltip');
-                    if (tooltip && estado) {
-                        tooltip.querySelector('.tooltip-state').textContent = estado.nome;
-                        tooltip.querySelector('.tooltip-badge').textContent = estado.regiao;
-                        tooltip.querySelector('.tooltip-stat-value').textContent = estado.decisoes.toLocaleString('pt-BR');
-                        tooltip.querySelector('.tooltip-stat-rate').textContent = estado.taxa + '%';
-                        tooltip.style.display = 'block';
-                        tooltip.style.left = (e.clientX + 15) + 'px';
-                        tooltip.style.top = (e.clientY + 15) + 'px';
-                    }
+            svgHTML += `</g></svg>`;
+
+            // Legend
+            svgHTML += `
+                <div class="map-legend">
+                    <div class="legend-title">Volume de Decisoes</div>
+                    <div class="legend-scale">
+                        <div class="legend-bar"></div>
+                        <div class="legend-labels">
+                            <span>Menor</span>
+                            <span>Maior</span>
+                        </div>
+                    </div>
+                </div>`;
+
+            container.innerHTML = svgHTML;
+            this.bindMapEvents();
+        },
+
+        bindMapEvents() {
+            document.querySelectorAll('.state-group').forEach(group => {
+                const code = group.dataset.state;
+                const path = group.querySelector('.state-path');
+
+                group.addEventListener('mouseenter', () => {
+                    path.style.filter = 'url(#state-glow)';
+                    path.style.fillOpacity = '1';
+                    path.style.transform = 'scale(1.02)';
+                    path.style.transformOrigin = 'center';
+                    this.showTooltip(code, event);
                 });
 
                 group.addEventListener('mousemove', (e) => {
-                    const tooltip = document.getElementById('mapa-tooltip');
-                    if (tooltip) {
-                        tooltip.style.left = (e.clientX + 15) + 'px';
-                        tooltip.style.top = (e.clientY + 15) + 'px';
-                    }
+                    this.moveTooltip(e);
                 });
 
                 group.addEventListener('mouseleave', () => {
-                    mainCircle.style.filter = 'none';
-                    mainCircle.style.transform = 'scale(1)';
-
-                    const tooltip = document.getElementById('mapa-tooltip');
-                    if (tooltip) {
-                        tooltip.style.display = 'none';
-                    }
+                    path.style.filter = 'none';
+                    path.style.fillOpacity = '0.85';
+                    path.style.transform = 'scale(1)';
+                    this.hideTooltip();
                 });
 
                 group.addEventListener('click', () => {
@@ -4652,49 +4604,91 @@
             });
         },
 
+        showTooltip(code, e) {
+            const estado = this.estados[code];
+            if (!estado) return;
+
+            let tooltip = document.getElementById('map-tooltip-dynamic');
+            if (!tooltip) {
+                tooltip = document.createElement('div');
+                tooltip.id = 'map-tooltip-dynamic';
+                tooltip.className = 'map-tooltip-floating';
+                document.body.appendChild(tooltip);
+            }
+
+            tooltip.innerHTML = `
+                <div class="tooltip-header">${estado.nome}</div>
+                <div class="tooltip-body">
+                    <div class="tooltip-row">
+                        <span>Decisoes:</span>
+                        <strong>${estado.decisoes.toLocaleString('pt-BR')}</strong>
+                    </div>
+                    <div class="tooltip-row">
+                        <span>Taxa:</span>
+                        <strong>${estado.taxa}%</strong>
+                    </div>
+                    <div class="tooltip-region">${estado.regiao}</div>
+                </div>`;
+            tooltip.style.display = 'block';
+            this.moveTooltip(e);
+        },
+
+        moveTooltip(e) {
+            const tooltip = document.getElementById('map-tooltip-dynamic');
+            if (tooltip) {
+                tooltip.style.left = (e.clientX + 15) + 'px';
+                tooltip.style.top = (e.clientY + 15) + 'px';
+            }
+        },
+
+        hideTooltip() {
+            const tooltip = document.getElementById('map-tooltip-dynamic');
+            if (tooltip) tooltip.style.display = 'none';
+        },
+
         selectState(code) {
             this.selectedState = code;
             const estado = this.estados[code];
             const panel = document.getElementById('mapa-info-panel');
 
-            // Highlight selected state circle
-            document.querySelectorAll('.state-circle-group').forEach(g => {
-                const circle = g.querySelector('.state-main-circle');
-                if (g.dataset.state === code) {
-                    circle.style.strokeWidth = '4';
-                    circle.style.filter = 'url(#glow)';
-                } else {
-                    circle.style.strokeWidth = '2';
-                    circle.style.filter = 'none';
-                }
+            // Highlight
+            document.querySelectorAll('.state-path').forEach(p => {
+                p.style.strokeWidth = '1.5';
+                p.style.stroke = '#1e293b';
             });
+            const selected = document.querySelector(`[data-state="${code}"] .state-path`);
+            if (selected) {
+                selected.style.strokeWidth = '3';
+                selected.style.stroke = '#fff';
+            }
 
-            // Update info panel
-            panel.innerHTML = `
-                <div class="info-panel-header selected">
-                    <span class="state-code">${code}</span>
-                    <span class="state-name">${estado.nome}</span>
-                </div>
-                <div class="info-panel-stats">
-                    <div class="info-stat">
-                        <div class="info-stat-value">${estado.decisoes.toLocaleString('pt-BR')}</div>
-                        <div class="info-stat-label">Decisoes</div>
+            if (panel) {
+                panel.innerHTML = `
+                    <div class="info-header">
+                        <span class="state-badge">${code}</span>
+                        <h3>${estado.nome}</h3>
                     </div>
-                    <div class="info-stat">
-                        <div class="info-stat-value">${estado.taxa}%</div>
-                        <div class="info-stat-label">Taxa Deferimento</div>
+                    <div class="info-stats">
+                        <div class="info-stat">
+                            <span class="stat-value">${estado.decisoes.toLocaleString('pt-BR')}</span>
+                            <span class="stat-label">Decisoes</span>
+                        </div>
+                        <div class="info-stat">
+                            <span class="stat-value">${estado.taxa}%</span>
+                            <span class="stat-label">Taxa Deferimento</span>
+                        </div>
                     </div>
-                </div>
-                <div class="info-panel-region">
-                    <span class="region-tag">${estado.regiao}</span>
-                </div>
-                <div class="info-panel-chart">
-                    <div class="mini-bar-chart">
-                        <div class="bar-fill" style="width: ${(estado.decisoes / 4521 * 100)}%"></div>
+                    <div class="info-region">
+                        <span class="region-badge">${estado.regiao}</span>
                     </div>
-                    <span class="chart-label">Volume relativo ao maior (SP)</span>
-                </div>
-            `;
+                    <div class="info-bar">
+                        <div class="bar-label">Volume vs SP</div>
+                        <div class="bar-track">
+                            <div class="bar-fill" style="width: ${(estado.decisoes / 4521 * 100)}%"></div>
+                        </div>
+                        <span class="bar-value">${Math.round(estado.decisoes / 4521 * 100)}%</span>
+                    </div>`;
+            }
         },
 
         renderTopStates() {
@@ -4705,39 +4699,12 @@
                 .sort((a, b) => b[1].decisoes - a[1].decisoes)
                 .slice(0, 5);
 
-            container.innerHTML = sorted.map(([code, estado], index) => {
-                const colorInfo = this.getStateColor(estado.decisoes);
-                return `
-                    <div class="top-state-item" onclick="App.PageMapa.selectState('${code}')">
-                        <div class="top-state-rank">${index + 1}</div>
-                        <div class="top-state-info">
-                            <span class="top-state-code" style="background: ${colorInfo.fill}">${code}</span>
-                            <span class="top-state-name">${estado.nome}</span>
-                        </div>
-                        <div class="top-state-value">${estado.decisoes.toLocaleString('pt-BR')}</div>
-                    </div>
-                `;
-            }).join('');
-        },
-
-        renderRanking() {
-            const list = document.getElementById('mapa-ranking');
-            if (!list) return;
-
-            const sorted = Object.entries(this.estados)
-                .sort((a, b) => b[1].decisoes - a[1].decisoes)
-                .slice(0, 8);
-
-            list.innerHTML = sorted.map(([code, data], index) => `
-                <div class="state-item" data-state="${code}">
-                    <div class="state-rank">${index + 1}</div>
-                    <div class="state-info">
-                        <div class="state-name">${data.nome}</div>
-                        <div class="state-bar">
-                            <div class="state-bar-fill" style="width: ${(data.decisoes / sorted[0][1].decisoes * 100)}%;"></div>
-                        </div>
-                    </div>
-                    <div class="state-value">${data.decisoes.toLocaleString('pt-BR')}</div>
+            container.innerHTML = sorted.map(([code, estado], index) => `
+                <div class="top-state-row" onclick="PageMapa.selectState('${code}')">
+                    <span class="rank">${index + 1}</span>
+                    <span class="code" style="background: ${this.getStateColor(estado.decisoes)}">${code}</span>
+                    <span class="name">${estado.nome}</span>
+                    <span class="value">${estado.decisoes.toLocaleString('pt-BR')}</span>
                 </div>
             `).join('');
         }

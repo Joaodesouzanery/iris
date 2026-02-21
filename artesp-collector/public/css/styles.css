@@ -277,17 +277,17 @@ svg:not([width]):not([height]) {
 .nav-item {
     display: flex;
     align-items: center;
-    gap: 14px;
-    padding: 12px 14px;
+    gap: 10px;
+    padding: 10px 12px;
     color: var(--text-muted);
     text-decoration: none;
-    border-radius: var(--radius);
+    border-radius: var(--radius-sm);
     cursor: pointer;
     transition: all var(--transition-base);
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 500;
     position: relative;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
 }
 
 .nav-item::before {
@@ -322,11 +322,11 @@ svg:not([width]):not([height]) {
 }
 
 .nav-item svg {
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
     flex-shrink: 0;
-    opacity: 0.6;
-    transition: opacity var(--transition-base), transform var(--transition-base);
+    opacity: 0.5;
+    transition: opacity var(--transition-base);
 }
 
 .nav-item:hover svg {
@@ -8706,4 +8706,248 @@ tr:hover {
 
 .alert-item:hover {
     transform: translateX(4px);
+}
+
+/* ============================================
+   IMPROVED BRAZIL MAP STYLES
+   ============================================ */
+.brazil-svg-map {
+    width: 100%;
+    height: 100%;
+    min-height: 500px;
+}
+
+.state-path {
+    transition: all 0.2s ease;
+}
+
+.state-group:hover .state-path {
+    filter: brightness(1.15);
+}
+
+.map-legend {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    background: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(8px);
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+}
+
+.map-legend .legend-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+
+.map-legend .legend-bar {
+    height: 8px;
+    width: 120px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #6b7280, #a78bfa, #60a5fa, #4ade80, #FFEF4D);
+}
+
+.map-legend .legend-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+/* Floating Map Tooltip */
+.map-tooltip-floating {
+    position: fixed;
+    z-index: 10000;
+    background: rgba(15, 23, 42, 0.98);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    min-width: 180px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    pointer-events: none;
+}
+
+.map-tooltip-floating .tooltip-header {
+    padding: 10px 14px;
+    font-weight: 600;
+    font-size: 14px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(255, 239, 77, 0.1);
+    border-radius: var(--radius) var(--radius) 0 0;
+}
+
+.map-tooltip-floating .tooltip-body {
+    padding: 10px 14px;
+}
+
+.map-tooltip-floating .tooltip-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    font-size: 13px;
+}
+
+.map-tooltip-floating .tooltip-row span {
+    color: var(--text-muted);
+}
+
+.map-tooltip-floating .tooltip-row strong {
+    color: var(--primary);
+}
+
+.map-tooltip-floating .tooltip-region {
+    font-size: 11px;
+    color: var(--text-muted);
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+    margin-top: 6px;
+    text-align: center;
+}
+
+/* Map Info Panel */
+.info-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.info-header .state-badge {
+    background: var(--primary);
+    color: #0f172a;
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: var(--radius);
+    font-size: 16px;
+}
+
+.info-header h3 {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.info-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.info-stat {
+    background: var(--background);
+    padding: 14px;
+    border-radius: var(--radius);
+    text-align: center;
+}
+
+.info-stat .stat-value {
+    display: block;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 4px;
+}
+
+.info-stat .stat-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+.info-region {
+    margin-bottom: 16px;
+}
+
+.region-badge {
+    background: var(--surface-hover);
+    padding: 6px 12px;
+    border-radius: var(--radius-full);
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.info-bar {
+    background: var(--background);
+    padding: 12px;
+    border-radius: var(--radius);
+}
+
+.info-bar .bar-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+
+.info-bar .bar-track {
+    height: 8px;
+    background: var(--surface);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 4px;
+}
+
+.info-bar .bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), #4ade80);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.info-bar .bar-value {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+/* Top States Row */
+.top-state-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: var(--background);
+    border-radius: var(--radius);
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.top-state-row:hover {
+    background: var(--surface-hover);
+    transform: translateX(4px);
+}
+
+.top-state-row .rank {
+    width: 24px;
+    height: 24px;
+    background: var(--surface);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.top-state-row .code {
+    padding: 4px 10px;
+    border-radius: var(--radius-sm);
+    font-weight: 700;
+    font-size: 12px;
+    color: #0f172a;
+}
+
+.top-state-row .name {
+    flex: 1;
+    font-size: 13px;
+}
+
+.top-state-row .value {
+    font-weight: 600;
+    color: var(--text-primary);
 }
