@@ -4630,78 +4630,120 @@
                      PAGE: Grafo de Conexões
                      ============================================ -->
                 <div id="page-grafo" class="page-view">
-                    <div class="page-header">
-                        <div class="page-title-section">
-                            <h1 class="page-title">Rede de Conexões</h1>
-                            <p class="page-subtitle">Mapa de inteligência das relações entre diretores, empresas e temas regulatórios</p>
+                    <!-- STEP 1: Entity Selection Screen -->
+                    <div id="grafo-selection-screen">
+                        <div class="page-header">
+                            <div class="page-title-section">
+                                <h1 class="page-title">Análise de Vínculos</h1>
+                                <p class="page-subtitle">Selecione uma entidade para explorar suas conexões e vínculos regulatórios</p>
+                            </div>
                         </div>
-                        <div class="page-actions">
-                            <select class="filter-select" id="intel-filter-type">
-                                <option value="all">Todos os Nós</option>
-                                <option value="director">Diretores</option>
-                                <option value="company">Empresas</option>
-                                <option value="theme">Temas</option>
-                            </select>
-                            <button class="btn btn-outline" onclick="App.PageGrafo.resetView()">Resetar Visão</button>
+
+                        <!-- Search bar -->
+                        <div class="card" style="margin-bottom:20px;">
+                            <div style="display:flex;gap:12px;align-items:center;padding:4px 0;">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20" style="opacity:0.5;flex-shrink:0;"><circle cx="11" cy="11" r="8" stroke-width="2"/><path d="m21 21-4.35-4.35" stroke-width="2"/></svg>
+                                <input type="text" id="grafo-entity-search" placeholder="Buscar agência, diretor, empresa ou tema..." style="flex:1;background:transparent;border:none;outline:none;font-size:15px;color:var(--text-primary);" oninput="App.PageGrafo.filterEntities(this.value)">
+                            </div>
+                        </div>
+
+                        <!-- Category tabs -->
+                        <div id="grafo-category-tabs" style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;">
+                            <button class="btn btn-primary btn-sm grafo-cat-tab active" data-cat="all" onclick="App.PageGrafo.filterByCategory('all')">Todos</button>
+                            <button class="btn btn-outline btn-sm grafo-cat-tab" data-cat="agency" onclick="App.PageGrafo.filterByCategory('agency')">Agências</button>
+                            <button class="btn btn-outline btn-sm grafo-cat-tab" data-cat="director" onclick="App.PageGrafo.filterByCategory('director')">Diretores</button>
+                            <button class="btn btn-outline btn-sm grafo-cat-tab" data-cat="company" onclick="App.PageGrafo.filterByCategory('company')">Empresas</button>
+                            <button class="btn btn-outline btn-sm grafo-cat-tab" data-cat="theme" onclick="App.PageGrafo.filterByCategory('theme')">Temas</button>
+                        </div>
+
+                        <!-- Entity cards grid -->
+                        <div id="grafo-entity-grid" class="grafo-entity-grid">
+                            <!-- Populated by JS -->
                         </div>
                     </div>
 
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <div class="stat-card-header"><span class="stat-card-title">Entidades Mapeadas</span></div>
-                            <div class="stat-card-value primary" id="intel-total-nodes">22</div>
+                    <!-- STEP 2: Graph Visualization (hidden until entity selected) -->
+                    <div id="grafo-graph-screen" style="display:none;">
+                        <div class="page-header">
+                            <div class="page-title-section">
+                                <h1 class="page-title" id="grafo-graph-title">Vínculos</h1>
+                                <p class="page-subtitle" id="grafo-graph-subtitle">Visualização de conexões</p>
+                            </div>
+                            <div class="page-actions">
+                                <button class="btn btn-outline" onclick="App.PageGrafo.backToSelection()">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                                    Voltar
+                                </button>
+                                <select class="filter-select" id="intel-filter-type" onchange="App.PageGrafo.filterNodeType(this.value)">
+                                    <option value="all">Todos os Nós</option>
+                                    <option value="director">Diretores</option>
+                                    <option value="company">Empresas</option>
+                                    <option value="theme">Temas</option>
+                                    <option value="agency">Agências</option>
+                                </select>
+                                <button class="btn btn-outline" onclick="App.PageGrafo.resetView()">Resetar</button>
+                            </div>
                         </div>
-                        <div class="stat-card">
-                            <div class="stat-card-header"><span class="stat-card-title">Conexões Identificadas</span></div>
-                            <div class="stat-card-value" id="intel-total-edges">38</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-card-header"><span class="stat-card-title">Clusters Detectados</span></div>
-                            <div class="stat-card-value warning">4</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-card-header"><span class="stat-card-title">Grau Máximo</span></div>
-                            <div class="stat-card-value success">8</div>
-                        </div>
-                    </div>
 
-                    <div class="card" style="overflow: hidden;">
-                        <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
-                            <h2 class="card-title">
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
-                                Grafo de Inteligência
-                            </h2>
-                            <div class="intel-legend-bar">
-                                <span class="intel-legend-item"><span class="intel-dot" style="background:#60a5fa;"></span> Diretores</span>
-                                <span class="intel-legend-item"><span class="intel-dot" style="background:#fbbf24;"></span> Empresas</span>
-                                <span class="intel-legend-item"><span class="intel-dot" style="background:#4ade80;"></span> Temas</span>
-                                <span class="intel-legend-item"><span class="intel-dot" style="background:#a78bfa;"></span> Agências</span>
+                        <!-- Stats row -->
+                        <div class="stats-grid" style="margin-bottom:16px;">
+                            <div class="stat-card">
+                                <div class="stat-card-header"><span class="stat-card-title">Entidades</span></div>
+                                <div class="stat-card-value primary" id="intel-total-nodes">0</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-card-header"><span class="stat-card-title">Conexões</span></div>
+                                <div class="stat-card-value" id="intel-total-edges">0</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-card-header"><span class="stat-card-title">Profundidade</span></div>
+                                <div class="stat-card-value warning" id="intel-depth">1</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-card-header"><span class="stat-card-title">Grau Máximo</span></div>
+                                <div class="stat-card-value success" id="intel-max-degree">0</div>
                             </div>
                         </div>
-                        <div class="intel-graph-wrapper">
-                            <div class="intel-scan-line"></div>
-                            <canvas id="intel-canvas"></canvas>
-                            <div id="intel-tooltip" class="intel-tooltip"></div>
-                            <div class="intel-classification">
-                                <div class="classification-label">IRIS // INTELIGÊNCIA REGULATÓRIA</div>
-                                <div class="classification-label">ANÁLISE DE VÍNCULOS v2.1</div>
-                            </div>
-                            <div id="intel-info-panel" class="intel-info-panel">
-                                <div class="intel-info-header">
-                                    <span class="classified-badge">CLASSIFICADO</span>
-                                    <h3 id="intel-info-title">Selecione uma Entidade</h3>
-                                </div>
-                                <div id="intel-info-body" class="intel-info-body">
-                                    <p style="color:#475569;">Clique em um nó do grafo para visualizar informações detalhadas sobre a entidade e suas conexões.</p>
+
+                        <!-- Graph canvas card -->
+                        <div class="card" style="overflow:hidden;">
+                            <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
+                                <h2 class="card-title">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                                    Grafo de Inteligência
+                                </h2>
+                                <div class="intel-legend-bar">
+                                    <span class="intel-legend-item"><span class="intel-dot" style="background:#60a5fa;"></span> Diretores</span>
+                                    <span class="intel-legend-item"><span class="intel-dot" style="background:#fbbf24;"></span> Empresas</span>
+                                    <span class="intel-legend-item"><span class="intel-dot" style="background:#4ade80;"></span> Temas</span>
+                                    <span class="intel-legend-item"><span class="intel-dot" style="background:#a78bfa;"></span> Agências</span>
                                 </div>
                             </div>
-                            <div class="intel-controls">
-                                <button onclick="App.PageGrafo.zoomIn()" title="Zoom In">+</button>
-                                <button onclick="App.PageGrafo.zoomOut()" title="Zoom Out">−</button>
-                                <button onclick="App.PageGrafo.resetView()" title="Centralizar">⊙</button>
-                            </div>
-                            <div class="intel-search">
-                                <input type="text" id="intel-search-input" placeholder="Buscar entidade..." oninput="App.PageGrafo.search(this.value)">
+                            <div class="intel-graph-wrapper">
+                                <div class="intel-scan-line"></div>
+                                <canvas id="intel-canvas"></canvas>
+                                <div id="intel-tooltip" class="intel-tooltip"></div>
+                                <div class="intel-classification">
+                                    <div class="classification-label">IRIS // INTELIGÊNCIA REGULATÓRIA</div>
+                                    <div class="classification-label">ANÁLISE DE VÍNCULOS v2.1</div>
+                                </div>
+                                <div id="intel-info-panel" class="intel-info-panel">
+                                    <div class="intel-info-header">
+                                        <span class="classified-badge">CLASSIFICADO</span>
+                                        <h3 id="intel-info-title">Selecione um Nó</h3>
+                                    </div>
+                                    <div id="intel-info-body" class="intel-info-body">
+                                        <p style="color:#475569;">Clique em um nó para ver detalhes.</p>
+                                    </div>
+                                </div>
+                                <div class="intel-controls">
+                                    <button onclick="App.PageGrafo.zoomIn()" title="Zoom In">+</button>
+                                    <button onclick="App.PageGrafo.zoomOut()" title="Zoom Out">−</button>
+                                    <button onclick="App.PageGrafo.resetView()" title="Centralizar">⊙</button>
+                                </div>
+                                <div class="intel-search">
+                                    <input type="text" id="intel-search-input" placeholder="Buscar no grafo..." oninput="App.PageGrafo.search(this.value)">
+                                </div>
                             </div>
                         </div>
                     </div>

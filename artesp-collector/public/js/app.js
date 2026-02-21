@@ -2559,19 +2559,21 @@
     };
 
     // ============================================
-    // PAGE: Grafo de Conexões - CIA Intelligence Network
+    // PAGE: Análise de Vínculos — Sherlocker-style
+    // Select entity first, then render graph on demand
     // ============================================
     const PageGrafo = {
         canvas: null, ctx: null, nodes: [], edges: [], animFrame: null,
         dragging: null, hovering: null, selected: null,
         mouse: { x: 0, y: 0 }, camera: { x: 0, y: 0, zoom: 1 },
-        width: 0, height: 0, time: 0,
-        graphData: {
+        width: 0, height: 0, time: 0, currentCategory: 'all',
+        // ----------- Full data catalog -----------
+        catalog: {
             directors: [
-                { id:'d1',label:'André Isper',full:'André Isper Rodrigues Barnabé',role:'Diretor-Presidente',initials:'AI' },
-                { id:'d2',label:'Diego Zanatto',full:'Diego Albert Zanatto',role:'Diretor de Fiscalização',initials:'DZ' },
-                { id:'d3',label:'Fernanda Rudnik',full:'Fernanda Esbizaro Rodrigues Rudnik',role:'Diretora de Planejamento',initials:'FR' },
-                { id:'d4',label:'Raquel Carneiro',full:'Raquel França Carneiro',role:'Diretora de Investimentos',initials:'RC' }
+                { id:'d1',label:'André Isper',full:'André Isper Rodrigues Barnabé',role:'Diretor-Presidente',initials:'AI',agency:'a1' },
+                { id:'d2',label:'Diego Zanatto',full:'Diego Albert Zanatto',role:'Diretor de Fiscalização',initials:'DZ',agency:'a1' },
+                { id:'d3',label:'Fernanda Rudnik',full:'Fernanda Esbizaro Rodrigues Rudnik',role:'Diretora de Planejamento',initials:'FR',agency:'a1' },
+                { id:'d4',label:'Raquel Carneiro',full:'Raquel França Carneiro',role:'Diretora de Investimentos',initials:'RC',agency:'a1' }
             ],
             companies: [
                 { id:'c1',label:'Ecovias',full:'Ecovias dos Imigrantes S.A.',sector:'Rodovias',contracts:12 },
@@ -2618,17 +2620,157 @@
                 {source:'a1',target:'d3',strength:0.9,label:'Diretora'},{source:'a1',target:'d4',strength:0.9,label:'Diretora'}
             ]
         },
+
+        // ========== INIT: Show selection screen ==========
         init() {
-            const page = document.getElementById('page-grafo');
-            page.classList.add('active');
-            this.setupCanvas();
-            this.buildGraph();
-            this.setupEvents();
-            this.animate();
+            document.getElementById('page-grafo').classList.add('active');
+            this.showSelectionScreen();
+        },
+        destroy() {
+            if (this.animFrame) { cancelAnimationFrame(this.animFrame); this.animFrame = null; }
+        },
+
+        // ========== SELECTION SCREEN ==========
+        showSelectionScreen() {
+            document.getElementById('grafo-selection-screen').style.display = '';
+            document.getElementById('grafo-graph-screen').style.display = 'none';
+            if (this.animFrame) { cancelAnimationFrame(this.animFrame); this.animFrame = null; }
+            this.currentCategory = 'all';
+            this.renderEntityGrid();
+        },
+        getAllEntities() {
+            const c = this.catalog;
+            const entities = [];
+            c.agencies.forEach(a => {
+                const dirCount = c.directors.filter(d => d.agency === a.id).length;
+                const connCount = c.connections.filter(cn => cn.source === a.id || cn.target === a.id).length;
+                entities.push({ ...a, type: 'agency', icon: 'A', color: '#a78bfa', subtitle: a.full, meta: `${a.deliberations} deliberações · ${dirCount} diretores`, connCount });
+            });
+            c.directors.forEach(d => {
+                const connCount = c.connections.filter(cn => cn.source === d.id || cn.target === d.id).length;
+                entities.push({ ...d, type: 'director', icon: d.initials, color: '#60a5fa', subtitle: d.role, meta: `${connCount} vínculos`, connCount });
+            });
+            c.companies.forEach(co => {
+                const connCount = c.connections.filter(cn => cn.source === co.id || cn.target === co.id).length;
+                entities.push({ ...co, type: 'company', icon: co.label.charAt(0), color: '#fbbf24', subtitle: co.full, meta: `${co.sector} · ${co.contracts} contratos`, connCount });
+            });
+            c.themes.forEach(t => {
+                const connCount = c.connections.filter(cn => cn.source === t.id || cn.target === t.id).length;
+                entities.push({ ...t, type: 'theme', icon: t.label.charAt(0), color: '#4ade80', subtitle: t.category, meta: `${t.count} ocorrências`, connCount });
+            });
+            return entities;
+        },
+        renderEntityGrid(filter) {
+            let entities = this.getAllEntities();
+            if (this.currentCategory !== 'all') entities = entities.filter(e => e.type === this.currentCategory);
+            if (filter) { const q = filter.toLowerCase(); entities = entities.filter(e => e.label.toLowerCase().includes(q) || (e.full || '').toLowerCase().includes(q) || (e.subtitle || '').toLowerCase().includes(q)); }
+            const grid = document.getElementById('grafo-entity-grid');
+            if (!entities.length) { grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:48px 0;color:var(--text-muted);">Nenhuma entidade encontrada.</div>'; return; }
+            const typeLabel = { agency: 'Agência', director: 'Diretor(a)', company: 'Empresa', theme: 'Tema' };
+            grid.innerHTML = entities.map(e => `
+                <div class="grafo-entity-card" onclick="App.PageGrafo.selectEntity('${e.id}')" data-type="${e.type}">
+                    <div class="grafo-entity-card-icon" style="background:${e.color}20;color:${e.color};border:1px solid ${e.color}40;">${e.icon}</div>
+                    <div class="grafo-entity-card-body">
+                        <div class="grafo-entity-card-name">${e.label}</div>
+                        <div class="grafo-entity-card-type" style="color:${e.color}">${typeLabel[e.type]}</div>
+                        <div class="grafo-entity-card-meta">${e.meta}</div>
+                    </div>
+                    <div class="grafo-entity-card-arrow">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    </div>
+                </div>
+            `).join('');
+        },
+        filterEntities(q) { this.renderEntityGrid(q); },
+        filterByCategory(cat) {
+            this.currentCategory = cat;
+            document.querySelectorAll('.grafo-cat-tab').forEach(b => {
+                const active = b.getAttribute('data-cat') === cat;
+                b.classList.toggle('active', active);
+                b.classList.toggle('btn-primary', active);
+                b.classList.toggle('btn-outline', !active);
+            });
+            this.renderEntityGrid(document.getElementById('grafo-entity-search').value);
+        },
+
+        // ========== SELECT ENTITY → BUILD GRAPH ==========
+        selectEntity(entityId) {
+            document.getElementById('grafo-selection-screen').style.display = 'none';
+            document.getElementById('grafo-graph-screen').style.display = '';
+
+            // Determine connected subgraph from this entity
+            const relevantIds = new Set([entityId]);
+            const c = this.catalog;
+            // First degree connections
+            c.connections.forEach(cn => {
+                if (cn.source === entityId) relevantIds.add(cn.target);
+                if (cn.target === entityId) relevantIds.add(cn.source);
+            });
+            // Second degree — connections between 1st-degree nodes
+            const firstDegree = new Set(relevantIds);
+            c.connections.forEach(cn => {
+                if (firstDegree.has(cn.source) && firstDegree.has(cn.target)) {
+                    relevantIds.add(cn.source); relevantIds.add(cn.target);
+                }
+            });
+
+            // Build node/edge arrays for this subgraph
+            const allItems = [...c.agencies, ...c.directors, ...c.companies, ...c.themes];
+            const nodeMap = {};
+            allItems.forEach(item => {
+                if (!relevantIds.has(item.id)) return;
+                let type, color, radius;
+                if (item.id.startsWith('a')) { type='agency'; color='#a78bfa'; radius=34; }
+                else if (item.id.startsWith('d')) { type='director'; color='#60a5fa'; radius=28; }
+                else if (item.id.startsWith('c')) { type='company'; color='#fbbf24'; radius=22; }
+                else { type='theme'; color='#4ade80'; radius=18; }
+                nodeMap[item.id] = { ...item, type, color, radius, x: 0, y: 0, vx: 0, vy: 0, pulsePhase: Math.random()*Math.PI*2, connections: 0, _isRoot: item.id === entityId };
+            });
+
+            this.nodes = Object.values(nodeMap);
+            this.edges = [];
+            c.connections.forEach(cn => {
+                const s = nodeMap[cn.source], t = nodeMap[cn.target];
+                if (s && t) { s.connections++; t.connections++; this.edges.push({ source: s, target: t, strength: cn.strength, label: cn.label, phase: Math.random()*Math.PI*2 }); }
+            });
+
+            // Set title
+            const rootNode = nodeMap[entityId];
+            document.getElementById('grafo-graph-title').textContent = 'Vínculos: ' + (rootNode ? rootNode.label : '');
+            document.getElementById('grafo-graph-subtitle').textContent = (rootNode && rootNode.full) ? rootNode.full : `${this.nodes.length} entidades · ${this.edges.length} conexões`;
             document.getElementById('intel-total-nodes').textContent = this.nodes.length;
             document.getElementById('intel-total-edges').textContent = this.edges.length;
+            const maxDeg = this.nodes.reduce((m, n) => Math.max(m, n.connections), 0);
+            document.getElementById('intel-max-degree').textContent = maxDeg;
+
+            // Layout + render
+            this.setupCanvas();
+            this.layoutNodes(entityId);
+            for (let i = 0; i < 200; i++) this.simulateForces(0.4 * (1 - i / 200));
+            this.setupEvents();
+            this.time = 0;
+            this.animate();
         },
-        destroy() { if (this.animFrame) { cancelAnimationFrame(this.animFrame); this.animFrame = null; } },
+        layoutNodes(rootId) {
+            const cx = this.width / 2, cy = this.height / 2;
+            const root = this.nodes.find(n => n.id === rootId);
+            if (root) { root.x = cx; root.y = cy; }
+            const others = this.nodes.filter(n => n.id !== rootId);
+            others.forEach((n, i) => {
+                const angle = (i / others.length) * Math.PI * 2 - Math.PI / 2;
+                const ring = 160 + (Math.random() - 0.5) * 60;
+                n.x = cx + Math.cos(angle) * ring;
+                n.y = cy + Math.sin(angle) * ring;
+            });
+        },
+        backToSelection() {
+            if (this.animFrame) { cancelAnimationFrame(this.animFrame); this.animFrame = null; }
+            this.nodes = []; this.edges = [];
+            this.dragging = null; this.hovering = null; this.selected = null;
+            this.showSelectionScreen();
+        },
+
+        // ========== GRAPH ENGINE (same proven rendering) ==========
         setupCanvas() {
             this.canvas = document.getElementById('intel-canvas');
             this.ctx = this.canvas.getContext('2d');
@@ -2636,28 +2778,9 @@
             this.width = wrapper.clientWidth; this.height = wrapper.clientHeight;
             this.canvas.width = this.width * 2; this.canvas.height = this.height * 2;
             this.canvas.style.width = this.width + 'px'; this.canvas.style.height = this.height + 'px';
+            this.ctx.setTransform(1,0,0,1,0,0);
             this.ctx.scale(2, 2);
             this.camera = { x: this.width / 2, y: this.height / 2, zoom: 1 };
-        },
-        buildGraph() {
-            this.nodes = []; this.edges = [];
-            const cx = this.width / 2, cy = this.height / 2;
-            [{data:this.graphData.directors,type:'director',color:'#60a5fa',radius:28,ring:120},
-             {data:this.graphData.companies,type:'company',color:'#fbbf24',radius:20,ring:250},
-             {data:this.graphData.themes,type:'theme',color:'#4ade80',radius:16,ring:200},
-             {data:this.graphData.agencies,type:'agency',color:'#a78bfa',radius:32,ring:60}
-            ].forEach(({data,type,color,radius,ring}) => {
-                data.forEach((item,i) => {
-                    const angle = (i/data.length)*Math.PI*2 - Math.PI/2;
-                    const jitter = (Math.random()-0.5)*60;
-                    this.nodes.push({...item,type,color,radius,x:cx+Math.cos(angle)*(ring+jitter),y:cy+Math.sin(angle)*(ring+jitter),vx:0,vy:0,pulsePhase:Math.random()*Math.PI*2,connections:0});
-                });
-            });
-            this.graphData.connections.forEach(conn => {
-                const source = this.nodes.find(n=>n.id===conn.source), target = this.nodes.find(n=>n.id===conn.target);
-                if(source&&target){source.connections++;target.connections++;this.edges.push({source,target,strength:conn.strength,label:conn.label,phase:Math.random()*Math.PI*2});}
-            });
-            for(let i=0;i<150;i++) this.simulateForces(0.3*(1-i/150));
         },
         simulateForces(alpha) {
             const cx=this.width/2,cy=this.height/2;
@@ -2670,29 +2793,35 @@
         },
         setupEvents() {
             const canvas=this.canvas;
-            canvas.addEventListener('mousemove',(e)=>{
-                const rect=canvas.getBoundingClientRect();
+            // remove old listeners by replacing node
+            const clone = canvas.cloneNode(true);
+            canvas.parentNode.replaceChild(clone, canvas);
+            this.canvas = clone; this.ctx = clone.getContext('2d');
+            this.ctx.setTransform(1,0,0,1,0,0); this.ctx.scale(2,2);
+
+            clone.addEventListener('mousemove',(e)=>{
+                const rect=clone.getBoundingClientRect();
                 this.mouse.x=(e.clientX-rect.left-this.camera.x+this.width/2)/this.camera.zoom;
                 this.mouse.y=(e.clientY-rect.top-this.camera.y+this.height/2)/this.camera.zoom;
                 if(this.dragging){this.dragging.x=this.mouse.x;this.dragging.y=this.mouse.y;return;}
                 let found=null;
                 for(let i=this.nodes.length-1;i>=0;i--){const n=this.nodes[i],dx=this.mouse.x-n.x,dy=this.mouse.y-n.y;if(Math.sqrt(dx*dx+dy*dy)<n.radius+5){found=n;break;}}
                 if(found!==this.hovering){
-                    this.hovering=found;canvas.style.cursor=found?'pointer':'grab';
+                    this.hovering=found;clone.style.cursor=found?'pointer':'grab';
                     const tooltip=document.getElementById('intel-tooltip');
-                    if(found){const tl={director:'Diretor',company:'Empresa',theme:'Tema',agency:'Agência'};tooltip.innerHTML=`<strong>${found.label}</strong>${tl[found.type]} | ${found.connections} conexões`;tooltip.style.display='block';const rx=e.clientX-rect.left,ry=e.clientY-rect.top;tooltip.style.left=(rx+15)+'px';tooltip.style.top=(ry-10)+'px';}
+                    if(found){const tl={director:'Diretor(a)',company:'Empresa',theme:'Tema',agency:'Agência'};tooltip.innerHTML=`<strong>${found.label}</strong>${tl[found.type]} | ${found.connections} conexões`;tooltip.style.display='block';const rx=e.clientX-rect.left,ry=e.clientY-rect.top;tooltip.style.left=(rx+15)+'px';tooltip.style.top=(ry-10)+'px';}
                     else{tooltip.style.display='none';}
-                } else if(found){const tooltip=document.getElementById('intel-tooltip'),rx=e.clientX-canvas.getBoundingClientRect().left,ry=e.clientY-canvas.getBoundingClientRect().top;tooltip.style.left=(rx+15)+'px';tooltip.style.top=(ry-10)+'px';}
+                } else if(found){const tooltip=document.getElementById('intel-tooltip'),rx=e.clientX-clone.getBoundingClientRect().left,ry=e.clientY-clone.getBoundingClientRect().top;tooltip.style.left=(rx+15)+'px';tooltip.style.top=(ry-10)+'px';}
             });
-            canvas.addEventListener('mousedown',(e)=>{
-                if(this.hovering){this.dragging=this.hovering;canvas.style.cursor='grabbing';}
-                else{const sx=e.clientX,sy=e.clientY,cx=this.camera.x,cy=this.camera.y;const onM=(ev)=>{this.camera.x=cx+(ev.clientX-sx);this.camera.y=cy+(ev.clientY-sy);};const onU=()=>{window.removeEventListener('mousemove',onM);window.removeEventListener('mouseup',onU);};window.addEventListener('mousemove',onM);window.addEventListener('mouseup',onU);}
+            clone.addEventListener('mousedown',(e)=>{
+                if(this.hovering){this.dragging=this.hovering;clone.style.cursor='grabbing';}
+                else{const sx=e.clientX,sy=e.clientY,cx0=this.camera.x,cy0=this.camera.y;const onM=(ev)=>{this.camera.x=cx0+(ev.clientX-sx);this.camera.y=cy0+(ev.clientY-sy);};const onU=()=>{window.removeEventListener('mousemove',onM);window.removeEventListener('mouseup',onU);};window.addEventListener('mousemove',onM);window.addEventListener('mouseup',onU);}
             });
-            canvas.addEventListener('mouseup',()=>{this.dragging=null;canvas.style.cursor=this.hovering?'pointer':'grab';});
-            canvas.addEventListener('click',()=>{if(this.hovering){this.selected=this.hovering;this.showNodeInfo(this.hovering);}});
-            canvas.addEventListener('wheel',(e)=>{e.preventDefault();const d=e.deltaY>0?0.9:1.1;this.camera.zoom=Math.max(0.3,Math.min(3,this.camera.zoom*d));});
-            document.getElementById('intel-filter-type')?.addEventListener('change',(e)=>{this.nodes.forEach(n=>{n._hidden=e.target.value!=='all'&&n.type!==e.target.value;});});
+            clone.addEventListener('mouseup',()=>{this.dragging=null;clone.style.cursor=this.hovering?'pointer':'grab';});
+            clone.addEventListener('click',()=>{if(this.hovering){this.selected=this.hovering;this.showNodeInfo(this.hovering);}});
+            clone.addEventListener('wheel',(e)=>{e.preventDefault();const d=e.deltaY>0?0.9:1.1;this.camera.zoom=Math.max(0.3,Math.min(3,this.camera.zoom*d));});
         },
+        filterNodeType(val) { this.nodes.forEach(n=>{ n._hidden = val!=='all' && n.type!==val; }); },
         showNodeInfo(node) {
             document.getElementById('intel-info-title').textContent=node.label;
             const connEdges=this.edges.filter(e=>e.source===node||e.target===node);
@@ -2713,21 +2842,25 @@
         zoomOut(){this.camera.zoom=Math.max(0.3,this.camera.zoom/1.2);},
         resetView(){
             this.camera={x:this.width/2,y:this.height/2,zoom:1};this.nodes.forEach(n=>{n._hidden=false;n._highlighted=false;n._dimmed=false;});
-            this.selected=null;document.getElementById('intel-filter-type').value='all';document.getElementById('intel-search-input').value='';
-            document.getElementById('intel-info-title').textContent='Selecione uma Entidade';
-            document.getElementById('intel-info-body').innerHTML='<p style="color:#475569">Clique em um nó do grafo para visualizar informações detalhadas.</p>';
+            this.selected=null;const ft=document.getElementById('intel-filter-type');if(ft)ft.value='all';const si=document.getElementById('intel-search-input');if(si)si.value='';
+            document.getElementById('intel-info-title').textContent='Selecione um Nó';
+            document.getElementById('intel-info-body').innerHTML='<p style="color:#475569">Clique em um nó para ver detalhes.</p>';
         },
         animate(){this.time+=0.016;this.simulateForces(0.01);this.draw();this.animFrame=requestAnimationFrame(()=>this.animate());},
         draw() {
             const ctx=this.ctx,w=this.width,h=this.height;ctx.clearRect(0,0,w,h);ctx.save();
             ctx.translate(this.camera.x-w/2+(w/2)*(1-this.camera.zoom),this.camera.y-h/2+(h/2)*(1-this.camera.zoom));ctx.scale(this.camera.zoom,this.camera.zoom);
+            // Draw edges
             this.edges.forEach(edge=>{if(edge.source._hidden||edge.target._hidden)return;const dimmed=edge.source._dimmed&&edge.target._dimmed,hl=this.selected&&(edge.source===this.selected||edge.target===this.selected),hv=this.hovering&&(edge.source===this.hovering||edge.target===this.hovering);
-                const alpha=dimmed?0.03:hl?0.6:hv?0.4:0.12;ctx.beginPath();ctx.moveTo(edge.source.x,edge.source.y);ctx.lineTo(edge.target.x,edge.target.y);ctx.strokeStyle=hl||hv?`rgba(96,165,250,${alpha})`:`rgba(100,116,139,${alpha})`;ctx.lineWidth=hl?2:hv?1.5:0.8;ctx.stroke();
+                const alpha=dimmed?0.03:hl?0.6:hv?0.4:0.15;ctx.beginPath();ctx.moveTo(edge.source.x,edge.source.y);ctx.lineTo(edge.target.x,edge.target.y);ctx.strokeStyle=hl||hv?`rgba(96,165,250,${alpha})`:`rgba(100,116,139,${alpha})`;ctx.lineWidth=hl?2.5:hv?1.5:0.8;ctx.stroke();
                 if(!dimmed){const t=((this.time*0.5+edge.phase)%1),px=edge.source.x+(edge.target.x-edge.source.x)*t,py=edge.source.y+(edge.target.y-edge.source.y)*t;ctx.beginPath();ctx.arc(px,py,hl?2.5:1.5,0,Math.PI*2);ctx.fillStyle=hl?'rgba(96,165,250,0.8)':'rgba(96,165,250,0.3)';ctx.fill();}
             });
-            this.nodes.forEach(node=>{if(node._hidden)return;const dimmed=node._dimmed,isSel=node===this.selected,isHov=node===this.hovering,isHl=node._highlighted,pulse=Math.sin(this.time*2+node.pulsePhase)*0.15+1;
-                const r=node.radius*(isHov?1.15:1)*(isHl?1.2:1),alpha=dimmed?0.15:1;
-                if((isSel||isHov||isHl)&&!dimmed){const glR=r*2.5*pulse,glow=ctx.createRadialGradient(node.x,node.y,r,node.x,node.y,glR);glow.addColorStop(0,node.color+'30');glow.addColorStop(1,node.color+'00');ctx.beginPath();ctx.arc(node.x,node.y,glR,0,Math.PI*2);ctx.fillStyle=glow;ctx.fill();}
+            // Draw nodes
+            this.nodes.forEach(node=>{if(node._hidden)return;const dimmed=node._dimmed,isSel=node===this.selected,isHov=node===this.hovering,isHl=node._highlighted,isRoot=node._isRoot,pulse=Math.sin(this.time*2+node.pulsePhase)*0.15+1;
+                const r=node.radius*(isHov?1.15:1)*(isHl?1.2:1)*(isRoot?1.15:1),alpha=dimmed?0.15:1;
+                // Root node extra ring
+                if(isRoot&&!dimmed){ctx.beginPath();ctx.arc(node.x,node.y,r*2,0,Math.PI*2);ctx.strokeStyle=node.color+'30';ctx.lineWidth=1;ctx.setLineDash([4,4]);ctx.stroke();ctx.setLineDash([]);}
+                if((isSel||isHov||isHl||isRoot)&&!dimmed){const glR=r*2.5*pulse,glow=ctx.createRadialGradient(node.x,node.y,r,node.x,node.y,glR);glow.addColorStop(0,node.color+'30');glow.addColorStop(1,node.color+'00');ctx.beginPath();ctx.arc(node.x,node.y,glR,0,Math.PI*2);ctx.fillStyle=glow;ctx.fill();}
                 if(!dimmed){const ambR=r*1.8*pulse,amb=ctx.createRadialGradient(node.x,node.y,r*0.5,node.x,node.y,ambR);amb.addColorStop(0,node.color+'15');amb.addColorStop(1,node.color+'00');ctx.beginPath();ctx.arc(node.x,node.y,ambR,0,Math.PI*2);ctx.fillStyle=amb;ctx.fill();}
                 ctx.beginPath();
                 if(node.type==='company'){for(let i=0;i<6;i++){const a=(Math.PI/3)*i-Math.PI/6,px=node.x+r*Math.cos(a),py=node.y+r*Math.sin(a);i===0?ctx.moveTo(px,py):ctx.lineTo(px,py);}ctx.closePath();}
@@ -2735,7 +2868,7 @@
                 else ctx.arc(node.x,node.y,r,0,Math.PI*2);
                 const num=parseInt(node.color.slice(1),16),cr=(num>>16)&255,cg=(num>>8)&255,cb=num&255;
                 const bg=ctx.createRadialGradient(node.x-r*0.3,node.y-r*0.3,0,node.x,node.y,r);bg.addColorStop(0,`rgba(${Math.min(255,cr+30)},${Math.min(255,cg+30)},${Math.min(255,cb+30)},${alpha*0.4})`);bg.addColorStop(1,`rgba(${cr},${cg},${cb},${alpha*0.2})`);ctx.fillStyle=bg;ctx.fill();
-                ctx.strokeStyle=`rgba(${cr},${cg},${cb},${alpha*(isSel?1:0.7)})`;ctx.lineWidth=isSel?2.5:isHov?2:1;ctx.stroke();
+                ctx.strokeStyle=`rgba(${cr},${cg},${cb},${alpha*(isSel||isRoot?1:0.7)})`;ctx.lineWidth=isSel?2.5:isRoot?2:isHov?2:1;ctx.stroke();
                 if(!dimmed||isHl){ctx.font=`${node.type==='agency'?'600 11px':node.type==='director'?'600 10px':'500 9px'} -apple-system,BlinkMacSystemFont,sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='rgba(0,0,0,0.6)';ctx.fillText(node.type==='director'?node.initials:node.label,node.x+0.5,node.y+0.5);ctx.fillStyle=`rgba(226,232,240,${alpha})`;ctx.fillText(node.type==='director'?node.initials:node.label,node.x,node.y);
                     if(node.type==='director'||node.type==='agency'){ctx.font='500 9px -apple-system,BlinkMacSystemFont,sans-serif';ctx.fillStyle=`rgba(${cr},${cg},${cb},${alpha*0.8})`;ctx.fillText(node.label,node.x,node.y+r+14);}
                 }
