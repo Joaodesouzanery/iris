@@ -24,6 +24,7 @@ const { extractFromMultiple, gerarEstatisticas } = require('./src/services/extra
 const { sendMultipleToLovable, isValidEndpoint, testConnection } = require('./src/services/sender');
 const syncManager = require('./src/services/sync-manager');
 const logger = require('./src/services/logger');
+const newsFetcher = require('../iris-core/services/news-fetcher');
 
 // Configurações
 const PORT = process.env.PORT || 3000;
@@ -561,6 +562,71 @@ app.delete('/api/pdfs', (req, res) => {
     res.json({
         success: true,
         message: `${quantidade} PDF(s) removido(s) da memória`
+    });
+});
+
+/**
+ * GET /api/noticias
+ * Busca notícias reais de agências reguladoras (fontes públicas)
+ */
+app.get('/api/noticias', async (req, res) => {
+    try {
+        const { agencia, setor, esfera, limite = 50, forceRefresh } = req.query;
+
+        let noticias;
+
+        if (agencia) {
+            // Busca de uma agência específica
+            noticias = await newsFetcher.fetchAgenciaNoticias(agencia.toUpperCase());
+        } else if (setor) {
+            // Busca por setor (energia, saude, transporte, etc.)
+            noticias = await newsFetcher.fetchNoticiasPorSetor(setor, parseInt(limite));
+        } else if (esfera) {
+            // Busca por esfera (federal, estadual)
+            noticias = await newsFetcher.fetchNoticiasPorEsfera(esfera, parseInt(limite));
+        } else {
+            // Busca todas com cache
+            noticias = await newsFetcher.fetchNoticiasComCache(forceRefresh === 'true');
+        }
+
+        // Aplica limite
+        noticias = noticias.slice(0, parseInt(limite));
+
+        res.json({
+            success: true,
+            total: noticias.length,
+            fontes: Object.keys(newsFetcher.FONTES_RSS).length,
+            atualizadoEm: new Date().toISOString(),
+            noticias: noticias
+        });
+    } catch (error) {
+        logger.error(`Erro ao buscar notícias: ${error.message}`);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+/**
+ * GET /api/noticias/fontes
+ * Lista todas as fontes de notícias disponíveis
+ */
+app.get('/api/noticias/fontes', (req, res) => {
+    const fontes = Object.entries(newsFetcher.FONTES_RSS).map(([sigla, config]) => ({
+        sigla,
+        nome: config.nome,
+        url: config.url,
+        tipo: config.tipo,
+        esfera: config.esfera,
+        setor: config.setor,
+        cor: config.cor
+    }));
+
+    res.json({
+        success: true,
+        total: fontes.length,
+        fontes: fontes
     });
 });
 

@@ -3963,10 +3963,19 @@
         ],
 
         currentTab: 'todas',
+        noticiasReais: [],
+        carregandoNoticias: false,
+        usarNoticiasReais: true, // Flag para alternar entre mock e real
 
-        init() {
+        async init() {
             const page = document.getElementById('page-hub');
             page.classList.add('active');
+
+            // Carrega notícias reais da API
+            if (this.usarNoticiasReais) {
+                await this.fetchNoticiasReais();
+            }
+
             this.renderNews();
             this.renderMandatos();
             this.renderFontes();
@@ -3975,6 +3984,46 @@
             this.renderRoadmap();
             this.updateStats();
             this.bindEvents();
+        },
+
+        async fetchNoticiasReais(forceRefresh = false) {
+            if (this.carregandoNoticias) return;
+
+            this.carregandoNoticias = true;
+            const container = document.getElementById('hub-news-container');
+            if (container) {
+                container.innerHTML = '<div class="hub-loading"><div class="loading-spinner"></div><span>Carregando noticias das agencias...</span></div>';
+            }
+
+            try {
+                const params = new URLSearchParams({
+                    limite: '50',
+                    forceRefresh: forceRefresh ? 'true' : 'false'
+                });
+
+                const response = await fetch(`/api/noticias?${params}`);
+                const data = await response.json();
+
+                if (data.success && data.noticias) {
+                    this.noticiasReais = data.noticias.map(n => ({
+                        agencia: n.agencia,
+                        tipo: n.tipo || 'noticia',
+                        titulo: n.titulo,
+                        resumo: n.resumo,
+                        data: n.data,
+                        esfera: n.esfera || 'federal',
+                        fonte: n.fonte,
+                        link: n.link,
+                        cor: n.cor
+                    }));
+                    console.log(`[Hub] Carregadas ${this.noticiasReais.length} noticias reais`);
+                }
+            } catch (error) {
+                console.warn('[Hub] Erro ao carregar noticias reais, usando dados de demonstracao:', error.message);
+                this.noticiasReais = [];
+            }
+
+            this.carregandoNoticias = false;
         },
 
         bindEvents() {
@@ -4014,7 +4063,8 @@
         },
 
         getFilteredNews() {
-            let news = [...this.noticias];
+            // Usa notícias reais se disponíveis, senão usa mock
+            let news = this.noticiasReais.length > 0 ? [...this.noticiasReais] : [...this.noticias];
             const tab = this.currentTab;
             const setor = document.getElementById('hub-filtro-setor')?.value || '';
             const esfera = document.getElementById('hub-filtro-esfera')?.value || '';
@@ -4078,16 +4128,28 @@
                                 <span class="hub-news-type" style="background: ${tipo.bg}; color: ${tipo.color};">${tipo.label}</span>
                                 <span class="hub-news-date">${dataFormatada}</span>
                             </div>
-                            <div class="hub-news-title">${n.titulo}</div>
+                            <div class="hub-news-title">${n.link ? `<a href="${n.link}" target="_blank" rel="noopener noreferrer">${n.titulo}</a>` : n.titulo}</div>
                             <div class="hub-news-excerpt">${n.resumo}</div>
-                            <div class="hub-news-source">
-                                <span class="hub-news-source-dot"></span>
-                                ${n.fonte}
+                            <div class="hub-news-footer">
+                                <div class="hub-news-source">
+                                    <span class="hub-news-source-dot"></span>
+                                    ${n.fonte}
+                                </div>
+                                ${n.link ? `<a href="${n.link}" target="_blank" rel="noopener noreferrer" class="hub-news-link">Ver original <svg viewBox="0 0 20 20" fill="currentColor" width="12" height="12"><path fill-rule="evenodd" d="M4.25 5.5a.75.75 0 00-.75.75v8.5c0 .414.336.75.75.75h8.5a.75.75 0 00.75-.75v-4a.75.75 0 011.5 0v4A2.25 2.25 0 0112.75 17h-8.5A2.25 2.25 0 012 14.75v-8.5A2.25 2.25 0 014.25 4h5a.75.75 0 010 1.5h-5z" clip-rule="evenodd"/><path fill-rule="evenodd" d="M6.194 12.753a.75.75 0 001.06.053L16.5 4.44v2.81a.75.75 0 001.5 0v-4.5a.75.75 0 00-.75-.75h-4.5a.75.75 0 000 1.5h2.553l-9.056 8.194a.75.75 0 00-.053 1.06z" clip-rule="evenodd"/></svg></a>` : ''}
                             </div>
                         </div>
                     </div>
                 `;
             }).join('') + '</div>';
+
+            // Adiciona indicador de fonte de dados
+            const isRealData = this.noticiasReais.length > 0;
+            const badge = document.createElement('div');
+            badge.className = 'hub-data-source-badge';
+            badge.innerHTML = isRealData
+                ? '<span class="badge-live">AO VIVO</span> Dados de fontes oficiais (gov.br)'
+                : '<span class="badge-demo">DEMO</span> Dados de demonstracao';
+            container.insertBefore(badge, container.firstChild);
         },
 
         renderMandatos() {
