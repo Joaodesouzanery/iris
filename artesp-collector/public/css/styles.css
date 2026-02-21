@@ -6371,6 +6371,649 @@ tr:hover {
     cursor: not-allowed;
 }
 
+/* ============================================
+   BOLETIM MENSAL - Novo Layout
+   ============================================ */
+.boletim-main-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+}
+
+.boletim-main-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.boletim-main-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.boletim-main-subtitle {
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+.boletim-main-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.boletim-kpis {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 16px;
+}
+
+.boletim-kpi {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+}
+
+.boletim-kpi-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.boletim-kpi-header svg {
+    color: var(--text-muted);
+}
+
+.boletim-kpi-label {
+    font-size: 12px;
+    font-weight: 500;
+}
+.boletim-kpi-label.success { color: var(--success); }
+.boletim-kpi-label.warning { color: var(--warning); }
+.boletim-kpi-label.danger { color: var(--danger); }
+.boletim-kpi-label.info { color: var(--info); }
+.boletim-kpi-label.primary { color: #FFEF4D; }
+
+.boletim-kpi-value {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.boletim-kpi-trend {
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+/* Boletim Bars */
+.boletim-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.boletim-bar-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.boletim-bar-label {
+    width: 100px;
+    font-size: 14px;
+    color: var(--text-primary);
+}
+
+.boletim-bar-track {
+    flex: 1;
+    height: 8px;
+    background: var(--surface);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.boletim-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.5s ease;
+}
+
+.boletim-bar-fill.orange { background: linear-gradient(90deg, #fbbf24, #f59e0b); }
+.boletim-bar-fill.teal { background: linear-gradient(90deg, #2dd4bf, #14b8a6); }
+
+.boletim-bar-value {
+    width: 40px;
+    text-align: right;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* Boletim Normas List */
+.boletim-normas-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.boletim-norma-item {
+    padding: 12px 16px;
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+}
+
+.boletim-norma-titulo {
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+.boletim-norma-tags {
+    display: flex;
+    gap: 8px;
+}
+
+.boletim-tag {
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.boletim-tag.tipo {
+    background: var(--surface-hover);
+    color: var(--text-secondary);
+}
+
+.boletim-tag.alta { background: var(--danger-bg); color: var(--danger); }
+.boletim-tag.media { background: var(--warning-bg); color: var(--warning); }
+.boletim-tag.baixa { background: var(--info-bg); color: var(--info); }
+
+/* Boletim Decisoes List */
+.boletim-decisoes-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.boletim-decisao-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.boletim-decisao-item:last-child {
+    border-bottom: none;
+}
+
+.boletim-decisao-info {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.boletim-decisao-titulo {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.boletim-status {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.boletim-status.aprovado { background: var(--success-bg); color: var(--success); }
+.boletim-status.rejeitado { background: var(--danger-bg); color: var(--danger); }
+
+.boletim-decisao-data {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+/* Boletim Diretores */
+.boletim-diretores-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+.boletim-diretor-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+}
+
+.boletim-diretor-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 16px;
+    color: white;
+    margin-bottom: 12px;
+}
+
+.boletim-diretor-info {
+    margin-bottom: 16px;
+}
+
+.boletim-diretor-nome {
+    font-weight: 600;
+    font-size: 15px;
+    margin-bottom: 2px;
+}
+
+.boletim-diretor-votos {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.boletim-diretor-taxa {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.boletim-taxa-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.boletim-taxa-bar {
+    flex: 1;
+    height: 6px;
+    background: var(--surface-hover);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.boletim-taxa-fill {
+    height: 100%;
+    border-radius: 3px;
+}
+
+.boletim-taxa-value {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--text-primary);
+    min-width: 36px;
+    text-align: right;
+}
+
+/* ============================================
+   MAPA DO BRASIL - Circulos
+   ============================================ */
+.mapa-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    position: relative;
+}
+
+.mapa-card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-primary);
+    font-weight: 600;
+    margin-bottom: 16px;
+}
+
+.mapa-card-header svg {
+    color: #FFEF4D;
+}
+
+.mapa-container {
+    position: relative;
+    width: 100%;
+    min-height: 480px;
+    background: var(--background);
+    border-radius: var(--radius);
+}
+
+.mapa-legenda {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+}
+
+.mapa-legenda-titulo {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+}
+
+.mapa-legenda-items {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.mapa-legenda-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.mapa-legenda-circle {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid;
+}
+
+.mapa-legenda-circle.baixo {
+    background: transparent;
+    border-color: rgba(96, 165, 250, 0.5);
+}
+
+.mapa-legenda-circle.medio {
+    background: rgba(96, 165, 250, 0.3);
+    border-color: #60a5fa;
+}
+
+.mapa-legenda-circle.alto {
+    background: #FFEF4D;
+    border-color: #FFEF4D;
+}
+
+/* Mapa SVG Circles */
+.mapa-estado {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.mapa-estado:hover .mapa-estado-circle {
+    stroke-width: 3;
+    filter: drop-shadow(0 0 8px rgba(96, 165, 250, 0.5));
+}
+
+.mapa-estado-circle {
+    fill: rgba(96, 165, 250, 0.15);
+    stroke: #60a5fa;
+    stroke-width: 2;
+    transition: all 0.2s ease;
+}
+
+.mapa-estado-circle.alto {
+    fill: rgba(255, 239, 77, 0.3);
+    stroke: #FFEF4D;
+}
+
+.mapa-estado-circle.medio {
+    fill: rgba(96, 165, 250, 0.25);
+    stroke: #60a5fa;
+}
+
+.mapa-estado-label {
+    font-size: 11px;
+    font-weight: 600;
+    fill: #60a5fa;
+    text-anchor: middle;
+    dominant-baseline: central;
+    pointer-events: none;
+}
+
+.mapa-estado-label.alto {
+    fill: #FFEF4D;
+}
+
+/* ============================================
+   RADAR REGULATORIO
+   ============================================ */
+.radar-agencia-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.radar-badge-real {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    background: var(--success-bg);
+    color: var(--success);
+    border: 1px solid rgba(74, 222, 128, 0.3);
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.radar-agencia-nome {
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.radar-kpis {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.radar-kpi {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+}
+
+.radar-kpi-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.radar-kpi-label {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.radar-kpi-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.radar-kpi-icon.yellow { background: rgba(251, 191, 36, 0.15); color: #fbbf24; }
+.radar-kpi-icon.blue { background: rgba(96, 165, 250, 0.15); color: #60a5fa; }
+.radar-kpi-icon.orange { background: rgba(251, 146, 60, 0.15); color: #fb923c; }
+.radar-kpi-icon.pink { background: rgba(244, 114, 182, 0.15); color: #f472b6; }
+
+.radar-kpi-value {
+    font-size: 36px;
+    font-weight: 700;
+}
+
+/* Radar Tabs */
+.radar-tabs {
+    display: flex;
+    gap: 8px;
+}
+
+.radar-tab {
+    padding: 8px 20px;
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.radar-tab.active {
+    background: var(--surface-hover);
+    color: var(--text-primary);
+    border-color: var(--border-light);
+}
+
+.radar-tab:hover:not(.active) {
+    background: var(--surface);
+}
+
+/* Radar Setores Grid */
+.radar-setores-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 16px;
+}
+
+.radar-setor-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 24px 16px;
+    text-align: center;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.radar-setor-card:hover {
+    border-color: var(--border-light);
+    transform: translateY(-2px);
+}
+
+.radar-setor-icon {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 12px;
+    background: var(--surface-hover);
+    border-radius: var(--radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+}
+
+.radar-setor-nome {
+    font-size: 13px;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+/* Radar Deliberacoes List */
+.radar-deliberacoes-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.radar-deliberacao-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+}
+
+.radar-deliberacao-item:hover {
+    background: var(--surface);
+}
+
+.radar-deliberacao-item:last-child {
+    border-bottom: none;
+}
+
+.radar-deliberacao-numero {
+    width: 48px;
+    height: 48px;
+    background: var(--surface);
+    border: 2px solid #FFEF4D;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: #FFEF4D;
+    flex-shrink: 0;
+}
+
+.radar-deliberacao-info {
+    flex: 1;
+}
+
+.radar-deliberacao-titulo {
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.radar-deliberacao-meta {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.radar-status {
+    padding: 6px 14px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.radar-status.deferido { background: rgba(34, 197, 94, 0.15); color: #22c55e; }
+.radar-status.parcial { background: rgba(251, 191, 36, 0.15); color: #fbbf24; }
+.radar-status.indeferido { background: var(--danger-bg); color: var(--danger); }
+.radar-status.neutro { background: var(--surface); color: var(--text-muted); }
+
+/* Card Link */
+.card-link {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #60a5fa;
+    font-size: 13px;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.card-link:hover {
+    color: #93c5fd;
+}
+
+@media (max-width: 1200px) {
+    .boletim-kpis { grid-template-columns: repeat(3, 1fr); }
+    .boletim-diretores-grid { grid-template-columns: repeat(2, 1fr); }
+    .radar-kpis { grid-template-columns: repeat(2, 1fr); }
+    .radar-setores-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
 @media (max-width: 768px) {
     .landing-hero-title { font-size: 28px; }
     .landing-hero-stats { grid-template-columns: repeat(2, 1fr); }
@@ -6379,4 +7022,8 @@ tr:hover {
     .landing-nav-link { display: none; }
     .painel-grid { grid-template-columns: 1fr; }
     .landing-news-grid { grid-template-columns: 1fr; }
+    .boletim-kpis { grid-template-columns: repeat(2, 1fr); }
+    .boletim-diretores-grid { grid-template-columns: 1fr; }
+    .radar-kpis { grid-template-columns: 1fr; }
+    .radar-setores-grid { grid-template-columns: repeat(2, 1fr); }
 }

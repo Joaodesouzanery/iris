@@ -275,6 +275,10 @@
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path></svg>
                         Dashboard Geral
                     </a>
+                    <a data-route="/radar" class="nav-item">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                        Radar Regulatorio
+                    </a>
                     <a data-route="/boletim" class="nav-item">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path></svg>
                         Boletim Mensal
@@ -3231,119 +3235,430 @@
                 </div>
 
                 <!-- ============================================
+                     PAGE: Radar Regulatorio
+                     ============================================ -->
+                <div id="page-radar" class="page-view">
+                    <div class="page-header">
+                        <div class="page-title-section">
+                            <h1 class="page-title">Radar Regulatorio</h1>
+                            <p class="page-subtitle">Monitoramento e analise de atividade regulatoria</p>
+                        </div>
+                        <div class="page-actions">
+                            <select class="filter-select" id="radar-ano">
+                                <option value="2025">2025</option>
+                                <option value="2026">2026</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Badge + Nome da Agencia -->
+                    <div class="radar-agencia-info">
+                        <span class="radar-badge-real">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            Dados Reais
+                        </span>
+                        <span class="radar-agencia-nome">Agencia de Transporte do Estado de Sao Paulo</span>
+                    </div>
+
+                    <!-- KPIs do Radar -->
+                    <div class="radar-kpis">
+                        <div class="radar-kpi">
+                            <div class="radar-kpi-header">
+                                <span class="radar-kpi-label">Reunioes 2025</span>
+                                <div class="radar-kpi-icon yellow">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                </div>
+                            </div>
+                            <div class="radar-kpi-value">2</div>
+                        </div>
+                        <div class="radar-kpi">
+                            <div class="radar-kpi-header">
+                                <span class="radar-kpi-label">Diretores</span>
+                                <div class="radar-kpi-icon blue">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                </div>
+                            </div>
+                            <div class="radar-kpi-value">4</div>
+                        </div>
+                        <div class="radar-kpi">
+                            <div class="radar-kpi-header">
+                                <span class="radar-kpi-label">Deliberacoes</span>
+                                <div class="radar-kpi-icon orange">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                </div>
+                            </div>
+                            <div class="radar-kpi-value">25</div>
+                        </div>
+                        <div class="radar-kpi">
+                            <div class="radar-kpi-header">
+                                <span class="radar-kpi-label">Setores</span>
+                                <div class="radar-kpi-icon pink">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                                </div>
+                            </div>
+                            <div class="radar-kpi-value">6</div>
+                        </div>
+                    </div>
+
+                    <!-- Tabs Dashboard / Diretores -->
+                    <div class="radar-tabs">
+                        <button class="radar-tab active" data-radar-tab="dashboard">Dashboard</button>
+                        <button class="radar-tab" data-radar-tab="diretores">Diretores</button>
+                    </div>
+
+                    <!-- Setores Regulados -->
+                    <div class="card" style="margin-top: 24px;" id="radar-dashboard-content">
+                        <div class="card-header">
+                            <h2 class="card-title">Setores Regulados</h2>
+                        </div>
+                        <div class="card-body">
+                            <div class="radar-setores-grid">
+                                <div class="radar-setor-card">
+                                    <div class="radar-setor-icon">
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10m16 0V8a1 1 0 00-1-1h-3l-3 9"></path></svg>
+                                    </div>
+                                    <span class="radar-setor-nome">Rodovias</span>
+                                </div>
+                                <div class="radar-setor-card">
+                                    <div class="radar-setor-icon">
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10h6m0 0V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"></path></svg>
+                                    </div>
+                                    <span class="radar-setor-nome">Trilhos</span>
+                                </div>
+                                <div class="radar-setor-card">
+                                    <div class="radar-setor-icon">
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                                    </div>
+                                    <span class="radar-setor-nome">Aeroportos Regionais</span>
+                                </div>
+                                <div class="radar-setor-card">
+                                    <div class="radar-setor-icon">
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+                                    </div>
+                                    <span class="radar-setor-nome">Onibus</span>
+                                </div>
+                                <div class="radar-setor-card">
+                                    <div class="radar-setor-icon">
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+                                    </div>
+                                    <span class="radar-setor-nome">Travessias Hidricas</span>
+                                </div>
+                                <div class="radar-setor-card">
+                                    <div class="radar-setor-icon">
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+                                    </div>
+                                    <span class="radar-setor-nome">Fretamento</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Deliberacoes Recentes -->
+                    <div class="card" style="margin-top: 24px;">
+                        <div class="card-header">
+                            <h2 class="card-title">Deliberacoes Recentes</h2>
+                            <a href="#" class="card-link">Ver todas <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg></a>
+                        </div>
+                        <div class="card-body" style="padding: 0;">
+                            <div class="radar-deliberacoes-list" id="radar-deliberacoes">
+                                <div class="radar-deliberacao-item">
+                                    <div class="radar-deliberacao-numero">1129</div>
+                                    <div class="radar-deliberacao-info">
+                                        <div class="radar-deliberacao-titulo">Sem interessado</div>
+                                        <div class="radar-deliberacao-meta">29/12/2025 · Contrato / Aditivo</div>
+                                    </div>
+                                    <span class="radar-status deferido">Deferido</span>
+                                </div>
+                                <div class="radar-deliberacao-item">
+                                    <div class="radar-deliberacao-numero">1129</div>
+                                    <div class="radar-deliberacao-info">
+                                        <div class="radar-deliberacao-titulo">Sem interessado</div>
+                                        <div class="radar-deliberacao-meta">29/12/2025 · Outros</div>
+                                    </div>
+                                    <span class="radar-status neutro">—</span>
+                                </div>
+                                <div class="radar-deliberacao-item">
+                                    <div class="radar-deliberacao-numero">1129</div>
+                                    <div class="radar-deliberacao-info">
+                                        <div class="radar-deliberacao-titulo">Rodovias Integradas do Oeste S.A. - SPVias.</div>
+                                        <div class="radar-deliberacao-meta">29/12/2025 · Autorizacao</div>
+                                    </div>
+                                    <span class="radar-status deferido">Deferido</span>
+                                </div>
+                                <div class="radar-deliberacao-item">
+                                    <div class="radar-deliberacao-numero">1129</div>
+                                    <div class="radar-deliberacao-info">
+                                        <div class="radar-deliberacao-titulo">Concessionaria Rodoanel Norte SPE S.A.</div>
+                                        <div class="radar-deliberacao-meta">29/12/2025 · Autorizacao</div>
+                                    </div>
+                                    <span class="radar-status parcial">Parcialmente Deferido</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================
                      PAGE: Boletim
                      ============================================ -->
                 <div id="page-boletim" class="page-view">
                     <div class="page-header">
                         <div class="page-title-section">
                             <h1 class="page-title">Boletim Mensal</h1>
-                            <p class="page-subtitle">Resumo executivo das atividades regulatorias da ARTESP</p>
+                            <p class="page-subtitle">Resumo automatico de atividades regulatorias</p>
                         </div>
                         <div class="page-actions">
-                            <div class="filter-group">
+                            <select class="filter-select" id="boletim-agencia">
+                                <option value="artesp">ARTESP</option>
+                                <option value="anatel">ANATEL</option>
+                                <option value="aneel">ANEEL</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Card Principal do Boletim -->
+                    <div class="boletim-main-card">
+                        <div class="boletim-main-header">
+                            <div>
+                                <h2 class="boletim-main-title" id="boletim-titulo">Boletim ARTESP — Janeiro/2026</h2>
+                                <p class="boletim-main-subtitle">Resumo mensal de atividades regulatorias</p>
+                            </div>
+                            <div class="boletim-main-actions">
                                 <select class="filter-select" id="boletim-mes">
-                                    <option value="2026-02">Fevereiro 2026</option>
-                                    <option value="2026-01">Janeiro 2026</option>
-                                    <option value="2025-12">Dezembro 2025</option>
+                                    <option value="01">Janeiro</option>
+                                    <option value="02">Fevereiro</option>
+                                    <option value="12">Dezembro</option>
                                 </select>
+                                <select class="filter-select" id="boletim-ano">
+                                    <option value="2026">2026</option>
+                                    <option value="2025">2025</option>
+                                </select>
+                                <button class="btn btn-secondary">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                    Atualizar
+                                </button>
+                                <button class="btn btn-secondary">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                    Exportar
+                                </button>
                             </div>
-                            <button class="btn btn-primary">
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                                Gerar PDF
-                            </button>
-                            <button class="btn btn-secondary" onclick="window.print()">
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-                                Imprimir
-                            </button>
+                        </div>
+
+                        <!-- KPIs do Boletim -->
+                        <div class="boletim-kpis">
+                            <div class="boletim-kpi">
+                                <div class="boletim-kpi-header">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                    <span class="boletim-kpi-label success">Novas Normas</span>
+                                </div>
+                                <div class="boletim-kpi-value">15</div>
+                                <div class="boletim-kpi-trend trend-up">+50% vs mes anterior</div>
+                            </div>
+                            <div class="boletim-kpi">
+                                <div class="boletim-kpi-header">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                    <span class="boletim-kpi-label warning">Alteradas</span>
+                                </div>
+                                <div class="boletim-kpi-value">28</div>
+                            </div>
+                            <div class="boletim-kpi">
+                                <div class="boletim-kpi-header">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                    <span class="boletim-kpi-label danger">Revogadas</span>
+                                </div>
+                                <div class="boletim-kpi-value">3</div>
+                            </div>
+                            <div class="boletim-kpi">
+                                <div class="boletim-kpi-header">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                    <span class="boletim-kpi-label info">Reunioes</span>
+                                </div>
+                                <div class="boletim-kpi-value">4</div>
+                            </div>
+                            <div class="boletim-kpi">
+                                <div class="boletim-kpi-header">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                    <span class="boletim-kpi-label primary">Votos</span>
+                                </div>
+                                <div class="boletim-kpi-value">87</div>
+                                <div class="boletim-kpi-trend trend-up">+16% vs mes anterior</div>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <div class="stat-card-header">
-                                <span class="stat-card-title">Reunioes Realizadas</span>
-                            </div>
-                            <div class="stat-card-value">4</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-card-header">
-                                <span class="stat-card-title">Total Deliberacoes</span>
-                            </div>
-                            <div class="stat-card-value">87</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-card-header">
-                                <span class="stat-card-title">Deferidas</span>
-                            </div>
-                            <div class="stat-card-value success">68</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-card-header">
-                                <span class="stat-card-title">Indeferidas</span>
-                            </div>
-                            <div class="stat-card-value danger">19</div>
-                        </div>
-                    </div>
-
-                    <div class="grid-2">
+                    <!-- Setores e Temas -->
+                    <div class="grid-2" style="margin-top: 24px;">
                         <div class="card">
                             <div class="card-header">
-                                <h2 class="card-title">
-                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                                    Destaques do Mes
-                                </h2>
+                                <h2 class="card-title">Setores Mais Afetados</h2>
                             </div>
                             <div class="card-body">
-                                <div class="alert-list">
-                                    <div class="alert-item info">
-                                        <div class="alert-title">Revisao Tarifaria Extraordinaria</div>
-                                        <div class="alert-body">Aprovada revisao de 4.2% para o Sistema Anchieta-Imigrantes devido a variacao do IPCA acumulado.</div>
+                                <div class="boletim-bars">
+                                    <div class="boletim-bar-item">
+                                        <span class="boletim-bar-label">Rodovias</span>
+                                        <div class="boletim-bar-track"><div class="boletim-bar-fill orange" style="width: 100%;"></div></div>
+                                        <span class="boletim-bar-value">32</span>
                                     </div>
-                                    <div class="alert-item info">
-                                        <div class="alert-title">Novos Investimentos Aprovados</div>
-                                        <div class="alert-body">Homologado pacote de R$ 234 milhoes em melhorias para rodovias do interior paulista.</div>
+                                    <div class="boletim-bar-item">
+                                        <span class="boletim-bar-label">Ferrovias</span>
+                                        <div class="boletim-bar-track"><div class="boletim-bar-fill orange" style="width: 25%;"></div></div>
+                                        <span class="boletim-bar-value">8</span>
                                     </div>
-                                    <div class="alert-item warning">
-                                        <div class="alert-title">Fiscalizacao Intensificada</div>
-                                        <div class="alert-body">12 autos de infracao lavrados contra concessionarias por irregularidades em sinalizacao.</div>
+                                    <div class="boletim-bar-item">
+                                        <span class="boletim-bar-label">Aeroportos</span>
+                                        <div class="boletim-bar-track"><div class="boletim-bar-fill orange" style="width: 9%;"></div></div>
+                                        <span class="boletim-bar-value">3</span>
+                                    </div>
+                                    <div class="boletim-bar-item">
+                                        <span class="boletim-bar-label">Multimodal</span>
+                                        <div class="boletim-bar-track"><div class="boletim-bar-fill orange" style="width: 9%;"></div></div>
+                                        <span class="boletim-bar-value">3</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
-
                         <div class="card">
                             <div class="card-header">
-                                <h2 class="card-title">
-                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path></svg>
-                                    Temas Mais Frequentes
-                                </h2>
+                                <h2 class="card-title">Temas Dominantes</h2>
                             </div>
                             <div class="card-body">
-                                <div class="bar-chart">
-                                    <div class="bar-item">
-                                        <span class="bar-label">Revisao Tarifaria</span>
-                                        <div class="bar-track"><div class="bar-fill" style="width: 85%;"></div></div>
-                                        <span class="bar-value">23</span>
+                                <div class="boletim-bars">
+                                    <div class="boletim-bar-item">
+                                        <span class="boletim-bar-label">Tarifas</span>
+                                        <div class="boletim-bar-track"><div class="boletim-bar-fill teal" style="width: 100%;"></div></div>
+                                        <span class="boletim-bar-value">18</span>
                                     </div>
-                                    <div class="bar-item">
-                                        <span class="bar-label">Multas e Sancoes</span>
-                                        <div class="bar-track"><div class="bar-fill" style="width: 65%;"></div></div>
-                                        <span class="bar-value">18</span>
+                                    <div class="boletim-bar-item">
+                                        <span class="boletim-bar-label">Contratos</span>
+                                        <div class="boletim-bar-track"><div class="boletim-bar-fill teal" style="width: 67%;"></div></div>
+                                        <span class="boletim-bar-value">12</span>
                                     </div>
-                                    <div class="bar-item">
-                                        <span class="bar-label">Obras e Investimentos</span>
-                                        <div class="bar-track"><div class="bar-fill" style="width: 55%;"></div></div>
-                                        <span class="bar-value">15</span>
+                                    <div class="boletim-bar-item">
+                                        <span class="boletim-bar-label">Fiscalizacao</span>
+                                        <div class="boletim-bar-track"><div class="boletim-bar-fill teal" style="width: 56%;"></div></div>
+                                        <span class="boletim-bar-value">10</span>
                                     </div>
-                                    <div class="bar-item">
-                                        <span class="bar-label">Contratos</span>
-                                        <div class="bar-track"><div class="bar-fill" style="width: 45%;"></div></div>
-                                        <span class="bar-value">12</span>
+                                    <div class="boletim-bar-item">
+                                        <span class="boletim-bar-label">Concessoes</span>
+                                        <div class="boletim-bar-track"><div class="boletim-bar-fill teal" style="width: 33%;"></div></div>
+                                        <span class="boletim-bar-value">6</span>
                                     </div>
-                                    <div class="bar-item">
-                                        <span class="bar-label">Licenciamento</span>
-                                        <div class="bar-track"><div class="bar-fill" style="width: 32%;"></div></div>
-                                        <span class="bar-value">9</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Normas e Decisoes -->
+                    <div class="grid-2" style="margin-top: 24px;">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">Normas Publicadas em Destaque</h2>
+                            </div>
+                            <div class="card-body">
+                                <div class="boletim-normas-list">
+                                    <div class="boletim-norma-item">
+                                        <div class="boletim-norma-titulo">Resolucao no 001/2026 - Novas Diretrizes de Fiscalizacao</div>
+                                        <div class="boletim-norma-tags">
+                                            <span class="boletim-tag tipo">Resolucao</span>
+                                            <span class="boletim-tag alta">Alta</span>
+                                        </div>
+                                    </div>
+                                    <div class="boletim-norma-item">
+                                        <div class="boletim-norma-titulo">Deliberacao no 15/2026 - Reajuste Tarifario</div>
+                                        <div class="boletim-norma-tags">
+                                            <span class="boletim-tag tipo">Deliberacao</span>
+                                            <span class="boletim-tag alta">Alta</span>
+                                        </div>
+                                    </div>
+                                    <div class="boletim-norma-item">
+                                        <div class="boletim-norma-titulo">Portaria no 042/2026 - Procedimentos de Vistoria</div>
+                                        <div class="boletim-norma-tags">
+                                            <span class="boletim-tag tipo">Portaria</span>
+                                            <span class="boletim-tag media">Media</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">Decisoes Relevantes</h2>
+                            </div>
+                            <div class="card-body">
+                                <div class="boletim-decisoes-list">
+                                    <div class="boletim-decisao-item">
+                                        <div class="boletim-decisao-info">
+                                            <div class="boletim-decisao-titulo">Reajuste Tarifario CCR ViaOeste</div>
+                                            <span class="boletim-status aprovado">Aprovado</span>
+                                        </div>
+                                        <div class="boletim-decisao-data">05/01/2026</div>
+                                    </div>
+                                    <div class="boletim-decisao-item">
+                                        <div class="boletim-decisao-info">
+                                            <div class="boletim-decisao-titulo">Multa Administrativa - Arteris</div>
+                                            <span class="boletim-status aprovado">Aprovado</span>
+                                        </div>
+                                        <div class="boletim-decisao-data">03/01/2026</div>
+                                    </div>
+                                    <div class="boletim-decisao-item">
+                                        <div class="boletim-decisao-info">
+                                            <div class="boletim-decisao-titulo">Revisao Contratual EcoRodovias</div>
+                                            <span class="boletim-status rejeitado">Rejeitado</span>
+                                        </div>
+                                        <div class="boletim-decisao-data">28/12/2025</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Diretores Mais Ativos -->
+                    <div class="card" style="margin-top: 24px;">
+                        <div class="card-header">
+                            <h2 class="card-title">Diretores Mais Ativos</h2>
+                        </div>
+                        <div class="card-body">
+                            <div class="boletim-diretores-grid">
+                                <div class="boletim-diretor-card">
+                                    <div class="boletim-diretor-avatar" style="background: linear-gradient(135deg, #4ade80, #22c55e);">MS</div>
+                                    <div class="boletim-diretor-info">
+                                        <div class="boletim-diretor-nome">Maria Silva Santos</div>
+                                        <div class="boletim-diretor-votos">24 votos no mes</div>
+                                    </div>
+                                    <div class="boletim-diretor-taxa">
+                                        <div class="boletim-taxa-label">Taxa de aprovacao</div>
+                                        <div class="boletim-taxa-bar">
+                                            <div class="boletim-taxa-fill" style="width: 88%; background: #4ade80;"></div>
+                                        </div>
+                                        <span class="boletim-taxa-value">88%</span>
+                                    </div>
+                                </div>
+                                <div class="boletim-diretor-card">
+                                    <div class="boletim-diretor-avatar" style="background: linear-gradient(135deg, #60a5fa, #3b82f6);">AP</div>
+                                    <div class="boletim-diretor-info">
+                                        <div class="boletim-diretor-nome">Ana Paula Ferreira</div>
+                                        <div class="boletim-diretor-votos">22 votos no mes</div>
+                                    </div>
+                                    <div class="boletim-diretor-taxa">
+                                        <div class="boletim-taxa-label">Taxa de aprovacao</div>
+                                        <div class="boletim-taxa-bar">
+                                            <div class="boletim-taxa-fill" style="width: 82%; background: #4ade80;"></div>
+                                        </div>
+                                        <span class="boletim-taxa-value">82%</span>
+                                    </div>
+                                </div>
+                                <div class="boletim-diretor-card">
+                                    <div class="boletim-diretor-avatar" style="background: linear-gradient(135deg, #a78bfa, #8b5cf6);">RM</div>
+                                    <div class="boletim-diretor-info">
+                                        <div class="boletim-diretor-nome">Roberto Mendes</div>
+                                        <div class="boletim-diretor-votos">21 votos no mes</div>
+                                    </div>
+                                    <div class="boletim-diretor-taxa">
+                                        <div class="boletim-taxa-label">Taxa de aprovacao</div>
+                                        <div class="boletim-taxa-bar">
+                                            <div class="boletim-taxa-fill" style="width: 76%; background: #fbbf24;"></div>
+                                        </div>
+                                        <span class="boletim-taxa-value">76%</span>
                                     </div>
                                 </div>
                             </div>
@@ -3986,7 +4301,7 @@
                     <div class="page-header">
                         <div class="page-title-section">
                             <h1 class="page-title">Mapa do Brasil</h1>
-                            <p class="page-subtitle">Distribuicao geografica das deliberacoes por estado</p>
+                            <p class="page-subtitle">Distribuicao geografica das decisoes regulatorias por estado</p>
                         </div>
                         <div class="page-actions">
                             <select class="filter-select" id="mapa-filtro-ano">
@@ -3997,195 +4312,92 @@
                         </div>
                     </div>
 
-                    <!-- Stats do Mapa -->
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <div class="stat-card-header">
-                                <span class="stat-card-title">Estados Ativos</span>
-                            </div>
-                            <div class="stat-card-value">12</div>
-                            <div class="stat-card-subtitle">Com deliberacoes</div>
+                    <!-- Mapa Interativo com Circulos -->
+                    <div class="mapa-card">
+                        <div class="mapa-card-header">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg>
+                            <span>Mapa Interativo</span>
                         </div>
-                        <div class="stat-card">
-                            <div class="stat-card-header">
-                                <span class="stat-card-title">Estado Mais Ativo</span>
-                            </div>
-                            <div class="stat-card-value">SP</div>
-                            <div class="stat-card-subtitle">456 deliberacoes</div>
+                        <div class="mapa-container" id="mapa-brasil-container">
+                            <!-- Mapa de circulos renderizado via JS -->
                         </div>
-                        <div class="stat-card">
-                            <div class="stat-card-header">
-                                <span class="stat-card-title">Regiao Sudeste</span>
+                        <div class="mapa-legenda">
+                            <div class="mapa-legenda-titulo">DECISOES POR ESTADO</div>
+                            <div class="mapa-legenda-items">
+                                <div class="mapa-legenda-item">
+                                    <span class="mapa-legenda-circle baixo"></span>
+                                    <span>Menor volume</span>
+                                </div>
+                                <div class="mapa-legenda-item">
+                                    <span class="mapa-legenda-circle medio"></span>
+                                    <span>Volume medio</span>
+                                </div>
+                                <div class="mapa-legenda-item">
+                                    <span class="mapa-legenda-circle alto"></span>
+                                    <span>Maior volume</span>
+                                </div>
                             </div>
-                            <div class="stat-card-value">68%</div>
-                            <div class="stat-card-subtitle">Das deliberacoes</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-card-header">
-                                <span class="stat-card-title">Crescimento</span>
-                            </div>
-                            <div class="stat-card-value success">+12%</div>
-                            <div class="stat-card-subtitle">vs ano anterior</div>
                         </div>
                     </div>
 
-                    <div class="grid-2">
-                        <!-- Mapa SVG -->
-                        <div class="card">
-                            <div class="card-header">
-                                <h2 class="card-title">
-                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg>
-                                    Mapa Interativo
-                                </h2>
-                            </div>
-                            <div class="card-body d3-map-container">
-                                <!-- D3.js Map Container -->
-                                <div id="brazil-d3-map" class="brazil-d3-map">
-                                    <!-- Mapa sera renderizado via D3.js -->
-                                </div>
-                                <!-- Tooltip -->
-                                <div id="map-tooltip" class="d3-map-tooltip"></div>
-                            </div>
-                        </div>
-
-                        <!-- Lista por Estado -->
+                    <!-- Stats e Ranking -->
+                    <div class="grid-2" style="margin-top: 24px;">
                         <div class="card">
                             <div class="card-header">
                                 <h2 class="card-title">Ranking por Estado</h2>
                             </div>
                             <div class="card-body">
-                                <div class="state-ranking">
-                                    <div class="state-item">
-                                        <div class="state-rank">1</div>
-                                        <div class="state-info">
-                                            <div class="state-name">Sao Paulo</div>
-                                            <div class="state-bar">
-                                                <div class="state-bar-fill" style="width: 100%;"></div>
-                                            </div>
-                                        </div>
-                                        <div class="state-value">456</div>
-                                    </div>
-                                    <div class="state-item">
-                                        <div class="state-rank">2</div>
-                                        <div class="state-info">
-                                            <div class="state-name">Distrito Federal</div>
-                                            <div class="state-bar">
-                                                <div class="state-bar-fill" style="width: 51%;"></div>
-                                            </div>
-                                        </div>
-                                        <div class="state-value">234</div>
-                                    </div>
-                                    <div class="state-item">
-                                        <div class="state-rank">3</div>
-                                        <div class="state-info">
-                                            <div class="state-name">Minas Gerais</div>
-                                            <div class="state-bar">
-                                                <div class="state-bar-fill" style="width: 41%;"></div>
-                                            </div>
-                                        </div>
-                                        <div class="state-value">187</div>
-                                    </div>
-                                    <div class="state-item">
-                                        <div class="state-rank">4</div>
-                                        <div class="state-info">
-                                            <div class="state-name">Rio de Janeiro</div>
-                                            <div class="state-bar">
-                                                <div class="state-bar-fill" style="width: 34%;"></div>
-                                            </div>
-                                        </div>
-                                        <div class="state-value">156</div>
-                                    </div>
-                                    <div class="state-item">
-                                        <div class="state-rank">5</div>
-                                        <div class="state-info">
-                                            <div class="state-name">Bahia</div>
-                                            <div class="state-bar">
-                                                <div class="state-bar-fill" style="width: 25%;"></div>
-                                            </div>
-                                        </div>
-                                        <div class="state-value">112</div>
-                                    </div>
-                                    <div class="state-item">
-                                        <div class="state-rank">6</div>
-                                        <div class="state-info">
-                                            <div class="state-name">Parana</div>
-                                            <div class="state-bar">
-                                                <div class="state-bar-fill" style="width: 21%;"></div>
-                                            </div>
-                                        </div>
-                                        <div class="state-value">98</div>
-                                    </div>
-                                    <div class="state-item">
-                                        <div class="state-rank">7</div>
-                                        <div class="state-info">
-                                            <div class="state-name">Rio Grande do Sul</div>
-                                            <div class="state-bar">
-                                                <div class="state-bar-fill" style="width: 19%;"></div>
-                                            </div>
-                                        </div>
-                                        <div class="state-value">89</div>
-                                    </div>
-                                    <div class="state-item">
-                                        <div class="state-rank">8</div>
-                                        <div class="state-info">
-                                            <div class="state-name">Pernambuco</div>
-                                            <div class="state-bar">
-                                                <div class="state-bar-fill" style="width: 19%;"></div>
-                                            </div>
-                                        </div>
-                                        <div class="state-value">89</div>
-                                    </div>
+                                <div class="state-ranking" id="mapa-ranking">
+                                    <!-- Renderizado via JS -->
                                 </div>
                             </div>
                         </div>
-                    </div>
-
-                    <!-- Distribuicao por Regiao -->
-                    <div class="card">
-                        <div class="card-header">
-                            <h2 class="card-title">Distribuicao por Regiao</h2>
-                        </div>
-                        <div class="card-body">
-                            <div class="region-grid">
-                                <div class="region-card">
-                                    <div class="region-icon" style="background: rgba(255,239,77,0.2);">SE</div>
-                                    <div class="region-info">
-                                        <div class="region-name">Sudeste</div>
-                                        <div class="region-value">844</div>
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">Distribuicao por Regiao</h2>
+                            </div>
+                            <div class="card-body">
+                                <div class="region-grid">
+                                    <div class="region-card">
+                                        <div class="region-icon" style="background: rgba(255,239,77,0.2); color: #FFEF4D;">SE</div>
+                                        <div class="region-info">
+                                            <div class="region-name">Sudeste</div>
+                                            <div class="region-value">844</div>
+                                        </div>
+                                        <div class="region-percent">68%</div>
                                     </div>
-                                    <div class="region-percent">68%</div>
-                                </div>
-                                <div class="region-card">
-                                    <div class="region-icon" style="background: rgba(96,165,250,0.2);">NE</div>
-                                    <div class="region-info">
-                                        <div class="region-name">Nordeste</div>
-                                        <div class="region-value">416</div>
+                                    <div class="region-card">
+                                        <div class="region-icon" style="background: rgba(96,165,250,0.2); color: #60a5fa;">NE</div>
+                                        <div class="region-info">
+                                            <div class="region-name">Nordeste</div>
+                                            <div class="region-value">189</div>
+                                        </div>
+                                        <div class="region-percent">15%</div>
                                     </div>
-                                    <div class="region-percent">15%</div>
-                                </div>
-                                <div class="region-card">
-                                    <div class="region-icon" style="background: rgba(74,222,128,0.2);">S</div>
-                                    <div class="region-info">
-                                        <div class="region-name">Sul</div>
-                                        <div class="region-value">254</div>
+                                    <div class="region-card">
+                                        <div class="region-icon" style="background: rgba(74,222,128,0.2); color: #4ade80;">S</div>
+                                        <div class="region-info">
+                                            <div class="region-name">Sul</div>
+                                            <div class="region-value">254</div>
+                                        </div>
+                                        <div class="region-percent">10%</div>
                                     </div>
-                                    <div class="region-percent">10%</div>
-                                </div>
-                                <div class="region-card">
-                                    <div class="region-icon" style="background: rgba(251,191,36,0.2);">CO</div>
-                                    <div class="region-info">
-                                        <div class="region-name">Centro-Oeste</div>
-                                        <div class="region-value">370</div>
+                                    <div class="region-card">
+                                        <div class="region-icon" style="background: rgba(251,191,36,0.2); color: #fbbf24;">CO</div>
+                                        <div class="region-info">
+                                            <div class="region-name">Centro-Oeste</div>
+                                            <div class="region-value">87</div>
+                                        </div>
+                                        <div class="region-percent">5%</div>
                                     </div>
-                                    <div class="region-percent">5%</div>
-                                </div>
-                                <div class="region-card">
-                                    <div class="region-icon" style="background: rgba(248,113,113,0.2);">N</div>
-                                    <div class="region-info">
-                                        <div class="region-name">Norte</div>
-                                        <div class="region-value">118</div>
+                                    <div class="region-card">
+                                        <div class="region-icon" style="background: rgba(248,113,113,0.2); color: #f87171;">N</div>
+                                        <div class="region-info">
+                                            <div class="region-name">Norte</div>
+                                            <div class="region-value">42</div>
+                                        </div>
+                                        <div class="region-percent">2%</div>
                                     </div>
-                                    <div class="region-percent">2%</div>
                                 </div>
                             </div>
                         </div>

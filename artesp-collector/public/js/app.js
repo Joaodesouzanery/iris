@@ -64,6 +64,7 @@
                 '/analise': 'Analise de PDFs',
                 '/agencias': 'Agencias Reguladoras',
                 '/mapa': 'Mapa do Brasil',
+                '/radar': 'Radar Regulatorio',
                 '/painel-regulatorio': 'Painel Regulatorio',
                 '/setores': 'Setores Regulados',
                 '/microtemas': 'Microtemas',
@@ -3787,30 +3788,101 @@
         init() {
             const page = document.getElementById('page-mapa');
             page.classList.add('active');
-            this.renderD3Map();
+            this.renderCircleMap();
             this.renderRanking();
         },
 
-        renderD3Map() {
-            const container = document.getElementById('brazil-d3-map');
-            if (!container || typeof d3 === 'undefined') {
-                console.warn('D3.js not loaded or container not found');
-                this.renderFallbackMap();
-                return;
-            }
+        renderCircleMap() {
+            const container = document.getElementById('mapa-brasil-container');
+            if (!container) return;
 
-            // Clear container
             container.innerHTML = '';
 
-            const width = container.offsetWidth || 600;
-            const height = 500;
+            const width = container.offsetWidth || 700;
+            const height = 480;
 
             // Create SVG
-            this.svg = d3.select(container)
-                .append('svg')
-                .attr('width', width)
-                .attr('height', height)
-                .attr('viewBox', '0 0 650 600');
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('width', '100%');
+            svg.setAttribute('height', height);
+            svg.setAttribute('viewBox', '0 0 700 520');
+            svg.style.display = 'block';
+
+            // Draw circles for each state
+            Object.entries(this.statePositions).forEach(([code, pos]) => {
+                const estado = this.estados[code];
+                if (!estado) return;
+
+                const maxDecisoes = 4521; // SP
+                const ratio = estado.decisoes / maxDecisoes;
+                const minRadius = 18;
+                const maxRadius = 48;
+                const radius = minRadius + (maxRadius - minRadius) * ratio;
+
+                // Determine color based on volume
+                let fillColor, strokeColor, textColor;
+                if (ratio > 0.4) {
+                    fillColor = 'rgba(255, 239, 77, 0.25)';
+                    strokeColor = '#FFEF4D';
+                    textColor = '#FFEF4D';
+                } else if (ratio > 0.15) {
+                    fillColor = 'rgba(96, 165, 250, 0.2)';
+                    strokeColor = '#60a5fa';
+                    textColor = '#60a5fa';
+                } else {
+                    fillColor = 'rgba(96, 165, 250, 0.1)';
+                    strokeColor = 'rgba(96, 165, 250, 0.5)';
+                    textColor = 'rgba(96, 165, 250, 0.8)';
+                }
+
+                // Create group
+                const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                g.setAttribute('class', 'mapa-estado');
+                g.style.cursor = 'pointer';
+
+                // Circle
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('cx', pos.x);
+                circle.setAttribute('cy', pos.y);
+                circle.setAttribute('r', radius);
+                circle.setAttribute('fill', fillColor);
+                circle.setAttribute('stroke', strokeColor);
+                circle.setAttribute('stroke-width', '2');
+                circle.style.transition = 'all 0.2s ease';
+
+                // Label
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', pos.x);
+                text.setAttribute('y', pos.y + 4);
+                text.setAttribute('text-anchor', 'middle');
+                text.setAttribute('fill', textColor);
+                text.setAttribute('font-size', '11px');
+                text.setAttribute('font-weight', '600');
+                text.style.pointerEvents = 'none';
+                text.textContent = code;
+
+                g.appendChild(circle);
+                g.appendChild(text);
+
+                // Hover effects
+                g.addEventListener('mouseenter', () => {
+                    circle.setAttribute('stroke-width', '3');
+                    circle.style.filter = 'drop-shadow(0 0 10px ' + strokeColor + ')';
+                });
+                g.addEventListener('mouseleave', () => {
+                    circle.setAttribute('stroke-width', '2');
+                    circle.style.filter = 'none';
+                });
+
+                svg.appendChild(g);
+            });
+
+            container.appendChild(svg);
+        },
+
+        renderD3Map() {
+            // Legacy - now uses renderCircleMap
+            this.renderCircleMap();
 
             // Add gradient definitions
             const defs = this.svg.append('defs');
@@ -4079,12 +4151,12 @@
         },
 
         renderRanking() {
-            const list = document.querySelector('#page-mapa .state-ranking');
+            const list = document.getElementById('mapa-ranking');
             if (!list) return;
 
             const sorted = Object.entries(this.estados)
                 .sort((a, b) => b[1].decisoes - a[1].decisoes)
-                .slice(0, 7);
+                .slice(0, 8);
 
             list.innerHTML = sorted.map(([code, data], index) => `
                 <div class="state-item" data-state="${code}">
@@ -4098,18 +4170,40 @@
                     <div class="state-value">${data.decisoes.toLocaleString('pt-BR')}</div>
                 </div>
             `).join('');
+        }
+    };
 
-            // Add click handlers to ranking items
-            list.querySelectorAll('.state-item').forEach(item => {
-                item.addEventListener('click', () => {
-                    const code = item.dataset.state;
-                    const circle = document.querySelector(`.state-path[data-state="${code}"]`);
-                    if (circle) {
-                        circle.dispatchEvent(new Event('click'));
-                    }
+    // ============================================
+    // PAGE: Radar Regulatorio
+    // ============================================
+    const PageRadar = {
+        currentTab: 'dashboard',
+
+        init() {
+            const page = document.getElementById('page-radar');
+            page.classList.add('active');
+            this.bindEvents();
+        },
+
+        bindEvents() {
+            // Tab switching
+            document.querySelectorAll('.radar-tab').forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    document.querySelectorAll('.radar-tab').forEach(t => t.classList.remove('active'));
+                    e.target.classList.add('active');
+                    this.currentTab = e.target.dataset.radarTab;
+                    this.renderContent();
                 });
-                item.style.cursor = 'pointer';
             });
+        },
+
+        renderContent() {
+            const dashboardContent = document.getElementById('radar-dashboard-content');
+            if (this.currentTab === 'dashboard' && dashboardContent) {
+                dashboardContent.style.display = 'block';
+            } else if (dashboardContent) {
+                dashboardContent.style.display = 'block'; // Keep showing for now
+            }
         }
     };
 
@@ -4134,6 +4228,7 @@
         PageHub,
         PageAgencias,
         PageMapa,
+        PageRadar,
         PagePainelRegulatorio,
         PageSetores,
         PageMicrotemas,
@@ -4190,6 +4285,10 @@
             Router.register('/mapa', () => {
                 PageMonitor.destroy();
                 PageMapa.init();
+            });
+            Router.register('/radar', () => {
+                PageMonitor.destroy();
+                PageRadar.init();
             });
             Router.register('/painel-regulatorio', () => {
                 PageMonitor.destroy();
