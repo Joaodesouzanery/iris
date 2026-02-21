@@ -1552,12 +1552,27 @@ app.get('/api/grafo-data', (req, res) => {
             });
         }
 
-        // Themes from microtema
-        if (d.microtema) {
-            const theme = d.microtema;
+        // Themes from microtema (singular) and microtemas (array)
+        const temas = d.microtemas && d.microtemas.length > 0 ? d.microtemas : (d.microtema ? [d.microtema] : []);
+        temas.forEach(theme => {
+            if (!theme || theme.length < 2) return;
             if (!nodesMap[theme]) nodesMap[theme] = { id: theme, label: theme, type: 'theme', count: 0 };
             nodesMap[theme].count = (nodesMap[theme].count || 0) + 1;
-        }
+
+            // Theme ↔ Director edges
+            allVoters.forEach(dir => {
+                const ek = `${dir}||${theme}`;
+                if (!edgesMap[ek]) edgesMap[ek] = { source: dir, target: theme, label: 'Votou sobre', count: 0, type: 'tema_voto' };
+                edgesMap[ek].count++;
+            });
+
+            // Theme ↔ Company edges
+            if (d.interessado && d.interessado !== 'ARTESP' && d.interessado.length > 2) {
+                const ek = `${d.interessado}||${theme}`;
+                if (!edgesMap[ek]) edgesMap[ek] = { source: d.interessado, target: theme, label: 'Relacionado a', count: 0, type: 'tema_empresa' };
+                edgesMap[ek].count++;
+            }
+        });
     });
 
     // Add detected companies from PDFs
@@ -1572,10 +1587,152 @@ app.get('/api/grafo-data', (req, res) => {
         });
     });
 
+    // Calculate edge strength based on count (normalized 0-1)
+    const allEdges = Object.values(edgesMap);
+    const maxCount = Math.max(1, ...allEdges.map(e => e.count));
+    allEdges.forEach(e => {
+        e.strength = Math.max(0.15, e.count / maxCount);
+        if (e.count > 1) e.label = `${e.label} (${e.count}x)`;
+    });
+
     res.json({
+        success: true,
         nodes: Object.values(nodesMap),
-        edges: Object.values(edgesMap),
+        edges: allEdges,
         meta: { totalDeliberacoes: deliberacoes.length, totalPdfs: pdfsProcessados.length, pdfsAnalisados: pdfsProcessados.filter(p => p.analise).length }
+    });
+});
+
+// ============================================================================
+// API: DOSSIÊ AUTOMÁTICO POR ENTIDADE (Estilo Sherlocker)
+// ============================================================================
+app.get('/api/dossie/:entidade', (req, res) => {
+    const entidadeNome = decodeURIComponent(req.params.entidade);
+    const deliberacoes = coletarTodasDeliberacoes();
+
+    // Identify entity type
+    const DIRETORES = ['André Isper', 'Diego Albert', 'Fernanda Esbizaro', 'Raquel França', 'Milton Persoli', 'Sergio Massaru', 'Carlos Eduardo', 'Antonio Carlos', 'Flavio Augusto'];
+    const isDiretor = DIRETORES.some(d => entidadeNome.includes(d)) ||
+                      deliberacoes.some(dl => [...(dl.votos_a_favor || []), ...(dl.votos_contra || [])].includes(entidadeNome));
+    const tipo = entidadeNome === 'ARTESP' ? 'agencia' : isDiretor ? 'diretor' : 'empresa';
+
+    // Filter relevant deliberations
+    let delibsRelevantes = [];
+    if (tipo === 'diretor') {
+        delibsRelevantes = deliberacoes.filter(d =>
+            [...(d.votos_a_favor || []), ...(d.votos_contra || [])].includes(entidadeNome)
+        );
+    } else if (tipo === 'empresa') {
+        delibsRelevantes = deliberacoes.filter(d =>
+            d.interessado && d.interessado.toLowerCase().includes(entidadeNome.toLowerCase())
+        );
+    } else {
+        delibsRelevantes = deliberacoes;
+    }
+
+    // Timeline — group by date
+    const timeline = {};
+    delibsRelevantes.forEach(d => {
+        const data = d.data_reuniao || d.dataArquivo || 'Sem data';
+        if (!timeline[data]) timeline[data] = [];
+        timeline[data].push({
+            numero: d.numero_deliberacao || '',
+            resultado: d.resultado || '',
+            interessado: d.interessado || '',
+            microtema: d.microtema || '',
+            confianca: d.confianca || 0
+        });
+    });
+
+    // Connected entities
+    const entidadesConectadas = { diretores: {}, empresas: {}, temas: {} };
+    delibsRelevantes.forEach(d => {
+        const voters = [...(d.votos_a_favor || []), ...(d.votos_contra || [])];
+        voters.forEach(v => {
+            if (v !== entidadeNome) {
+                entidadesConectadas.diretores[v] = (entidadesConectadas.diretores[v] || 0) + 1;
+            }
+        });
+        if (d.interessado && d.interessado !== entidadeNome && d.interessado !== 'ARTESP' && d.interessado.length > 2) {
+            entidadesConectadas.empresas[d.interessado] = (entidadesConectadas.empresas[d.interessado] || 0) + 1;
+        }
+        const temas = d.microtemas && d.microtemas.length > 0 ? d.microtemas : (d.microtema ? [d.microtema] : []);
+        temas.forEach(t => {
+            entidadesConectadas.temas[t] = (entidadesConectadas.temas[t] || 0) + 1;
+        });
+    });
+
+    // Voting pattern analysis (for directors)
+    let padraoVotos = null;
+    if (tipo === 'diretor') {
+        const aFavor = deliberacoes.filter(d => (d.votos_a_favor || []).includes(entidadeNome)).length;
+        const contra = deliberacoes.filter(d => (d.votos_contra || []).includes(entidadeNome)).length;
+        const total = aFavor + contra;
+        const deferidos = delibsRelevantes.filter(d => d.resultado === 'Deferido').length;
+        const indeferidos = delibsRelevantes.filter(d => d.resultado === 'Indeferido').length;
+        padraoVotos = { aFavor, contra, total, deferidos, indeferidos, taxaDeferimento: total > 0 ? Math.round((deferidos / total) * 100) : 0 };
+    }
+
+    // Risk alerts
+    const alertas = [];
+    if (tipo === 'empresa') {
+        const indeferidos = delibsRelevantes.filter(d => d.resultado === 'Indeferido');
+        if (indeferidos.length > 3) alertas.push({ nivel: 'alto', mensagem: `${indeferidos.length} deliberações indeferidas`, detalhe: 'Volume acima do normal de decisões negativas' });
+        const baixaConfianca = delibsRelevantes.filter(d => (d.confianca || 0) < 50);
+        if (baixaConfianca.length > delibsRelevantes.length * 0.3) alertas.push({ nivel: 'medio', mensagem: `${baixaConfianca.length} extrações com baixa confiança`, detalhe: 'Verifique manualmente estas deliberações' });
+    }
+    if (tipo === 'diretor') {
+        const votosContra = deliberacoes.filter(d => (d.votos_contra || []).includes(entidadeNome));
+        if (votosContra.length > 5) alertas.push({ nivel: 'medio', mensagem: `${votosContra.length} votos contrários registrados`, detalhe: 'Padrão divergente detectado' });
+    }
+    if (delibsRelevantes.length === 0) alertas.push({ nivel: 'info', mensagem: 'Nenhuma deliberação encontrada', detalhe: 'Faça upload de PDFs para gerar o dossiê' });
+
+    // Stats summary
+    const resumo = {
+        totalDeliberacoes: delibsRelevantes.length,
+        deferidos: delibsRelevantes.filter(d => d.resultado === 'Deferido').length,
+        indeferidos: delibsRelevantes.filter(d => d.resultado === 'Indeferido').length,
+        confiancaMedia: delibsRelevantes.length > 0 ? Math.round(delibsRelevantes.reduce((s, d) => s + (d.confianca || 0), 0) / delibsRelevantes.length) : 0,
+        primeiraData: delibsRelevantes.map(d => d.data_reuniao).filter(Boolean).sort()[0] || null,
+        ultimaData: delibsRelevantes.map(d => d.data_reuniao).filter(Boolean).sort().pop() || null,
+        totalConexoes: Object.keys(entidadesConectadas.diretores).length + Object.keys(entidadesConectadas.empresas).length + Object.keys(entidadesConectadas.temas).length
+    };
+
+    res.json({
+        success: true,
+        entidade: entidadeNome,
+        tipo,
+        resumo,
+        timeline: Object.entries(timeline).sort(([a], [b]) => b.localeCompare(a)).map(([data, itens]) => ({ data, itens })),
+        conexoes: {
+            diretores: Object.entries(entidadesConectadas.diretores).map(([nome, count]) => ({ nome, deliberacoes: count })).sort((a, b) => b.deliberacoes - a.deliberacoes),
+            empresas: Object.entries(entidadesConectadas.empresas).map(([nome, count]) => ({ nome, deliberacoes: count })).sort((a, b) => b.deliberacoes - a.deliberacoes),
+            temas: Object.entries(entidadesConectadas.temas).map(([nome, count]) => ({ nome, ocorrencias: count })).sort((a, b) => b.ocorrencias - a.ocorrencias)
+        },
+        padraoVotos,
+        alertas,
+        geradoEm: new Date().toISOString()
+    });
+});
+
+// API: Listar entidades disponíveis para dossiê
+app.get('/api/dossie-entidades', (req, res) => {
+    const deliberacoes = coletarTodasDeliberacoes();
+    const diretores = new Set();
+    const empresas = new Set();
+
+    deliberacoes.forEach(d => {
+        [...(d.votos_a_favor || []), ...(d.votos_contra || [])].forEach(v => diretores.add(v));
+        if (d.interessado && d.interessado !== 'ARTESP' && d.interessado.length > 2) empresas.add(d.interessado);
+    });
+
+    res.json({
+        success: true,
+        entidades: [
+            { nome: 'ARTESP', tipo: 'agencia', deliberacoes: deliberacoes.length },
+            ...[...diretores].map(d => ({ nome: d, tipo: 'diretor', deliberacoes: deliberacoes.filter(dl => [...(dl.votos_a_favor || []), ...(dl.votos_contra || [])].includes(d)).length })),
+            ...[...empresas].map(e => ({ nome: e, tipo: 'empresa', deliberacoes: deliberacoes.filter(dl => dl.interessado === e).length }))
+        ].sort((a, b) => b.deliberacoes - a.deliberacoes)
     });
 });
 

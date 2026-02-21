@@ -2733,63 +2733,123 @@
             this.renderEntityGrid(document.getElementById('grafo-entity-search').value);
         },
 
+        // ========== TYPE/COLOR/RADIUS HELPERS ==========
+        _typeConfig: {
+            agency:   { color: '#a78bfa', radius: 34 },
+            director: { color: '#60a5fa', radius: 28 },
+            company:  { color: '#fbbf24', radius: 22 },
+            theme:    { color: '#4ade80', radius: 18 }
+        },
+        _getItemType(item) {
+            // Use catalog membership to determine type (IDs are names, not prefixed)
+            const c = this.catalog;
+            if (c.agencies.some(a => a.id === item.id)) return 'agency';
+            if (c.directors.some(d => d.id === item.id)) return 'director';
+            if (c.companies.some(co => co.id === item.id)) return 'company';
+            if (c.themes.some(t => t.id === item.id)) return 'theme';
+            return item.type || 'theme';
+        },
+        // Track expansion depth for on-demand expansion
+        expandedIds: new Set(),
+        currentRootId: null,
+
         // ========== SELECT ENTITY → BUILD GRAPH ==========
         selectEntity(entityId) {
             document.getElementById('grafo-selection-screen').style.display = 'none';
             document.getElementById('grafo-graph-screen').style.display = '';
 
-            // Determine connected subgraph from this entity
-            const relevantIds = new Set([entityId]);
+            this.currentRootId = entityId;
+            this.expandedIds = new Set([entityId]);
+            this._buildSubgraph(entityId, 1); // Start with 1st degree only
+        },
+
+        // Build subgraph showing connections up to the expanded depth
+        _buildSubgraph(centerId, degree) {
             const c = this.catalog;
-            // First degree connections
-            c.connections.forEach(cn => {
-                if (cn.source === entityId) relevantIds.add(cn.target);
-                if (cn.target === entityId) relevantIds.add(cn.source);
-            });
-            // Second degree — connections between 1st-degree nodes
-            const firstDegree = new Set(relevantIds);
-            c.connections.forEach(cn => {
-                if (firstDegree.has(cn.source) && firstDegree.has(cn.target)) {
-                    relevantIds.add(cn.source); relevantIds.add(cn.target);
-                }
+            const relevantIds = new Set();
+
+            // Add all expanded entities and their 1st-degree connections
+            this.expandedIds.forEach(eid => {
+                relevantIds.add(eid);
+                c.connections.forEach(cn => {
+                    if (cn.source === eid) relevantIds.add(cn.target);
+                    if (cn.target === eid) relevantIds.add(cn.source);
+                });
             });
 
-            // Build node/edge arrays for this subgraph
+            // Build node/edge arrays
             const allItems = [...c.agencies, ...c.directors, ...c.companies, ...c.themes];
             const nodeMap = {};
+            // Keep existing positions for nodes that already exist
+            const existingPos = {};
+            this.nodes.forEach(n => { existingPos[n.id] = { x: n.x, y: n.y }; });
+
             allItems.forEach(item => {
                 if (!relevantIds.has(item.id)) return;
-                let type, color, radius;
-                if (item.id.startsWith('a')) { type='agency'; color='#a78bfa'; radius=34; }
-                else if (item.id.startsWith('d')) { type='director'; color='#60a5fa'; radius=28; }
-                else if (item.id.startsWith('c')) { type='company'; color='#fbbf24'; radius=22; }
-                else { type='theme'; color='#4ade80'; radius=18; }
-                nodeMap[item.id] = { ...item, type, color, radius, x: 0, y: 0, vx: 0, vy: 0, pulsePhase: Math.random()*Math.PI*2, connections: 0, _isRoot: item.id === entityId };
+                const type = this._getItemType(item);
+                const cfg = this._typeConfig[type];
+                const existing = existingPos[item.id];
+                nodeMap[item.id] = {
+                    ...item, type, color: cfg.color, radius: cfg.radius,
+                    x: existing ? existing.x : 0, y: existing ? existing.y : 0,
+                    vx: 0, vy: 0, pulsePhase: Math.random() * Math.PI * 2,
+                    connections: 0, _isRoot: item.id === this.currentRootId,
+                    _isExpanded: this.expandedIds.has(item.id),
+                    _depth: this.expandedIds.has(item.id) ? 0 : 1
+                };
             });
 
             this.nodes = Object.values(nodeMap);
             this.edges = [];
             c.connections.forEach(cn => {
                 const s = nodeMap[cn.source], t = nodeMap[cn.target];
-                if (s && t) { s.connections++; t.connections++; this.edges.push({ source: s, target: t, strength: cn.strength, label: cn.label, phase: Math.random()*Math.PI*2 }); }
+                if (s && t) { s.connections++; t.connections++; this.edges.push({ source: s, target: t, strength: cn.strength, label: cn.label, phase: Math.random() * Math.PI * 2 }); }
             });
 
-            // Set title
-            const rootNode = nodeMap[entityId];
+            // Update stats
+            const rootNode = nodeMap[this.currentRootId];
             document.getElementById('grafo-graph-title').textContent = 'Vínculos: ' + (rootNode ? rootNode.label : '');
-            document.getElementById('grafo-graph-subtitle').textContent = (rootNode && rootNode.full) ? rootNode.full : `${this.nodes.length} entidades · ${this.edges.length} conexões`;
+            document.getElementById('grafo-graph-subtitle').textContent = `${this.nodes.length} entidades · ${this.edges.length} conexões`;
             document.getElementById('intel-total-nodes').textContent = this.nodes.length;
             document.getElementById('intel-total-edges').textContent = this.edges.length;
             const maxDeg = this.nodes.reduce((m, n) => Math.max(m, n.connections), 0);
             document.getElementById('intel-max-degree').textContent = maxDeg;
+            const depthEl = document.getElementById('intel-depth');
+            if (depthEl) depthEl.textContent = this.expandedIds.size;
 
-            // Layout + render
-            this.setupCanvas();
-            this.layoutNodes(entityId);
+            // Layout only new nodes (keep existing positions)
+            const hasExisting = Object.keys(existingPos).length > 0;
+            if (!hasExisting) {
+                this.setupCanvas();
+                this.layoutNodes(this.currentRootId);
+            } else {
+                // Position only new nodes near their connected node
+                this.nodes.forEach(n => {
+                    if (!existingPos[n.id]) {
+                        const connEdge = this.edges.find(e => (e.source === n && existingPos[e.target.id]) || (e.target === n && existingPos[e.source.id]));
+                        if (connEdge) {
+                            const anchor = connEdge.source === n ? connEdge.target : connEdge.source;
+                            n.x = anchor.x + (Math.random() - 0.5) * 120;
+                            n.y = anchor.y + (Math.random() - 0.5) * 120;
+                        } else {
+                            n.x = this.width / 2 + (Math.random() - 0.5) * 200;
+                            n.y = this.height / 2 + (Math.random() - 0.5) * 200;
+                        }
+                    }
+                });
+            }
+
             for (let i = 0; i < 200; i++) this.simulateForces(0.4 * (1 - i / 200));
-            this.setupEvents();
-            this.time = 0;
-            this.animate();
+            if (!hasExisting) { this.setupEvents(); this.time = 0; this.animate(); }
+        },
+
+        // ========== EXPAND NODE: Double-click to reveal 2nd/3rd degree connections ==========
+        expandNode(node) {
+            if (this.expandedIds.has(node.id)) return; // Already expanded
+            this.expandedIds.add(node.id);
+            this._buildSubgraph(node.id, 1);
+            // Flash effect to show expansion
+            node._expandFlash = this.time;
         },
         layoutNodes(rootId) {
             const cx = this.width / 2, cy = this.height / 2;
@@ -2833,7 +2893,6 @@
         },
         setupEvents() {
             const canvas=this.canvas;
-            // remove old listeners by replacing node
             const clone = canvas.cloneNode(true);
             canvas.parentNode.replaceChild(clone, canvas);
             this.canvas = clone; this.ctx = clone.getContext('2d');
@@ -2849,8 +2908,12 @@
                 if(found!==this.hovering){
                     this.hovering=found;clone.style.cursor=found?'pointer':'grab';
                     const tooltip=document.getElementById('intel-tooltip');
-                    if(found){const tl={director:'Diretor(a)',company:'Empresa',theme:'Tema',agency:'Agência'};tooltip.innerHTML=`<strong>${found.label}</strong>${tl[found.type]} | ${found.connections} conexões`;tooltip.style.display='block';const rx=e.clientX-rect.left,ry=e.clientY-rect.top;tooltip.style.left=(rx+15)+'px';tooltip.style.top=(ry-10)+'px';}
-                    else{tooltip.style.display='none';}
+                    if(found){
+                        const tl={director:'Diretor(a)',company:'Empresa',theme:'Tema',agency:'Agência'};
+                        const expandHint = !this.expandedIds.has(found.id) ? '<br><span style="opacity:0.6;font-size:10px">Duplo-clique para expandir</span>' : '';
+                        tooltip.innerHTML=`<strong>${found.label}</strong>${tl[found.type]} | ${found.connections} conexões${expandHint}`;
+                        tooltip.style.display='block';const rx=e.clientX-rect.left,ry=e.clientY-rect.top;tooltip.style.left=(rx+15)+'px';tooltip.style.top=(ry-10)+'px';
+                    } else{tooltip.style.display='none';}
                 } else if(found){const tooltip=document.getElementById('intel-tooltip'),rx=e.clientX-clone.getBoundingClientRect().left,ry=e.clientY-clone.getBoundingClientRect().top;tooltip.style.left=(rx+15)+'px';tooltip.style.top=(ry-10)+'px';}
             });
             clone.addEventListener('mousedown',(e)=>{
@@ -2859,6 +2922,13 @@
             });
             clone.addEventListener('mouseup',()=>{this.dragging=null;clone.style.cursor=this.hovering?'pointer':'grab';});
             clone.addEventListener('click',()=>{if(this.hovering){this.selected=this.hovering;this.showNodeInfo(this.hovering);}});
+            // Double-click to expand node — Sherlocker-style drill-down
+            clone.addEventListener('dblclick',(e)=>{
+                e.preventDefault();
+                if(this.hovering && !this.expandedIds.has(this.hovering.id)){
+                    this.expandNode(this.hovering);
+                }
+            });
             clone.addEventListener('wheel',(e)=>{e.preventDefault();const d=e.deltaY>0?0.9:1.1;this.camera.zoom=Math.max(0.3,Math.min(3,this.camera.zoom*d));});
         },
         filterNodeType(val) { this.nodes.forEach(n=>{ n._hidden = val!=='all' && n.type!==val; }); },
@@ -2866,17 +2936,65 @@
             document.getElementById('intel-info-title').textContent=node.label;
             const connEdges=this.edges.filter(e=>e.source===node||e.target===node);
             let html='';const tc={director:'#60a5fa',company:'#fbbf24',theme:'#4ade80',agency:'#a78bfa'};
-            if(node.type==='director') html=`<div class="info-row"><span class="info-label">Cargo</span><span class="info-value">${node.role}</span></div><div class="info-row"><span class="info-label">Conexões</span><span class="info-value">${node.connections}</span></div>`;
-            else if(node.type==='company') html=`<div class="info-row"><span class="info-label">Razão Social</span><span class="info-value" style="font-size:10px">${node.full}</span></div><div class="info-row"><span class="info-label">Setor</span><span class="info-value">${node.sector}</span></div><div class="info-row"><span class="info-label">Contratos</span><span class="info-value">${node.contracts}</span></div>`;
-            else if(node.type==='theme') html=`<div class="info-row"><span class="info-label">Categoria</span><span class="info-value">${node.category}</span></div><div class="info-row"><span class="info-label">Ocorrências</span><span class="info-value">${node.count}</span></div>`;
-            else if(node.type==='agency') html=`<div class="info-row"><span class="info-label">Nome</span><span class="info-value" style="font-size:10px">${node.full}</span></div><div class="info-row"><span class="info-label">Deliberações</span><span class="info-value">${node.deliberations}</span></div>`;
-            html+='<hr style="border-color:rgba(96,165,250,0.1);margin:8px 0"><div style="font-size:11px;color:#64748b;margin-bottom:6px">ENTIDADES CONECTADAS</div>';
-            connEdges.forEach(edge=>{const other=edge.source===node?edge.target:edge.source;html+=`<div class="info-row"><span class="info-label" style="display:flex;align-items:center;gap:4px"><span style="width:6px;height:6px;border-radius:50%;background:${tc[other.type]};display:inline-block"></span>${other.label}</span><span class="info-value" style="font-size:10px">${edge.label}</span></div>`;});
+            const tl={director:'Diretor(a)',company:'Empresa',theme:'Tema',agency:'Agência'};
+            // Entity info
+            html+=`<div class="info-row"><span class="info-label">Tipo</span><span class="info-value" style="color:${tc[node.type]}">${tl[node.type]}</span></div>`;
+            if(node.type==='director') html+=`<div class="info-row"><span class="info-label">Cargo</span><span class="info-value">${node.role||'Diretor(a)'}</span></div><div class="info-row"><span class="info-label">Conexões</span><span class="info-value">${node.connections}</span></div>`;
+            else if(node.type==='company') html+=`<div class="info-row"><span class="info-label">Nome completo</span><span class="info-value" style="font-size:10px">${node.full||node.label}</span></div><div class="info-row"><span class="info-label">Setor</span><span class="info-value">${node.sector||'--'}</span></div><div class="info-row"><span class="info-label">Menções</span><span class="info-value">${node.mentions||node.contracts||0}</span></div>`;
+            else if(node.type==='theme') html+=`<div class="info-row"><span class="info-label">Categoria</span><span class="info-value">${node.category||'--'}</span></div><div class="info-row"><span class="info-label">Ocorrências</span><span class="info-value">${node.count||0}</span></div>`;
+            else if(node.type==='agency') html+=`<div class="info-row"><span class="info-label">Nome</span><span class="info-value" style="font-size:10px">${node.full||node.label}</span></div><div class="info-row"><span class="info-label">Deliberações</span><span class="info-value">${node.deliberations||0}</span></div>`;
+
+            // Action buttons — Sherlocker-style
+            html+='<div style="display:flex;gap:6px;margin:10px 0 8px">';
+            if(!this.expandedIds.has(node.id)) html+=`<button onclick="App.PageGrafo.expandNode(App.PageGrafo.nodes.find(n=>n.id==='${node.id.replace(/'/g,"\\'")}'))" class="btn btn-primary btn-sm" style="font-size:10px;padding:4px 8px;">Expandir</button>`;
+            else html+='<span style="font-size:10px;color:#4ade80;display:flex;align-items:center;gap:3px"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="12" height="12"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Expandido</span>';
+            html+=`<button onclick="App.PageGrafo.openDossie('${node.id.replace(/'/g,"\\'")}')" class="btn btn-secondary btn-sm" style="font-size:10px;padding:4px 8px;">Dossiê</button>`;
+            html+='</div>';
+
+            // Connected entities
+            html+='<hr style="border-color:rgba(96,165,250,0.1);margin:8px 0"><div style="font-size:11px;color:#64748b;margin-bottom:6px">ENTIDADES CONECTADAS ('+connEdges.length+')</div>';
+            connEdges.sort((a,b)=>(b.strength||0)-(a.strength||0)).forEach(edge=>{
+                const other=edge.source===node?edge.target:edge.source;
+                const expanded = this.expandedIds.has(other.id);
+                html+=`<div class="info-row" style="cursor:pointer" onclick="App.PageGrafo.expandNode(App.PageGrafo.nodes.find(n=>n.id==='${other.id.replace(/'/g,"\\'")}'))">
+                    <span class="info-label" style="display:flex;align-items:center;gap:4px">
+                        <span style="width:6px;height:6px;border-radius:50%;background:${tc[other.type]};display:inline-block"></span>${other.label}
+                        ${expanded?'<span style="color:#4ade80;font-size:8px">&#10003;</span>':''}
+                    </span>
+                    <span class="info-value" style="font-size:10px">${edge.label}</span>
+                </div>`;
+            });
             document.getElementById('intel-info-body').innerHTML=html;
         },
+        // Open dossie for entity
+        openDossie(entityId) {
+            window.location.hash = '#/dossie';
+            setTimeout(() => { if(App.PageDossie) App.PageDossie.loadEntityDossie(entityId); }, 200);
+        },
         search(q) {
-            q=q.toLowerCase().trim();this.nodes.forEach(n=>{n._highlighted=q&&n.label.toLowerCase().includes(q);n._dimmed=q&&!n._highlighted;});
-            if(q){const m=this.nodes.find(n=>n._highlighted);if(m){this.camera.x=this.width/2-(m.x-this.width/2)*this.camera.zoom;this.camera.y=this.height/2-(m.y-this.height/2)*this.camera.zoom;}}
+            q=q.toLowerCase().trim();
+            // Highlight all matching nodes (not just first), also match full/role/sector
+            this.nodes.forEach(n=>{
+                const matches = q && (
+                    n.label.toLowerCase().includes(q) ||
+                    (n.full||'').toLowerCase().includes(q) ||
+                    (n.role||'').toLowerCase().includes(q) ||
+                    (n.sector||'').toLowerCase().includes(q) ||
+                    (n.category||'').toLowerCase().includes(q)
+                );
+                n._highlighted = matches;
+                n._dimmed = q && !matches;
+            });
+            // Also highlight edges between matching nodes
+            if(q){
+                const matchCount = this.nodes.filter(n=>n._highlighted).length;
+                document.getElementById('intel-search-count').textContent = matchCount > 0 ? `${matchCount} encontrado${matchCount>1?'s':''}` : 'Nenhum resultado';
+                document.getElementById('intel-search-count').style.display = 'block';
+                const m=this.nodes.find(n=>n._highlighted);
+                if(m){this.camera.x=this.width/2-(m.x-this.width/2)*this.camera.zoom;this.camera.y=this.height/2-(m.y-this.height/2)*this.camera.zoom;}
+            } else {
+                document.getElementById('intel-search-count').style.display = 'none';
+            }
         },
         zoomIn(){this.camera.zoom=Math.min(3,this.camera.zoom*1.2);},
         zoomOut(){this.camera.zoom=Math.max(0.3,this.camera.zoom/1.2);},
@@ -3018,9 +3136,37 @@
                     ctx.strokeStyle=`rgba(${cr},${cg},${cb},0.3)`;ctx.lineWidth=1.5;ctx.stroke();
                 }
 
+                // Expansion flash effect
+                if(node._expandFlash && !dimmed){
+                    const elapsed = this.time - node._expandFlash;
+                    if(elapsed < 1.5){
+                        const flashR = r * (1.5 + elapsed * 3);
+                        const flashAlpha = Math.max(0, 0.4 - elapsed * 0.27);
+                        ctx.beginPath();ctx.arc(node.x,node.y,flashR,0,Math.PI*2);
+                        ctx.strokeStyle=`rgba(${cr},${cg},${cb},${flashAlpha})`;ctx.lineWidth=2;ctx.stroke();
+                    }
+                }
+
+                // Expanded indicator (small "+" or checkmark at bottom-right)
+                if(!dimmed && node._isExpanded && !node._isRoot){
+                    const ix=node.x+r*0.7, iy=node.y-r*0.7;
+                    ctx.beginPath();ctx.arc(ix,iy,5,0,Math.PI*2);
+                    ctx.fillStyle='rgba(74,222,128,0.9)';ctx.fill();
+                    ctx.font='bold 7px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+                    ctx.fillStyle='#0a0f1a';ctx.fillText('✓',ix,iy);
+                }
+                // Not-expanded hint (small "+" for nodes with more connections)
+                if(!dimmed && !node._isExpanded && !node._isRoot && node.connections > 0 && isHov){
+                    const ix=node.x+r*0.7, iy=node.y-r*0.7;
+                    ctx.beginPath();ctx.arc(ix,iy,6,0,Math.PI*2);
+                    ctx.fillStyle='rgba(96,165,250,0.8)';ctx.fill();
+                    ctx.font='bold 9px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+                    ctx.fillStyle='#fff';ctx.fillText('+',ix,iy+0.5);
+                }
+
                 // Text label
                 if(!dimmed||isHl){
-                    const label=node.type==='director'?node.initials:node.label;
+                    const label=node.type==='director'?(node.initials||node.label.split(' ').map(w=>w[0]).join('').substring(0,2)):node.label;
                     const fontSize=node.type==='agency'?11:node.type==='director'?10:9;
                     ctx.font=`600 ${fontSize}px -apple-system,BlinkMacSystemFont,sans-serif`;
                     ctx.textAlign='center';ctx.textBaseline='middle';
@@ -3082,24 +3228,311 @@
     };
 
     // ============================================
-    // PAGE: Dossies Automaticos
+    // PAGE: Dossiês Automáticos — Sherlocker-style
     // ============================================
     const PageDossie = {
-        init() {
+        entidades: [],
+        dossieAtual: null,
+
+        async init() {
             const page = document.getElementById('page-dossie');
             page.classList.add('active');
+            await this.loadEntidades();
+        },
+
+        async loadEntidades() {
+            try {
+                const response = await fetch('/api/dossie-entidades');
+                const data = await response.json();
+                if (data.success && data.entidades) {
+                    this.entidades = data.entidades;
+                    this.renderTable();
+                    this.updateStats();
+                    // Hide demo banner if real data
+                    if (data.entidades.length > 1) {
+                        const banner = document.querySelector('#page-dossie .demo-banner');
+                        if (banner) banner.style.display = 'none';
+                    }
+                }
+            } catch (error) {
+                console.warn('[Dossiê] API indisponível:', error.message);
+                this.renderEmptyState();
+            }
+        },
+
+        updateStats() {
+            const e = this.entidades;
+            document.getElementById('dossie-total').textContent = e.length;
+            document.getElementById('dossie-processando').textContent = '0';
+            document.getElementById('dossie-empresas').textContent = e.filter(x => x.tipo === 'empresa').length;
+            document.getElementById('dossie-diretores').textContent = e.filter(x => x.tipo === 'diretor').length;
+        },
+
+        renderTable() {
+            const tbody = document.getElementById('dossie-table-body');
+            if (!this.entidades.length) { this.renderEmptyState(); return; }
+            const tipoBadge = { empresa: 'badge-secondary', diretor: 'badge-primary', agencia: 'badge-warning' };
+            const tipoLabel = { empresa: 'Empresa', diretor: 'Diretor', agencia: 'Agência' };
+            tbody.innerHTML = this.entidades.slice(0, 30).map(e => `
+                <tr>
+                    <td><strong>${e.nome}</strong></td>
+                    <td><span class="badge ${tipoBadge[e.tipo] || 'badge-secondary'}">${tipoLabel[e.tipo] || e.tipo}</span></td>
+                    <td>${e.deliberacoes}</td>
+                    <td>--</td>
+                    <td>--</td>
+                    <td><span class="badge badge-success">Disponível</span></td>
+                    <td>
+                        <button class="btn btn-primary btn-sm" onclick="App.PageDossie.visualizar('${e.nome.replace(/'/g,"\\'")}')">Gerar</button>
+                        <button class="btn btn-secondary btn-sm" onclick="App.PageDossie.verNoGrafo('${e.nome.replace(/'/g,"\\'")}')">Grafo</button>
+                    </td>
+                </tr>
+            `).join('');
+        },
+
+        renderEmptyState() {
+            const tbody = document.getElementById('dossie-table-body');
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text-muted);">
+                Nenhuma entidade encontrada. <a href="/upload" data-route="/upload" style="color:var(--primary);text-decoration:underline;">Faça upload de PDFs</a> para gerar dossiês.
+            </td></tr>`;
+        },
+
+        verNoGrafo(nome) {
+            window.location.hash = '#/grafo';
+            setTimeout(() => { if(App.PageGrafo) App.PageGrafo.selectEntity(nome); }, 300);
+        },
+
+        async visualizar(nome) {
+            this.dossieAtual = nome;
+            try {
+                const response = await fetch(`/api/dossie/${encodeURIComponent(nome)}`);
+                const data = await response.json();
+                if (data.success) {
+                    this.renderDossie(data);
+                }
+            } catch (error) {
+                console.warn('[Dossiê] Erro ao carregar:', error.message);
+            }
+        },
+
+        // Called from graph's "Dossiê" button
+        async loadEntityDossie(nome) {
+            await this.loadEntidades();
+            await this.visualizar(nome);
+        },
+
+        renderDossie(data) {
+            const container = document.getElementById('dossie-table-body');
+            const tipoLabel = { diretor: 'Diretor(a)', empresa: 'Empresa', agencia: 'Agência' };
+            const tipoColor = { diretor: '#60a5fa', empresa: '#fbbf24', agencia: '#a78bfa' };
+
+            // Replace entire card body with the dossie view
+            const cardBody = container.closest('.card-body');
+            let html = `
+                <div style="margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;">
+                    <button class="btn btn-secondary btn-sm" onclick="App.PageDossie.voltarLista()">← Voltar à lista</button>
+                    <button class="btn btn-primary btn-sm" onclick="App.PageDossie.exportar('${data.entidade.replace(/'/g,"\\'")}')">Exportar PDF</button>
+                </div>
+
+                <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;">
+                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+                        <div style="width:48px;height:48px;border-radius:50%;background:${tipoColor[data.tipo]}20;border:2px solid ${tipoColor[data.tipo]};display:flex;align-items:center;justify-content:center;font-weight:700;color:${tipoColor[data.tipo]};font-size:16px;">
+                            ${data.entidade.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase()}
+                        </div>
+                        <div>
+                            <h3 style="margin:0;font-size:18px;">${data.entidade}</h3>
+                            <span style="color:${tipoColor[data.tipo]};font-size:13px;font-weight:500;">${tipoLabel[data.tipo]}</span>
+                            <span style="color:var(--text-muted);font-size:12px;margin-left:8px;">Gerado em ${new Date(data.geradoEm).toLocaleString('pt-BR')}</span>
+                        </div>
+                    </div>
+
+                    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
+                        <div style="background:var(--bg-main);padding:12px;border-radius:8px;text-align:center;">
+                            <div style="font-size:22px;font-weight:700;color:var(--primary);">${data.resumo.totalDeliberacoes}</div>
+                            <div style="font-size:11px;color:var(--text-muted);">Deliberações</div>
+                        </div>
+                        <div style="background:var(--bg-main);padding:12px;border-radius:8px;text-align:center;">
+                            <div style="font-size:22px;font-weight:700;color:#4ade80;">${data.resumo.deferidos}</div>
+                            <div style="font-size:11px;color:var(--text-muted);">Deferidos</div>
+                        </div>
+                        <div style="background:var(--bg-main);padding:12px;border-radius:8px;text-align:center;">
+                            <div style="font-size:22px;font-weight:700;color:#f87171;">${data.resumo.indeferidos}</div>
+                            <div style="font-size:11px;color:var(--text-muted);">Indeferidos</div>
+                        </div>
+                        <div style="background:var(--bg-main);padding:12px;border-radius:8px;text-align:center;">
+                            <div style="font-size:22px;font-weight:700;color:#a78bfa;">${data.resumo.totalConexoes}</div>
+                            <div style="font-size:11px;color:var(--text-muted);">Conexões</div>
+                        </div>
+                    </div>
+                </div>`;
+
+            // Voting pattern for directors
+            if (data.padraoVotos) {
+                const pv = data.padraoVotos;
+                html += `
+                <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;">
+                    <h4 style="margin:0 0 12px;font-size:14px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;">Padrão de Votação</h4>
+                    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+                        <div style="text-align:center;">
+                            <div style="font-size:28px;font-weight:700;color:#60a5fa;">${pv.total}</div>
+                            <div style="font-size:11px;color:var(--text-muted);">Total de Votos</div>
+                        </div>
+                        <div style="text-align:center;">
+                            <div style="font-size:28px;font-weight:700;color:#4ade80;">${pv.aFavor}</div>
+                            <div style="font-size:11px;color:var(--text-muted);">A Favor</div>
+                        </div>
+                        <div style="text-align:center;">
+                            <div style="font-size:28px;font-weight:700;color:#f87171;">${pv.contra}</div>
+                            <div style="font-size:11px;color:var(--text-muted);">Contra</div>
+                        </div>
+                    </div>
+                    <div style="margin-top:12px;background:var(--bg-main);border-radius:6px;overflow:hidden;height:8px;display:flex;">
+                        <div style="background:#4ade80;width:${pv.total>0?(pv.aFavor/pv.total*100):50}%;"></div>
+                        <div style="background:#f87171;width:${pv.total>0?(pv.contra/pv.total*100):50}%;"></div>
+                    </div>
+                    <div style="margin-top:8px;font-size:12px;color:var(--text-muted);text-align:center;">Taxa de deferimento: <strong style="color:var(--primary);">${pv.taxaDeferimento}%</strong></div>
+                </div>`;
+            }
+
+            // Alerts
+            if (data.alertas && data.alertas.length > 0) {
+                const nivelColor = { alto: '#f87171', medio: '#fbbf24', info: '#60a5fa' };
+                const nivelIcon = { alto: '⚠', medio: '⚡', info: 'ℹ' };
+                html += `<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;">
+                    <h4 style="margin:0 0 12px;font-size:14px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;">Alertas e Riscos</h4>
+                    ${data.alertas.map(a => `
+                        <div style="display:flex;align-items:flex-start;gap:10px;padding:10px;background:${nivelColor[a.nivel]}10;border:1px solid ${nivelColor[a.nivel]}30;border-radius:8px;margin-bottom:8px;">
+                            <span style="font-size:18px;">${nivelIcon[a.nivel]}</span>
+                            <div>
+                                <div style="font-weight:600;color:${nivelColor[a.nivel]};">${a.mensagem}</div>
+                                <div style="font-size:12px;color:var(--text-muted);">${a.detalhe}</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>`;
+            }
+
+            // Connected entities
+            html += `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:16px;">`;
+            // Directors
+            html += `<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px;">
+                <h4 style="margin:0 0 10px;font-size:13px;color:#60a5fa;text-transform:uppercase;letter-spacing:1px;">Diretores (${data.conexoes.diretores.length})</h4>
+                ${data.conexoes.diretores.slice(0,8).map(d => `
+                    <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);font-size:12px;" class="clickable-row" onclick="App.PageDossie.visualizar('${d.nome.replace(/'/g,"\\'")}')">
+                        <span style="color:var(--text-main);cursor:pointer;">${d.nome}</span>
+                        <span style="color:var(--text-muted);">${d.deliberacoes}x</span>
+                    </div>
+                `).join('')}
+                ${data.conexoes.diretores.length === 0 ? '<div style="color:var(--text-muted);font-size:12px;">Nenhum</div>' : ''}
+            </div>`;
+            // Companies
+            html += `<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px;">
+                <h4 style="margin:0 0 10px;font-size:13px;color:#fbbf24;text-transform:uppercase;letter-spacing:1px;">Empresas (${data.conexoes.empresas.length})</h4>
+                ${data.conexoes.empresas.slice(0,8).map(e => `
+                    <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);font-size:12px;" class="clickable-row" onclick="App.PageDossie.visualizar('${e.nome.replace(/'/g,"\\'")}')">
+                        <span style="color:var(--text-main);cursor:pointer;">${e.nome}</span>
+                        <span style="color:var(--text-muted);">${e.deliberacoes}x</span>
+                    </div>
+                `).join('')}
+                ${data.conexoes.empresas.length === 0 ? '<div style="color:var(--text-muted);font-size:12px;">Nenhuma</div>' : ''}
+            </div>`;
+            // Themes
+            html += `<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px;">
+                <h4 style="margin:0 0 10px;font-size:13px;color:#4ade80;text-transform:uppercase;letter-spacing:1px;">Temas (${data.conexoes.temas.length})</h4>
+                ${data.conexoes.temas.slice(0,8).map(t => `
+                    <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);font-size:12px;">
+                        <span style="color:var(--text-main);">${t.nome}</span>
+                        <span style="color:var(--text-muted);">${t.ocorrencias}x</span>
+                    </div>
+                `).join('')}
+                ${data.conexoes.temas.length === 0 ? '<div style="color:var(--text-muted);font-size:12px;">Nenhum</div>' : ''}
+            </div>`;
+            html += `</div>`;
+
+            // Timeline
+            if (data.timeline && data.timeline.length > 0) {
+                html += `<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;">
+                    <h4 style="margin:0 0 12px;font-size:14px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;">Timeline de Deliberações</h4>
+                    <div style="max-height:400px;overflow-y:auto;">
+                    ${data.timeline.slice(0,20).map(t => `
+                        <div style="border-left:2px solid var(--primary);padding-left:16px;margin-bottom:16px;position:relative;">
+                            <div style="position:absolute;left:-5px;top:2px;width:8px;height:8px;border-radius:50%;background:var(--primary);"></div>
+                            <div style="font-weight:600;font-size:13px;color:var(--primary);margin-bottom:4px;">${t.data}</div>
+                            ${t.itens.map(item => `
+                                <div style="background:var(--bg-main);padding:8px 12px;border-radius:6px;margin-bottom:4px;font-size:12px;">
+                                    <div style="display:flex;justify-content:space-between;">
+                                        <span>${item.numero || item.interessado || 'Deliberação'}</span>
+                                        <span class="badge ${item.resultado==='Deferido'?'badge-success':item.resultado==='Indeferido'?'badge-danger':'badge-secondary'}" style="font-size:10px;">${item.resultado || '--'}</span>
+                                    </div>
+                                    ${item.microtema ? `<div style="color:var(--text-muted);margin-top:2px;">${item.microtema}</div>` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                    `).join('')}
+                    </div>
+                </div>`;
+            }
+
+            cardBody.innerHTML = html;
+        },
+
+        voltarLista() {
+            this.dossieAtual = null;
+            const cardBody = document.getElementById('dossie-table-body').closest('.card-body');
+            cardBody.innerHTML = `<div class="table-wrapper"><table class="table"><thead><tr>
+                <th>Entidade</th><th>Tipo</th><th>Deliberações</th><th>Alertas</th><th>Gerado em</th><th>Status</th><th>Ações</th>
+            </tr></thead><tbody id="dossie-table-body"></tbody></table></div>`;
+            this.renderTable();
         },
 
         novo() {
-            alert('Criacao de novo dossie em desenvolvimento');
+            // Show entity selector
+            if (this.entidades.length === 0) {
+                alert('Nenhuma entidade disponível. Faça upload de PDFs primeiro.');
+                return;
+            }
+            const nome = prompt('Digite o nome da entidade para gerar o dossiê:');
+            if (nome) this.visualizar(nome);
         },
 
-        visualizar(id) {
-            alert(`Visualizando dossie: ${id}`);
-        },
-
-        exportar(id) {
-            alert(`Exportando dossie ${id} como PDF`);
+        exportar(nome) {
+            // Generate printable HTML version
+            const w = window.open('', '_blank');
+            if (!w) { alert('Permita pop-ups para exportar o dossiê.'); return; }
+            w.document.write(`<!DOCTYPE html><html><head><title>Dossiê: ${nome}</title>
+                <style>body{font-family:-apple-system,sans-serif;max-width:800px;margin:40px auto;color:#1e293b;}
+                h1{border-bottom:2px solid #3b82f6;padding-bottom:8px;}
+                .section{margin:24px 0;padding:16px;border:1px solid #e2e8f0;border-radius:8px;}
+                .badge{padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;}
+                .success{background:#dcfce7;color:#166534;}.danger{background:#fee2e2;color:#991b1b;}
+                table{width:100%;border-collapse:collapse;}td,th{padding:6px 12px;border-bottom:1px solid #e2e8f0;text-align:left;font-size:13px;}
+                @media print{body{margin:20px;}}</style></head>
+                <body><h1>DOSSIÊ IRIS — ${nome}</h1>
+                <p style="color:#64748b;">Gerado em ${new Date().toLocaleString('pt-BR')} | Sistema IRIS — Inteligência Regulatória</p>
+                <p>Carregando dados...</p>
+                <script>
+                    fetch('/api/dossie/${encodeURIComponent(nome)}').then(r=>r.json()).then(d=>{
+                        if(!d.success)return;
+                        let h='<div class="section"><h2>Resumo</h2><table>';
+                        h+='<tr><td>Total de Deliberações</td><td><strong>'+d.resumo.totalDeliberacoes+'</strong></td></tr>';
+                        h+='<tr><td>Deferidos</td><td><strong style="color:#166534;">'+d.resumo.deferidos+'</strong></td></tr>';
+                        h+='<tr><td>Indeferidos</td><td><strong style="color:#991b1b;">'+d.resumo.indeferidos+'</strong></td></tr>';
+                        h+='<tr><td>Confiança Média</td><td>'+d.resumo.confiancaMedia+'%</td></tr>';
+                        h+='<tr><td>Período</td><td>'+(d.resumo.primeiraData||'--')+' a '+(d.resumo.ultimaData||'--')+'</td></tr>';
+                        h+='</table></div>';
+                        if(d.alertas.length){h+='<div class="section"><h2>Alertas</h2>';d.alertas.forEach(a=>{h+='<p><strong>'+a.mensagem+'</strong> — '+a.detalhe+'</p>';});h+='</div>';}
+                        h+='<div class="section"><h2>Conexões</h2><h3>Diretores</h3><table>';
+                        d.conexoes.diretores.forEach(x=>{h+='<tr><td>'+x.nome+'</td><td>'+x.deliberacoes+' deliberações</td></tr>';});
+                        h+='</table><h3>Empresas</h3><table>';
+                        d.conexoes.empresas.forEach(x=>{h+='<tr><td>'+x.nome+'</td><td>'+x.deliberacoes+' deliberações</td></tr>';});
+                        h+='</table></div>';
+                        if(d.timeline.length){h+='<div class="section"><h2>Timeline</h2><table><tr><th>Data</th><th>Deliberação</th><th>Resultado</th></tr>';
+                        d.timeline.forEach(t=>{t.itens.forEach(i=>{h+='<tr><td>'+t.data+'</td><td>'+(i.numero||i.interessado||'--')+'</td><td><span class="badge '+(i.resultado==="Deferido"?"success":"danger")+'">'+(i.resultado||'--')+'</span></td></tr>';});});
+                        h+='</table></div>';}
+                        document.body.innerHTML='<h1>DOSSIÊ IRIS — ${nome}</h1><p style="color:#64748b;">Gerado em '+new Date().toLocaleString('pt-BR')+' | Sistema IRIS</p>'+h+'<p style="margin-top:40px;color:#94a3b8;text-align:center;font-size:11px;">IRIS — Inteligência Regulatória Integrada e Sistêmica</p>';
+                        setTimeout(()=>window.print(),500);
+                    });
+                <\/script></body></html>`);
+            w.document.close();
         }
     };
 
