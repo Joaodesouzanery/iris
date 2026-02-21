@@ -8906,17 +8906,25 @@ tr:hover {
     border-bottom: 1px solid var(--border);
 }
 
+.search-header h3,
 .search-header h4 {
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 600;
     color: var(--text-primary);
-    margin-bottom: 14px;
+    margin-bottom: 8px;
     display: flex;
     align-items: center;
     gap: 8px;
 }
 
-.search-header h4 svg {
+.search-header p {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.search-header h4 svg,
+.search-header h3 svg {
     width: 18px;
     height: 18px;
     color: var(--primary);
@@ -9013,6 +9021,13 @@ tr:hover {
 
 .entity-list::-webkit-scrollbar-thumb:hover {
     background: var(--surface-light);
+}
+
+.entities-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-muted);
+    font-size: 13px;
 }
 
 .entity-group {
