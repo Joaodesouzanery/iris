@@ -1131,11 +1131,119 @@
 
         renderAll() {
             this.renderStats();
+            this.renderMandatosExpirando();
             this.renderCards();
             this.renderGantt();
             this.renderVotingMatrix();
             this.renderSetoresChart();
             this.renderParticipationList();
+        },
+
+        renderMandatosExpirando() {
+            const container = document.getElementById('mandatos-expirando-container');
+            const countBadge = document.getElementById('mandatos-expirando-count');
+            if (!container) return;
+
+            // Collect all directors from all agencies with their mandate end dates
+            const hoje = new Date();
+            const todosDir = [];
+
+            Object.entries(this.agenciasData).forEach(([key, agencia]) => {
+                agencia.diretores.forEach(d => {
+                    if (!d.termino) return;
+                    const fim = new Date(d.termino + (d.termino.length === 10 ? 'T12:00:00' : ''));
+                    const diffMs = fim - hoje;
+                    const diffDias = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+                    todosDir.push({
+                        ...d,
+                        agenciaNome: agencia.nome,
+                        agenciaCor: agencia.cor,
+                        fim,
+                        diffDias
+                    });
+                });
+            });
+
+            // Sort by expiration date (soonest first)
+            todosDir.sort((a, b) => a.diffDias - b.diffDias);
+
+            // Filter: show expired + expiring within 24 months
+            const expirando = todosDir.filter(d => d.diffDias <= 730);
+
+            if (countBadge) countBadge.textContent = expirando.length;
+
+            if (expirando.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-title">Nenhum mandato expirando nos proximos 24 meses</div></div>';
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="mandatos-exp-timeline">
+                    ${expirando.map(d => {
+                        let urgencia = 'far';
+                        let urgenciaLabel = '';
+                        let urgenciaIcon = '';
+
+                        if (d.diffDias < 0) {
+                            urgencia = 'expired';
+                            urgenciaLabel = 'Expirado';
+                            urgenciaIcon = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+                        } else if (d.diffDias <= 180) {
+                            urgencia = 'critical';
+                            urgenciaLabel = d.diffDias + ' dias';
+                            urgenciaIcon = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+                        } else if (d.diffDias <= 365) {
+                            urgencia = 'warning';
+                            urgenciaLabel = Math.ceil(d.diffDias / 30) + ' meses';
+                            urgenciaIcon = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+                        } else {
+                            urgenciaLabel = Math.ceil(d.diffDias / 30) + ' meses';
+                            urgenciaIcon = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+                        }
+
+                        const iniciais = d.nome.split(' ').filter((_, i, arr) => i === 0 || i === arr.length - 1).map(p => p[0]).join('');
+                        const dataFim = d.fim.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
+
+                        // Progress: how much of mandate has elapsed
+                        let progressPct = 100;
+                        if (d.inicio) {
+                            const inicio = new Date(d.inicio + (d.inicio.length === 10 ? 'T12:00:00' : ''));
+                            const total = d.fim - inicio;
+                            const elapsed = hoje - inicio;
+                            progressPct = Math.min(100, Math.max(0, Math.round((elapsed / total) * 100)));
+                        }
+
+                        return \`
+                            <div class="mandato-exp-item urgencia-\${urgencia}">
+                                <div class="mandato-exp-timeline-dot"></div>
+                                <div class="mandato-exp-timeline-line"></div>
+                                <div class="mandato-exp-content">
+                                    <div class="mandato-exp-header">
+                                        <div class="mandato-exp-avatar" style="background: \${d.agenciaCor};">\${iniciais}</div>
+                                        <div class="mandato-exp-info">
+                                            <div class="mandato-exp-nome">\${d.nome}</div>
+                                            <div class="mandato-exp-cargo">\${d.cargo} — <span style="color: \${d.agenciaCor}; font-weight: 600;">\${d.agenciaNome}</span></div>
+                                        </div>
+                                        <div class="mandato-exp-countdown urgencia-\${urgencia}">
+                                            \${urgenciaIcon}
+                                            <span>\${urgenciaLabel}</span>
+                                        </div>
+                                    </div>
+                                    <div class="mandato-exp-bar-wrapper">
+                                        <div class="mandato-exp-bar">
+                                            <div class="mandato-exp-bar-fill urgencia-\${urgencia}" style="width: \${progressPct}%;"></div>
+                                        </div>
+                                        <div class="mandato-exp-dates">
+                                            <span>\${d.inicio ? new Date(d.inicio + 'T12:00:00').toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' }) : '—'}</span>
+                                            <span class="mandato-exp-end-date">\${dataFim}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        \`;
+                    }).join('')}
+                </div>
+            `;
         },
 
         renderStats() {
@@ -4578,7 +4686,6 @@
             }
 
             this.renderNews();
-            this.renderMandatos();
             this.renderFontes();
             this.renderTabelaFederais();
             this.renderEstaduais();
@@ -4776,54 +4883,6 @@
                 ? '<span class="badge-live">AO VIVO</span> Dados de fontes oficiais (gov.br)'
                 : '<span class="badge-demo">DEMO</span> Dados de demonstracao';
             container.insertBefore(badge, container.firstChild);
-        },
-
-        renderMandatos() {
-            const container = document.getElementById('hub-mandatos-container');
-            if (!container) return;
-
-            const hoje = new Date();
-            const mandatosOrdenados = [...this.mandatos].sort((a, b) => new Date(a.fim) - new Date(b.fim));
-
-            container.innerHTML = mandatosOrdenados.map(m => {
-                const fim = new Date(m.fim + 'T12:00:00');
-                const diffMs = fim - hoje;
-                const diffDias = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-                const diffMeses = Math.ceil(diffDias / 30);
-
-                let classe = 'expiring-far';
-                let restanteColor = 'var(--success)';
-                let restanteText = diffMeses + ' meses';
-
-                if (diffDias < 0) {
-                    classe = 'expiring-soon';
-                    restanteColor = 'var(--danger)';
-                    restanteText = 'Expirado';
-                } else if (diffDias <= 180) {
-                    classe = 'expiring-soon';
-                    restanteColor = 'var(--danger)';
-                    restanteText = diffDias + ' dias';
-                } else if (diffDias <= 365) {
-                    classe = 'expiring-medium';
-                    restanteColor = 'var(--warning)';
-                }
-
-                const iniciais = m.nome.split(' ').filter((_, i, arr) => i === 0 || i === arr.length - 1).map(p => p[0]).join('');
-
-                return `
-                    <div class="hub-mandato-item ${classe}">
-                        <div class="hub-mandato-avatar" style="background: ${m.cor};">${iniciais}</div>
-                        <div class="hub-mandato-info">
-                            <div class="hub-mandato-nome">${m.nome}</div>
-                            <div class="hub-mandato-cargo">${m.cargo} - ${m.agencia}</div>
-                        </div>
-                        <div class="hub-mandato-prazo">
-                            <div class="hub-mandato-data">${fim.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' })}</div>
-                            <div class="hub-mandato-restante" style="color: ${restanteColor};">${restanteText}</div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
         },
 
         renderFontes() {
