@@ -215,7 +215,7 @@
             {
                 id: 1,
                 processo: 'SEI! n° 134.00037303/2024-01',
-                interessado: 'Viacao Cometa S/A',
+                interessado: 'Viação Cometa S/A',
                 microtema: 'Outros',
                 decisao: 'Deferido',
                 pauta_interna: false,
@@ -223,13 +223,13 @@
                 data_reuniao: '2025-12-18',
                 votos_favor: ['Andre Isper Rodrigues Barnabe', 'Diego Albert Zanatto', 'Fernanda Esbizaro Rodrigues Rudnik', 'Raquel Franca Carneiro'],
                 votos_contra: null,
-                resumo_pleito: 'A Viacao Cometa S/A solicitou o ressarcimento referente a utilizacao do servico de transporte intermunicipal com beneficio tarifario de gratuidade, conforme previsto no Decreto n° 68.937, de 3 de outubro de 2024, que estabelece a gratuidade nos dias 6 e 27 de outubro de 2024.',
-                fundamento_decisao: 'RECOMENDA O DEFERIMENTO do pedido da operadora Viacao Cometa S/A, para conceder o ressarcimento no Servico Regular Rodoviario de 18.366 (dezoito mil, trezentos e sessenta e seis) gratuidades, no montante de R$ 1.029.792,49 (um milhao, vinte e nove mil, setecentos e noventa e dois reais e quarenta e nove centavos), decorrente dos impactos do Decreto n° 68.937, de 03 de outubro de 2024.'
+                resumo_pleito: 'A Viação Cometa S/A solicitou o ressarcimento referente à utilização do serviço de transporte intermunicipal com benefício tarifário de gratuidade, conforme previsto no Decreto n° 68.937, de 3 de outubro de 2024, que estabelece a gratuidade nos dias 6 e 27 de outubro de 2024.',
+                fundamento_decisao: 'RECOMENDA O DEFERIMENTO do pedido da operadora Viação Cometa S/A, para conceder o ressarcimento no Serviço Regular Rodoviário de 18.366 (dezoito mil, trezentos e sessenta e seis) gratuidades, no montante de R$ 1.029.792,49 (um milhão, vinte e nove mil, setecentos e noventa e dois reais e quarenta e nove centavos), decorrente dos impactos do Decreto n° 68.937, de 03 de outubro de 2024.'
             },
             {
                 id: 2,
                 processo: 'SEI! n° 134.00038201/2024-02',
-                interessado: 'Concessionaria ViaOeste S/A',
+                interessado: 'Concessionária ViaOeste S/A',
                 microtema: 'Rodovias',
                 decisao: 'Deferido',
                 pauta_interna: false,
@@ -237,36 +237,36 @@
                 data_reuniao: '2025-12-18',
                 votos_favor: ['Andre Isper Rodrigues Barnabe', 'Diego Albert Zanatto', 'Fernanda Esbizaro Rodrigues Rudnik', 'Raquel Franca Carneiro'],
                 votos_contra: null,
-                resumo_pleito: 'A Concessionaria ViaOeste S/A solicitou aprovacao do projeto de ampliacao da faixa de pedagio no km 42 da Rodovia Raposo Tavares.',
-                fundamento_decisao: 'RECOMENDA O DEFERIMENTO do pedido de ampliacao, considerando os estudos de demanda e seguranca viaria apresentados.'
+                resumo_pleito: 'A Concessionária ViaOeste S/A solicitou aprovação do projeto de ampliação da faixa de pedágio no km 42 da Rodovia Raposo Tavares.',
+                fundamento_decisao: 'RECOMENDA O DEFERIMENTO do pedido de ampliação, considerando os estudos de demanda e segurança viária apresentados.'
             },
             {
                 id: 3,
                 processo: 'SEI! n° 134.00039102/2024-03',
                 interessado: 'EMTU - Empresa Metropolitana de Transportes Urbanos',
-                microtema: 'Onibus',
+                microtema: 'Ônibus',
                 decisao: 'Deferido',
                 pauta_interna: true,
                 numero_reuniao: '1175',
                 data_reuniao: '2025-12-11',
                 votos_favor: ['Andre Isper Rodrigues Barnabe', 'Diego Albert Zanatto', 'Fernanda Esbizaro Rodrigues Rudnik', 'Raquel Franca Carneiro'],
                 votos_contra: null,
-                resumo_pleito: 'Solicitacao de aprovacao de novas linhas metropolitanas para atendimento da regiao de Guarulhos.',
+                resumo_pleito: 'Solicitação de aprovação de novas linhas metropolitanas para atendimento da região de Guarulhos.',
                 fundamento_decisao: 'RECOMENDA O DEFERIMENTO considerando o estudo de demanda e viabilidade operacional.'
             },
             {
                 id: 4,
                 processo: 'SEI! n° 134.00040003/2024-04',
-                interessado: 'AutoBan Concessionaria S/A',
-                microtema: 'Regulacao',
+                interessado: 'AutoBan Concessionária S/A',
+                microtema: 'Regulação',
                 decisao: 'Indeferido',
                 pauta_interna: false,
                 numero_reuniao: '1175',
                 data_reuniao: '2025-12-11',
                 votos_favor: [],
                 votos_contra: ['Andre Isper Rodrigues Barnabe', 'Diego Albert Zanatto', 'Fernanda Esbizaro Rodrigues Rudnik', 'Raquel Franca Carneiro'],
-                resumo_pleito: 'Pedido de revisao extraordinaria de tarifas devido a variacao cambial.',
-                fundamento_decisao: 'RECOMENDA O INDEFERIMENTO por nao atender aos requisitos contratuais estabelecidos.'
+                resumo_pleito: 'Pedido de revisão extraordinária de tarifas devido à variação cambial.',
+                fundamento_decisao: 'RECOMENDA O INDEFERIMENTO por não atender aos requisitos contratuais estabelecidos.'
             }
         ],
 
@@ -478,7 +478,7 @@
                     </div>
                     <div class="modal-info-grid">
                         <div class="modal-info-item">
-                            <div class="modal-info-label">Agencia</div>
+                            <div class="modal-info-label">Agência</div>
                             <div class="modal-info-value">ARTESP</div>
                         </div>
                         <div class="modal-info-item">
@@ -665,7 +665,7 @@
                 let html = `<div class="meeting-card ${statusClass}">
                     <div class="meeting-header">
                         <div class="meeting-info">
-                            <h3>${r.numero_reuniao || 'Reuniao ' + r.id.substring(0, 8)}</h3>
+                            <h3>${r.numero_reuniao || 'Reunião ' + r.id.substring(0, 8)}</h3>
                             <p>${r.data_reuniao || 'Data não identificada'} - ${r.tipo || 'deliberacao'}</p>
                             <a href="${r.url_origem}" target="_blank">${r.url_origem.substring(0, 60)}...</a>
                         </div>
@@ -1340,20 +1340,20 @@
         activeAno: '2026',
 
         normasData: [
-            { titulo: 'Resolucao no 001/2026 - Diretrizes de Fiscalizacao', data: '04/01/2026', setor: 'Rodovias', tipo: 'Resolucao', natureza: 'nova', relevancia: 'alta' },
-            { titulo: 'Deliberacao no 15/2026 - Tarifas de Pedagio', data: '03/01/2026', setor: 'Rodovias', tipo: 'Deliberacao', natureza: 'alteracao', relevancia: 'alta' },
-            { titulo: 'Portaria no 042/2026 - Procedimentos de Vistoria', data: '02/01/2026', setor: 'Ferrovias', tipo: 'Portaria', natureza: 'nova', relevancia: 'media' },
-            { titulo: 'Resolucao no 998/2025 - Revogacao de Normativo', data: '27/12/2025', setor: 'Rodovias', tipo: 'Resolucao', natureza: 'revogacao', relevancia: 'baixa' },
-            { titulo: 'Deliberacao no 14/2026 - Indicadores de Qualidade', data: '01/01/2026', setor: 'Rodovias', tipo: 'Deliberacao', natureza: 'alteracao', relevancia: 'media' },
-            { titulo: 'Resolucao no 002/2026 - Normas de Seguranca Ferroviaria', data: '05/01/2026', setor: 'Ferrovias', tipo: 'Resolucao', natureza: 'nova', relevancia: 'alta' },
-            { titulo: 'Deliberacao no 16/2026 - Reajuste Tarifario Aeroportuario', data: '06/01/2026', setor: 'Aeroportos', tipo: 'Deliberacao', natureza: 'alteracao', relevancia: 'alta' },
-            { titulo: 'Portaria no 043/2026 - Inspecao de Terminais Portuarios', data: '07/01/2026', setor: 'Portos', tipo: 'Portaria', natureza: 'nova', relevancia: 'media' },
-            { titulo: 'Resolucao no 003/2026 - Padrao de Sinalizacao', data: '08/01/2026', setor: 'Rodovias', tipo: 'Resolucao', natureza: 'nova', relevancia: 'media' },
-            { titulo: 'Deliberacao no 17/2026 - Concessao de Rodovia SP-300', data: '09/01/2026', setor: 'Rodovias', tipo: 'Deliberacao', natureza: 'nova', relevancia: 'alta' },
-            { titulo: 'Resolucao no 997/2025 - Revogacao de Taxas Aeroportuarias', data: '26/12/2025', setor: 'Aeroportos', tipo: 'Resolucao', natureza: 'revogacao', relevancia: 'media' },
-            { titulo: 'Portaria no 044/2026 - Manutencao de Vias Ferreas', data: '10/01/2026', setor: 'Ferrovias', tipo: 'Portaria', natureza: 'alteracao', relevancia: 'baixa' },
-            { titulo: 'Deliberacao no 18/2026 - Seguro de Cargas Portuarias', data: '11/01/2026', setor: 'Portos', tipo: 'Deliberacao', natureza: 'nova', relevancia: 'media' },
-            { titulo: 'Resolucao no 004/2026 - Limite de Velocidade em Tuneis', data: '12/01/2026', setor: 'Rodovias', tipo: 'Resolucao', natureza: 'alteracao', relevancia: 'alta' }
+            { titulo: 'Resolução nº 001/2026 - Diretrizes de Fiscalização', data: '04/01/2026', setor: 'Rodovias', tipo: 'Resolução', natureza: 'nova', relevancia: 'alta' },
+            { titulo: 'Deliberação nº 15/2026 - Tarifas de Pedágio', data: '03/01/2026', setor: 'Rodovias', tipo: 'Deliberação', natureza: 'alteração', relevancia: 'alta' },
+            { titulo: 'Portaria nº 042/2026 - Procedimentos de Vistoria', data: '02/01/2026', setor: 'Ferrovias', tipo: 'Portaria', natureza: 'nova', relevancia: 'média' },
+            { titulo: 'Resolução nº 998/2025 - Revogação de Normativo', data: '27/12/2025', setor: 'Rodovias', tipo: 'Resolução', natureza: 'revogação', relevancia: 'baixa' },
+            { titulo: 'Deliberação nº 14/2026 - Indicadores de Qualidade', data: '01/01/2026', setor: 'Rodovias', tipo: 'Deliberação', natureza: 'alteração', relevancia: 'média' },
+            { titulo: 'Resolução nº 002/2026 - Normas de Segurança Ferroviária', data: '05/01/2026', setor: 'Ferrovias', tipo: 'Resolução', natureza: 'nova', relevancia: 'alta' },
+            { titulo: 'Deliberação nº 16/2026 - Reajuste Tarifário Aeroportuário', data: '06/01/2026', setor: 'Aeroportos', tipo: 'Deliberação', natureza: 'alteração', relevancia: 'alta' },
+            { titulo: 'Portaria nº 043/2026 - Inspeção de Terminais Portuários', data: '07/01/2026', setor: 'Portos', tipo: 'Portaria', natureza: 'nova', relevancia: 'média' },
+            { titulo: 'Resolução nº 003/2026 - Padrão de Sinalização', data: '08/01/2026', setor: 'Rodovias', tipo: 'Resolução', natureza: 'nova', relevancia: 'média' },
+            { titulo: 'Deliberação nº 17/2026 - Concessão de Rodovia SP-300', data: '09/01/2026', setor: 'Rodovias', tipo: 'Deliberação', natureza: 'nova', relevancia: 'alta' },
+            { titulo: 'Resolução nº 997/2025 - Revogação de Taxas Aeroportuárias', data: '26/12/2025', setor: 'Aeroportos', tipo: 'Resolução', natureza: 'revogação', relevancia: 'média' },
+            { titulo: 'Portaria nº 044/2026 - Manutenção de Vias Férreas', data: '10/01/2026', setor: 'Ferrovias', tipo: 'Portaria', natureza: 'alteração', relevancia: 'baixa' },
+            { titulo: 'Deliberação nº 18/2026 - Seguro de Cargas Portuárias', data: '11/01/2026', setor: 'Portos', tipo: 'Deliberação', natureza: 'nova', relevancia: 'média' },
+            { titulo: 'Resolução nº 004/2026 - Limite de Velocidade em Túneis', data: '12/01/2026', setor: 'Rodovias', tipo: 'Resolução', natureza: 'alteração', relevancia: 'alta' }
         ],
 
         chartData: {
@@ -1624,7 +1624,7 @@
             if (!container) return;
 
             if (this.empresasDetectadas.length === 0) {
-                container.innerHTML = '<span class="empresas-none">Nenhuma empresa detectada ainda. Faca upload e analise de PDFs para detectar empresas automaticamente.</span>';
+                container.innerHTML = '<span class="empresas-none">Nenhuma empresa detectada ainda. Faça upload e análise de PDFs para detectar empresas automaticamente.</span>';
                 return;
             }
 
@@ -2370,13 +2370,13 @@
 
                 <div class="profile-alert" style="background: rgba(201, 162, 39, 0.1); border-left: 3px solid var(--accent);">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    <p>Dados extraidos automaticamente dos PDFs processados. Os valores refletem a <strong>participacao institucional</strong> identificada nas deliberacoes analisadas.</p>
+                    <p>Dados extraídos automaticamente dos PDFs processados. Os valores refletem a <strong>participação institucional</strong> identificada nas deliberações analisadas.</p>
                 </div>
 
                 <div class="profile-tabs">
-                    <button class="profile-tab active" onclick="App.PageJurimetria.switchProfileTab(this, 'juridico')">Metricas</button>
+                    <button class="profile-tab active" onclick="App.PageJurimetria.switchProfileTab(this, 'juridico')">Métricas</button>
                     <button class="profile-tab" onclick="App.PageJurimetria.switchProfileTab(this, 'historico')">Temas</button>
-                    <button class="profile-tab" onclick="App.PageJurimetria.switchProfileTab(this, 'tendencias')">Decisoes</button>
+                    <button class="profile-tab" onclick="App.PageJurimetria.switchProfileTab(this, 'tendencias')">Decisões</button>
                 </div>
 
                 <div class="profile-content" id="profile-tab-content">
@@ -2475,15 +2475,15 @@
                     ? (d.temasOrdenados || []).map(t => `
                         <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--bg-card); border-radius: 8px; margin-bottom: 8px;">
                             <span style="font-weight: 500;">${t.tema}</span>
-                            <span class="badge badge-externo">${t.count} deliberacoes</span>
+                            <span class="badge badge-externo">${t.count} deliberações</span>
                         </div>
                     `).join('')
-                    : '<div style="text-align: center; padding: 40px; color: var(--text-secondary);">Nenhum tema identificado nas deliberacoes deste diretor.</div>';
+                    : '<div style="text-align: center; padding: 40px; color: var(--text-secondary);">Nenhum tema identificado nas deliberações deste diretor.</div>';
 
                 content.innerHTML = `
                     <h4 style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
-                        Temas das Deliberacoes
+                        Temas das Deliberações
                     </h4>
 
                     ${temasHtml}
@@ -2503,12 +2503,12 @@
                         <div style="background: rgba(74, 222, 128, 0.1); border-radius: 12px; padding: 20px; text-align: center;">
                             <div style="font-size: 2rem; font-weight: 700; color: var(--success);">${taxaDef}%</div>
                             <div style="color: var(--text-secondary); margin-top: 4px;">Taxa de Deferimento</div>
-                            <div style="font-size: 0.9rem; margin-top: 8px;">${d.votosDeferido || 0} decisoes deferidas</div>
+                            <div style="font-size: 0.9rem; margin-top: 8px;">${d.votosDeferido || 0} decisões deferidas</div>
                         </div>
                         <div style="background: rgba(248, 113, 113, 0.1); border-radius: 12px; padding: 20px; text-align: center;">
                             <div style="font-size: 2rem; font-weight: 700; color: var(--danger);">${taxaInd}%</div>
                             <div style="color: var(--text-secondary); margin-top: 4px;">Taxa de Indeferimento</div>
-                            <div style="font-size: 0.9rem; margin-top: 8px;">${d.votosIndeferido || 0} decisoes indeferidas</div>
+                            <div style="font-size: 0.9rem; margin-top: 8px;">${d.votosIndeferido || 0} decisões indeferidas</div>
                         </div>
                     </div>
 
@@ -3905,7 +3905,7 @@
                 if (response?.sucesso) {
                     await this.load();
                 } else {
-                    alert('Erro: ' + (response?.erro || 'Erro na analise'));
+                    alert('Erro: ' + (response?.erro || 'Erro na análise'));
                 }
             } catch (error) {
                 alert('Erro ao analisar: ' + error.message);
@@ -4081,7 +4081,7 @@
 
             document.getElementById('batch-progress-title').textContent =
                 this.batchCancelled
-                    ? 'Analise cancelada!'
+                    ? 'Análise cancelada!'
                     : `Análise concluída! ${completed} sucesso, ${errors} erros`;
             document.getElementById('batch-current-files').innerHTML = '';
 
@@ -4180,7 +4180,7 @@
             const tbody = document.getElementById('analise-table-body');
 
             if (this.pdfs.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state">Nenhum PDF disponivel. Faca upload na pagina de Upload.</div></td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state">Nenhum PDF disponível. Faça upload na página de Upload.</div></td></tr>';
                 return;
             }
 
@@ -4345,8 +4345,8 @@
                         <div class="deliberacao-card">
                             <div class="deliberacao-header">
                                 <div class="deliberacao-info">
-                                    <span class="deliberacao-numero">${d.numero_deliberacao || 'Deliberacao ' + (i + 1)}</span>
-                                    <span class="deliberacao-reuniao">Reuniao ${d.reuniao_ordinaria || '-'}</span>
+                                    <span class="deliberacao-numero">${d.numero_deliberacao || 'Deliberação ' + (i + 1)}</span>
+                                    <span class="deliberacao-reuniao">Reunião ${d.reuniao_ordinaria || '-'}</span>
                                     ${d.data_reuniao ? `<span class="deliberacao-data">${new Date(d.data_reuniao).toLocaleDateString('pt-BR')}</span>` : ''}
                                 </div>
                                 <span class="badge ${resultadoClass}">${d.resultado || '-'}</span>
@@ -4830,24 +4830,24 @@
             const fases = [
                 {
                     numero: 1,
-                    titulo: 'Noticias das Agencias',
-                    desc: 'Criar scrapers e RSS readers para cada agencia. A maioria publica noticias via RSS ou tem pagina paginavel. Armazenar em Supabase.',
+                    titulo: 'Notícias das Agências',
+                    desc: 'Criar scrapers e RSS readers para cada agência. A maioria publica notícias via RSS ou tem página paginável. Armazenar em Supabase.',
                     status: 'active',
                     items: ['RSS Readers', 'Web Scrapers', 'Supabase Storage', 'Feed Aggregator']
                 },
                 {
                     numero: 2,
                     titulo: 'Mandatos dos Diretores',
-                    desc: 'Dados publicos do Diário Oficial da União (DOU). Criar tabela de diretores com mandatos e alertas automaticos de troca.',
+                    desc: 'Dados públicos do Diário Oficial da União (DOU). Criar tabela de diretores com mandatos e alertas automáticos de troca.',
                     status: 'pending',
-                    items: ['API DOU', 'Tabela Diretores', 'Alertas Automaticos', 'Decretos']
+                    items: ['API DOU', 'Tabela Diretores', 'Alertas Automáticos', 'Decretos']
                 },
                 {
                     numero: 3,
-                    titulo: 'Decisoes e Resolucoes',
-                    desc: 'Scraping do DOU para resolucoes. ANEEL/ANA publicam em formato estruturado. Classificar por setor regulatorio.',
+                    titulo: 'Decisões e Resoluções',
+                    desc: 'Scraping do DOU para resoluções. ANEEL/ANA publicam em formato estruturado. Classificar por setor regulatório.',
                     status: 'pending',
-                    items: ['Scraping DOU', 'Classificacao por Setor', 'Dados Estruturados', 'Timeline']
+                    items: ['Scraping DOU', 'Classificação por Setor', 'Dados Estruturados', 'Timeline']
                 }
             ];
 

@@ -6280,28 +6280,198 @@ tr:hover {
     text-align: center;
 }
 
-.landing-video-wrapper {
+/* Platform Showcase */
+.landing-showcase-wrapper {
     max-width: 900px;
     margin: 0 auto;
+}
+
+.landing-showcase-screen {
     border-radius: 16px;
     overflow: hidden;
     border: 1px solid var(--border);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 239, 77, 0.08);
-    background: #000;
+    background: var(--surface, #1a1a2e);
 }
 
-.landing-video {
+.landing-showcase-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    background: rgba(0, 0, 0, 0.3);
+    border-bottom: 1px solid var(--border);
+}
+
+.landing-showcase-dots {
+    display: flex;
+    gap: 6px;
+}
+
+.landing-showcase-dots .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.landing-showcase-dots .dot.red { background: #ff5f57; }
+.landing-showcase-dots .dot.yellow { background: #febc2e; }
+.landing-showcase-dots .dot.green { background: #28c840; }
+
+.landing-showcase-url {
+    font-size: 12px;
+    color: var(--text-secondary, #999);
+    background: rgba(255, 255, 255, 0.05);
+    padding: 4px 12px;
+    border-radius: 6px;
+    flex: 1;
+    text-align: center;
+}
+
+.landing-showcase-content {
+    display: flex;
+    min-height: 280px;
+}
+
+.landing-showcase-sidebar {
+    width: 160px;
+    padding: 16px 12px;
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.showcase-nav-item {
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--text-secondary, #999);
+    text-align: left;
+    transition: all 0.2s;
+}
+
+.showcase-nav-item.active {
+    background: rgba(255, 239, 77, 0.1);
+    color: var(--primary, #ffef4d);
+}
+
+.showcase-icon {
+    margin-right: 6px;
+}
+
+.landing-showcase-main {
+    flex: 1;
+    padding: 20px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    align-content: start;
+}
+
+.showcase-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    text-align: left;
+    opacity: 0;
+    animation: showcaseCardAppear 0.5s ease forwards;
+}
+
+.showcase-card-animate-1 { animation-delay: 0.2s; }
+.showcase-card-animate-2 { animation-delay: 0.4s; }
+.showcase-card-animate-3 { animation-delay: 0.6s; }
+.showcase-card-animate-4 { animation-delay: 0.8s; }
+
+@keyframes showcaseCardAppear {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.showcase-card-header {
+    font-size: 11px;
+    color: var(--text-secondary, #999);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+}
+
+.showcase-card-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-primary, #fff);
+    margin-bottom: 8px;
+}
+
+.showcase-card-bar {
+    height: 4px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.showcase-bar-fill {
+    height: 100%;
+    background: var(--primary, #ffef4d);
+    border-radius: 2px;
+    animation: showcaseBarGrow 1s ease forwards;
+    transform-origin: left;
+    transform: scaleX(0);
+}
+
+@keyframes showcaseBarGrow {
+    to { transform: scaleX(1); }
+}
+
+.showcase-graph {
+    grid-column: 1 / -1;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    text-align: left;
+    opacity: 0;
+    animation: showcaseCardAppear 0.5s ease forwards;
+}
+
+.showcase-graph-svg {
     width: 100%;
-    display: block;
-    border-radius: 16px;
+    height: 120px;
+    margin-top: 8px;
+}
+
+.showcase-node-pulse {
+    animation: nodePulse 2s ease-in-out infinite;
+}
+
+@keyframes nodePulse {
+    0%, 100% { r: 10; opacity: 1; }
+    50% { r: 13; opacity: 0.8; }
+}
+
+.landing-showcase-cta {
+    margin-top: 24px;
+    font-size: 16px;
+    padding: 14px 32px;
 }
 
 @media (max-width: 768px) {
-    .landing-video-wrapper {
+    .landing-showcase-screen {
         border-radius: 12px;
     }
     .landing-video-section {
         padding: 40px 16px;
+    }
+    .landing-showcase-sidebar {
+        display: none;
+    }
+    .landing-showcase-main {
+        grid-template-columns: 1fr;
+        padding: 14px;
+    }
+    .showcase-graph {
+        grid-column: 1;
     }
 }
 
