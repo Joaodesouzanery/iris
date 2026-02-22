@@ -2650,9 +2650,9 @@
                     const directors = [], companies = [], themes = [], agencies = [], connections = [];
 
                     data.nodes.forEach(n => {
-                        if (n.type === 'agency') agencies.push({ id: n.id, label: n.label, full: n.full || n.label, setor: n.setor || '', esfera: n.esfera || 'federal', site: n.site || '', deliberations: n.deliberations || 0 });
+                        if (n.type === 'agency') agencies.push({ id: n.id, label: n.label, full: n.full || n.label, setor: n.setor || '', esfera: n.esfera || 'federal', site: n.site || '', lei_criacao: n.lei_criacao || '', vinculacao: n.vinculacao || '', deliberations: n.deliberations || 0 });
                         else if (n.type === 'director') directors.push({ id: n.id, label: n.label, full: n.full || n.label, role: n.role || 'Diretor(a)', mandato: n.mandato || '', initials: n.initials || n.label.split(' ').map(w=>w[0]).join('').substring(0,2), agency: n.agency || '' });
-                        else if (n.type === 'company') companies.push({ id: n.id, label: n.label, full: n.full || n.label, sector: n.sector || 'Regulado', contracts: n.contracts || 0 });
+                        else if (n.type === 'company') companies.push({ id: n.id, label: n.label, full: n.full || n.label, sector: n.sector || 'Regulado', contracts: n.contracts || 0, mentions: n.mentions || 0 });
                         else if (n.type === 'theme') themes.push({ id: n.id, label: n.label, count: n.count || 0, category: n.category || 'regulação' });
                     });
 
@@ -3049,7 +3049,9 @@
                 html+=`<div class="info-row"><span class="info-label">Nome</span><span class="info-value" style="font-size:10px">${node.full||node.label}</span></div>`;
                 if(node.setor) html+=`<div class="info-row"><span class="info-label">Setor</span><span class="info-value">${node.setor}</span></div>`;
                 if(node.esfera) html+=`<div class="info-row"><span class="info-label">Esfera</span><span class="info-value" style="text-transform:capitalize">${node.esfera}</span></div>`;
-                if(node.site) html+=`<div class="info-row"><span class="info-label">Site</span><span class="info-value" style="font-size:10px"><a href="${node.site}" target="_blank" style="color:#58a6ff">${node.site.replace('https://','')}</a></span></div>`;
+                if(node.vinculacao) html+=`<div class="info-row"><span class="info-label">Vinculação</span><span class="info-value" style="font-size:10px">${node.vinculacao}</span></div>`;
+                if(node.lei_criacao) html+=`<div class="info-row"><span class="info-label">Lei de Criação</span><span class="info-value" style="font-size:10px">${node.lei_criacao}</span></div>`;
+                if(node.site) html+=`<div class="info-row"><span class="info-label">Site</span><span class="info-value" style="font-size:10px"><a href="${node.site}" target="_blank" rel="noopener noreferrer" style="color:#58a6ff">${node.site.replace('https://','')}</a></span></div>`;
                 html+=`<div class="info-row"><span class="info-label">Deliberações</span><span class="info-value">${node.deliberations||0}</span></div>`;
             }
 
@@ -5521,6 +5523,26 @@
 
             // Initialize router
             Router.init();
+
+            // Mobile menu: show hamburger on small screens
+            const mobileBtn = document.getElementById('mobile-menu-btn');
+            function checkMobile() {
+                if (mobileBtn) mobileBtn.style.display = window.innerWidth <= 768 ? 'flex' : 'none';
+            }
+            checkMobile();
+            window.addEventListener('resize', checkMobile);
+
+            // Close sidebar on route change (mobile)
+            const origNavigate = Router.navigate.bind(Router);
+            Router.navigate = function(path) {
+                if (window.innerWidth <= 768) {
+                    const sidebar = document.querySelector('.sidebar');
+                    const overlay = document.getElementById('sidebar-overlay');
+                    if (sidebar) sidebar.classList.remove('open');
+                    if (overlay) overlay.classList.remove('active');
+                }
+                origNavigate(path);
+            };
 
             console.log('IRIS Platform initialized');
         }

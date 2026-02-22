@@ -161,9 +161,36 @@ function contarMencoes(texto, termo) {
     return (texto.match(regex) || []).length;
 }
 
-// Middleware - aumentado para suportar uploads grandes
-app.use(express.json({ limit: '500mb' }));
-app.use(express.urlencoded({ extended: true, limit: '500mb' }));
+// Middleware - body parsers (limit to 50MB — 500MB is dangerous)
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// ── Security Headers (OWASP recommended) ──
+app.use((req, res, next) => {
+    // Prevent MIME sniffing
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    // Prevent clickjacking
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+    // XSS Protection (legacy browsers)
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    // Referrer policy
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    // Content Security Policy
+    res.setHeader('Content-Security-Policy', [
+        "default-src 'self'",
+        "script-src 'self' 'unsafe-inline' https://d3js.org https://cdn.jsdelivr.net https://unpkg.com",
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com",
+        "font-src 'self' https://fonts.gstatic.com",
+        "img-src 'self' data: https: blob:",
+        "connect-src 'self' https://receitaws.com.br https://api.portaldatransparencia.gov.br",
+        "frame-ancestors 'self'"
+    ].join('; '));
+    // Permissions policy
+    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+    // Remove Express fingerprint
+    res.removeHeader('X-Powered-By');
+    next();
+});
 
 // ── Rate Limiting (sem dependência externa) ──
 const rateLimitStore = {};
@@ -259,10 +286,10 @@ app.use(express.static(path.join(__dirname, 'public'), {
 
 app.get('/api/noticias', async (req, res) => {
     try {
-        const limite = parseInt(req.query.limite) || 50;
+        const limite = Math.min(Math.max(parseInt(req.query.limite) || 50, 1), 200);
         const forceRefresh = req.query.forceRefresh === 'true';
-        const setor = req.query.setor || '';
-        const esfera = req.query.esfera || '';
+        const setor = sanitizeString(req.query.setor || '', 50);
+        const esfera = sanitizeString(req.query.esfera || '', 20);
 
         console.log(`[Notícias] Buscando notícias reais (limite=${limite}, refresh=${forceRefresh})`);
 
@@ -1698,7 +1725,7 @@ app.get('/api/grafo-data', (req, res) => {
 // API: DOSSIÊ AUTOMÁTICO POR ENTIDADE (Estilo Sherlocker)
 // ============================================================================
 app.get('/api/dossie/:entidade', (req, res) => {
-    const entidadeNome = decodeURIComponent(req.params.entidade);
+    const entidadeNome = sanitizeString(decodeURIComponent(req.params.entidade), 300);
     const deliberacoes = coletarTodasDeliberacoes();
 
     // Identify entity type
@@ -2793,14 +2820,24 @@ async function consultarTransparencia(tipo, termo) {
 }
 
 // ── ENDPOINT: Consulta CNPJ ──
-app.get('/api/cruzamento/cnpj/:cnpj', async (req, res) => {
-    const resultado = await consultarCNPJ(req.params.cnpj);
+app.get('/api/cruzamento/cnpj/:cnpj', rateLimit(RATE_LIMIT_STRICT), async (req, res) => {
+    const cnpj = req.params.cnpj;
+    if (!validateCNPJ(cnpj)) {
+        return res.status(400).json({ success: false, erro: 'CNPJ inválido. Use formato: 00.000.000/0000-00 ou 14 dígitos.' });
+    }
+    const resultado = await consultarCNPJ(cnpj);
     res.json({ success: !resultado.erro, ...resultado });
 });
 
 // ── ENDPOINT: Consulta Transparência ──
-app.get('/api/cruzamento/transparencia/:tipo', async (req, res) => {
-    const resultado = await consultarTransparencia(req.params.tipo, req.query.termo || '');
+app.get('/api/cruzamento/transparencia/:tipo', rateLimit(RATE_LIMIT_STRICT), async (req, res) => {
+    const tiposPermitidos = ['contratos', 'servidores', 'licitacoes', 'convenios'];
+    const tipo = req.params.tipo;
+    if (!tiposPermitidos.includes(tipo)) {
+        return res.status(400).json({ success: false, erro: 'Tipo inválido. Use: ' + tiposPermitidos.join(', ') });
+    }
+    const termo = sanitizeString(req.query.termo || '', 200);
+    const resultado = await consultarTransparencia(tipo, termo);
     res.json({ success: !resultado.erro, ...resultado });
 });
 
@@ -2839,7 +2876,7 @@ app.get('/api/grafo-data-completo', (req, res) => {
     const nodesMap = {};
     const edgesMap = {};
 
-    // Adiciona todas as agências como nós
+    // Adiciona todas as agências como nós (dados verificados de fontes oficiais)
     for (const [sigla, ag] of Object.entries(AGENCIAS_REGULADORAS)) {
         nodesMap[sigla] = {
             id: sigla,
@@ -2848,10 +2885,12 @@ app.get('/api/grafo-data-completo', (req, res) => {
             type: 'agency',
             setor: ag.setor,
             esfera: ag.esfera,
-            site: ag.site
+            site: ag.site,
+            lei_criacao: ag.lei_criacao || '',
+            vinculacao: ag.vinculacao || ''
         };
 
-        // Adiciona diretores como nós
+        // Adiciona diretores como nós (dados públicos DOU/gov.br)
         ag.diretores.forEach(dir => {
             const dirId = dir.nome;
             if (!nodesMap[dirId]) {
@@ -2860,11 +2899,12 @@ app.get('/api/grafo-data-completo', (req, res) => {
                     label: dir.nome,
                     type: 'director',
                     role: dir.cargo,
-                    mandato: dir.mandato
+                    mandato: dir.mandato,
+                    agency: sigla
                 };
             }
 
-            // Edge: Diretor → Agência
+            // Edge: Diretor → Agência (presidente/DG tem strength 1.0)
             const ek = `${sigla}||${dirId}`;
             edgesMap[ek] = {
                 source: sigla,
@@ -2875,18 +2915,30 @@ app.get('/api/grafo-data-completo', (req, res) => {
             };
         });
 
-        // Conecta agências do mesmo setor
+        // Conecta agências do mesmo setor regulatório
         for (const [sigla2, ag2] of Object.entries(AGENCIAS_REGULADORAS)) {
             if (sigla === sigla2) continue;
-            if (ag.setor === ag2.setor || ag.vinculacao === ag2.vinculacao) {
+
+            // Same sector connection
+            if (ag.setor === ag2.setor) {
                 const ek = [sigla, sigla2].sort().join('||');
                 if (!edgesMap[ek]) {
                     edgesMap[ek] = {
-                        source: sigla,
-                        target: sigla2,
-                        label: ag.setor === ag2.setor ? 'Mesmo setor' : 'Mesmo ministério',
-                        type: 'setor',
-                        strength: 0.3
+                        source: sigla, target: sigla2,
+                        label: `Mesmo setor: ${ag.setor}`,
+                        type: 'setor', strength: 0.35
+                    };
+                }
+            }
+
+            // Same ministry connection (separate edge)
+            if (ag.vinculacao && ag.vinculacao === ag2.vinculacao && ag.setor !== ag2.setor) {
+                const ek = `min:${[sigla, sigla2].sort().join('||')}`;
+                if (!edgesMap[ek]) {
+                    edgesMap[ek] = {
+                        source: sigla, target: sigla2,
+                        label: ag.vinculacao,
+                        type: 'ministerio', strength: 0.25
                     };
                 }
             }
@@ -2981,4 +3033,9 @@ app.listen(PORT, () => {
     console.log('║                                                              ║');
     console.log('╚══════════════════════════════════════════════════════════════╝');
     console.log('');
+
+    // Pre-fetch news in background so first user gets instant results
+    if (newsFetcher.startBackgroundPrefetch) {
+        newsFetcher.startBackgroundPrefetch();
+    }
 });

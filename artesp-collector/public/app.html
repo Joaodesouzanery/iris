@@ -359,11 +359,18 @@
             </div>
         </nav>
 
+        <!-- Mobile sidebar overlay -->
+        <div class="sidebar-overlay" id="sidebar-overlay" onclick="document.querySelector('.sidebar').classList.remove('open');this.classList.remove('active');"></div>
+
         <!-- Main Content -->
         <main class="main-content" id="main-content" role="main">
             <!-- Top Header -->
             <header class="top-header">
                 <div class="header-left">
+                    <!-- Mobile hamburger menu button -->
+                    <button class="mobile-menu-btn" id="mobile-menu-btn" style="display:none;" aria-label="Abrir menu" onclick="document.querySelector('.sidebar').classList.toggle('open');document.getElementById('sidebar-overlay').classList.toggle('active');">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="22" height="22"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                    </button>
                     <div class="breadcrumb">
                         <span class="breadcrumb-item">Plataforma IRIS</span>
                         <span class="breadcrumb-separator">/</span>
