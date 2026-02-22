@@ -76,9 +76,7 @@ function validatePDF(buffer) {
     const header = buffer.slice(0, 4);
     const headerStr = header.toString('utf8');
 
-    // DEBUG: Mostra primeiros bytes do arquivo
     const primeiros100 = buffer.slice(0, 100).toString('utf8').replace(/[^\x20-\x7E]/g, '.');
-    console.log(`[Downloader] [DEBUG] Primeiros 100 bytes: "${primeiros100}"`);
 
     if (!header.equals(PDF_MAGIC_NUMBER)) {
         // Verifica se é HTML (página de erro ou login)

@@ -185,9 +185,9 @@ async function scrapePDFLinks() {
 
             if (isBinaryDownload) {
                 linksBinaryTotal++;
-                // DEBUG: Mostra primeiros 5 links PDF encontrados
-                if (linksBinaryTotal <= 5) {
-                    console.log(`[Scraper] [DEBUG] PDF Link #${linksBinaryTotal}: texto="${texto}", href=${href.substring(0, 60)}...`);
+                // Primeiros 5 links PDF encontrados (verbose)
+                if (linksBinaryTotal <= 5 && process.env.DEBUG) {
+                    console.log(`[Scraper] PDF Link #${linksBinaryTotal}: texto="${texto}", href=${href.substring(0, 60)}...`);
                 }
             }
 
@@ -205,7 +205,7 @@ async function scrapePDFLinks() {
                     // Extrai informações adicionais do contexto
                     const dataInfo = extrairDataDoContexto($, element);
 
-                    console.log(`[Scraper] [DEBUG] Deliberação #${linksDeliberacaoTotal}: ano=${dataInfo.ano}, data=${dataInfo.dataCompleta}`);
+                    if (process.env.DEBUG) console.log(`[Scraper] Deliberação #${linksDeliberacaoTotal}: ano=${dataInfo.ano}, data=${dataInfo.dataCompleta}`);
 
                     // Filtra por anos permitidos
                     if (dataInfo.ano && ANOS_PERMITIDOS.includes(dataInfo.ano)) {
