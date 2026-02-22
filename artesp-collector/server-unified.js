@@ -2458,8 +2458,8 @@ FIM DO CÓDIGO ANTIGO DESATIVADO */
 // BASE DE DADOS: AGÊNCIAS REGULADORAS E DIRIGENTES
 // Fonte: Diário Oficial da União, portais gov.br, Lei de Acesso à Informação
 // LGPD Art. 7º, II e III — dados públicos de agentes públicos
-// Nota: mandatos podem mudar por nomeação presidencial ou término.
-// Atualização: fevereiro/2026
+// Verificado: fevereiro/2026 via portais oficiais
+// Nota: Houve grande renovação de diretorias em ago-set/2025
 // ============================================================================
 const AGENCIAS_REGULADORAS = {
     'ANEEL': {
@@ -2471,11 +2471,11 @@ const AGENCIAS_REGULADORAS = {
         lei_criacao: 'Lei nº 9.427/1996',
         vinculacao: 'Ministério de Minas e Energia',
         diretores: [
-            { nome: 'Sandoval de Araújo Feitosa Neto', cargo: 'Diretor-Geral', mandato: '2024-2028' },
-            { nome: 'Agnes Maria de Aragão da Costa', cargo: 'Diretora', mandato: '2021-2026' },
-            { nome: 'Fernando Luiz Mosna', cargo: 'Diretor', mandato: '2023-2027' },
-            { nome: 'Ricardo Tili Reis Pinheiro', cargo: 'Diretor', mandato: '2024-2028' },
-            { nome: 'Hélvio Neves Guerra', cargo: 'Diretor', mandato: '2022-2026' }
+            { nome: 'Sandoval de Araújo Feitosa Neto', cargo: 'Diretor-Geral', mandato: '2022-2027' },
+            { nome: 'Agnes Maria de Aragão da Costa', cargo: 'Diretora', mandato: '2022-2028' },
+            { nome: 'Fernando Luiz Mosna Ferreira da Silva', cargo: 'Diretor', mandato: '2022-2026' },
+            { nome: 'Willamy Moreira Frota', cargo: 'Diretor', mandato: '2025-2029' },
+            { nome: 'Gentil Nogueira de Sá Júnior', cargo: 'Diretor', mandato: '2025-2030' }
         ]
     },
     'ANATEL': {
@@ -2487,11 +2487,10 @@ const AGENCIAS_REGULADORAS = {
         lei_criacao: 'Lei nº 9.472/1997',
         vinculacao: 'Ministério das Comunicações',
         diretores: [
-            { nome: 'Carlos Manuel Baigorri', cargo: 'Presidente', mandato: '2022-2027' },
-            { nome: 'Artur Coimbra de Oliveira', cargo: 'Conselheiro', mandato: '2022-2027' },
-            { nome: 'Viviane Nóbrega Maldonado', cargo: 'Conselheira', mandato: '2024-2029' },
-            { nome: 'Alexandre Freire', cargo: 'Conselheiro', mandato: '2023-2028' },
-            { nome: 'Vicente Aquino', cargo: 'Conselheiro', mandato: '2021-2026' }
+            { nome: 'Carlos Manuel Baigorri', cargo: 'Presidente', mandato: '2022-2026' },
+            { nome: 'Alexandre Reis Siqueira Freire', cargo: 'Conselheiro', mandato: '2022-2027' },
+            { nome: 'Octávio Penna Pieranti', cargo: 'Conselheiro', mandato: '2025-2028' },
+            { nome: 'Edson Victor Eugênio de Holanda', cargo: 'Conselheiro', mandato: '2025-2029' }
         ]
     },
     'ANP': {
@@ -2503,10 +2502,11 @@ const AGENCIAS_REGULADORAS = {
         lei_criacao: 'Lei nº 9.478/1997',
         vinculacao: 'Ministério de Minas e Energia',
         diretores: [
-            { nome: 'Rodolfo Henrique de Saboia', cargo: 'Diretor-Geral', mandato: '2024-2028' },
-            { nome: 'Fernando Moura', cargo: 'Diretor', mandato: '2022-2026' },
-            { nome: 'Pietro Adamo Tonini Mendes', cargo: 'Diretor', mandato: '2023-2027' },
-            { nome: 'Regiane Boaventura Soares Mondini', cargo: 'Diretora', mandato: '2024-2028' }
+            { nome: 'Artur Watt Neto', cargo: 'Diretor-Geral', mandato: '2025-2029' },
+            { nome: 'Symone Christine de Santana Araújo', cargo: 'Diretora', mandato: '2023-2027' },
+            { nome: 'Daniel Maia Vieira', cargo: 'Diretor', mandato: '2022-2026' },
+            { nome: 'Fernando Luiz Gonçalves Moura', cargo: 'Diretor', mandato: '2022-2026' },
+            { nome: 'Pietro Adamo Sampaio Mendes', cargo: 'Diretor', mandato: '2025-2029' }
         ]
     },
     'ANVISA': {
@@ -2518,10 +2518,10 @@ const AGENCIAS_REGULADORAS = {
         lei_criacao: 'Lei nº 9.782/1999',
         vinculacao: 'Ministério da Saúde',
         diretores: [
-            { nome: 'Rômison Rodrigues Mota', cargo: 'Diretor-Presidente', mandato: '2025-2030' },
-            { nome: 'Daniel Roberto Coradi de Freitas', cargo: 'Diretor', mandato: '2023-2028' },
-            { nome: 'Alex Machado Campos', cargo: 'Diretor', mandato: '2024-2029' },
-            { nome: 'Daniela Matozinhos Oliveira', cargo: 'Diretora', mandato: '2024-2029' }
+            { nome: 'Leandro Pinheiro Safatle', cargo: 'Diretor-Presidente', mandato: '2025-2030' },
+            { nome: 'Daniel Meirelles Fernandes Pereira', cargo: 'Diretor', mandato: '2023-2028' },
+            { nome: 'Daniela Marreco Cerqueira', cargo: 'Diretora', mandato: '2025-2030' },
+            { nome: 'Thiago Lopes Cardoso Campos', cargo: 'Diretor', mandato: '2025-2030' }
         ]
     },
     'ANS': {
@@ -2533,9 +2533,10 @@ const AGENCIAS_REGULADORAS = {
         lei_criacao: 'Lei nº 9.961/2000',
         vinculacao: 'Ministério da Saúde',
         diretores: [
-            { nome: 'Paulo Roberto Vanderlei Rebello Filho', cargo: 'Diretor-Presidente', mandato: '2022-2027' },
-            { nome: 'Eliane Medeiros', cargo: 'Diretora de Gestão', mandato: '2022-2027' },
-            { nome: 'Jorge Aquino', cargo: 'Diretor de Normas e Habilitação', mandato: '2024-2029' }
+            { nome: 'Wadih Nemer Damous Filho', cargo: 'Diretor-Presidente', mandato: '2025-2029' },
+            { nome: 'Eliane Aparecida de Castro Medeiros', cargo: 'Diretora de Fiscalização', mandato: '2022-2026' },
+            { nome: 'Lenise Barcellos de Mello Secchin', cargo: 'Diretora de Normas', mandato: '2025-2030' },
+            { nome: 'Jorge Antônio Aquino Lopes', cargo: 'Diretor de Normas e Habilitação', mandato: '2022-2026' }
         ]
     },
     'ANTT': {
@@ -2547,11 +2548,10 @@ const AGENCIAS_REGULADORAS = {
         lei_criacao: 'Lei nº 10.233/2001',
         vinculacao: 'Ministério dos Transportes',
         diretores: [
-            { nome: 'Rafael Vitale Rodrigues', cargo: 'Diretor-Geral', mandato: '2023-2027' },
-            { nome: 'Guilherme Sampaio', cargo: 'Diretor', mandato: '2023-2027' },
-            { nome: 'Viviane Esse', cargo: 'Diretora', mandato: '2023-2027' },
-            { nome: 'Cristiana Fortini', cargo: 'Diretora', mandato: '2023-2027' },
-            { nome: 'José Marcelo Duarte Oliveira', cargo: 'Diretor', mandato: '2024-2028' }
+            { nome: 'Guilherme Theo Rodrigues da Rocha Sampaio', cargo: 'Diretor-Geral', mandato: '2025-2030' },
+            { nome: 'Alex Antônio de Azevedo Cruz', cargo: 'Diretor', mandato: '2025-2030' },
+            { nome: 'Felipe Fernandes Queiroz', cargo: 'Diretor', mandato: '2022-2027' },
+            { nome: 'Lucas Asfor Rocha Lima', cargo: 'Diretor', mandato: '2023-2028' }
         ]
     },
     'ANTAQ': {
@@ -2563,9 +2563,10 @@ const AGENCIAS_REGULADORAS = {
         lei_criacao: 'Lei nº 10.233/2001',
         vinculacao: 'Ministério de Portos e Aeroportos',
         diretores: [
-            { nome: 'Frederico Carvalho Dias', cargo: 'Diretor-Geral', mandato: '2025-2029' },
-            { nome: 'Wilson Pereira de Lima Filho', cargo: 'Diretor', mandato: '2022-2026' },
-            { nome: 'Alber Furtado de Vasconcelos Neto', cargo: 'Diretor', mandato: '2022-2026' }
+            { nome: 'Frederico Carvalho Dias', cargo: 'Diretor-Geral', mandato: '2025-2030' },
+            { nome: 'Wilson Pereira de Lima Filho', cargo: 'Diretor', mandato: '2022-2027' },
+            { nome: 'Alber Furtado de Vasconcelos Neto', cargo: 'Diretor', mandato: '2022-2026' },
+            { nome: 'Caio César Farias Leôncio', cargo: 'Diretor', mandato: '2022-2027' }
         ]
     },
     'ANAC': {
@@ -2577,9 +2578,10 @@ const AGENCIAS_REGULADORAS = {
         lei_criacao: 'Lei nº 11.182/2005',
         vinculacao: 'Ministério de Portos e Aeroportos',
         diretores: [
-            { nome: 'Tiago Sousa Pereira', cargo: 'Diretor-Presidente', mandato: '2024-2029' },
-            { nome: 'Luiz Gustavo Anawate Santana', cargo: 'Diretor', mandato: '2024-2029' },
-            { nome: 'Ricardo Catanant', cargo: 'Diretor', mandato: '2023-2028' }
+            { nome: 'Tiago Chagas Faierstein', cargo: 'Diretor-Presidente', mandato: '2025-2030' },
+            { nome: 'Tiago Sousa Pereira', cargo: 'Diretor', mandato: '2021-2026' },
+            { nome: 'Rui Chagas Mesquita', cargo: 'Diretor', mandato: '2025-2030' },
+            { nome: 'Antônio Mathias Nogueira Moreira', cargo: 'Diretor', mandato: '2025-2030' }
         ]
     },
     'ANA': {
@@ -2591,9 +2593,10 @@ const AGENCIAS_REGULADORAS = {
         lei_criacao: 'Lei nº 9.984/2000',
         vinculacao: 'Ministério da Integração e do Desenvolvimento Regional',
         diretores: [
-            { nome: 'Veronica Sánchez da Cruz Rios', cargo: 'Diretora-Presidente', mandato: '2024-2028' },
-            { nome: 'Ana Carolina Argolo', cargo: 'Diretora', mandato: '2023-2027' },
-            { nome: 'Marcelo Cruz', cargo: 'Diretor', mandato: '2024-2028' }
+            { nome: 'Ana Carolina Argolo Nascimento de Castro', cargo: 'Diretora-Presidente Interina', mandato: '2022-2026' },
+            { nome: 'Larissa Oliveira Rego', cargo: 'Diretora', mandato: '2025-2029' },
+            { nome: 'Cristiane Collet Battiston', cargo: 'Diretora', mandato: '2025-2030' },
+            { nome: 'Leonardo Goes Silva', cargo: 'Diretor', mandato: '2025-2029' }
         ]
     },
     'ANM': {
@@ -2605,9 +2608,10 @@ const AGENCIAS_REGULADORAS = {
         lei_criacao: 'Lei nº 13.575/2017',
         vinculacao: 'Ministério de Minas e Energia',
         diretores: [
-            { nome: 'Mauro Henrique Moreira de Souza', cargo: 'Diretor-Geral', mandato: '2021-2025' },
-            { nome: 'Jean Pierre Soares Bassit', cargo: 'Diretor', mandato: '2023-2027' },
-            { nome: 'Yuri Souza de Oliveira', cargo: 'Diretor', mandato: '2024-2028' }
+            { nome: 'Mauro Henrique Moreira Sousa', cargo: 'Diretor-Geral', mandato: '2022-2026' },
+            { nome: 'José Fernando de Mendonça Gomes Júnior', cargo: 'Diretor', mandato: '2025-2028' },
+            { nome: 'Luiz Paniago Neves', cargo: 'Diretor Substituto', mandato: '2025-2026' },
+            { nome: 'Fábio Fernando Borges', cargo: 'Diretor Substituto', mandato: '2025-2026' }
         ]
     },
     'ANCINE': {
@@ -2619,7 +2623,10 @@ const AGENCIAS_REGULADORAS = {
         lei_criacao: 'MP nº 2.228-1/2001',
         vinculacao: 'Ministério da Cultura',
         diretores: [
-            { nome: 'Alex Braga Muniz', cargo: 'Diretor-Presidente', mandato: '2023-2027' }
+            { nome: 'Alex Braga Muniz', cargo: 'Diretor-Presidente', mandato: '2021-2026' },
+            { nome: 'Vinícius Clay Araújo Gomes', cargo: 'Diretor', mandato: '2021-2026' },
+            { nome: 'Paulo Xavier Alcoforado', cargo: 'Diretor', mandato: '2023-2027' },
+            { nome: 'Patrícia Barcelos', cargo: 'Diretora', mandato: '2025-2029' }
         ]
     },
     'CVM': {
@@ -2631,11 +2638,8 @@ const AGENCIAS_REGULADORAS = {
         lei_criacao: 'Lei nº 6.385/1976',
         vinculacao: 'Ministério da Fazenda',
         diretores: [
-            { nome: 'João Pedro Barroso do Nascimento', cargo: 'Presidente', mandato: '2023-2028' },
-            { nome: 'Daniel Maeda', cargo: 'Diretor', mandato: '2024-2029' },
-            { nome: 'Otto Eduardo Hutzler Lobo', cargo: 'Diretor', mandato: '2022-2027' },
-            { nome: 'Marina Copola', cargo: 'Diretora', mandato: '2024-2029' },
-            { nome: 'João Accioly Tenório', cargo: 'Diretor', mandato: '2024-2029' }
+            { nome: 'João Carlos de Andrade Uzeda Accioly', cargo: 'Presidente Interino', mandato: '2022-2026' },
+            { nome: 'Marina Palma Copola de Carvalho', cargo: 'Diretora', mandato: '2024-2028' }
         ]
     },
     'CADE': {
@@ -2647,12 +2651,12 @@ const AGENCIAS_REGULADORAS = {
         lei_criacao: 'Lei nº 12.529/2011',
         vinculacao: 'Ministério da Justiça',
         diretores: [
-            { nome: 'Alexandre Cordeiro Macedo', cargo: 'Presidente', mandato: '2024-2028' },
-            { nome: 'Lenisa Rodrigues Prado', cargo: 'Conselheira', mandato: '2023-2027' },
-            { nome: 'Victor Santos Fernandes', cargo: 'Conselheiro', mandato: '2023-2027' },
-            { nome: 'Gustavo Augusto Freitas de Lima', cargo: 'Conselheiro', mandato: '2024-2028' },
+            { nome: 'Gustavo Augusto Freitas de Lima', cargo: 'Presidente', mandato: '2022-2026' },
             { nome: 'Carlos Jacques Vieira Gomes', cargo: 'Conselheiro', mandato: '2024-2028' },
-            { nome: 'Diogo Thomson de Andrade', cargo: 'Conselheiro', mandato: '2024-2028' }
+            { nome: 'Diogo Thomson de Andrade', cargo: 'Conselheiro', mandato: '2023-2027' },
+            { nome: 'Victor Oliveira Fernandes', cargo: 'Conselheiro', mandato: '2022-2026' },
+            { nome: 'Camila Cabral Pires Alves', cargo: 'Conselheira', mandato: '2024-2028' },
+            { nome: 'José Levi Mello do Amaral Júnior', cargo: 'Conselheiro', mandato: '2024-2028' }
         ]
     },
     // ─── Agências Estaduais ───
@@ -2665,11 +2669,10 @@ const AGENCIAS_REGULADORAS = {
         lei_criacao: 'Lei Complementar nº 914/2002',
         vinculacao: 'Governo do Estado de São Paulo',
         diretores: [
-            { nome: 'Milton Persoli', cargo: 'Diretor-Geral', mandato: '2023-2027' },
-            { nome: 'André Isper Lisbôa de Alkmim', cargo: 'Diretor', mandato: '2023-2027' },
-            { nome: 'Diego Albert Samrsla', cargo: 'Diretor', mandato: '2023-2027' },
-            { nome: 'Fernanda Esbizaro Vicentini', cargo: 'Diretora', mandato: '2023-2027' },
-            { nome: 'Raquel Oliveira França', cargo: 'Diretora', mandato: '2023-2027' }
+            { nome: 'André Isper Rodrigues Barnabé', cargo: 'Diretor-Presidente', mandato: '2023-2027' },
+            { nome: 'Diego Zanatto', cargo: 'Diretor', mandato: '2023-2027' },
+            { nome: 'Fernanda Esbizaro Rodrigues Rudnik', cargo: 'Diretora', mandato: '2023-2027' },
+            { nome: 'Raquel França Carneiro', cargo: 'Diretora', mandato: '2025-2029' }
         ]
     },
     'ARSESP': {
@@ -2681,7 +2684,11 @@ const AGENCIAS_REGULADORAS = {
         lei_criacao: 'Lei Complementar nº 1.025/2007',
         vinculacao: 'Governo do Estado de São Paulo',
         diretores: [
-            { nome: 'Marcos Antônio Ribas Cavalcanti', cargo: 'Diretor-Geral', mandato: '2022-2026' }
+            { nome: 'Thiago Mesquita Nunes', cargo: 'Diretor-Presidente', mandato: '2023-2027' },
+            { nome: 'Amauri Gavião Almeida Marques da Silva', cargo: 'Diretor de Gás', mandato: '2022-2027' },
+            { nome: 'Gustavo Zarif Frayha', cargo: 'Diretor de Saneamento', mandato: '2023-2027' },
+            { nome: 'Daniel Antônio Narzetti', cargo: 'Diretor de Regulação', mandato: '2024-2028' },
+            { nome: 'Thiago Roberto Magalhães Veloso', cargo: 'Diretor de Energia', mandato: '2023-2027' }
         ]
     }
 };

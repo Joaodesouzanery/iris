@@ -826,8 +826,8 @@
                         nome: 'Mauro Henrique Moreira Sousa',
                         cargo: 'Diretor-Geral',
                         iniciais: 'MM',
-                        inicio: '2023-04-15',
-                        termino: '2027-04-14',
+                        inicio: '2022-04-15',
+                        termino: '2026-12-31',
                         ativo: true,
                         participacoes: 78,
                         relatorias: 12,
@@ -836,69 +836,56 @@
                         vista: 2
                     },
                     {
-                        nome: 'Luiz Paniago Neves',
-                        cargo: 'Diretor Substituto',
-                        iniciais: 'LP',
-                        inicio: '2023-06-01',
-                        termino: '2027-05-31',
-                        ativo: true,
-                        participacoes: 65,
-                        relatorias: 8,
-                        favoravel: 60,
-                        desfavoravel: 3,
-                        vista: 2
-                    },
-                    {
-                        nome: 'Fabio Fernando Borges',
-                        cargo: 'Diretor Substituto',
-                        iniciais: 'FB',
-                        inicio: '2022-11-20',
-                        termino: '2026-11-19',
-                        ativo: true,
-                        participacoes: 89,
-                        relatorias: 15,
-                        favoravel: 82,
-                        desfavoravel: 5,
-                        vista: 2
-                    },
-                    {
-                        nome: 'Caio Mario Trivellato Seabra Filho',
-                        cargo: 'Diretor',
-                        iniciais: 'CT',
-                        inicio: '2024-02-10',
-                        termino: '2028-02-09',
-                        ativo: true,
-                        participacoes: 45,
-                        relatorias: 5,
-                        favoravel: 44,
-                        desfavoravel: 0,
-                        vista: 1
-                    },
-                    {
                         nome: 'Jose Fernando de Mendonca Gomes Junior',
                         cargo: 'Diretor',
                         iniciais: 'JG',
-                        inicio: '2024-03-01',
-                        termino: '2028-02-29',
+                        inicio: '2025-01-01',
+                        termino: '2028-12-31',
                         ativo: true,
                         participacoes: 42,
                         relatorias: 3,
                         favoravel: 40,
                         desfavoravel: 0,
                         vista: 2
+                    },
+                    {
+                        nome: 'Luiz Paniago Neves',
+                        cargo: 'Diretor Substituto',
+                        iniciais: 'LP',
+                        inicio: '2025-06-01',
+                        termino: '2026-12-31',
+                        ativo: true,
+                        participacoes: 35,
+                        relatorias: 4,
+                        favoravel: 33,
+                        desfavoravel: 1,
+                        vista: 1
+                    },
+                    {
+                        nome: 'Fabio Fernando Borges',
+                        cargo: 'Diretor Substituto',
+                        iniciais: 'FB',
+                        inicio: '2025-06-01',
+                        termino: '2026-12-31',
+                        ativo: true,
+                        participacoes: 35,
+                        relatorias: 4,
+                        favoravel: 33,
+                        desfavoravel: 1,
+                        vista: 1
                     }
                 ],
                 stats: {
-                    diretoresAtivos: 5,
-                    participacoesColegiadas: 319,
+                    diretoresAtivos: 4,
+                    participacoesColegiadas: 190,
                     taxaConsenso: 94,
                     deliberacoes: 156
                 },
                 votos: {
-                    favoravel: 298,
-                    desfavoravel: 12,
+                    favoravel: 178,
+                    desfavoravel: 6,
                     vista: 6,
-                    relator: 3
+                    relator: 0
                 },
                 setores: [
                     { nome: 'Licenciamento', valor: 67, cor: '#60a5fa' },
@@ -917,7 +904,7 @@
                         cargo: 'Presidente',
                         iniciais: 'CB',
                         inicio: '2022-11-04',
-                        termino: '2027-11-03',
+                        termino: '2026-11-03',
                         ativo: true,
                         participacoes: 156,
                         relatorias: 28,
@@ -926,42 +913,55 @@
                         vista: 3
                     },
                     {
-                        nome: 'Artur Coimbra de Oliveira',
-                        cargo: 'Conselheiro',
-                        iniciais: 'AC',
-                        inicio: '2021-02-05',
-                        termino: '2026-02-04',
-                        ativo: true,
-                        participacoes: 189,
-                        relatorias: 35,
-                        favoravel: 180,
-                        desfavoravel: 6,
-                        vista: 3
-                    },
-                    {
-                        nome: 'Alexandre Freire',
+                        nome: 'Alexandre Reis Siqueira Freire',
                         cargo: 'Conselheiro',
                         iniciais: 'AF',
-                        inicio: '2023-06-15',
-                        termino: '2028-06-14',
+                        inicio: '2022-06-15',
+                        termino: '2027-06-14',
                         ativo: true,
                         participacoes: 98,
                         relatorias: 18,
                         favoravel: 94,
                         desfavoravel: 2,
                         vista: 2
+                    },
+                    {
+                        nome: 'Octávio Penna Pieranti',
+                        cargo: 'Conselheiro',
+                        iniciais: 'OP',
+                        inicio: '2025-08-01',
+                        termino: '2028-12-31',
+                        ativo: true,
+                        participacoes: 32,
+                        relatorias: 5,
+                        favoravel: 30,
+                        desfavoravel: 1,
+                        vista: 1
+                    },
+                    {
+                        nome: 'Edson Victor Eugênio de Holanda',
+                        cargo: 'Conselheiro',
+                        iniciais: 'EV',
+                        inicio: '2025-09-01',
+                        termino: '2029-12-31',
+                        ativo: true,
+                        participacoes: 28,
+                        relatorias: 4,
+                        favoravel: 27,
+                        desfavoravel: 0,
+                        vista: 1
                     }
                 ],
                 stats: {
-                    diretoresAtivos: 3,
-                    participacoesColegiadas: 443,
+                    diretoresAtivos: 4,
+                    participacoesColegiadas: 314,
                     taxaConsenso: 96,
                     deliberacoes: 234
                 },
                 votos: {
-                    favoravel: 422,
-                    desfavoravel: 13,
-                    vista: 8,
+                    favoravel: 299,
+                    desfavoravel: 8,
+                    vista: 7,
                     relator: 0
                 },
                 setores: [
@@ -976,24 +976,24 @@
                 cor: '#F59E0B',
                 diretores: [
                     {
-                        nome: 'Agnes Maria de Aragao da Costa',
-                        cargo: 'Diretora-Presidente',
-                        iniciais: 'AC',
-                        inicio: '2024-01-10',
-                        termino: '2029-01-09',
+                        nome: 'Sandoval de Araújo Feitosa Neto',
+                        cargo: 'Diretor-Geral',
+                        iniciais: 'SF',
+                        inicio: '2022-01-10',
+                        termino: '2027-12-31',
                         ativo: true,
-                        participacoes: 87,
-                        relatorias: 15,
-                        favoravel: 82,
-                        desfavoravel: 3,
-                        vista: 2
+                        participacoes: 187,
+                        relatorias: 30,
+                        favoravel: 180,
+                        desfavoravel: 4,
+                        vista: 3
                     },
                     {
-                        nome: 'Ricardo Lavorato',
-                        cargo: 'Diretor',
-                        iniciais: 'RL',
-                        inicio: '2022-08-20',
-                        termino: '2027-08-19',
+                        nome: 'Agnes Maria de Aragao da Costa',
+                        cargo: 'Diretora',
+                        iniciais: 'AC',
+                        inicio: '2022-06-20',
+                        termino: '2028-12-31',
                         ativo: true,
                         participacoes: 145,
                         relatorias: 25,
@@ -1002,29 +1002,55 @@
                         vista: 3
                     },
                     {
-                        nome: 'Fernando Mosna',
+                        nome: 'Fernando Luiz Mosna Ferreira da Silva',
                         cargo: 'Diretor',
                         iniciais: 'FM',
-                        inicio: '2023-03-15',
-                        termino: '2028-03-14',
+                        inicio: '2022-03-15',
+                        termino: '2026-12-31',
                         ativo: true,
-                        participacoes: 112,
-                        relatorias: 20,
-                        favoravel: 108,
-                        desfavoravel: 2,
+                        participacoes: 145,
+                        relatorias: 22,
+                        favoravel: 140,
+                        desfavoravel: 3,
                         vista: 2
+                    },
+                    {
+                        nome: 'Willamy Moreira Frota',
+                        cargo: 'Diretor',
+                        iniciais: 'WF',
+                        inicio: '2025-08-01',
+                        termino: '2029-12-31',
+                        ativo: true,
+                        participacoes: 28,
+                        relatorias: 4,
+                        favoravel: 27,
+                        desfavoravel: 0,
+                        vista: 1
+                    },
+                    {
+                        nome: 'Gentil Nogueira de Sa Junior',
+                        cargo: 'Diretor',
+                        iniciais: 'GN',
+                        inicio: '2025-09-01',
+                        termino: '2030-12-31',
+                        ativo: true,
+                        participacoes: 25,
+                        relatorias: 3,
+                        favoravel: 24,
+                        desfavoravel: 0,
+                        vista: 1
                     }
                 ],
                 stats: {
-                    diretoresAtivos: 3,
-                    participacoesColegiadas: 344,
+                    diretoresAtivos: 5,
+                    participacoesColegiadas: 530,
                     taxaConsenso: 97,
                     deliberacoes: 198
                 },
                 votos: {
-                    favoravel: 328,
-                    desfavoravel: 9,
-                    vista: 7,
+                    favoravel: 509,
+                    desfavoravel: 11,
+                    vista: 10,
                     relator: 0
                 },
                 setores: [
@@ -1743,64 +1769,54 @@
                         nome: 'Mauro Henrique Moreira Sousa',
                         cargo: 'Diretor-Geral',
                         iniciais: 'MM',
-                        inicio: '2023-04-15',
-                        termino: '2027-04-14',
+                        inicio: '2022-04-15',
+                        termino: '2026-12-31',
                         ativo: true,
                         participacoes: 78,
                         relatorias: 12
                     },
                     {
+                        nome: 'Jose Fernando de Mendonca Gomes Junior',
+                        cargo: 'Diretor',
+                        iniciais: 'JG',
+                        inicio: '2025-01-01',
+                        termino: '2028-12-31',
+                        ativo: true,
+                        participacoes: 42,
+                        relatorias: 3
+                    },
+                    {
                         nome: 'Luiz Paniago Neves',
                         cargo: 'Diretor Substituto',
                         iniciais: 'LP',
-                        inicio: '2023-06-01',
-                        termino: '2027-05-31',
+                        inicio: '2025-06-01',
+                        termino: '2026-12-31',
                         ativo: true,
-                        participacoes: 65,
-                        relatorias: 8
+                        participacoes: 35,
+                        relatorias: 4
                     },
                     {
                         nome: 'Fabio Fernando Borges',
                         cargo: 'Diretor Substituto',
                         iniciais: 'FB',
-                        inicio: '2022-11-20',
-                        termino: '2026-11-19',
+                        inicio: '2025-06-01',
+                        termino: '2026-12-31',
                         ativo: true,
-                        participacoes: 89,
-                        relatorias: 15
-                    },
-                    {
-                        nome: 'Caio Mario Trivellato Seabra Filho',
-                        cargo: 'Diretor',
-                        iniciais: 'CT',
-                        inicio: '2024-02-10',
-                        termino: '2028-02-09',
-                        ativo: true,
-                        participacoes: 45,
-                        relatorias: 5
-                    },
-                    {
-                        nome: 'Jose Fernando de Mendonca Gomes Junior',
-                        cargo: 'Diretor',
-                        iniciais: 'JG',
-                        inicio: '2024-03-01',
-                        termino: '2028-02-29',
-                        ativo: true,
-                        participacoes: 42,
-                        relatorias: 3
+                        participacoes: 35,
+                        relatorias: 4
                     }
                 ],
                 stats: {
-                    diretoresAtivos: 5,
-                    participacoesColegiadas: 319,
+                    diretoresAtivos: 4,
+                    participacoesColegiadas: 190,
                     taxaConsenso: 94,
                     deliberacoes: 156
                 },
                 votos: {
-                    favoravel: 298,
-                    desfavoravel: 12,
+                    favoravel: 178,
+                    desfavoravel: 6,
                     vista: 6,
-                    relator: 3
+                    relator: 0
                 },
                 setores: [
                     { nome: 'Licenciamento', valor: 67, cor: '#f472b6' },
@@ -4521,21 +4537,28 @@
 
         // Mandatos de diretores (dados públicos do DOU / gov.br)
         // Fonte: Diário Oficial da União, portais oficiais das agências
+        // Atualizado: Fev/2026 - dados verificados em fontes oficiais
         mandatos: [
-            { nome: 'Sandoval de Araújo Feitosa Neto', cargo: 'Diretor-Geral', agencia: 'ANEEL', fim: '2028-02-10', cor: '#FFEF4D' },
-            { nome: 'Hélvio Neves Guerra', cargo: 'Diretor', agencia: 'ANEEL', fim: '2026-11-05', cor: '#FFEF4D' },
-            { nome: 'Carlos Manuel Baigorri', cargo: 'Presidente', agencia: 'ANATEL', fim: '2027-11-03', cor: '#4ADE80' },
-            { nome: 'Artur Coimbra de Oliveira', cargo: 'Conselheiro', agencia: 'ANATEL', fim: '2027-02-04', cor: '#4ADE80' },
-            { nome: 'Rodolfo Henrique de Saboia', cargo: 'Diretor-Geral', agencia: 'ANP', fim: '2028-04-15', cor: '#F472B6' },
-            { nome: 'Rômison Rodrigues Mota', cargo: 'Diretor-Presidente', agencia: 'ANVISA', fim: '2030-01-15', cor: '#A78BFA' },
-            { nome: 'Paulo Roberto Vanderlei Rebello Filho', cargo: 'Diretor-Presidente', agencia: 'ANS', fim: '2027-03-15', cor: '#F97316' },
-            { nome: 'Rafael Vitale Rodrigues', cargo: 'Diretor-Geral', agencia: 'ANTT', fim: '2027-06-20', cor: '#14B8A6' },
-            { nome: 'Cristiana Fortini', cargo: 'Diretora', agencia: 'ANTT', fim: '2027-06-20', cor: '#14B8A6' },
-            { nome: 'Frederico Carvalho Dias', cargo: 'Diretor-Geral', agencia: 'ANTAQ', fim: '2029-01-15', cor: '#06B6D4' },
-            { nome: 'Tiago Sousa Pereira', cargo: 'Diretor-Presidente', agencia: 'ANAC', fim: '2029-02-22', cor: '#8B5CF6' },
-            { nome: 'Veronica Sánchez da Cruz Rios', cargo: 'Diretora-Presidente', agencia: 'ANA', fim: '2028-07-15', cor: '#60A5FA' },
-            { nome: 'Milton Persoli', cargo: 'Diretor-Geral', agencia: 'ARTESP', fim: '2027-06-01', cor: '#FBBF24' },
-            { nome: 'João Pedro Barroso do Nascimento', cargo: 'Presidente', agencia: 'CVM', fim: '2028-01-10', cor: '#22D3EE' }
+            { nome: 'Sandoval de Araújo Feitosa Neto', cargo: 'Diretor-Geral', agencia: 'ANEEL', fim: '2027-12-31', cor: '#FFEF4D' },
+            { nome: 'Agnes Maria de Aragão da Costa', cargo: 'Diretora', agencia: 'ANEEL', fim: '2028-12-31', cor: '#FFEF4D' },
+            { nome: 'Willamy Moreira Frota', cargo: 'Diretor', agencia: 'ANEEL', fim: '2029-12-31', cor: '#FFEF4D' },
+            { nome: 'Carlos Manuel Baigorri', cargo: 'Presidente', agencia: 'ANATEL', fim: '2026-11-03', cor: '#4ADE80' },
+            { nome: 'Octávio Penna Pieranti', cargo: 'Conselheiro', agencia: 'ANATEL', fim: '2028-12-31', cor: '#4ADE80' },
+            { nome: 'Artur Watt Neto', cargo: 'Diretor-Geral', agencia: 'ANP', fim: '2029-12-31', cor: '#F472B6' },
+            { nome: 'Symone Araújo', cargo: 'Diretora', agencia: 'ANP', fim: '2027-12-31', cor: '#F472B6' },
+            { nome: 'Leandro Pinheiro Safatle', cargo: 'Diretor-Presidente', agencia: 'ANVISA', fim: '2030-12-31', cor: '#A78BFA' },
+            { nome: 'Daniel Meirelles Fernandes Pereira', cargo: 'Diretor', agencia: 'ANVISA', fim: '2028-12-31', cor: '#A78BFA' },
+            { nome: 'Wadih Nemer Damous Filho', cargo: 'Diretor-Presidente', agencia: 'ANS', fim: '2029-12-31', cor: '#F97316' },
+            { nome: 'Eliane Medeiros', cargo: 'Diretora de Fiscalização', agencia: 'ANS', fim: '2026-12-31', cor: '#F97316' },
+            { nome: 'Guilherme Sampaio', cargo: 'Diretor-Geral', agencia: 'ANTT', fim: '2030-12-31', cor: '#14B8A6' },
+            { nome: 'Felipe Fernandes Queiroz', cargo: 'Diretor', agencia: 'ANTT', fim: '2027-12-31', cor: '#14B8A6' },
+            { nome: 'Frederico Carvalho Dias', cargo: 'Diretor-Geral', agencia: 'ANTAQ', fim: '2030-12-31', cor: '#06B6D4' },
+            { nome: 'Tiago Chagas Faierstein', cargo: 'Diretor-Presidente', agencia: 'ANAC', fim: '2030-12-31', cor: '#8B5CF6' },
+            { nome: 'Tiago Sousa Pereira', cargo: 'Diretor', agencia: 'ANAC', fim: '2026-12-31', cor: '#8B5CF6' },
+            { nome: 'Ana Carolina Argolo', cargo: 'Diretora-Presidente Interina', agencia: 'ANA', fim: '2026-12-31', cor: '#60A5FA' },
+            { nome: 'André Isper Rodrigues Barnabé', cargo: 'Diretor-Presidente', agencia: 'ARTESP', fim: '2027-12-31', cor: '#FBBF24' },
+            { nome: 'João Carlos Accioly', cargo: 'Presidente Interino', agencia: 'CVM', fim: '2026-12-31', cor: '#22D3EE' },
+            { nome: 'Thiago Mesquita Nunes', cargo: 'Diretor-Presidente', agencia: 'ARSESP', fim: '2027-12-31', cor: '#EC4899' }
         ],
 
         currentTab: 'todas',
@@ -4987,10 +5010,9 @@
                 corSecundaria: '#3b82f6',
                 diretores: [
                     { nome: 'Mauro Henrique Moreira Sousa', cargo: 'Diretor-Geral', iniciais: 'MM' },
+                    { nome: 'Jose Fernando de Mendonca Gomes Junior', cargo: 'Diretor', iniciais: 'JG' },
                     { nome: 'Luiz Paniago Neves', cargo: 'Diretor Substituto', iniciais: 'LP' },
-                    { nome: 'Fabio Fernando Borges', cargo: 'Diretor Substituto', iniciais: 'FB' },
-                    { nome: 'Caio Mario Trivellato Seabra Filho', cargo: 'Diretor', iniciais: 'CT' },
-                    { nome: 'Jose Fernando de Mendonca Gomes Junior', cargo: 'Diretor', iniciais: 'JG' }
+                    { nome: 'Fabio Fernando Borges', cargo: 'Diretor Substituto', iniciais: 'FB' }
                 ]
             }
         ],
