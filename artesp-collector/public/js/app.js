@@ -2712,7 +2712,7 @@
             if (!entities.length) {
                 const isSearch = !!filter;
                 grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:48px 0;color:var(--text-muted);">
-                    ${isSearch ? 'Nenhuma entidade encontrada para esta busca.' : 'Nenhum dado disponível. Faça <a href="/upload" data-route="/upload" style="color:var(--primary);text-decoration:underline;">upload de PDFs</a> para alimentar o grafo com dados reais.'}
+                    ${isSearch ? 'Nenhuma entidade encontrada para esta busca.' : 'Carregando entidades... Se não aparecerem, verifique a conexão com o servidor.'}
                 </div>`;
                 return;
             }
@@ -2912,44 +2912,49 @@
             offscreen.width = w * 2; offscreen.height = h * 2;
             const octx = offscreen.getContext('2d');
             octx.scale(2, 2);
-            octx.fillStyle = '#0d1117';
+            // Clean dark background with subtle radial gradient
+            octx.fillStyle = '#080c14';
             octx.fillRect(0, 0, w, h);
-            octx.globalAlpha = 0.06;
-            octx.strokeStyle = '#30363d';
-            octx.lineWidth = 0.5;
-            const gridSize = 40;
-            for (let gx = 0; gx < w; gx += gridSize) {
-                octx.beginPath(); octx.moveTo(gx, 0); octx.lineTo(gx, h); octx.stroke();
-            }
-            for (let gy = 0; gy < h; gy += gridSize) {
-                octx.beginPath(); octx.moveTo(0, gy); octx.lineTo(w, gy); octx.stroke();
+            const grad = octx.createRadialGradient(w/2, h/2, 0, w/2, h/2, Math.max(w, h) * 0.6);
+            grad.addColorStop(0, 'rgba(42, 66, 140, 0.08)');
+            grad.addColorStop(0.5, 'rgba(42, 66, 140, 0.03)');
+            grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+            octx.fillStyle = grad;
+            octx.fillRect(0, 0, w, h);
+            // Subtle dot pattern instead of grid
+            octx.fillStyle = 'rgba(255,255,255,0.03)';
+            const dotSpacing = 48;
+            for (let gx = dotSpacing; gx < w; gx += dotSpacing) {
+                for (let gy = dotSpacing; gy < h; gy += dotSpacing) {
+                    octx.beginPath(); octx.arc(gx, gy, 0.5, 0, Math.PI * 2); octx.fill();
+                }
             }
             this._gridCanvas = offscreen;
         },
         simulateForces(alpha) {
             const cx=this.width/2,cy=this.height/2;
             const nodes=this.nodes,len=nodes.length;
-            // Repulsive forces with distance threshold (skip pairs >800px apart)
+            // Stronger repulsion for better spacing with circular nodes
             for(let i=0;i<len;i++) {
                 const a=nodes[i];
                 for(let j=i+1;j<len;j++){
                     const b=nodes[j];
                     const dx=b.x-a.x,dy=b.y-a.y;
                     const distSq=dx*dx+dy*dy;
-                    if(distSq>640000) continue; // Skip if >800px apart
+                    if(distSq>1000000) continue;
                     const dist=Math.sqrt(distSq)||1;
-                    const force=5000/distSq*alpha;
+                    const force=8000/distSq*alpha;
                     const fx=(dx/dist)*force,fy=(dy/dist)*force;
                     a.vx-=fx;a.vy-=fy;b.vx+=fx;b.vy+=fy;
                 }
             }
-            // Spring forces along edges
+            // Spring forces along edges — longer resting distance
             const edges=this.edges,elen=edges.length;
             for(let i=0;i<elen;i++){
                 const e=edges[i];
                 const dx=e.target.x-e.source.x,dy=e.target.y-e.source.y;
                 const dist=Math.sqrt(dx*dx+dy*dy)||1;
-                const force=(dist-220)*0.004*e.strength*alpha;
+                const force=(dist-280)*0.003*e.strength*alpha;
                 const fx=(dx/dist)*force,fy=(dy/dist)*force;
                 e.source.vx+=fx;e.source.vy+=fy;e.target.vx-=fx;e.target.vy-=fy;
             }
@@ -2957,12 +2962,11 @@
             let totalEnergy=0;
             for(let i=0;i<len;i++){
                 const n=nodes[i];
-                n.vx+=(cx-n.x)*0.001*alpha;n.vy+=(cy-n.y)*0.001*alpha;
+                n.vx+=(cx-n.x)*0.0008*alpha;n.vy+=(cy-n.y)*0.0008*alpha;
                 n.x+=n.vx;n.y+=n.vy;
-                n.vx*=0.9;n.vy*=0.9;
+                n.vx*=0.88;n.vy*=0.88;
                 totalEnergy+=n.vx*n.vx+n.vy*n.vy;
             }
-            // Track if simulation has settled
             if(totalEnergy<0.01*len){this._settledFrames++;if(this._settledFrames>30)this._settled=true;}
             else{this._settledFrames=0;this._settled=false;}
         },
@@ -2981,7 +2985,7 @@
                 this.mouse.y=(e.clientY-rect.top-this.camera.y+this.height/2)/this.camera.zoom;
                 if(this.dragging){this.dragging.x=this.mouse.x;this.dragging.y=this.mouse.y;this._settled=false;this._settledFrames=0;return;}
                 let found=null;
-                for(let i=this.nodes.length-1;i>=0;i--){const n=this.nodes[i];if(n._hidden)continue;const cw=n._isRoot?70:60,ch=n._isRoot?26:22;if(Math.abs(this.mouse.x-n.x)<cw+5&&Math.abs(this.mouse.y-n.y)<ch+5){found=n;break;}}
+                for(let i=this.nodes.length-1;i>=0;i--){const n=this.nodes[i];if(n._hidden)continue;const r=n._isRoot?35:n.type==='agency'?31:n.type==='director'?27:n.type==='company'?25:21;const dx=this.mouse.x-n.x,dy=this.mouse.y-n.y;if(dx*dx+dy*dy<r*r){found=n;break;}}
                 if(found!==this.hovering){
                     this.hovering=found;clone.style.cursor=found?'pointer':'grab';
                     if(found){
@@ -3102,13 +3106,13 @@
             const dt = timestamp && this._lastTimestamp ? Math.min((timestamp - this._lastTimestamp) / 1000, 0.05) : 0.016;
             this._lastTimestamp = timestamp || 0;
             this.time += dt;
-            // Reset time periodically to prevent floating-point precision loss
             if (this.time > 1000) this.time -= 1000;
-            // Only run force sim when not fully settled
             if (!this._settled || this.dragging) {
                 this.simulateForces(0.01);
             }
-            this.draw();
+            // Skip every other frame when settled and not interacting
+            const shouldDraw = !this._settled || this.hovering || this.dragging || this.selected || (this._frameCount % 3 === 0);
+            if (shouldDraw) this.draw();
             this.animFrame = requestAnimationFrame((ts) => this.animate(ts));
         },
         // Sherlocker-style rounded rectangle helper
@@ -3127,14 +3131,13 @@
         },
         draw() {
             const ctx = this.ctx, w = this.width, h = this.height;
-            // Use pre-rendered grid canvas instead of redrawing grid every frame
             if (this._gridCanvas) {
                 ctx.setTransform(1,0,0,1,0,0);
                 ctx.drawImage(this._gridCanvas, 0, 0);
                 ctx.setTransform(2,0,0,2,0,0);
             } else {
                 ctx.clearRect(0, 0, w, h);
-                ctx.fillStyle = '#0d1117';
+                ctx.fillStyle = '#080c14';
                 ctx.fillRect(0, 0, w, h);
             }
 
@@ -3144,199 +3147,180 @@
 
             const typeLabels = { director: 'Diretor(a)', company: 'Empresa', theme: 'Tema', agency: 'Agência' };
 
-            // ── EDGES ──
+            // ── EDGES — curved bezier ──
             this.edges.forEach(edge => {
                 if (edge.source._hidden || edge.target._hidden) return;
                 const dimmed = edge.source._dimmed && edge.target._dimmed;
                 const hl = this.selected && (edge.source === this.selected || edge.target === this.selected);
                 const hv = this.hovering && (edge.source === this.hovering || edge.target === this.hovering);
                 const active = hl || hv;
-                const alpha = dimmed ? 0.04 : active ? 0.7 : 0.2;
-                const lw = dimmed ? 0.5 : active ? 2 : 1;
-                const isTheme = edge.source.type === 'theme' || edge.target.type === 'theme';
+                const alpha = dimmed ? 0.03 : active ? 0.6 : 0.12;
+                const lw = dimmed ? 0.5 : active ? 2.5 : 1;
+
+                // Compute bezier control point (perpendicular offset)
+                const mx = (edge.source.x + edge.target.x) / 2;
+                const my = (edge.source.y + edge.target.y) / 2;
+                const dx = edge.target.x - edge.source.x;
+                const dy = edge.target.y - edge.source.y;
+                const dist = Math.sqrt(dx*dx + dy*dy) || 1;
+                const curvature = Math.min(dist * 0.15, 40);
+                const nx = -dy / dist * curvature;
+                const ny = dx / dist * curvature;
+                const cpx = mx + nx, cpy = my + ny;
 
                 ctx.beginPath();
                 ctx.moveTo(edge.source.x, edge.source.y);
-                ctx.lineTo(edge.target.x, edge.target.y);
-                ctx.strokeStyle = active ? `rgba(88,166,255,${alpha})` : `rgba(110,118,129,${alpha})`;
-                ctx.lineWidth = lw;
-                if (isTheme && !active) { ctx.setLineDash([4, 4]); }
-                ctx.stroke();
-                ctx.setLineDash([]);
+                ctx.quadraticCurveTo(cpx, cpy, edge.target.x, edge.target.y);
 
-                // Arrow indicator at midpoint
+                if (active) {
+                    // Gradient edge for active connections
+                    const grad = ctx.createLinearGradient(edge.source.x, edge.source.y, edge.target.x, edge.target.y);
+                    grad.addColorStop(0, `rgba(${edge.source._cr},${edge.source._cg},${edge.source._cb},${alpha})`);
+                    grad.addColorStop(1, `rgba(${edge.target._cr},${edge.target._cg},${edge.target._cb},${alpha})`);
+                    ctx.strokeStyle = grad;
+                } else {
+                    ctx.strokeStyle = `rgba(140,150,170,${alpha})`;
+                }
+                ctx.lineWidth = lw;
+                ctx.stroke();
+
+                // Animated particles on active edges
                 if (active && !dimmed) {
-                    const mx = (edge.source.x + edge.target.x) / 2;
-                    const my = (edge.source.y + edge.target.y) / 2;
-                    const dx = edge.target.x - edge.source.x;
-                    const dy = edge.target.y - edge.source.y;
-                    const angle = Math.atan2(dy, dx);
-                    ctx.save();
-                    ctx.translate(mx, my);
-                    ctx.rotate(angle);
-                    ctx.beginPath();
-                    ctx.moveTo(5, 0); ctx.lineTo(-3, -3); ctx.lineTo(-3, 3); ctx.closePath();
-                    ctx.fillStyle = `rgba(88,166,255,${alpha * 0.8})`;
-                    ctx.fill();
-                    ctx.restore();
+                    for (let p = 0; p < 3; p++) {
+                        const t = ((this.time * edge._particleSpeed * 0.8 + (edge.phase || 0) + p * 0.33) % 1);
+                        // Quadratic bezier point
+                        const u = 1 - t;
+                        const px = u*u*edge.source.x + 2*u*t*cpx + t*t*edge.target.x;
+                        const py = u*u*edge.source.y + 2*u*t*cpy + t*t*edge.target.y;
+                        const pAlpha = Math.sin(t * Math.PI) * 0.7;
+                        ctx.beginPath(); ctx.arc(px, py, 2, 0, Math.PI * 2);
+                        ctx.fillStyle = `rgba(${edge.source._cr},${edge.source._cg},${edge.source._cb},${pAlpha})`;
+                        ctx.fill();
+                    }
                 }
 
-                // Edge labels — always shown when labels enabled, inline on the edge
-                if (this.showLabels && edge.label && !dimmed) {
-                    const mx = (edge.source.x + edge.target.x) / 2;
-                    const my = (edge.source.y + edge.target.y) / 2;
-                    const shortLabel = edge.label.length > 20 ? edge.label.substring(0, 18) + '…' : edge.label;
-                    ctx.font = '500 8px -apple-system,BlinkMacSystemFont,sans-serif';
+                // Edge label — only on active edges to reduce clutter
+                if (this.showLabels && edge.label && active && !dimmed) {
+                    const shortLabel = edge.label.length > 22 ? edge.label.substring(0, 20) + '…' : edge.label;
+                    ctx.font = '500 9px Inter,-apple-system,BlinkMacSystemFont,sans-serif';
                     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
                     const tw = ctx.measureText(shortLabel).width;
-                    // Background pill
-                    this._roundRect(ctx, mx - tw / 2 - 6, my - 8, tw + 12, 16, 4);
-                    ctx.fillStyle = active ? 'rgba(22,27,34,0.95)' : 'rgba(22,27,34,0.8)';
+                    this._roundRect(ctx, cpx - tw / 2 - 8, cpy - 10, tw + 16, 20, 6);
+                    ctx.fillStyle = 'rgba(8,12,20,0.92)';
                     ctx.fill();
-                    ctx.strokeStyle = active ? 'rgba(88,166,255,0.4)' : 'rgba(110,118,129,0.2)';
+                    ctx.strokeStyle = `rgba(${edge.source._cr},${edge.source._cg},${edge.source._cb},0.3)`;
                     ctx.lineWidth = 0.5; ctx.stroke();
-                    ctx.fillStyle = active ? 'rgba(200,215,230,0.95)' : 'rgba(139,148,158,0.7)';
-                    ctx.fillText(shortLabel, mx, my);
-                }
-
-                // Subtle data flow particles on active edges (using pre-computed speed)
-                if (active && !dimmed) {
-                    const dx = edge.target.x - edge.source.x, dy = edge.target.y - edge.source.y;
-                    ctx.fillStyle = 'rgba(88,166,255,0.6)';
-                    for (let p = 0; p < 2; p++) {
-                        const t = ((this.time * edge._particleSpeed + (edge.phase || 0) + p * 0.5) % 1);
-                        const px = edge.source.x + dx * t, py = edge.source.y + dy * t;
-                        ctx.beginPath(); ctx.arc(px, py, 2, 0, Math.PI * 2); ctx.fill();
-                    }
+                    ctx.fillStyle = 'rgba(220,228,240,0.9)';
+                    ctx.fillText(shortLabel, cpx, cpy);
                 }
             });
 
-            // ── NODES as Sherlocker-style cards ──
+            // ── NODES — modern circular design with glow ──
             this.nodes.forEach(node => {
                 if (node._hidden) return;
                 const dimmed = node._dimmed, isSel = node === this.selected, isHov = node === this.hovering;
                 const isHl = node._highlighted, isRoot = node._isRoot;
-                const alpha = dimmed ? 0.15 : 1;
-                // Use pre-cached RGB values (parsed once at build time)
+                const alpha = dimmed ? 0.12 : 1;
                 const cr = node._cr, cg = node._cg, cb = node._cb;
 
-                // Card dimensions
-                const cardW = isRoot ? 140 : (isSel || isHov) ? 130 : 120;
-                const cardH = isRoot ? 52 : (isSel || isHov) ? 48 : 44;
-                const cardX = node.x - cardW / 2;
-                const cardY = node.y - cardH / 2;
-                const cornerR = 10;
+                // Node radius based on type and state
+                const baseR = isRoot ? 32 : node.type === 'agency' ? 28 : node.type === 'director' ? 24 : node.type === 'company' ? 22 : 18;
+                const r = (isSel || isHov) ? baseR + 3 : baseR;
 
-                // Drop shadow (only for selected/hovered/root — reduced shadow blur)
-                if (!dimmed && (isSel || isHov || isRoot)) {
-                    ctx.save();
-                    ctx.shadowColor = `rgba(${cr},${cg},${cb},0.3)`;
-                    ctx.shadowBlur = (isSel || isHov) ? 12 : 6;
-                    ctx.shadowOffsetY = 2;
-                    this._roundRect(ctx, cardX, cardY, cardW, cardH, cornerR);
-                    ctx.fillStyle = 'rgba(22,27,34,0.01)'; ctx.fill();
-                    ctx.restore();
+                // Outer glow for active/selected nodes
+                if (!dimmed && (isSel || isHov || isRoot || isHl)) {
+                    const glowR = r + (isRoot ? 16 : 10);
+                    const glow = ctx.createRadialGradient(node.x, node.y, r * 0.8, node.x, node.y, glowR);
+                    glow.addColorStop(0, `rgba(${cr},${cg},${cb},${(isSel || isRoot) ? 0.25 : 0.15})`);
+                    glow.addColorStop(1, 'rgba(0,0,0,0)');
+                    ctx.beginPath(); ctx.arc(node.x, node.y, glowR, 0, Math.PI * 2);
+                    ctx.fillStyle = glow; ctx.fill();
                 }
 
-                // Card background
-                this._roundRect(ctx, cardX, cardY, cardW, cardH, cornerR);
-                ctx.fillStyle = dimmed ? 'rgba(22,27,34,0.3)' :
-                    isSel ? 'rgba(30,38,50,0.98)' :
-                    isHov ? 'rgba(28,35,47,0.96)' : 'rgba(22,27,34,0.92)';
-                ctx.fill();
+                // Main circle — gradient fill
+                const grad = ctx.createRadialGradient(node.x - r * 0.3, node.y - r * 0.3, r * 0.1, node.x, node.y, r);
+                grad.addColorStop(0, dimmed ? 'rgba(30,35,50,0.4)' : `rgba(${Math.min(cr+40,255)},${Math.min(cg+40,255)},${Math.min(cb+40,255)},${alpha * 0.35})`);
+                grad.addColorStop(1, dimmed ? 'rgba(15,18,28,0.3)' : `rgba(${cr},${cg},${cb},${alpha * 0.15})`);
+                ctx.beginPath(); ctx.arc(node.x, node.y, r, 0, Math.PI * 2);
+                ctx.fillStyle = grad; ctx.fill();
 
-                // Card border
-                ctx.strokeStyle = (isSel || isRoot) ? `rgba(${cr},${cg},${cb},${alpha * 0.8})` :
-                    isHov ? `rgba(${cr},${cg},${cb},${alpha * 0.5})` :
-                    isHl ? `rgba(${cr},${cg},${cb},${alpha * 0.6})` :
-                    `rgba(110,118,129,${alpha * 0.2})`;
-                ctx.lineWidth = (isSel || isRoot) ? 2 : isHov ? 1.5 : 1;
+                // Circle border
+                ctx.strokeStyle = `rgba(${cr},${cg},${cb},${dimmed ? 0.08 : (isSel || isRoot) ? 0.9 : isHov ? 0.7 : isHl ? 0.6 : 0.3})`;
+                ctx.lineWidth = (isSel || isRoot) ? 2.5 : isHov ? 2 : 1.5;
                 ctx.stroke();
 
-                // Color accent line on left side
-                this._roundRect(ctx, cardX, cardY, 4, cardH, 2);
-                ctx.fillStyle = `rgba(${cr},${cg},${cb},${alpha * (dimmed ? 0.3 : 0.8)})`;
-                ctx.fill();
-
-                // Avatar circle
-                const avatarR = cardH * 0.3;
-                const avatarX = cardX + 18;
-                const avatarY = node.y;
-                ctx.beginPath(); ctx.arc(avatarX, avatarY, avatarR, 0, Math.PI * 2);
-                ctx.fillStyle = `rgba(${cr},${cg},${cb},${alpha * 0.2})`;
-                ctx.fill();
-                ctx.strokeStyle = `rgba(${cr},${cg},${cb},${alpha * 0.5})`;
-                ctx.lineWidth = 1; ctx.stroke();
-
-                // Avatar initials
-                const initials = (node.initials || node.label.split(' ').map(w => w[0]).join('').substring(0, 2)).toUpperCase();
-                ctx.font = `700 ${avatarR * 0.9}px -apple-system,BlinkMacSystemFont,sans-serif`;
-                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                ctx.fillStyle = `rgba(${cr},${cg},${cb},${alpha * 0.9})`;
-                ctx.fillText(initials, avatarX, avatarY);
-
-                // Name text
-                if (!dimmed || isHl) {
-                    const textX = cardX + 34;
-                    const maxTextW = cardW - 42;
-                    const name = node.label.length > 16 ? node.label.substring(0, 15) + '…' : node.label;
-                    ctx.font = `600 10px -apple-system,BlinkMacSystemFont,sans-serif`;
-                    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-                    ctx.fillStyle = `rgba(230,237,243,${alpha})`;
-                    ctx.fillText(name, textX, node.y - 6, maxTextW);
-
-                    // Type badge
-                    const typeText = typeLabels[node.type] || node.type;
-                    ctx.font = `500 8px -apple-system,BlinkMacSystemFont,sans-serif`;
-                    ctx.fillStyle = `rgba(${cr},${cg},${cb},${alpha * 0.7})`;
-                    ctx.fillText(typeText, textX, node.y + 8, maxTextW);
+                // Inner ring for root
+                if (isRoot && !dimmed) {
+                    const pulse = Math.sin(this.time * 2.5) * 3 + r + 6;
+                    ctx.beginPath(); ctx.arc(node.x, node.y, pulse, 0, Math.PI * 2);
+                    ctx.strokeStyle = `rgba(${cr},${cg},${cb},0.12)`;
+                    ctx.lineWidth = 1; ctx.setLineDash([3, 6]); ctx.stroke(); ctx.setLineDash([]);
                 }
 
-                // Connection count badge (top-right)
+                // Initials inside the circle
+                const initials = (node.initials || node.label.split(' ').map(w => w[0]).join('').substring(0, 2)).toUpperCase();
+                ctx.font = `700 ${r * 0.55}px Inter,-apple-system,BlinkMacSystemFont,sans-serif`;
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillStyle = `rgba(${cr},${cg},${cb},${alpha * (dimmed ? 0.3 : 0.95)})`;
+                ctx.fillText(initials, node.x, node.y);
+
+                // Label below node (pre-computed truncation)
+                if (!dimmed || isHl) {
+                    const name = node._shortLabel || (node._shortLabel = node.label.length > 18 ? node.label.substring(0, 16) + '…' : node.label);
+                    ctx.font = `600 10px Inter,-apple-system,BlinkMacSystemFont,sans-serif`;
+                    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+                    // Text shadow for readability
+                    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+                    ctx.fillText(name, node.x + 1, node.y + r + 7);
+                    ctx.fillStyle = `rgba(230,237,243,${alpha * 0.9})`;
+                    ctx.fillText(name, node.x, node.y + r + 6);
+                    // Type badge below label
+                    if (isSel || isHov || isRoot) {
+                        ctx.font = '400 8px Inter,-apple-system,BlinkMacSystemFont,sans-serif';
+                        ctx.fillStyle = `rgba(${cr},${cg},${cb},${alpha * 0.6})`;
+                        ctx.fillText(typeLabels[node.type] || node.type, node.x, node.y + r + 20);
+                    }
+                }
+
+                // Connection count badge
                 if (!dimmed && node.connections > 0) {
-                    const bx = cardX + cardW - 14;
-                    const by = cardY + 10;
+                    const bx = node.x + r * 0.65, by = node.y - r * 0.65;
                     ctx.beginPath(); ctx.arc(bx, by, 8, 0, Math.PI * 2);
-                    ctx.fillStyle = `rgba(${cr},${cg},${cb},${alpha * 0.15})`;
+                    ctx.fillStyle = `rgba(${cr},${cg},${cb},0.2)`;
                     ctx.fill();
-                    ctx.font = 'bold 7px -apple-system,sans-serif';
+                    ctx.strokeStyle = `rgba(${cr},${cg},${cb},0.5)`;
+                    ctx.lineWidth = 1; ctx.stroke();
+                    ctx.font = 'bold 7px Inter,-apple-system,sans-serif';
                     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                    ctx.fillStyle = `rgba(${cr},${cg},${cb},${alpha * 0.8})`;
+                    ctx.fillStyle = `rgba(${cr},${cg},${cb},0.9)`;
                     ctx.fillText(node.connections, bx, by);
                 }
 
-                // Root indicator ring
-                if (isRoot && !dimmed) {
-                    const pulse = Math.sin(this.time * 2) * 0.1 + 1;
-                    this._roundRect(ctx, cardX - 4 * pulse, cardY - 4 * pulse, cardW + 8 * pulse, cardH + 8 * pulse, cornerR + 2);
-                    ctx.strokeStyle = `rgba(${cr},${cg},${cb},0.15)`;
-                    ctx.lineWidth = 1; ctx.setLineDash([4, 4]); ctx.stroke(); ctx.setLineDash([]);
-                }
-
-                // Expansion indicators
+                // Expansion indicator
                 if (!dimmed && node._isExpanded && !isRoot) {
-                    const ix = cardX + cardW - 6, iy = cardY + cardH - 6;
-                    ctx.beginPath(); ctx.arc(ix, iy, 5, 0, Math.PI * 2);
-                    ctx.fillStyle = 'rgba(74,222,128,0.9)'; ctx.fill();
-                    ctx.font = 'bold 7px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                    ctx.fillStyle = '#0d1117'; ctx.fillText('✓', ix, iy);
+                    const ix = node.x + r * 0.65, iy = node.y + r * 0.65;
+                    ctx.beginPath(); ctx.arc(ix, iy, 6, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(74,222,128,0.85)'; ctx.fill();
+                    ctx.font = 'bold 8px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                    ctx.fillStyle = '#080c14'; ctx.fillText('✓', ix, iy);
                 }
                 if (!dimmed && !node._isExpanded && !isRoot && node.connections > 0 && isHov) {
-                    const ix = cardX + cardW - 6, iy = cardY + cardH - 6;
-                    ctx.beginPath(); ctx.arc(ix, iy, 6, 0, Math.PI * 2);
-                    ctx.fillStyle = 'rgba(88,166,255,0.8)'; ctx.fill();
-                    ctx.font = 'bold 9px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                    const ix = node.x + r * 0.65, iy = node.y + r * 0.65;
+                    ctx.beginPath(); ctx.arc(ix, iy, 7, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(88,166,255,0.85)'; ctx.fill();
+                    ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
                     ctx.fillStyle = '#fff'; ctx.fillText('+', ix, iy + 0.5);
                 }
 
-                // Expansion flash
+                // Expansion flash (ripple effect)
                 if (node._expandFlash && !dimmed) {
                     const elapsed = this.time - node._expandFlash;
                     if (elapsed < 1.5) {
-                        const flashAlpha = Math.max(0, 0.3 - elapsed * 0.2);
-                        this._roundRect(ctx, cardX - elapsed * 20, cardY - elapsed * 15, cardW + elapsed * 40, cardH + elapsed * 30, cornerR + 4);
+                        const flashR = r + elapsed * 30;
+                        const flashAlpha = Math.max(0, 0.35 - elapsed * 0.23);
+                        ctx.beginPath(); ctx.arc(node.x, node.y, flashR, 0, Math.PI * 2);
                         ctx.strokeStyle = `rgba(${cr},${cg},${cb},${flashAlpha})`;
-                        ctx.lineWidth = 1.5; ctx.stroke();
+                        ctx.lineWidth = 2; ctx.stroke();
                     }
                 }
             });
@@ -3834,46 +3818,86 @@
                 });
             };
 
+            let successCount = 0, errorCount = 0;
+            const errorFiles = [];
+
             for (let i = 0; i < files.length; i++) {
                 const file = files[i];
+                const pct = Math.round(((i) / files.length) * 100);
+                const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
 
-                progressText.textContent = `Enviando ${file.name}... (${i + 1}/${files.length})`;
-                progressPercent.textContent = Math.round((i / files.length) * 100) + '%';
-                progressBar.style.width = Math.round((i / files.length) * 100) + '%';
+                progressText.textContent = `Enviando ${file.name} (${sizeMB} MB)... ${i + 1} de ${files.length}`;
+                progressPercent.textContent = pct + '%';
+                progressBar.style.width = pct + '%';
+                progressBar.classList.remove('success', 'danger');
 
                 try {
-                    // Convert file to base64
                     const base64 = await fileToBase64(file);
 
                     const response = await fetch('/api/upload-pdf', {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            arquivo: base64,
-                            nomeArquivo: file.name
-                        })
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ arquivo: base64, nomeArquivo: file.name })
                     });
                     const result = await response.json();
-                    if (!result.sucesso) {
-                        console.error('Erro no upload:', result.erro);
+                    if (result.sucesso) {
+                        successCount++;
+                    } else {
+                        errorCount++;
+                        errorFiles.push(`${file.name}: ${result.erro || 'Erro desconhecido'}`);
                     }
                 } catch (error) {
-                    console.error('Erro no upload:', error);
+                    errorCount++;
+                    errorFiles.push(`${file.name}: ${error.message}`);
                 }
             }
 
-            progressText.textContent = 'Upload concluído!';
-            progressPercent.textContent = '100%';
+            // Show clear final status
             progressBar.style.width = '100%';
+            if (errorCount === 0) {
+                progressText.textContent = `Upload concluído! ${successCount} arquivo${successCount > 1 ? 's' : ''} enviado${successCount > 1 ? 's' : ''} com sucesso.`;
+                progressPercent.textContent = '100%';
+                progressBar.classList.add('success');
+            } else {
+                progressText.textContent = `Upload finalizado: ${successCount} sucesso, ${errorCount} erro${errorCount > 1 ? 's' : ''}`;
+                progressPercent.textContent = '';
+                progressBar.classList.add(successCount > 0 ? 'success' : 'danger');
+                // Show error details as toast
+                if (errorFiles.length > 0) {
+                    const errMsg = errorFiles.join('\n');
+                    this._showToast('Erros no upload:\n' + errMsg, 'error', 8000);
+                }
+            }
 
             setTimeout(() => {
                 progressDiv.style.display = 'none';
                 progressBar.style.width = '0%';
-            }, 2000);
+                progressBar.classList.remove('success', 'danger');
+            }, errorCount > 0 ? 6000 : 3000);
 
             await this.load();
+        },
+
+        // Toast notification system
+        _showToast(message, type = 'info', duration = 4000) {
+            let container = document.getElementById('iris-toast-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'iris-toast-container';
+                container.style.cssText = 'position:fixed;top:20px;right:20px;z-index:99999;display:flex;flex-direction:column;gap:8px;max-width:420px;';
+                document.body.appendChild(container);
+            }
+            const colors = { success: '#166534', error: '#991b1b', info: '#1e40af', warning: '#92400e' };
+            const bgColors = { success: 'rgba(22,101,52,0.95)', error: 'rgba(153,27,27,0.95)', info: 'rgba(30,64,175,0.95)', warning: 'rgba(146,64,14,0.95)' };
+            const toast = document.createElement('div');
+            toast.style.cssText = `background:${bgColors[type]};color:#fff;padding:12px 16px;border-radius:10px;font-size:13px;line-height:1.5;box-shadow:0 8px 24px rgba(0,0,0,0.3);transform:translateX(120%);transition:transform 0.3s ease;white-space:pre-line;border-left:4px solid ${colors[type]};`;
+            toast.textContent = message;
+            container.appendChild(toast);
+            requestAnimationFrame(() => { toast.style.transform = 'translateX(0)'; });
+            setTimeout(() => {
+                toast.style.transform = 'translateX(120%)';
+                setTimeout(() => toast.remove(), 300);
+            }, duration);
         },
 
         async uploadFromUrl() {
@@ -3881,21 +3905,23 @@
             const url = urlInput?.value?.trim();
 
             if (!url) {
-                alert('Digite uma URL válida');
+                this._showToast('Digite uma URL válida para importar', 'warning');
                 return;
             }
+
+            this._showToast('Baixando PDF da URL...', 'info', 10000);
 
             try {
                 const response = await API.post('/api/upload-url', { url });
                 if (response?.sucesso) {
                     urlInput.value = '';
                     await this.load();
-                    alert('PDF baixado com sucesso!');
+                    this._showToast('PDF importado com sucesso!', 'success');
                 } else {
-                    alert('Erro: ' + (response?.erro || 'Erro desconhecido'));
+                    this._showToast('Erro: ' + (response?.erro || 'Erro desconhecido'), 'error', 6000);
                 }
             } catch (error) {
-                alert('Erro ao baixar PDF: ' + error.message);
+                this._showToast('Erro ao baixar PDF: ' + error.message, 'error', 6000);
             }
         },
 
@@ -3904,11 +3930,12 @@
                 const response = await API.post(`/api/analisar-pdf/${index}`);
                 if (response?.sucesso) {
                     await this.load();
+                    this._showToast('Análise concluída com sucesso!', 'success');
                 } else {
-                    alert('Erro: ' + (response?.erro || 'Erro na análise'));
+                    this._showToast('Erro na análise: ' + (response?.erro || 'Erro desconhecido'), 'error', 6000);
                 }
             } catch (error) {
-                alert('Erro ao analisar: ' + error.message);
+                this._showToast('Erro ao analisar: ' + error.message, 'error', 6000);
             }
         },
 
@@ -4605,8 +4632,8 @@
         },
 
         getFilteredNews() {
-            // Usa apenas notícias reais da API — sem fallback para mock
-            let news = [...this.noticiasReais];
+            // Usa notícias reais se disponíveis, senão fallback para dados de demonstração
+            let news = this.noticiasReais.length > 0 ? [...this.noticiasReais] : [...this.noticias];
             const tab = this.currentTab;
             const setor = document.getElementById('hub-filtro-setor')?.value || '';
             const esfera = document.getElementById('hub-filtro-esfera')?.value || '';

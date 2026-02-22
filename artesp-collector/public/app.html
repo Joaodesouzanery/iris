@@ -81,65 +81,28 @@
             </div>
         </section>
 
-        <!-- Platform Showcase Section -->
+        <!-- Platform Video Section -->
         <section class="landing-video-section">
             <div class="landing-section-inner">
                 <h2 class="landing-section-title">Veja a Plataforma em Ação</h2>
                 <p class="landing-section-subtitle">Conheça como a IRIS transforma dados regulatórios em inteligência estratégica</p>
-                <div class="landing-showcase-wrapper">
-                    <div class="landing-showcase-screen">
-                        <div class="landing-showcase-toolbar">
-                            <div class="landing-showcase-dots">
+                <div class="landing-video-wrapper">
+                    <div class="landing-video-frame">
+                        <div class="landing-video-toolbar">
+                            <div class="landing-video-dots">
                                 <span class="dot red"></span>
                                 <span class="dot yellow"></span>
                                 <span class="dot green"></span>
                             </div>
-                            <span class="landing-showcase-url">iris-regulacao.com.br/plataforma</span>
+                            <span class="landing-video-url">iris-regulacao.com.br/demo</span>
                         </div>
-                        <div class="landing-showcase-content">
-                            <div class="landing-showcase-sidebar">
-                                <div class="showcase-nav-item active"><span class="showcase-icon">&#9783;</span> Hub</div>
-                                <div class="showcase-nav-item"><span class="showcase-icon">&#128200;</span> Análise</div>
-                                <div class="showcase-nav-item"><span class="showcase-icon">&#128203;</span> PDFs</div>
-                                <div class="showcase-nav-item"><span class="showcase-icon">&#128279;</span> Grafo</div>
-                                <div class="showcase-nav-item"><span class="showcase-icon">&#128269;</span> Cruzamento</div>
-                            </div>
-                            <div class="landing-showcase-main">
-                                <div class="showcase-card showcase-card-animate-1">
-                                    <div class="showcase-card-header">Deliberações Analisadas</div>
-                                    <div class="showcase-card-value">1.247</div>
-                                    <div class="showcase-card-bar"><div class="showcase-bar-fill" style="width:78%"></div></div>
-                                </div>
-                                <div class="showcase-card showcase-card-animate-2">
-                                    <div class="showcase-card-header">Agências Monitoradas</div>
-                                    <div class="showcase-card-value">34</div>
-                                    <div class="showcase-card-bar"><div class="showcase-bar-fill" style="width:92%"></div></div>
-                                </div>
-                                <div class="showcase-card showcase-card-animate-3">
-                                    <div class="showcase-card-header">Votos Mapeados</div>
-                                    <div class="showcase-card-value">5.832</div>
-                                    <div class="showcase-card-bar"><div class="showcase-bar-fill" style="width:65%"></div></div>
-                                </div>
-                                <div class="showcase-graph showcase-card-animate-4">
-                                    <div class="showcase-card-header">Grafo de Relações</div>
-                                    <svg class="showcase-graph-svg" viewBox="0 0 280 120">
-                                        <line x1="140" y1="60" x2="60" y2="30" stroke="var(--primary)" stroke-width="1.5" opacity="0.5"/>
-                                        <line x1="140" y1="60" x2="220" y2="25" stroke="var(--primary)" stroke-width="1.5" opacity="0.5"/>
-                                        <line x1="140" y1="60" x2="80" y2="100" stroke="var(--primary)" stroke-width="1.5" opacity="0.5"/>
-                                        <line x1="140" y1="60" x2="210" y2="95" stroke="var(--primary)" stroke-width="1.5" opacity="0.5"/>
-                                        <line x1="60" y1="30" x2="80" y2="100" stroke="var(--primary)" stroke-width="1" opacity="0.3"/>
-                                        <line x1="220" y1="25" x2="210" y2="95" stroke="var(--primary)" stroke-width="1" opacity="0.3"/>
-                                        <circle cx="140" cy="60" r="10" fill="var(--primary)" class="showcase-node-pulse"/>
-                                        <circle cx="60" cy="30" r="7" fill="var(--accent, #60a5fa)" opacity="0.8"/>
-                                        <circle cx="220" cy="25" r="7" fill="var(--accent, #60a5fa)" opacity="0.8"/>
-                                        <circle cx="80" cy="100" r="6" fill="var(--accent, #34d399)" opacity="0.8"/>
-                                        <circle cx="210" cy="95" r="6" fill="var(--accent, #34d399)" opacity="0.8"/>
-                                    </svg>
-                                </div>
-                            </div>
+                        <div class="landing-video-container">
+                            <video class="landing-hero-video" autoplay muted loop playsinline>
+                                <source src="/video/hero.mp4" type="video/mp4">
+                            </video>
                         </div>
                     </div>
-                    <button class="landing-btn-primary landing-showcase-cta" onclick="LandingPage.enterPlatform()">
+                    <button class="landing-btn-primary landing-video-cta" onclick="LandingPage.enterPlatform()">
                         Explorar a Plataforma Completa
                     </button>
                 </div>
@@ -5392,7 +5355,7 @@
             this.renderAgenciasLoading();
             this.bindEvents();
 
-            // Fetch real news from API
+            // Fetch real news from API, with fallback to demo data
             try {
                 const resp = await fetch('/api/noticias?limite=30');
                 const data = await resp.json();
@@ -5413,9 +5376,20 @@
                     document.getElementById('landing-stat-fontes').textContent = data.fontes || '22';
                 }
             } catch (e) {
-                console.warn('[Landing] Não foi possível carregar notícias da API, usando fallback');
+                console.warn('[Landing] API indisponível, usando dados de demonstração');
+            }
+
+            // Fallback: dados de demonstração quando a API não retorna notícias
+            if (this.noticias.length === 0) {
                 this.noticias = [
-                    { id: 1, titulo: 'Conectando às fontes de notícias...', resumo: 'As notícias serão carregadas em tempo real dos sites oficiais das agências reguladoras brasileiras.', agencia: 'IRIS', tipo: 'federal', data: new Date().toISOString().split('T')[0], categoria: 'noticia', link: '#' }
+                    { id: 1, titulo: 'ANVISA publica novas regras para rotulagem de alimentos ultraprocessados', resumo: 'Resolução da Diretoria Colegiada estabelece novos critérios para advertências frontais em embalagens, com prazo de adequação até dezembro de 2026.', agencia: 'ANVISA', tipo: 'federal', data: '2026-02-17', categoria: 'resolucao', fonte: 'Portal ANVISA', cor: '#A78BFA' },
+                    { id: 2, titulo: 'ANEEL aprova reajuste tarifário para distribuidoras do Nordeste', resumo: 'Diretoria aprovou reajustes entre 3,2% e 7,8% para cinco distribuidoras regionais, válidos a partir de março de 2026.', agencia: 'ANEEL', tipo: 'federal', data: '2026-02-16', categoria: 'resolucao', fonte: 'Portal ANEEL', cor: '#FFEF4D' },
+                    { id: 3, titulo: 'ANP divulga resultado do 4º Ciclo de Oferta Permanente', resumo: 'Leilão arrecadou R$ 1,2 bilhão em bônus de assinatura, com 15 blocos arrematados por 8 empresas nacionais e internacionais.', agencia: 'ANP', tipo: 'federal', data: '2026-02-15', categoria: 'noticia', fonte: 'Portal ANP', cor: '#F472B6' },
+                    { id: 4, titulo: 'ANATEL abre consulta pública sobre uso do espectro 6 GHz', resumo: 'Consulta visa definir condições de uso da faixa para redes 5G Advanced e Wi-Fi 6E no Brasil, com prazo de 60 dias.', agencia: 'ANATEL', tipo: 'federal', data: '2026-02-14', categoria: 'consulta', fonte: 'Portal ANATEL', cor: '#4ADE80' },
+                    { id: 5, titulo: 'ANAC autoriza operação de drones autônomos para entregas urbanas', resumo: 'Regulamentação permite operações BVLOS (além da linha de visada) em áreas urbanas específicas, mediante certificação.', agencia: 'ANAC', tipo: 'federal', data: '2026-02-13', categoria: 'noticia', fonte: 'Portal ANAC', cor: '#8B5CF6' },
+                    { id: 6, titulo: 'ANM intensifica fiscalização de barragens com potencial de dano alto', resumo: 'Agência anuncia plano de fiscalização emergencial para 47 barragens classificadas com Nível de Emergência 1 e 2.', agencia: 'ANM', tipo: 'federal', data: '2026-02-12', categoria: 'noticia', fonte: 'Portal ANM', cor: '#EF4444' },
+                    { id: 7, titulo: 'ARTESP delibera sobre reequilíbrio de concessão da Autoban', resumo: 'Diretoria Colegiada analisa pedido de reequilíbrio econômico-financeiro apresentado pela concessionária para o período 2024-2026.', agencia: 'ARTESP', tipo: 'estadual', data: '2026-02-11', categoria: 'deliberacao', fonte: 'Portal ARTESP', cor: '#FBBF24' },
+                    { id: 8, titulo: 'TCU aponta irregularidades em contratos da ANTT', resumo: 'Relatório de auditoria identifica sobrepreço em contratos de manutenção rodoviária fiscalizados pela agência.', agencia: 'TCU', tipo: 'federal', data: '2026-02-10', categoria: 'auditoria', fonte: 'Portal TCU', cor: '#F59E0B' }
                 ];
             }
             this.renderNews();
