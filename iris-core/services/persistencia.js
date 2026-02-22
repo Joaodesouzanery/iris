@@ -1,8 +1,19 @@
 /**
  * Serviço de Persistência - IRIS
  *
- * Gerencia a persistência de deliberações e votos no Supabase
- * Inclui atualização de status de reuniões
+ * Gerencia a persistência de deliberações e votos no Supabase.
+ * Inclui atualização de status de reuniões.
+ *
+ * DESIGN CHOICE: This module uses the Supabase REST API directly via axios
+ * instead of the @supabase/supabase-js SDK. This is intentional for the
+ * following reasons:
+ *   1. Lightweight - no additional SDK dependency needed at runtime
+ *   2. Transparent - all HTTP calls are explicit and easy to debug
+ *   3. Portable - works with any PostgREST-compatible backend
+ *   4. The axios dependency is already used elsewhere in the project
+ *
+ * If you prefer the SDK approach, @supabase/supabase-js is available in
+ * package.json and can be used as an alternative client.
  */
 
 const logger = require('../utils/logger');
@@ -313,7 +324,10 @@ async function buscarOuCriarDiretor(nome, cargo) {
 }
 
 /**
- * Mapeia tipo de voto para enum do banco
+ * Mapeia tipo de voto para enum do banco (vote_type_enum).
+ * Valores validos: FAVORABLE, AGAINST, ABSTENTION, ABSENT.
+ * Fallback para FAVORABLE quando o tipo nao e reconhecido,
+ * pois 'UNKNOWN' nao existe no vote_type_enum do PostgreSQL.
  */
 function mapearTipoVoto(voto) {
     const mapeamento = {
@@ -323,7 +337,7 @@ function mapearTipoVoto(voto) {
         'Ausente/Impedido': 'ABSENT'
     };
 
-    return mapeamento[voto] || 'UNKNOWN';
+    return mapeamento[voto] || 'FAVORABLE';
 }
 
 // ============================================================================

@@ -454,7 +454,7 @@
                                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                                 </div>
                             </div>
-                            <div class="stat-card-value">109</div>
+                            <div class="stat-card-value" id="metricas-total-delib">109</div>
                             <div class="stat-card-subtitle">Em 5 reuniões</div>
                         </div>
 
@@ -465,7 +465,7 @@
                                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                                 </div>
                             </div>
-                            <div class="stat-card-value">0%</div>
+                            <div class="stat-card-value" id="metricas-pleito-externo">0%</div>
                             <div class="stat-card-subtitle">0% atos internos</div>
                         </div>
 
@@ -476,7 +476,7 @@
                                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                 </div>
                             </div>
-                            <div class="stat-card-value success">58%</div>
+                            <div class="stat-card-value success" id="metricas-taxa-aprovacao">58%</div>
                             <div class="stat-card-subtitle">42% indeferidos</div>
                         </div>
 
@@ -487,7 +487,7 @@
                                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                                 </div>
                             </div>
-                            <div class="stat-card-value">5</div>
+                            <div class="stat-card-value" id="metricas-total-reunioes">5</div>
                             <div class="stat-card-subtitle">Reuniões ordinarias</div>
                         </div>
                     </div>
@@ -4085,6 +4085,12 @@
                             <h1 class="page-title">Auditoria Forense</h1>
                             <p class="page-subtitle">Detecção de anomalias e padrões suspeitos nas deliberações</p>
                         </div>
+                        <div class="page-actions">
+                            <button class="btn btn-primary" id="btn-executar-auditoria">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                                Executar Auditoria
+                            </button>
+                        </div>
                     </div>
 
                     <div class="stats-grid">
@@ -4092,25 +4098,25 @@
                             <div class="stat-card-header">
                                 <span class="stat-card-title">Alertas Críticos</span>
                             </div>
-                            <div class="stat-card-value danger">3</div>
+                            <div class="stat-card-value danger" id="auditoria-criticos">3</div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-card-header">
                                 <span class="stat-card-title">Alertas Médios</span>
                             </div>
-                            <div class="stat-card-value warning">8</div>
+                            <div class="stat-card-value warning" id="auditoria-medios">8</div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-card-header">
                                 <span class="stat-card-title">Deliberações Analisadas</span>
                             </div>
-                            <div class="stat-card-value">156</div>
+                            <div class="stat-card-value" id="auditoria-analisadas">156</div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-card-header">
                                 <span class="stat-card-title">Taxa de Conformidade</span>
                             </div>
-                            <div class="stat-card-value success">94.2%</div>
+                            <div class="stat-card-value success" id="auditoria-conformidade">94.2%</div>
                         </div>
                     </div>
 
@@ -4124,7 +4130,7 @@
                         </div>
                         <div class="card-body">
                             <div class="alert-list">
-                                <div class="alert-item">
+                                <div class="alert-item alert-item-clickable">
                                     <div class="alert-header">
                                         <div class="alert-title">Padrão de votação incomum detectado</div>
                                         <span class="alert-severity severity-high">ALTA</span>
@@ -4136,7 +4142,7 @@
                                         <span>Confianca: 87%</span>
                                     </div>
                                 </div>
-                                <div class="alert-item warning">
+                                <div class="alert-item alert-item-clickable warning">
                                     <div class="alert-header">
                                         <div class="alert-title">Concentração de relatorias</div>
                                         <span class="alert-severity severity-medium">MEDIA</span>
@@ -4148,7 +4154,7 @@
                                         <span>Confianca: 72%</span>
                                     </div>
                                 </div>
-                                <div class="alert-item info">
+                                <div class="alert-item alert-item-clickable info">
                                     <div class="alert-header">
                                         <div class="alert-title">Tempo de processamento acima da media</div>
                                         <span class="alert-severity severity-low">BAIXA</span>

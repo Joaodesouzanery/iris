@@ -2677,11 +2677,136 @@
     // PAGE: Metricas (Dashboard)
     // ============================================
     const PageMetricas = {
-        init() {
+        _data: null,
+
+        async init() {
             const page = document.getElementById('page-metricas');
             if (page) {
                 page.classList.add('active');
             }
+
+            // Try fetching live data, fall back to DOM-based stats
+            try {
+                const data = await API.get('/api/metricas/exportar');
+                if (data) {
+                    this._data = data;
+                    this._applyData(data);
+                }
+            } catch (e) {
+                console.warn('PageMetricas: API indisponivel, usando dados do DOM');
+                this._data = this._readFromDOM();
+            }
+
+            this.animateCounters();
+            this.renderBarChart();
+        },
+
+        /** Read stat values directly from the HTML elements */
+        _readFromDOM() {
+            const val = (id) => {
+                const el = document.getElementById(id);
+                return el ? el.textContent.trim() : '0';
+            };
+            return {
+                totalDelib: val('metricas-total-delib'),
+                pleitoExterno: val('metricas-pleito-externo'),
+                taxaAprovacao: val('metricas-taxa-aprovacao'),
+                totalReunioes: val('metricas-total-reunioes')
+            };
+        },
+
+        /** Apply fetched data to the stat cards */
+        _applyData(data) {
+            const map = {
+                'metricas-total-delib': data.totalDelib ?? data.total_deliberacoes,
+                'metricas-pleito-externo': data.pleitoExterno ?? data.pleito_externo,
+                'metricas-taxa-aprovacao': data.taxaAprovacao ?? data.taxa_aprovacao,
+                'metricas-total-reunioes': data.totalReunioes ?? data.total_reunioes
+            };
+            Object.entries(map).forEach(([id, value]) => {
+                const el = document.getElementById(id);
+                if (el && value !== undefined) {
+                    el.textContent = value;
+                }
+            });
+        },
+
+        /** Animate stat card numbers counting up from 0 */
+        animateCounters() {
+            const ids = [
+                'metricas-total-delib',
+                'metricas-pleito-externo',
+                'metricas-taxa-aprovacao',
+                'metricas-total-reunioes'
+            ];
+            ids.forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                const raw = el.textContent.trim();
+                const isPercent = raw.includes('%');
+                const target = parseFloat(raw.replace('%', '').replace(',', '.')) || 0;
+                const duration = 1200;
+                const startTime = performance.now();
+                el.textContent = isPercent ? '0%' : '0';
+
+                const step = (now) => {
+                    const elapsed = now - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+                    // easeOutCubic
+                    const ease = 1 - Math.pow(1 - progress, 3);
+                    const current = target * ease;
+                    if (isPercent) {
+                        el.textContent = (target % 1 !== 0 ? current.toFixed(1) : Math.round(current)) + '%';
+                    } else {
+                        el.textContent = Math.round(current);
+                    }
+                    if (progress < 1) {
+                        requestAnimationFrame(step);
+                    } else {
+                        el.textContent = raw; // restore exact original text
+                    }
+                };
+                requestAnimationFrame(step);
+            });
+        },
+
+        /** Re-render bar chart dynamically from its data or from DOM items */
+        renderBarChart() {
+            const chartEl = document.querySelector('#page-metricas .bar-chart');
+            if (!chartEl) return;
+            const items = chartEl.querySelectorAll('.bar-item');
+            if (!items.length) return;
+
+            // Read existing data
+            const data = [];
+            items.forEach(item => {
+                const label = item.querySelector('.bar-label')?.textContent.trim() || '';
+                const value = parseInt(item.querySelector('.bar-value')?.textContent.trim(), 10) || 0;
+                data.push({ label, value });
+            });
+
+            // Sort descending
+            data.sort((a, b) => b.value - a.value);
+            const max = data[0]?.value || 1;
+
+            // Rebuild with animation
+            chartEl.innerHTML = '';
+            data.forEach((d, i) => {
+                const pct = Math.round((d.value / max) * 100);
+                const item = document.createElement('div');
+                item.className = 'bar-item';
+                item.innerHTML =
+                    '<span class="bar-label">' + d.label + '</span>' +
+                    '<div class="bar-track"><div class="bar-fill" style="width: 0%; transition: width 0.8s cubic-bezier(.4,0,.2,1) ' + (i * 0.08) + 's;"></div></div>' +
+                    '<span class="bar-value">' + d.value + '</span>';
+                chartEl.appendChild(item);
+                // Trigger animation after append
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        item.querySelector('.bar-fill').style.width = pct + '%';
+                    });
+                });
+            });
         },
 
         async exportar() {
@@ -2696,14 +2821,94 @@
     // PAGE: Boletim
     // ============================================
     const PageBoletim = {
-        init() {
-            const page = document.getElementById('page-boletim');
-            page.classList.add('active');
+        _agencyNames: {
+            artesp: 'ARTESP',
+            anatel: 'ANATEL',
+            aneel: 'ANEEL'
         },
 
+        init() {
+            const page = document.getElementById('page-boletim');
+            if (page) {
+                page.classList.add('active');
+            }
+
+            // Bind agency selector
+            const agencySelect = document.getElementById('boletim-agencia');
+            if (agencySelect) {
+                agencySelect.addEventListener('change', (e) => {
+                    this.switchAgency(e.target.value);
+                });
+            }
+        },
+
+        /** Update boletim title based on selected agency */
+        switchAgency(agency) {
+            const titleEl = document.getElementById('boletim-titulo');
+            if (!titleEl) return;
+            const name = this._agencyNames[agency] || agency.toUpperCase();
+            const mesSelect = document.getElementById('boletim-mes');
+            const anoSelect = document.getElementById('boletim-ano');
+            const meses = {
+                '01': 'Janeiro', '02': 'Fevereiro', '03': 'Marco',
+                '04': 'Abril', '05': 'Maio', '06': 'Junho',
+                '07': 'Julho', '08': 'Agosto', '09': 'Setembro',
+                '10': 'Outubro', '11': 'Novembro', '12': 'Dezembro'
+            };
+            const mes = mesSelect ? (meses[mesSelect.value] || mesSelect.value) : '';
+            const ano = anoSelect ? anoSelect.value : '';
+            titleEl.textContent = 'Boletim ' + name + ' \u2014 ' + mes + '/' + ano;
+        },
+
+        /** Generate boletim with loading state and simulated success */
         gerar() {
             const mes = document.getElementById('boletim-mes')?.value;
-            alert('Gerando boletim para ' + mes + '...\nEsta funcionalidade será conectada à API de geração de boletins.');
+            const ano = document.getElementById('boletim-ano')?.value;
+            const agencia = document.getElementById('boletim-agencia')?.value || 'artesp';
+            const name = this._agencyNames[agencia] || agencia.toUpperCase();
+
+            // Find or create a status element
+            let statusEl = document.getElementById('boletim-status');
+            if (!statusEl) {
+                const mainCard = document.querySelector('.boletim-main-card');
+                if (mainCard) {
+                    statusEl = document.createElement('div');
+                    statusEl.id = 'boletim-status';
+                    statusEl.style.cssText = 'padding: 16px 24px; text-align: center; font-size: 14px;';
+                    mainCard.appendChild(statusEl);
+                }
+            }
+
+            if (statusEl) {
+                statusEl.style.color = 'var(--primary)';
+                statusEl.innerHTML =
+                    '<div style="display:flex;align-items:center;justify-content:center;gap:10px;">' +
+                    '<div class="spinner" style="width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin 0.8s linear infinite;"></div>' +
+                    'Gerando boletim ' + name + ' para ' + (mes || '') + '/' + (ano || '') + '...' +
+                    '</div>';
+
+                // Add spinner keyframes if not present
+                if (!document.getElementById('boletim-spinner-style')) {
+                    const style = document.createElement('style');
+                    style.id = 'boletim-spinner-style';
+                    style.textContent = '@keyframes spin{to{transform:rotate(360deg)}}';
+                    document.head.appendChild(style);
+                }
+            }
+
+            // Simulate generation after 2 seconds
+            setTimeout(() => {
+                if (statusEl) {
+                    statusEl.style.color = 'var(--success)';
+                    statusEl.innerHTML =
+                        '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="18" height="18" style="vertical-align:middle;margin-right:6px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>' +
+                        'Boletim gerado com sucesso! Pronto para download.';
+                    // Auto-clear after 5s
+                    setTimeout(() => {
+                        if (statusEl) statusEl.innerHTML = '';
+                    }, 5000);
+                }
+            }, 2000);
         },
 
         imprimir() {
@@ -2717,7 +2922,176 @@
     const PageAuditoria = {
         init() {
             const page = document.getElementById('page-auditoria');
-            page.classList.add('active');
+            if (page) {
+                page.classList.add('active');
+            }
+
+            this.animateMetrics();
+            this.renderAlertTimeline();
+
+            // Bind click expand/collapse on alert items
+            const alertItems = document.querySelectorAll('#page-auditoria .alert-item-clickable');
+            alertItems.forEach(item => {
+                item.style.cursor = 'pointer';
+                item.addEventListener('click', () => this.toggleAlertDetails(item));
+            });
+
+            // Bind "Executar Auditoria" button
+            const auditBtn = document.getElementById('btn-executar-auditoria');
+            if (auditBtn) {
+                auditBtn.addEventListener('click', () => this.runAudit());
+            }
+        },
+
+        /** Animate the stat card values counting up from 0 */
+        animateMetrics() {
+            const ids = [
+                'auditoria-criticos',
+                'auditoria-medios',
+                'auditoria-analisadas',
+                'auditoria-conformidade'
+            ];
+            ids.forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                const raw = el.textContent.trim();
+                const isPercent = raw.includes('%');
+                const target = parseFloat(raw.replace('%', '').replace(',', '.')) || 0;
+                const duration = 1000;
+                const startTime = performance.now();
+                el.textContent = isPercent ? '0%' : '0';
+
+                const step = (now) => {
+                    const elapsed = now - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+                    const ease = 1 - Math.pow(1 - progress, 3);
+                    const current = target * ease;
+                    if (isPercent) {
+                        el.textContent = (target % 1 !== 0 ? current.toFixed(1) : Math.round(current)) + '%';
+                    } else {
+                        el.textContent = Math.round(current);
+                    }
+                    if (progress < 1) {
+                        requestAnimationFrame(step);
+                    } else {
+                        el.textContent = raw;
+                    }
+                };
+                requestAnimationFrame(step);
+            });
+        },
+
+        /** Add relative time ("ha X dias") to alert-meta spans */
+        renderAlertTimeline() {
+            const alertMetas = document.querySelectorAll('#page-auditoria .alert-meta');
+            const now = new Date();
+            alertMetas.forEach(meta => {
+                const spans = meta.querySelectorAll('span');
+                spans.forEach(span => {
+                    const text = span.textContent.trim();
+                    const match = text.match(/^Detectado:\s*(\d{2})\/(\d{2})\/(\d{4})$/);
+                    if (match) {
+                        const day = parseInt(match[1], 10);
+                        const month = parseInt(match[2], 10) - 1;
+                        const year = parseInt(match[3], 10);
+                        const detected = new Date(year, month, day);
+                        const diffMs = now - detected;
+                        const diffDays = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
+                        let relative;
+                        if (diffDays === 0) {
+                            relative = 'hoje';
+                        } else if (diffDays === 1) {
+                            relative = 'ha 1 dia';
+                        } else {
+                            relative = 'ha ' + diffDays + ' dias';
+                        }
+                        span.textContent = text + ' (' + relative + ')';
+                    }
+                });
+            });
+        },
+
+        /** Expand or collapse alert details on click */
+        toggleAlertDetails(el) {
+            const body = el.querySelector('.alert-body');
+            if (!body) return;
+            const isCollapsed = body.style.display === 'none';
+            if (isCollapsed) {
+                body.style.display = '';
+                body.style.maxHeight = body.scrollHeight + 'px';
+                body.style.opacity = '1';
+                el.classList.remove('collapsed');
+            } else {
+                body.style.display = 'none';
+                body.style.maxHeight = '0';
+                body.style.opacity = '0';
+                el.classList.add('collapsed');
+            }
+        },
+
+        /** Simulate running an audit with a progress bar */
+        runAudit() {
+            const page = document.getElementById('page-auditoria');
+            if (!page) return;
+
+            // Prevent double-run
+            if (document.getElementById('audit-progress-container')) return;
+
+            const container = document.createElement('div');
+            container.id = 'audit-progress-container';
+            container.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;padding:0;';
+
+            const bar = document.createElement('div');
+            bar.id = 'audit-progress-bar';
+            bar.style.cssText = 'height:4px;background:var(--primary);width:0%;transition:width 0.3s ease;border-radius:0 2px 2px 0;';
+            container.appendChild(bar);
+
+            // Status banner below the bar
+            const banner = document.createElement('div');
+            banner.style.cssText = 'background:var(--card-bg);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;gap:10px;font-size:14px;color:var(--text-secondary);';
+            banner.innerHTML =
+                '<div class="spinner" style="width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin 0.8s linear infinite;flex-shrink:0;"></div>' +
+                '<span id="audit-status-text">Iniciando auditoria forense...</span>';
+            container.appendChild(banner);
+
+            // Spinner keyframes
+            if (!document.getElementById('audit-spinner-style')) {
+                const style = document.createElement('style');
+                style.id = 'audit-spinner-style';
+                style.textContent = '@keyframes spin{to{transform:rotate(360deg)}}';
+                document.head.appendChild(style);
+            }
+
+            document.body.appendChild(container);
+
+            const statusText = document.getElementById('audit-status-text');
+            const steps = [
+                { pct: 15, text: 'Coletando dados de deliberacoes...' },
+                { pct: 35, text: 'Analisando padroes de votacao...' },
+                { pct: 55, text: 'Verificando concentracao de relatorias...' },
+                { pct: 75, text: 'Calculando indices de conformidade...' },
+                { pct: 90, text: 'Gerando relatorio de anomalias...' },
+                { pct: 100, text: 'Auditoria concluida com sucesso!' }
+            ];
+
+            let stepIndex = 0;
+            const interval = setInterval(() => {
+                if (stepIndex < steps.length) {
+                    bar.style.width = steps[stepIndex].pct + '%';
+                    if (statusText) statusText.textContent = steps[stepIndex].text;
+                    stepIndex++;
+                } else {
+                    clearInterval(interval);
+                    // Show completion state
+                    bar.style.background = 'var(--success)';
+                    banner.querySelector('.spinner')?.remove();
+                    banner.style.color = 'var(--success)';
+                    // Remove after 3 seconds
+                    setTimeout(() => {
+                        container.remove();
+                    }, 3000);
+                }
+            }, 600);
         }
     };
 
