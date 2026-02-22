@@ -1427,7 +1427,7 @@
             const exportBtn = document.getElementById('painel-exportar-btn');
             if (exportBtn) {
                 exportBtn.addEventListener('click', () => {
-                    alert('Exportacao em desenvolvimento. Os dados serao exportados em formato CSV/PDF.');
+                    alert('Exportação em desenvolvimento. Os dados serão exportados em formato CSV/PDF.');
                 });
             }
         },
