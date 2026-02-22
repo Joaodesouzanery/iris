@@ -4519,16 +4519,23 @@
             { agencia: 'AGERGS', tipo: 'deliberacao', titulo: 'AGERGS homologa tarifas do transporte metropolitano de Porto Alegre', resumo: 'Diretoria colegiada homologou o reajuste de 8,3% nas tarifas do sistema de transporte metropolitano do RS.', data: '2026-02-10', esfera: 'estadual', fonte: 'AGERGS' }
         ],
 
-        // Mandatos de diretores (dados publicos do DOU)
+        // Mandatos de diretores (dados públicos do DOU / gov.br)
+        // Fonte: Diário Oficial da União, portais oficiais das agências
         mandatos: [
-            { nome: 'Sandoval Feitosa Neto', cargo: 'Diretor-Presidente', agencia: 'ANATEL', fim: '2026-11-05', cor: '#4ADE80' },
-            { nome: 'Agnes Maria de Aragao da Costa', cargo: 'Diretora', agencia: 'ANEEL', fim: '2026-07-15', cor: '#FFEF4D' },
-            { nome: 'Cristiana Fortini', cargo: 'Diretora', agencia: 'ANTT', fim: '2026-09-20', cor: '#14B8A6' },
-            { nome: 'Alex Machado Campos', cargo: 'Diretor', agencia: 'ANVISA', fim: '2027-01-10', cor: '#A78BFA' },
-            { nome: 'Fernando Saraiva Fernandes', cargo: 'Diretor', agencia: 'ANP', fim: '2026-12-30', cor: '#F472B6' },
-            { nome: 'Paulo Roberto Vanderlei Rebello', cargo: 'Diretor-Presidente', agencia: 'ANS', fim: '2027-03-15', cor: '#F97316' },
-            { nome: 'Andre Isper Rodrigues Barnabe', cargo: 'Diretor-Presidente', agencia: 'ARTESP', fim: '2027-06-01', cor: '#FFEF4D' },
-            { nome: 'Tiago Pereira Lima', cargo: 'Diretor-Presidente', agencia: 'ANAC', fim: '2027-08-22', cor: '#8B5CF6' }
+            { nome: 'Sandoval de Araújo Feitosa Neto', cargo: 'Diretor-Geral', agencia: 'ANEEL', fim: '2028-02-10', cor: '#FFEF4D' },
+            { nome: 'Hélvio Neves Guerra', cargo: 'Diretor', agencia: 'ANEEL', fim: '2026-11-05', cor: '#FFEF4D' },
+            { nome: 'Carlos Manuel Baigorri', cargo: 'Presidente', agencia: 'ANATEL', fim: '2027-11-03', cor: '#4ADE80' },
+            { nome: 'Artur Coimbra de Oliveira', cargo: 'Conselheiro', agencia: 'ANATEL', fim: '2027-02-04', cor: '#4ADE80' },
+            { nome: 'Rodolfo Henrique de Saboia', cargo: 'Diretor-Geral', agencia: 'ANP', fim: '2028-04-15', cor: '#F472B6' },
+            { nome: 'Rômison Rodrigues Mota', cargo: 'Diretor-Presidente', agencia: 'ANVISA', fim: '2030-01-15', cor: '#A78BFA' },
+            { nome: 'Paulo Roberto Vanderlei Rebello Filho', cargo: 'Diretor-Presidente', agencia: 'ANS', fim: '2027-03-15', cor: '#F97316' },
+            { nome: 'Rafael Vitale Rodrigues', cargo: 'Diretor-Geral', agencia: 'ANTT', fim: '2027-06-20', cor: '#14B8A6' },
+            { nome: 'Cristiana Fortini', cargo: 'Diretora', agencia: 'ANTT', fim: '2027-06-20', cor: '#14B8A6' },
+            { nome: 'Frederico Carvalho Dias', cargo: 'Diretor-Geral', agencia: 'ANTAQ', fim: '2029-01-15', cor: '#06B6D4' },
+            { nome: 'Tiago Sousa Pereira', cargo: 'Diretor-Presidente', agencia: 'ANAC', fim: '2029-02-22', cor: '#8B5CF6' },
+            { nome: 'Veronica Sánchez da Cruz Rios', cargo: 'Diretora-Presidente', agencia: 'ANA', fim: '2028-07-15', cor: '#60A5FA' },
+            { nome: 'Milton Persoli', cargo: 'Diretor-Geral', agencia: 'ARTESP', fim: '2027-06-01', cor: '#FBBF24' },
+            { nome: 'João Pedro Barroso do Nascimento', cargo: 'Presidente', agencia: 'CVM', fim: '2028-01-10', cor: '#22D3EE' }
         ],
 
         currentTab: 'todas',
@@ -4561,7 +4568,18 @@
             this.carregandoNoticias = true;
             const container = document.getElementById('hub-news-container');
             if (container) {
-                container.innerHTML = '<div class="hub-loading"><div class="loading-spinner"></div><span>Carregando notícias das agências reguladoras...</span></div>';
+                // Skeleton loading instead of spinner
+                container.innerHTML = '<div class="skeleton-news-grid">' +
+                    Array(5).fill(0).map(() => `
+                        <div class="skeleton-news-item skeleton">
+                            <div class="skeleton-badge skeleton"></div>
+                            <div class="skeleton-body">
+                                <div class="skeleton-text short skeleton"></div>
+                                <div class="skeleton-text long skeleton"></div>
+                                <div class="skeleton-text medium skeleton"></div>
+                            </div>
+                        </div>
+                    `).join('') + '</div>';
             }
 
             try {
@@ -4677,7 +4695,21 @@
             const news = this.getFilteredNews();
 
             if (news.length === 0) {
-                container.innerHTML = '<div class="empty-state"><p>Nenhuma notícia disponível. As notícias são buscadas em tempo real dos RSS das agências reguladoras. Verifique sua conexão ou tente novamente.</p></div>';
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="36" height="36">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/>
+                            </svg>
+                        </div>
+                        <div class="empty-state-title">Nenhuma noticia encontrada</div>
+                        <div class="empty-state-text">As noticias sao buscadas em tempo real dos RSS oficiais das agencias reguladoras. Verifique sua conexao ou tente novamente.</div>
+                        <div class="empty-state-action">
+                            <button class="btn btn-primary btn-sm" onclick="App.PageHub.fetchNoticiasReais(true).then(() => App.PageHub.renderNews())">
+                                Tentar novamente
+                            </button>
+                        </div>
+                    </div>`;
                 return;
             }
 

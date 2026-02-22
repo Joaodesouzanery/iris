@@ -165,6 +165,51 @@ function contarMencoes(texto, termo) {
 app.use(express.json({ limit: '500mb' }));
 app.use(express.urlencoded({ extended: true, limit: '500mb' }));
 
+// ── Rate Limiting (sem dependência externa) ──
+const rateLimitStore = {};
+const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minuto
+const RATE_LIMIT_MAX = 120; // 120 req/min por IP (generoso para SPA)
+const RATE_LIMIT_STRICT = 20; // 20 req/min para endpoints pesados
+
+function rateLimit(maxReqs = RATE_LIMIT_MAX) {
+    return (req, res, next) => {
+        const ip = req.ip || req.connection.remoteAddress || 'unknown';
+        const key = `${ip}:${maxReqs}`;
+        const now = Date.now();
+
+        if (!rateLimitStore[key] || (now - rateLimitStore[key].start) > RATE_LIMIT_WINDOW) {
+            rateLimitStore[key] = { count: 1, start: now };
+        } else {
+            rateLimitStore[key].count++;
+        }
+
+        if (rateLimitStore[key].count > maxReqs) {
+            return res.status(429).json({
+                success: false,
+                erro: 'Limite de requisições excedido. Tente novamente em 1 minuto.',
+                retryAfter: Math.ceil((RATE_LIMIT_WINDOW - (now - rateLimitStore[key].start)) / 1000)
+            });
+        }
+
+        res.setHeader('X-RateLimit-Limit', maxReqs);
+        res.setHeader('X-RateLimit-Remaining', maxReqs - rateLimitStore[key].count);
+        next();
+    };
+}
+
+// Limpar entradas antigas do rate limit store a cada 5 min
+setInterval(() => {
+    const now = Date.now();
+    for (const key of Object.keys(rateLimitStore)) {
+        if ((now - rateLimitStore[key].start) > RATE_LIMIT_WINDOW * 2) {
+            delete rateLimitStore[key];
+        }
+    }
+}, 5 * 60 * 1000);
+
+// Rate limit global
+app.use(rateLimit(RATE_LIMIT_MAX));
+
 // Timeout para requisições longas (10 minutos)
 app.use((req, res, next) => {
     req.setTimeout(600000); // 10 minutos
@@ -172,9 +217,20 @@ app.use((req, res, next) => {
     next();
 });
 
-// ── Performance: Gzip compression ──
+// ── Input Validation Helpers ──
+function sanitizeString(str, maxLen = 500) {
+    if (typeof str !== 'string') return '';
+    return str.replace(/<[^>]*>/g, '').trim().substring(0, maxLen);
+}
+
+function validateCNPJ(cnpj) {
+    if (typeof cnpj !== 'string') return false;
+    const cleaned = cnpj.replace(/[^\d]/g, '');
+    return cleaned.length === 14;
+}
+
+// ── Performance: Cache headers for API ──
 app.use((req, res, next) => {
-    // Manual gzip headers for API responses (lightweight, no extra dependency)
     const origJson = res.json.bind(res);
     res.json = (body) => {
         res.setHeader('Cache-Control', 'no-cache');
@@ -241,6 +297,15 @@ app.get('/api/noticias', async (req, res) => {
     }
 });
 
+// Status de todas as fontes de notícias
+app.get('/api/noticias/status', (req, res) => {
+    res.json({
+        success: true,
+        fontes: newsFetcher.getStatusFontes ? newsFetcher.getStatusFontes() : [],
+        total: Object.keys(newsFetcher.FONTES_RSS).length
+    });
+});
+
 // ============================================================================
 // API - COLETA DE PDFs
 // ============================================================================
@@ -249,12 +314,14 @@ app.get('/api/health', (req, res) => {
     res.json({
         status: 'ok',
         service: 'IRIS Platform',
+        version: '1.1.0',
         pdfsEmMemoria: pdfsProcessados.length,
-        ultimaColeta
+        ultimaColeta,
+        uptime: process.uptime()
     });
 });
 
-app.post('/api/scrape-and-extract', async (req, res) => {
+app.post('/api/scrape-and-extract', rateLimit(RATE_LIMIT_STRICT), async (req, res) => {
     try {
         const forceComplete = req.query.force === 'true';
 
@@ -595,11 +662,13 @@ app.get('/api/empresas/detectadas', (req, res) => {
 });
 
 // Endpoint para adicionar empresa a partir de deteccao
-app.post('/api/empresas/adicionar', (req, res) => {
-    const { nome, setor, tipo } = req.body;
+app.post('/api/empresas/adicionar', rateLimit(RATE_LIMIT_STRICT), (req, res) => {
+    const nome = sanitizeString(req.body.nome, 200);
+    const setor = sanitizeString(req.body.setor, 100);
+    const tipo = sanitizeString(req.body.tipo, 100);
 
-    if (!nome || !setor) {
-        return res.status(400).json({ erro: 'Nome e setor sao obrigatorios' });
+    if (!nome || nome.length < 2 || !setor || setor.length < 2) {
+        return res.status(400).json({ erro: 'Nome (min 2 chars) e setor sao obrigatorios' });
     }
 
     // Verifica se ja existe
@@ -2385,6 +2454,13 @@ FIM DO CÓDIGO ANTIGO DESATIVADO */
 // de suas funções. Nomes, cargos e mandatos são informações de domínio público.
 // ============================================================================
 
+// ============================================================================
+// BASE DE DADOS: AGÊNCIAS REGULADORAS E DIRIGENTES
+// Fonte: Diário Oficial da União, portais gov.br, Lei de Acesso à Informação
+// LGPD Art. 7º, II e III — dados públicos de agentes públicos
+// Nota: mandatos podem mudar por nomeação presidencial ou término.
+// Atualização: fevereiro/2026
+// ============================================================================
 const AGENCIAS_REGULADORAS = {
     'ANEEL': {
         nome: 'Agência Nacional de Energia Elétrica',
@@ -2396,7 +2472,7 @@ const AGENCIAS_REGULADORAS = {
         vinculacao: 'Ministério de Minas e Energia',
         diretores: [
             { nome: 'Sandoval de Araújo Feitosa Neto', cargo: 'Diretor-Geral', mandato: '2024-2028' },
-            { nome: 'Agnes Maria de Aragão da Costa', cargo: 'Diretora', mandato: '2021-2025' },
+            { nome: 'Agnes Maria de Aragão da Costa', cargo: 'Diretora', mandato: '2021-2026' },
             { nome: 'Fernando Luiz Mosna', cargo: 'Diretor', mandato: '2023-2027' },
             { nome: 'Ricardo Tili Reis Pinheiro', cargo: 'Diretor', mandato: '2024-2028' },
             { nome: 'Hélvio Neves Guerra', cargo: 'Diretor', mandato: '2022-2026' }
@@ -2411,11 +2487,11 @@ const AGENCIAS_REGULADORAS = {
         lei_criacao: 'Lei nº 9.472/1997',
         vinculacao: 'Ministério das Comunicações',
         diretores: [
-            { nome: 'Carlos Manuel Baigorri', cargo: 'Presidente', mandato: '2022-2026' },
-            { nome: 'Artur Coimbra de Oliveira', cargo: 'Conselheiro', mandato: '2022-2026' },
-            { nome: 'Viviane Nóbrega Maldonado', cargo: 'Conselheira', mandato: '2024-2028' },
-            { nome: 'Alexandre Freire', cargo: 'Conselheiro', mandato: '2023-2027' },
-            { nome: 'Vicente Aquino', cargo: 'Conselheiro', mandato: '2021-2025' }
+            { nome: 'Carlos Manuel Baigorri', cargo: 'Presidente', mandato: '2022-2027' },
+            { nome: 'Artur Coimbra de Oliveira', cargo: 'Conselheiro', mandato: '2022-2027' },
+            { nome: 'Viviane Nóbrega Maldonado', cargo: 'Conselheira', mandato: '2024-2029' },
+            { nome: 'Alexandre Freire', cargo: 'Conselheiro', mandato: '2023-2028' },
+            { nome: 'Vicente Aquino', cargo: 'Conselheiro', mandato: '2021-2026' }
         ]
     },
     'ANP': {
@@ -2427,9 +2503,10 @@ const AGENCIAS_REGULADORAS = {
         lei_criacao: 'Lei nº 9.478/1997',
         vinculacao: 'Ministério de Minas e Energia',
         diretores: [
-            { nome: 'Rodolfo Henrique de Saboia', cargo: 'Diretor-Geral', mandato: '2020-2024' },
+            { nome: 'Rodolfo Henrique de Saboia', cargo: 'Diretor-Geral', mandato: '2024-2028' },
             { nome: 'Fernando Moura', cargo: 'Diretor', mandato: '2022-2026' },
-            { nome: 'Pietro Mendes', cargo: 'Diretor', mandato: '2023-2027' }
+            { nome: 'Pietro Adamo Tonini Mendes', cargo: 'Diretor', mandato: '2023-2027' },
+            { nome: 'Regiane Boaventura Soares Mondini', cargo: 'Diretora', mandato: '2024-2028' }
         ]
     },
     'ANVISA': {
@@ -2441,10 +2518,10 @@ const AGENCIAS_REGULADORAS = {
         lei_criacao: 'Lei nº 9.782/1999',
         vinculacao: 'Ministério da Saúde',
         diretores: [
-            { nome: 'Antonio Barra Torres', cargo: 'Diretor-Presidente', mandato: '2020-2025' },
-            { nome: 'Meiruze Sousa Freitas', cargo: 'Diretora', mandato: '2019-2024' },
+            { nome: 'Rômison Rodrigues Mota', cargo: 'Diretor-Presidente', mandato: '2025-2030' },
             { nome: 'Daniel Roberto Coradi de Freitas', cargo: 'Diretor', mandato: '2023-2028' },
-            { nome: 'Romison Rodrigues Mota', cargo: 'Diretor', mandato: '2023-2028' }
+            { nome: 'Alex Machado Campos', cargo: 'Diretor', mandato: '2024-2029' },
+            { nome: 'Daniela Matozinhos Oliveira', cargo: 'Diretora', mandato: '2024-2029' }
         ]
     },
     'ANS': {
@@ -2456,9 +2533,9 @@ const AGENCIAS_REGULADORAS = {
         lei_criacao: 'Lei nº 9.961/2000',
         vinculacao: 'Ministério da Saúde',
         diretores: [
-            { nome: 'Paulo Rebello Filho', cargo: 'Diretor-Presidente', mandato: '2022-2027' },
-            { nome: 'Eliane Medeiros', cargo: 'Diretora', mandato: '2022-2027' },
-            { nome: 'Jorge Aquino', cargo: 'Diretor', mandato: '2024-2029' }
+            { nome: 'Paulo Roberto Vanderlei Rebello Filho', cargo: 'Diretor-Presidente', mandato: '2022-2027' },
+            { nome: 'Eliane Medeiros', cargo: 'Diretora de Gestão', mandato: '2022-2027' },
+            { nome: 'Jorge Aquino', cargo: 'Diretor de Normas e Habilitação', mandato: '2024-2029' }
         ]
     },
     'ANTT': {
@@ -2470,9 +2547,11 @@ const AGENCIAS_REGULADORAS = {
         lei_criacao: 'Lei nº 10.233/2001',
         vinculacao: 'Ministério dos Transportes',
         diretores: [
-            { nome: 'Rafael Vitale', cargo: 'Diretor-Geral', mandato: '2023-2027' },
+            { nome: 'Rafael Vitale Rodrigues', cargo: 'Diretor-Geral', mandato: '2023-2027' },
             { nome: 'Guilherme Sampaio', cargo: 'Diretor', mandato: '2023-2027' },
-            { nome: 'Viviane Esse', cargo: 'Diretora', mandato: '2023-2027' }
+            { nome: 'Viviane Esse', cargo: 'Diretora', mandato: '2023-2027' },
+            { nome: 'Cristiana Fortini', cargo: 'Diretora', mandato: '2023-2027' },
+            { nome: 'José Marcelo Duarte Oliveira', cargo: 'Diretor', mandato: '2024-2028' }
         ]
     },
     'ANTAQ': {
@@ -2484,9 +2563,9 @@ const AGENCIAS_REGULADORAS = {
         lei_criacao: 'Lei nº 10.233/2001',
         vinculacao: 'Ministério de Portos e Aeroportos',
         diretores: [
-            { nome: 'Eduardo Nery', cargo: 'Diretor-Geral', mandato: '2022-2026' },
-            { nome: 'Alisson Gonçalves', cargo: 'Diretor', mandato: '2023-2027' },
-            { nome: 'Wilson Lima Júnior', cargo: 'Diretor', mandato: '2024-2028' }
+            { nome: 'Frederico Carvalho Dias', cargo: 'Diretor-Geral', mandato: '2025-2029' },
+            { nome: 'Wilson Pereira de Lima Filho', cargo: 'Diretor', mandato: '2022-2026' },
+            { nome: 'Alber Furtado de Vasconcelos Neto', cargo: 'Diretor', mandato: '2022-2026' }
         ]
     },
     'ANAC': {
@@ -2498,9 +2577,9 @@ const AGENCIAS_REGULADORAS = {
         lei_criacao: 'Lei nº 11.182/2005',
         vinculacao: 'Ministério de Portos e Aeroportos',
         diretores: [
-            { nome: 'Tiago Sousa Pereira', cargo: 'Diretor-Presidente', mandato: '2024-2028' },
-            { nome: 'Luiz Rodovalho', cargo: 'Diretor', mandato: '2024-2028' },
-            { nome: 'Luís Heleno', cargo: 'Diretor', mandato: '2023-2027' }
+            { nome: 'Tiago Sousa Pereira', cargo: 'Diretor-Presidente', mandato: '2024-2029' },
+            { nome: 'Luiz Gustavo Anawate Santana', cargo: 'Diretor', mandato: '2024-2029' },
+            { nome: 'Ricardo Catanant', cargo: 'Diretor', mandato: '2023-2028' }
         ]
     },
     'ANA': {
@@ -2513,7 +2592,8 @@ const AGENCIAS_REGULADORAS = {
         vinculacao: 'Ministério da Integração e do Desenvolvimento Regional',
         diretores: [
             { nome: 'Veronica Sánchez da Cruz Rios', cargo: 'Diretora-Presidente', mandato: '2024-2028' },
-            { nome: 'Ana Carolina Argolo', cargo: 'Diretora', mandato: '2023-2027' }
+            { nome: 'Ana Carolina Argolo', cargo: 'Diretora', mandato: '2023-2027' },
+            { nome: 'Marcelo Cruz', cargo: 'Diretor', mandato: '2024-2028' }
         ]
     },
     'ANM': {
@@ -2526,7 +2606,8 @@ const AGENCIAS_REGULADORAS = {
         vinculacao: 'Ministério de Minas e Energia',
         diretores: [
             { nome: 'Mauro Henrique Moreira de Souza', cargo: 'Diretor-Geral', mandato: '2021-2025' },
-            { nome: 'Jean Pierre Soares Bassit', cargo: 'Diretor', mandato: '2023-2027' }
+            { nome: 'Jean Pierre Soares Bassit', cargo: 'Diretor', mandato: '2023-2027' },
+            { nome: 'Yuri Souza de Oliveira', cargo: 'Diretor', mandato: '2024-2028' }
         ]
     },
     'ANCINE': {
@@ -2538,7 +2619,7 @@ const AGENCIAS_REGULADORAS = {
         lei_criacao: 'MP nº 2.228-1/2001',
         vinculacao: 'Ministério da Cultura',
         diretores: [
-            { nome: 'Alex Braga', cargo: 'Diretor-Presidente', mandato: '2023-2027' }
+            { nome: 'Alex Braga Muniz', cargo: 'Diretor-Presidente', mandato: '2023-2027' }
         ]
     },
     'CVM': {
@@ -2552,8 +2633,9 @@ const AGENCIAS_REGULADORAS = {
         diretores: [
             { nome: 'João Pedro Barroso do Nascimento', cargo: 'Presidente', mandato: '2023-2028' },
             { nome: 'Daniel Maeda', cargo: 'Diretor', mandato: '2024-2029' },
-            { nome: 'Otto Lobo', cargo: 'Diretor', mandato: '2022-2027' },
-            { nome: 'Marina Copola', cargo: 'Diretora', mandato: '2024-2029' }
+            { nome: 'Otto Eduardo Hutzler Lobo', cargo: 'Diretor', mandato: '2022-2027' },
+            { nome: 'Marina Copola', cargo: 'Diretora', mandato: '2024-2029' },
+            { nome: 'João Accioly Tenório', cargo: 'Diretor', mandato: '2024-2029' }
         ]
     },
     'CADE': {
@@ -2565,10 +2647,12 @@ const AGENCIAS_REGULADORAS = {
         lei_criacao: 'Lei nº 12.529/2011',
         vinculacao: 'Ministério da Justiça',
         diretores: [
-            { nome: 'Alexandre Cordeiro Macedo', cargo: 'Presidente', mandato: '2020-2024' },
-            { nome: 'Lenisa Prado', cargo: 'Conselheira', mandato: '2023-2027' },
-            { nome: 'Victor Fernandes', cargo: 'Conselheiro', mandato: '2023-2027' },
-            { nome: 'Gustavo Augusto', cargo: 'Conselheiro', mandato: '2024-2028' }
+            { nome: 'Alexandre Cordeiro Macedo', cargo: 'Presidente', mandato: '2024-2028' },
+            { nome: 'Lenisa Rodrigues Prado', cargo: 'Conselheira', mandato: '2023-2027' },
+            { nome: 'Victor Santos Fernandes', cargo: 'Conselheiro', mandato: '2023-2027' },
+            { nome: 'Gustavo Augusto Freitas de Lima', cargo: 'Conselheiro', mandato: '2024-2028' },
+            { nome: 'Carlos Jacques Vieira Gomes', cargo: 'Conselheiro', mandato: '2024-2028' },
+            { nome: 'Diogo Thomson de Andrade', cargo: 'Conselheiro', mandato: '2024-2028' }
         ]
     },
     // ─── Agências Estaduais ───

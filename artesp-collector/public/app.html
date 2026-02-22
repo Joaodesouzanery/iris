@@ -15,6 +15,9 @@
     <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 </head>
 <body>
+    <!-- Skip link for keyboard navigation (Accessibility) -->
+    <a href="#main-content" class="skip-link">Ir para o conteudo principal</a>
+
     <!-- ============================================
          LANDING PAGE PUBLICA - Hub de Noticias (gratuito)
          ============================================ -->
@@ -193,7 +196,7 @@
          ============================================ -->
     <div class="app-container" id="app-platform" style="display: none;">
         <!-- Sidebar -->
-        <nav class="sidebar">
+        <nav class="sidebar" role="navigation" aria-label="Menu principal">
             <div class="sidebar-header">
                 <!-- Logo IRIS com linhas douradas -->
                 <div class="iris-logo">
@@ -357,7 +360,7 @@
         </nav>
 
         <!-- Main Content -->
-        <main class="main-content">
+        <main class="main-content" id="main-content" role="main">
             <!-- Top Header -->
             <header class="top-header">
                 <div class="header-left">
