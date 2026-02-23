@@ -402,19 +402,24 @@
                     <div class="page-header">
                         <div class="page-title-section">
                             <h1 class="page-title">Dashboard Geral</h1>
-                            <p class="page-subtitle">Visão consolidada das deliberações regulatórias</p>
+                            <p class="page-subtitle">Visão consolidada das deliberações de todas as agências reguladoras</p>
                         </div>
                         <div class="page-actions">
                             <div class="filter-group">
-                                <select class="filter-select">
-                                    <option>Todas...</option>
-                                    <option>ARTESP</option>
-                                </select>
-                            </div>
-                            <div class="filter-group">
-                                <select class="filter-select">
-                                    <option>Todas Agencias</option>
-                                    <option>ARTESP</option>
+                                <select class="filter-select" id="dashboard-filtro-agencia">
+                                    <option value="">Todas Agências</option>
+                                    <option value="ARTESP">ARTESP</option>
+                                    <option value="ANEEL">ANEEL</option>
+                                    <option value="ANATEL">ANATEL</option>
+                                    <option value="ANP">ANP</option>
+                                    <option value="ANVISA">ANVISA</option>
+                                    <option value="ANAC">ANAC</option>
+                                    <option value="ANTT">ANTT</option>
+                                    <option value="ANTAQ">ANTAQ</option>
+                                    <option value="ANA">ANA</option>
+                                    <option value="ANS">ANS</option>
+                                    <option value="ANM">ANM</option>
+                                    <option value="ANCINE">ANCINE</option>
                                 </select>
                             </div>
                             <div class="filter-group">
@@ -429,20 +434,17 @@
                                     <option>Todos Microtemas</option>
                                 </select>
                             </div>
-                            <div class="filter-group">
-                                <select class="filter-select">
-                                    <option>Todos Tipos</option>
-                                </select>
-                            </div>
-                            <button class="btn btn-outline">
+                            <button class="btn btn-outline" onclick="if(window.App)App.PageMetricas.exportar()">
                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                                Exportar PDF
-                            </button>
-                            <button class="btn btn-outline">
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
-                                Personalizar
+                                Exportar
                             </button>
                         </div>
+                    </div>
+
+                    <!-- Supabase Connection Status -->
+                    <div class="supabase-status-bar" id="supabase-status-bar" style="display:none;">
+                        <span class="supabase-status-dot"></span>
+                        <span class="supabase-status-text" id="supabase-status-text">Verificando conexão Supabase...</span>
                     </div>
 
                     <!-- Stats Grid - 4 cards iguais ao Lovable -->
@@ -3323,12 +3325,24 @@
                     <div class="page-header">
                         <div class="page-title-section">
                             <h1 class="page-title">Radar Regulatório</h1>
-                            <p class="page-subtitle">Monitoramento e análise de atividade regulatória</p>
+                            <p class="page-subtitle">Monitoramento e análise de atividade regulatória em tempo real</p>
                         </div>
                         <div class="page-actions">
+                            <select class="filter-select" id="radar-agencia">
+                                <option value="artesp">ARTESP</option>
+                                <option value="aneel">ANEEL</option>
+                                <option value="anatel">ANATEL</option>
+                                <option value="anp">ANP</option>
+                                <option value="anvisa">ANVISA</option>
+                                <option value="anac">ANAC</option>
+                                <option value="antt">ANTT</option>
+                                <option value="antaq">ANTAQ</option>
+                                <option value="ans">ANS</option>
+                                <option value="anm">ANM</option>
+                            </select>
                             <select class="filter-select" id="radar-ano">
-                                <option value="2025">2025</option>
                                 <option value="2026">2026</option>
+                                <option value="2025">2025</option>
                             </select>
                         </div>
                     </div>
@@ -3339,7 +3353,7 @@
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                             Dados Reais
                         </span>
-                        <span class="radar-agencia-nome">Agência de Transporte do Estado de São Paulo</span>
+                        <span class="radar-agencia-nome" id="radar-agencia-nome">Agência de Transporte do Estado de São Paulo</span>
                     </div>
 
                     <!-- KPIs do Radar -->
@@ -3492,8 +3506,15 @@
                         <div class="page-actions">
                             <select class="filter-select" id="boletim-agencia">
                                 <option value="artesp">ARTESP</option>
-                                <option value="anatel">ANATEL</option>
                                 <option value="aneel">ANEEL</option>
+                                <option value="anatel">ANATEL</option>
+                                <option value="anp">ANP</option>
+                                <option value="anvisa">ANVISA</option>
+                                <option value="anac">ANAC</option>
+                                <option value="antt">ANTT</option>
+                                <option value="antaq">ANTAQ</option>
+                                <option value="ans">ANS</option>
+                                <option value="anm">ANM</option>
                             </select>
                         </div>
                     </div>
@@ -3502,13 +3523,22 @@
                     <div class="boletim-main-card">
                         <div class="boletim-main-header">
                             <div>
-                                <h2 class="boletim-main-title" id="boletim-titulo">Boletim ARTESP — Janeiro/2026</h2>
+                                <h2 class="boletim-main-title" id="boletim-titulo">Boletim ARTESP — Fevereiro/2026</h2>
                                 <p class="boletim-main-subtitle">Resumo mensal de atividades regulatórias</p>
                             </div>
                             <div class="boletim-main-actions">
                                 <select class="filter-select" id="boletim-mes">
                                     <option value="01">Janeiro</option>
-                                    <option value="02">Fevereiro</option>
+                                    <option value="02" selected>Fevereiro</option>
+                                    <option value="03">Março</option>
+                                    <option value="04">Abril</option>
+                                    <option value="05">Maio</option>
+                                    <option value="06">Junho</option>
+                                    <option value="07">Julho</option>
+                                    <option value="08">Agosto</option>
+                                    <option value="09">Setembro</option>
+                                    <option value="10">Outubro</option>
+                                    <option value="11">Novembro</option>
                                     <option value="12">Dezembro</option>
                                 </select>
                                 <select class="filter-select" id="boletim-ano">
@@ -4086,6 +4116,17 @@
                             <p class="page-subtitle">Detecção de anomalias e padrões suspeitos nas deliberações</p>
                         </div>
                         <div class="page-actions">
+                            <select class="filter-select" id="auditoria-agencia">
+                                <option value="">Todas Agências</option>
+                                <option value="artesp">ARTESP</option>
+                                <option value="aneel">ANEEL</option>
+                                <option value="anatel">ANATEL</option>
+                                <option value="antt">ANTT</option>
+                                <option value="anvisa">ANVISA</option>
+                                <option value="anp">ANP</option>
+                                <option value="ans">ANS</option>
+                                <option value="anm">ANM</option>
+                            </select>
                             <button class="btn btn-primary" id="btn-executar-auditoria">
                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
                                 Executar Auditoria
@@ -4249,9 +4290,13 @@
                     <div class="page-header">
                         <div class="page-title-section">
                             <h1 class="page-title">Agências Reguladoras</h1>
-                            <p class="page-subtitle">Visão isométrica das agências e suas métricas</p>
+                            <p class="page-subtitle">Painel consolidado de todas as agências monitoradas e seus diretores</p>
                         </div>
                         <div class="page-actions">
+                            <div class="search-input-wrapper">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                                <input type="text" class="filter-input" id="agencia-search-input" placeholder="Buscar agência...">
+                            </div>
                             <select class="filter-select" id="filtro-esfera">
                                 <option value="">Todas Esferas</option>
                                 <option value="federal">Federal</option>
@@ -4260,8 +4305,16 @@
                             <select class="filter-select" id="filtro-setor">
                                 <option value="">Todos Setores</option>
                                 <option value="transporte">Transporte</option>
-                                <option value="mineracao">Mineração</option>
                                 <option value="energia">Energia</option>
+                                <option value="telecomunica">Telecomunicações</option>
+                                <option value="petróleo">Petróleo e Gás</option>
+                                <option value="vigilância">Vigilância Sanitária</option>
+                                <option value="aviação">Aviação</option>
+                                <option value="mineração">Mineração</option>
+                                <option value="saúde">Saúde</option>
+                                <option value="águas">Águas</option>
+                                <option value="saneamento">Saneamento</option>
+                                <option value="cinema">Cinema</option>
                             </select>
                         </div>
                     </div>
@@ -4322,60 +4375,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr>
-                                        <td><strong style="color: var(--primary);">ARTESP</strong></td>
-                                        <td><span class="badge badge-info">Estadual</span></td>
-                                        <td>Transporte Rodoviario</td>
-                                        <td>109</td>
-                                        <td>63</td>
-                                        <td><span style="color: var(--success);">58%</span></td>
-                                        <td>4</td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong style="color: var(--primary);">ANTT</strong></td>
-                                        <td><span class="badge badge-warning">Federal</span></td>
-                                        <td>Transporte Terrestre</td>
-                                        <td>342</td>
-                                        <td>245</td>
-                                        <td><span style="color: var(--success);">72%</span></td>
-                                        <td>5</td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong style="color: var(--primary);">ANM</strong></td>
-                                        <td><span class="badge badge-warning">Federal</span></td>
-                                        <td>Mineração</td>
-                                        <td>187</td>
-                                        <td>112</td>
-                                        <td><span style="color: var(--success);">60%</span></td>
-                                        <td>5</td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong style="color: var(--primary);">ANEEL</strong></td>
-                                        <td><span class="badge badge-warning">Federal</span></td>
-                                        <td>Energia Elétrica</td>
-                                        <td>456</td>
-                                        <td>342</td>
-                                        <td><span style="color: var(--success);">75%</span></td>
-                                        <td>5</td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong style="color: var(--primary);">ANTAQ</strong></td>
-                                        <td><span class="badge badge-warning">Federal</span></td>
-                                        <td>Transporte Aquaviário</td>
-                                        <td>98</td>
-                                        <td>67</td>
-                                        <td><span style="color: var(--success);">68%</span></td>
-                                        <td>3</td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong style="color: var(--primary);">ARSESP</strong></td>
-                                        <td><span class="badge badge-info">Estadual</span></td>
-                                        <td>Saneamento</td>
-                                        <td>55</td>
-                                        <td>38</td>
-                                        <td><span style="color: var(--success);">69%</span></td>
-                                        <td>4</td>
-                                    </tr>
+                                    <!-- Renderizado dinamicamente via JavaScript -->
                                 </tbody>
                             </table>
                         </div>

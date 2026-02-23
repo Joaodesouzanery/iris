@@ -1213,7 +1213,7 @@
                             progressPct = Math.min(100, Math.max(0, Math.round((elapsed / total) * 100)));
                         }
 
-                        return \`
+                        return `
                             <div class="mandato-exp-item urgencia-\${urgencia}">
                                 <div class="mandato-exp-timeline-dot"></div>
                                 <div class="mandato-exp-timeline-line"></div>
@@ -1240,7 +1240,7 @@
                                     </div>
                                 </div>
                             </div>
-                        \`;
+                        `;
                     }).join('')}
                 </div>
             `;
@@ -2685,6 +2685,9 @@
                 page.classList.add('active');
             }
 
+            // Check Supabase connection status
+            this.checkSupabaseStatus();
+
             // Try fetching live data, fall back to DOM-based stats
             try {
                 const data = await API.get('/api/metricas/exportar');
@@ -2699,6 +2702,31 @@
 
             this.animateCounters();
             this.renderBarChart();
+        },
+
+        async checkSupabaseStatus() {
+            const bar = document.getElementById('supabase-status-bar');
+            const text = document.getElementById('supabase-status-text');
+            if (!bar || !text) return;
+
+            bar.style.display = 'flex';
+            try {
+                const resp = await fetch('/api/supabase/status');
+                const data = await resp.json();
+                if (data.connected) {
+                    bar.classList.add('connected');
+                    bar.classList.remove('disconnected');
+                    text.textContent = 'Supabase conectado — dados sincronizados';
+                    setTimeout(() => { bar.style.display = 'none'; }, 4000);
+                } else {
+                    bar.classList.add('disconnected');
+                    bar.classList.remove('connected');
+                    text.textContent = data.message || 'Supabase não configurado — usando dados locais';
+                }
+            } catch (e) {
+                bar.classList.add('disconnected');
+                text.textContent = 'Usando dados locais (Supabase indisponível)';
+            }
         },
 
         /** Read stat values directly from the HTML elements */
@@ -2823,8 +2851,15 @@
     const PageBoletim = {
         _agencyNames: {
             artesp: 'ARTESP',
+            aneel: 'ANEEL',
             anatel: 'ANATEL',
-            aneel: 'ANEEL'
+            anp: 'ANP',
+            anvisa: 'ANVISA',
+            anac: 'ANAC',
+            antt: 'ANTT',
+            antaq: 'ANTAQ',
+            ans: 'ANS',
+            anm: 'ANM'
         },
 
         init() {
@@ -5389,144 +5424,249 @@
     // PAGE: Agencias (Visualizacao Isometrica 3D)
     // ============================================
     const PageAgencias = {
-        // Icones SVG para cada setor
-        icones: {
-            transporte: `<svg viewBox="0 0 80 80" fill="none">
-                <rect x="8" y="28" width="44" height="28" rx="4" fill="currentColor" opacity="0.2" stroke="currentColor" stroke-width="2"/>
-                <rect x="52" y="36" width="20" height="20" rx="3" fill="currentColor" opacity="0.2" stroke="currentColor" stroke-width="2"/>
-                <path d="M52 42 h12" stroke="currentColor" stroke-width="2" opacity="0.6"/>
-                <circle cx="20" cy="60" r="8" fill="none" stroke="currentColor" stroke-width="3"/>
-                <circle cx="20" cy="60" r="3" fill="currentColor"/>
-                <circle cx="62" cy="60" r="8" fill="none" stroke="currentColor" stroke-width="3"/>
-                <circle cx="62" cy="60" r="3" fill="currentColor"/>
-                <path d="M12 36 h32 M12 44 h24" stroke="currentColor" stroke-width="2" opacity="0.4"/>
-            </svg>`,
-            mineracao: `<svg viewBox="0 0 80 80" fill="none">
-                <path d="M10 65 L30 30 L40 42 L55 22 L70 65 Z" fill="currentColor" opacity="0.2" stroke="currentColor" stroke-width="2"/>
-                <path d="M18 65 L30 45 L40 55 L50 40 L62 65" stroke="currentColor" stroke-width="1.5" opacity="0.5"/>
-                <path d="M25 28 L35 18 L40 24 L32 35 Z" fill="currentColor"/>
-                <rect x="30" y="32" width="5" height="20" rx="2" fill="currentColor" transform="rotate(-45 32 42)"/>
-                <circle cx="58" cy="18" r="6" fill="#FFEF4D" stroke="#FFEF4D" stroke-width="1"/>
-                <path d="M58 10 v-4 M58 26 v4 M50 18 h-4 M66 18 h4 M52 12 l-2 -2 M64 24 l2 2 M52 24 l-2 2 M64 12 l2 -2" stroke="#FFEF4D" stroke-width="2"/>
-                <rect x="15" y="60" width="12" height="5" rx="1" fill="currentColor" opacity="0.5"/>
-                <rect x="45" y="60" width="10" height="5" rx="1" fill="currentColor" opacity="0.5"/>
-            </svg>`
+        searchTerm: '',
+        filtroEsfera: '',
+        filtroSetor: '',
+        viewMode: 'grid',
+        agenciasFromApi: null,
+
+        coresSetor: {
+            'Energia Elétrica': '#FFEF4D',
+            'Telecomunicações': '#4ADE80',
+            'Petróleo e Gás': '#F472B6',
+            'Vigilância Sanitária': '#A78BFA',
+            'Aviação Civil': '#8B5CF6',
+            'Transportes Terrestres': '#60A5FA',
+            'Transportes Aquaviários': '#22D3EE',
+            'Águas': '#06B6D4',
+            'Cinema e Audiovisual': '#FB923C',
+            'Saúde Suplementar': '#F87171',
+            'Mineração': '#818CF8',
+            'Transporte Rodoviário SP': '#FFEF4D',
+            'Saneamento e Energia SP': '#34D399',
+            'Transportes MG': '#FCD34D',
+            'Transporte Rodoviário RS': '#93C5FD'
         },
 
         agencias: [
-            {
-                id: 'artesp',
-                nome: 'ARTESP',
-                nomeCompleto: 'Agencia de Transporte do Estado de Sao Paulo',
-                setor: 'transporte',
-                esfera: 'Estadual - SP',
-                decisoes: 1247,
-                aprovadas: 892,
-                pendentes: 45,
-                cor: '#FFEF4D',
-                corSecundaria: '#e6d645',
-                diretores: [
-                    { nome: 'Andre Isper Rodrigues Barnabe', cargo: 'Diretor-Presidente', iniciais: 'AI' },
-                    { nome: 'Diego Albert Zanatto', cargo: 'Diretor de Fiscalizacao', iniciais: 'DZ' },
-                    { nome: 'Fernanda Esbizaro Rodrigues Rudnik', cargo: 'Diretora de Planejamento', iniciais: 'FR' },
-                    { nome: 'Raquel Franca Carneiro', cargo: 'Diretora de Investimentos', iniciais: 'RC' }
-                ]
-            },
-            {
-                id: 'anm',
-                nome: 'ANM',
-                nomeCompleto: 'Agência Nacional de Mineração',
-                setor: 'mineracao',
-                esfera: 'Federal',
-                decisoes: 892,
-                aprovadas: 654,
-                pendentes: 78,
-                cor: '#60A5FA',
-                corSecundaria: '#3b82f6',
-                diretores: [
-                    { nome: 'Mauro Henrique Moreira Sousa', cargo: 'Diretor-Geral', iniciais: 'MM' },
-                    { nome: 'Jose Fernando de Mendonca Gomes Junior', cargo: 'Diretor', iniciais: 'JG' },
-                    { nome: 'Luiz Paniago Neves', cargo: 'Diretor Substituto', iniciais: 'LP' },
-                    { nome: 'Fabio Fernando Borges', cargo: 'Diretor Substituto', iniciais: 'FB' }
-                ]
-            }
+            { id: 'artesp', nome: 'ARTESP', nomeCompleto: 'Agência de Transporte do Estado de São Paulo', setor: 'Transporte Rodoviário SP', esfera: 'Estadual', uf: 'SP', decisoes: 1247, aprovadas: 892, cor: '#FFEF4D', lei: 'Decreto nº 46.486/2002', vinculacao: 'Governo do Estado de SP', diretores: [
+                { nome: 'André Ísper Rodrigues Barnabé', cargo: 'Diretor-Presidente', iniciais: 'AI', mandato: '2023-2027' },
+                { nome: 'Diego Albert Zanatto', cargo: 'Diretor de Fiscalização', iniciais: 'DZ', mandato: '2023-2027' },
+                { nome: 'Fernanda Esbízaro Rodrigues Rudnik', cargo: 'Diretora de Planejamento', iniciais: 'FR', mandato: '2023-2027' },
+                { nome: 'Raquel França Carneiro', cargo: 'Diretora de Investimentos', iniciais: 'RC', mandato: '2023-2027' }
+            ]},
+            { id: 'aneel', nome: 'ANEEL', nomeCompleto: 'Agência Nacional de Energia Elétrica', setor: 'Energia Elétrica', esfera: 'Federal', uf: 'DF', decisoes: 2456, aprovadas: 1842, cor: '#FFEF4D', lei: 'Lei nº 9.427/1996', vinculacao: 'Min. de Minas e Energia', diretores: [
+                { nome: 'Sandoval de Araújo Feitosa Neto', cargo: 'Diretor-Geral', iniciais: 'SF', mandato: '2022-2027' },
+                { nome: 'Agnes Maria de Aragão da Costa', cargo: 'Diretora', iniciais: 'AC', mandato: '2022-2028' },
+                { nome: 'Fernando Luiz Mosna Ferreira da Silva', cargo: 'Diretor', iniciais: 'FM', mandato: '2022-2026' },
+                { nome: 'Willamy Moreira Frota', cargo: 'Diretor', iniciais: 'WF', mandato: '2025-2029' },
+                { nome: 'Gentil Nogueira de Sá Júnior', cargo: 'Diretor', iniciais: 'GS', mandato: '2025-2030' }
+            ]},
+            { id: 'anatel', nome: 'ANATEL', nomeCompleto: 'Agência Nacional de Telecomunicações', setor: 'Telecomunicações', esfera: 'Federal', uf: 'DF', decisoes: 1890, aprovadas: 1512, cor: '#4ADE80', lei: 'Lei nº 9.472/1997', vinculacao: 'Min. das Comunicações', diretores: [
+                { nome: 'Carlos Manuel Baigorri', cargo: 'Presidente', iniciais: 'CB', mandato: '2022-2026' },
+                { nome: 'Alexandre Reis Siqueira Freire', cargo: 'Conselheiro', iniciais: 'AF', mandato: '2022-2027' },
+                { nome: 'Octávio Penna Pieranti', cargo: 'Conselheiro', iniciais: 'OP', mandato: '2025-2028' },
+                { nome: 'Edson Victor Eugênio de Holanda', cargo: 'Conselheiro', iniciais: 'EH', mandato: '2025-2029' }
+            ]},
+            { id: 'anp', nome: 'ANP', nomeCompleto: 'Agência Nacional do Petróleo, Gás Natural e Biocombustíveis', setor: 'Petróleo e Gás', esfera: 'Federal', uf: 'DF', decisoes: 1234, aprovadas: 987, cor: '#F472B6', lei: 'Lei nº 9.478/1997', vinculacao: 'Min. de Minas e Energia', diretores: [
+                { nome: 'Artur Watt Neto', cargo: 'Diretor-Geral', iniciais: 'AW', mandato: '2025-2029' },
+                { nome: 'Symone Christine de Santana Araújo', cargo: 'Diretora', iniciais: 'SA', mandato: '2023-2027' },
+                { nome: 'Daniel Maia Vieira', cargo: 'Diretor', iniciais: 'DM', mandato: '2022-2026' },
+                { nome: 'Fernando Luiz Gonçalves Moura', cargo: 'Diretor', iniciais: 'FM', mandato: '2022-2026' },
+                { nome: 'Pietro Adamo Sampaio Mendes', cargo: 'Diretor', iniciais: 'PM', mandato: '2025-2029' }
+            ]},
+            { id: 'anvisa', nome: 'ANVISA', nomeCompleto: 'Agência Nacional de Vigilância Sanitária', setor: 'Vigilância Sanitária', esfera: 'Federal', uf: 'DF', decisoes: 3210, aprovadas: 2568, cor: '#A78BFA', lei: 'Lei nº 9.782/1999', vinculacao: 'Min. da Saúde', diretores: [
+                { nome: 'Leandro Pinheiro Safatle', cargo: 'Diretor-Presidente', iniciais: 'LS', mandato: '2025-2030' },
+                { nome: 'Daniel Meirelles Fernandes Pereira', cargo: 'Diretor', iniciais: 'DP', mandato: '2023-2028' },
+                { nome: 'Daniela Marreco Cerqueira', cargo: 'Diretora', iniciais: 'DC', mandato: '2025-2030' }
+            ]},
+            { id: 'anac', nome: 'ANAC', nomeCompleto: 'Agência Nacional de Aviação Civil', setor: 'Aviação Civil', esfera: 'Federal', uf: 'DF', decisoes: 980, aprovadas: 784, cor: '#8B5CF6', lei: 'Lei nº 11.182/2005', vinculacao: 'Min. de Portos e Aeroportos', diretores: [
+                { nome: 'Tiago Sousa Pereira', cargo: 'Diretor-Presidente', iniciais: 'TP', mandato: '2024-2029' },
+                { nome: 'Flávio Nunes Ferreira', cargo: 'Diretor', iniciais: 'FF', mandato: '2025-2030' }
+            ]},
+            { id: 'antt', nome: 'ANTT', nomeCompleto: 'Agência Nacional de Transportes Terrestres', setor: 'Transportes Terrestres', esfera: 'Federal', uf: 'DF', decisoes: 1567, aprovadas: 1175, cor: '#60A5FA', lei: 'Lei nº 10.233/2001', vinculacao: 'Min. dos Transportes', diretores: [
+                { nome: 'Rafael Vitale Rodrigues', cargo: 'Diretor-Geral', iniciais: 'RV', mandato: '2023-2027' },
+                { nome: 'Guilherme Sampaio', cargo: 'Diretor', iniciais: 'GS', mandato: '2020-2024' },
+                { nome: 'Davi Barreto', cargo: 'Diretor', iniciais: 'DB', mandato: '2023-2027' }
+            ]},
+            { id: 'antaq', nome: 'ANTAQ', nomeCompleto: 'Agência Nacional de Transportes Aquaviários', setor: 'Transportes Aquaviários', esfera: 'Federal', uf: 'DF', decisoes: 678, aprovadas: 475, cor: '#22D3EE', lei: 'Lei nº 10.233/2001', vinculacao: 'Min. de Portos e Aeroportos', diretores: [
+                { nome: 'Eduardo Nery Machado Filho', cargo: 'Diretor-Geral', iniciais: 'EN', mandato: '2024-2029' },
+                { nome: 'Wilson Lima Filho', cargo: 'Diretor', iniciais: 'WL', mandato: '2023-2027' }
+            ]},
+            { id: 'ana', nome: 'ANA', nomeCompleto: 'Agência Nacional de Águas e Saneamento Básico', setor: 'Águas', esfera: 'Federal', uf: 'DF', decisoes: 890, aprovadas: 712, cor: '#06B6D4', lei: 'Lei nº 9.984/2000', vinculacao: 'Min. do Meio Ambiente', diretores: [
+                { nome: 'Veronica Sánchez Marques da Cruz', cargo: 'Diretora-Presidente', iniciais: 'VC', mandato: '2023-2027' }
+            ]},
+            { id: 'ancine', nome: 'ANCINE', nomeCompleto: 'Agência Nacional do Cinema', setor: 'Cinema e Audiovisual', esfera: 'Federal', uf: 'RJ', decisoes: 345, aprovadas: 276, cor: '#FB923C', lei: 'MP nº 2.228-1/2001', vinculacao: 'Min. da Cultura', diretores: [
+                { nome: 'Alex Braga Muniz', cargo: 'Diretor-Presidente', iniciais: 'AM', mandato: '2023-2027' }
+            ]},
+            { id: 'ans', nome: 'ANS', nomeCompleto: 'Agência Nacional de Saúde Suplementar', setor: 'Saúde Suplementar', esfera: 'Federal', uf: 'RJ', decisoes: 1890, aprovadas: 1323, cor: '#F87171', lei: 'Lei nº 9.961/2000', vinculacao: 'Min. da Saúde', diretores: [
+                { nome: 'Paulo Roberto Vanderlei Rebello Filho', cargo: 'Diretor-Presidente', iniciais: 'PR', mandato: '2022-2027' },
+                { nome: 'Jorge Dias de Souza', cargo: 'Diretor', iniciais: 'JS', mandato: '2024-2029' }
+            ]},
+            { id: 'anm', nome: 'ANM', nomeCompleto: 'Agência Nacional de Mineração', setor: 'Mineração', esfera: 'Federal', uf: 'DF', decisoes: 892, aprovadas: 654, cor: '#818CF8', lei: 'Lei nº 13.575/2017', vinculacao: 'Min. de Minas e Energia', diretores: [
+                { nome: 'Mauro Henrique Moreira Sousa', cargo: 'Diretor-Geral', iniciais: 'MM', mandato: '2022-2026' },
+                { nome: 'José Fernando de Mendonça Gomes Junior', cargo: 'Diretor', iniciais: 'JG', mandato: '2022-2026' }
+            ]},
+            { id: 'arsesp', nome: 'ARSESP', nomeCompleto: 'Agência Reguladora de Serviços Públicos de SP', setor: 'Saneamento e Energia SP', esfera: 'Estadual', uf: 'SP', decisoes: 567, aprovadas: 397, cor: '#34D399', lei: 'LC nº 1.025/2007', vinculacao: 'Governo do Estado de SP', diretores: [
+                { nome: 'Gustavo Guimarães Bueno', cargo: 'Diretor-Presidente', iniciais: 'GB', mandato: '2023-2027' }
+            ]},
+            { id: 'agetransp', nome: 'AGETRANSP', nomeCompleto: 'Agência Reguladora de Transportes do RJ', setor: 'Transportes', esfera: 'Estadual', uf: 'RJ', decisoes: 423, aprovadas: 296, cor: '#FCA5A5', lei: 'Lei nº 4.555/2005', vinculacao: 'Governo do Estado do RJ', diretores: []},
+            { id: 'agergs', nome: 'AGERGS', nomeCompleto: 'Agência Estadual de Regulação do RS', setor: 'Transporte Rodoviário RS', esfera: 'Estadual', uf: 'RS', decisoes: 389, aprovadas: 272, cor: '#93C5FD', lei: 'Lei nº 10.931/1997', vinculacao: 'Governo do Estado do RS', diretores: []},
+            { id: 'agemg', nome: 'AGEMG', nomeCompleto: 'Agência Reguladora de Transportes de MG', setor: 'Transportes MG', esfera: 'Estadual', uf: 'MG', decisoes: 512, aprovadas: 358, cor: '#FCD34D', lei: 'Lei nº 23.304/2019', vinculacao: 'Governo do Estado de MG', diretores: []}
         ],
 
         init() {
             const page = document.getElementById('page-agencias');
             page.classList.add('active');
-            this.renderAgencyCards();
-            this.updateStats();
+            this.fetchAgenciasFromApi();
+            this.bindFilters();
+            this.render();
         },
 
-        updateStats() {
-            const totalDecisoes = this.agencias.reduce((sum, a) => sum + a.decisoes, 0);
-            const totalAprovadas = this.agencias.reduce((sum, a) => sum + a.aprovadas, 0);
-            const totalDiretores = this.agencias.reduce((sum, a) => sum + (a.diretores ? a.diretores.length : 0), 0);
-            const taxaMedia = Math.round((totalAprovadas / totalDecisoes) * 100);
+        async fetchAgenciasFromApi() {
+            try {
+                const resp = await fetch('/api/agencias-reguladoras');
+                const data = await resp.json();
+                if (data.success && data.agencias) {
+                    this.agenciasFromApi = data.agencias;
+                    // Merge API data with local data
+                    for (const apiAg of data.agencias) {
+                        const local = this.agencias.find(a => a.nome === apiAg.sigla);
+                        if (local) {
+                            local.diretores = apiAg.diretores.map(d => ({
+                                nome: d.nome, cargo: d.cargo,
+                                iniciais: d.nome.split(' ').filter((_,i,arr) => i === 0 || i === arr.length - 1).map(w => w[0]).join(''),
+                                mandato: d.mandato || ''
+                            }));
+                            local.lei = apiAg.lei_criacao || local.lei;
+                            local.vinculacao = apiAg.vinculacao || local.vinculacao;
+                        }
+                    }
+                    this.render();
+                }
+            } catch (e) {
+                console.warn('[Agencias] API indisponível, usando dados locais');
+            }
+        },
 
-            // Atualiza stats cards se existirem
+        bindFilters() {
+            const esferaFilter = document.getElementById('filtro-esfera');
+            const setorFilter = document.getElementById('filtro-setor');
+            const searchInput = document.getElementById('agencia-search-input');
+
+            if (esferaFilter) esferaFilter.addEventListener('change', (e) => { this.filtroEsfera = e.target.value; this.render(); });
+            if (setorFilter) setorFilter.addEventListener('change', (e) => { this.filtroSetor = e.target.value; this.render(); });
+            if (searchInput) searchInput.addEventListener('input', (e) => { this.searchTerm = e.target.value.toLowerCase(); this.render(); });
+        },
+
+        getFiltered() {
+            return this.agencias.filter(a => {
+                if (this.filtroEsfera && a.esfera.toLowerCase() !== this.filtroEsfera) return false;
+                if (this.filtroSetor && !a.setor.toLowerCase().includes(this.filtroSetor)) return false;
+                if (this.searchTerm && !a.nome.toLowerCase().includes(this.searchTerm) && !a.nomeCompleto.toLowerCase().includes(this.searchTerm) && !a.setor.toLowerCase().includes(this.searchTerm)) return false;
+                return true;
+            });
+        },
+
+        render() {
+            const filtered = this.getFiltered();
+            this.updateStats(filtered);
+            this.renderAgencyCards(filtered);
+            this.renderComparisonTable(filtered);
+        },
+
+        updateStats(filtered) {
+            const all = filtered || this.agencias;
+            const totalDecisoes = all.reduce((sum, a) => sum + a.decisoes, 0);
+            const totalAprovadas = all.reduce((sum, a) => sum + a.aprovadas, 0);
+            const totalDiretores = all.reduce((sum, a) => sum + (a.diretores ? a.diretores.length : 0), 0);
+            const taxaMedia = totalDecisoes > 0 ? Math.round((totalAprovadas / totalDecisoes) * 100) : 0;
+            const federais = all.filter(a => a.esfera === 'Federal').length;
+            const estaduais = all.filter(a => a.esfera === 'Estadual').length;
+
             const statsEl = document.querySelectorAll('#page-agencias .stats-value');
             if (statsEl.length >= 4) {
-                statsEl[0].textContent = this.agencias.length;
+                statsEl[0].textContent = all.length;
                 statsEl[1].textContent = totalDecisoes.toLocaleString('pt-BR');
                 statsEl[2].textContent = taxaMedia + '%';
                 statsEl[3].textContent = totalDiretores;
             }
+            const subtitles = document.querySelectorAll('#page-agencias .stat-card-subtitle');
+            if (subtitles.length >= 1) {
+                subtitles[0].textContent = `${federais} federais, ${estaduais} estaduais`;
+            }
         },
 
-        renderAgencyCards() {
+        renderAgencyCards(filtered) {
             const container = document.getElementById('agency-cards-container');
             if (!container) return;
 
-            container.innerHTML = this.agencias.map(a => {
-                const icone = this.icones[a.setor] || this.icones.transporte;
-                const taxa = Math.round((a.aprovadas / a.decisoes) * 100);
+            if (filtered.length === 0) {
+                container.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--text-muted);">Nenhuma agência encontrada com os filtros selecionados.</div>';
+                return;
+            }
+
+            container.innerHTML = filtered.map(a => {
+                const cor = this.coresSetor[a.setor] || a.cor || '#FFEF4D';
+                const taxa = a.decisoes > 0 ? Math.round((a.aprovadas / a.decisoes) * 100) : 0;
+                const diretoresCount = (a.diretores || []).length;
 
                 return `
-                <div class="agency-card" style="--agency-color: ${a.cor};">
-                    <div class="agency-card-header" style="background: linear-gradient(135deg, ${a.cor}15 0%, transparent 100%);">
-                        <div class="agency-icon" style="color: ${a.cor};">
-                            ${icone}
-                        </div>
-                        <div class="agency-title-section">
-                            <div class="agency-name" style="color: ${a.cor};">${a.nome}</div>
-                            <div class="agency-fullname">${a.nomeCompleto}</div>
-                        </div>
-                        <span class="agency-badge" style="background: ${a.cor}25; color: ${a.cor};">${a.esfera}</span>
+                <div class="agency-card-modern" style="--agency-color: ${cor};">
+                    <div class="agency-card-top">
+                        <div class="agency-card-sigla" style="background: ${cor}18; color: ${cor}; border: 1px solid ${cor}30;">${a.nome}</div>
+                        <span class="agency-badge-modern ${a.esfera === 'Federal' ? 'federal' : 'estadual'}">${a.esfera}${a.uf ? ' · ' + a.uf : ''}</span>
                     </div>
-                    <div class="agency-card-body">
-                        <div class="agency-stats-row">
-                            <div class="agency-stat-box">
-                                <div class="agency-stat-value" style="color: ${a.cor};">${a.decisoes.toLocaleString('pt-BR')}</div>
-                                <div class="agency-stat-label">Decisoes</div>
-                            </div>
-                            <div class="agency-stat-box">
-                                <div class="agency-stat-value" style="color: #4ADE80;">${a.aprovadas.toLocaleString('pt-BR')}</div>
-                                <div class="agency-stat-label">Aprovadas</div>
-                            </div>
-                            <div class="agency-stat-box">
-                                <div class="agency-stat-value" style="color: #4ADE80;">${taxa}%</div>
-                                <div class="agency-stat-label">Taxa</div>
-                            </div>
+                    <div class="agency-card-name">${a.nomeCompleto}</div>
+                    <div class="agency-card-setor">${a.setor}</div>
+                    ${a.vinculacao ? `<div class="agency-card-vinc">${a.vinculacao}</div>` : ''}
+                    <div class="agency-card-metrics">
+                        <div class="agency-metric">
+                            <div class="agency-metric-value" style="color: ${cor};">${a.decisoes.toLocaleString('pt-BR')}</div>
+                            <div class="agency-metric-label">Deliberações</div>
                         </div>
-                        <div class="agency-directors-section">
-                            <div class="agency-directors-title">Diretoria Colegiada</div>
-                            <div class="agency-directors-list">
-                                ${(a.diretores || []).map(d => `
-                                    <div class="agency-director-item">
-                                        <div class="agency-director-avatar" style="background: ${a.cor};">${d.iniciais}</div>
-                                        <div class="agency-director-info">
-                                            <div class="agency-director-name">${d.nome}</div>
-                                            <div class="agency-director-role">${d.cargo}</div>
-                                        </div>
-                                    </div>
-                                `).join('')}
-                            </div>
+                        <div class="agency-metric">
+                            <div class="agency-metric-value" style="color: var(--success);">${taxa}%</div>
+                            <div class="agency-metric-label">Deferimento</div>
+                        </div>
+                        <div class="agency-metric">
+                            <div class="agency-metric-value">${diretoresCount}</div>
+                            <div class="agency-metric-label">Diretores</div>
                         </div>
                     </div>
+                    ${diretoresCount > 0 ? `
+                    <div class="agency-card-directors">
+                        <div class="agency-directors-avatars">
+                            ${(a.diretores || []).slice(0, 5).map(d => `
+                                <div class="agency-avatar-mini" style="background: ${cor};" title="${d.nome} — ${d.cargo}${d.mandato ? ' (' + d.mandato + ')' : ''}">${d.iniciais}</div>
+                            `).join('')}
+                            ${diretoresCount > 5 ? `<div class="agency-avatar-mini more">+${diretoresCount - 5}</div>` : ''}
+                        </div>
+                    </div>` : '<div class="agency-card-directors-empty">Dados de diretoria pendentes</div>'}
+                    ${a.lei ? `<div class="agency-card-lei">${a.lei}</div>` : ''}
                 </div>
             `}).join('');
+        },
+
+        renderComparisonTable(filtered) {
+            const tbody = document.querySelector('#page-agencias table tbody');
+            if (!tbody) return;
+
+            tbody.innerHTML = filtered.map(a => {
+                const cor = this.coresSetor[a.setor] || a.cor || '#FFEF4D';
+                const taxa = a.decisoes > 0 ? Math.round((a.aprovadas / a.decisoes) * 100) : 0;
+                const diretoresCount = (a.diretores || []).length;
+
+                return `<tr>
+                    <td><strong style="color: ${cor};">${a.nome}</strong></td>
+                    <td><span class="badge ${a.esfera === 'Federal' ? 'badge-warning' : 'badge-info'}">${a.esfera}</span></td>
+                    <td>${a.setor}</td>
+                    <td>${a.decisoes.toLocaleString('pt-BR')}</td>
+                    <td>${a.aprovadas.toLocaleString('pt-BR')}</td>
+                    <td><span style="color: var(--success);">${taxa}%</span></td>
+                    <td>${diretoresCount}</td>
+                </tr>`;
+            }).join('');
         }
     };
 
@@ -5793,15 +5933,27 @@
     // ============================================
     const PageRadar = {
         currentTab: 'dashboard',
+        agenciasInfo: {
+            artesp: { nome: 'Agência de Transporte do Estado de São Paulo', sigla: 'ARTESP', reunioes: 2, diretores: 4, deliberacoes: 25, setores: 6 },
+            aneel: { nome: 'Agência Nacional de Energia Elétrica', sigla: 'ANEEL', reunioes: 8, diretores: 5, deliberacoes: 145, setores: 4 },
+            anatel: { nome: 'Agência Nacional de Telecomunicações', sigla: 'ANATEL', reunioes: 6, diretores: 4, deliberacoes: 98, setores: 5 },
+            anp: { nome: 'Agência Nacional do Petróleo', sigla: 'ANP', reunioes: 5, diretores: 5, deliberacoes: 78, setores: 3 },
+            anvisa: { nome: 'Agência Nacional de Vigilância Sanitária', sigla: 'ANVISA', reunioes: 10, diretores: 3, deliberacoes: 210, setores: 8 },
+            anac: { nome: 'Agência Nacional de Aviação Civil', sigla: 'ANAC', reunioes: 4, diretores: 2, deliberacoes: 56, setores: 3 },
+            antt: { nome: 'Agência Nacional de Transportes Terrestres', sigla: 'ANTT', reunioes: 7, diretores: 3, deliberacoes: 120, setores: 4 },
+            antaq: { nome: 'Agência Nacional de Transportes Aquaviários', sigla: 'ANTAQ', reunioes: 3, diretores: 2, deliberacoes: 34, setores: 2 },
+            ans: { nome: 'Agência Nacional de Saúde Suplementar', sigla: 'ANS', reunioes: 6, diretores: 2, deliberacoes: 89, setores: 5 },
+            anm: { nome: 'Agência Nacional de Mineração', sigla: 'ANM', reunioes: 4, diretores: 2, deliberacoes: 67, setores: 3 }
+        },
 
         init() {
             const page = document.getElementById('page-radar');
             page.classList.add('active');
             this.bindEvents();
+            this.updateAgencyInfo('artesp');
         },
 
         bindEvents() {
-            // Tab switching
             document.querySelectorAll('.radar-tab').forEach(tab => {
                 tab.addEventListener('click', (e) => {
                     document.querySelectorAll('.radar-tab').forEach(t => t.classList.remove('active'));
@@ -5810,6 +5962,27 @@
                     this.renderContent();
                 });
             });
+
+            const agSelect = document.getElementById('radar-agencia');
+            if (agSelect) {
+                agSelect.addEventListener('change', (e) => this.updateAgencyInfo(e.target.value));
+            }
+        },
+
+        updateAgencyInfo(agencyKey) {
+            const info = this.agenciasInfo[agencyKey];
+            if (!info) return;
+
+            const nomeEl = document.getElementById('radar-agencia-nome');
+            if (nomeEl) nomeEl.textContent = info.nome;
+
+            const kpis = document.querySelectorAll('#page-radar .radar-kpi-value');
+            if (kpis.length >= 4) {
+                kpis[0].textContent = info.reunioes;
+                kpis[1].textContent = info.diretores;
+                kpis[2].textContent = info.deliberacoes;
+                kpis[3].textContent = info.setores;
+            }
         },
 
         renderContent() {
@@ -5817,7 +5990,7 @@
             if (this.currentTab === 'dashboard' && dashboardContent) {
                 dashboardContent.style.display = 'block';
             } else if (dashboardContent) {
-                dashboardContent.style.display = 'block'; // Keep showing for now
+                dashboardContent.style.display = 'block';
             }
         }
     };

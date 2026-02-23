@@ -1012,6 +1012,47 @@ svg:not([width]):not([height]) {
 .stat-card-trend.down { color: var(--danger); }
 
 /* ============================================
+   SUPABASE STATUS BAR
+   ============================================ */
+.supabase-status-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: var(--radius);
+    font-size: 12px;
+    margin-bottom: 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    transition: all 0.3s ease;
+}
+.supabase-status-bar.connected {
+    background: rgba(34, 197, 94, 0.08);
+    border-color: rgba(34, 197, 94, 0.3);
+    color: var(--success);
+}
+.supabase-status-bar.disconnected {
+    background: rgba(245, 158, 11, 0.08);
+    border-color: rgba(245, 158, 11, 0.3);
+    color: var(--warning);
+}
+.supabase-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    flex-shrink: 0;
+}
+.supabase-status-bar.connected .supabase-status-dot {
+    background: var(--success);
+    box-shadow: 0 0 6px var(--success);
+}
+.supabase-status-bar.disconnected .supabase-status-dot {
+    background: var(--warning);
+    box-shadow: 0 0 6px var(--warning);
+}
+
+/* ============================================
    TABLES
    ============================================ */
 .table-container {
@@ -4003,8 +4044,8 @@ tr:hover {
    ============================================ */
 .agency-cards-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-    gap: 24px;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
     margin-bottom: 24px;
 }
 
@@ -4162,6 +4203,208 @@ tr:hover {
 .agency-director-role {
     font-size: 12px;
     color: var(--text-secondary);
+}
+
+/* ============================================
+   MODERN AGENCY CARDS
+   ============================================ */
+.search-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+.search-input-wrapper svg {
+    position: absolute;
+    left: 12px;
+    color: var(--text-muted);
+    pointer-events: none;
+}
+.filter-input {
+    padding: 8px 12px 8px 36px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-primary);
+    font-size: 13px;
+    font-family: inherit;
+    min-width: 200px;
+    transition: border-color 0.2s ease;
+}
+.filter-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-bg);
+}
+.filter-input::placeholder {
+    color: var(--text-muted);
+}
+
+.agency-card-modern {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    padding: 24px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    position: relative;
+    overflow: hidden;
+}
+.agency-card-modern::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--agency-color, var(--primary));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.agency-card-modern:hover {
+    border-color: var(--agency-color, var(--primary));
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3), 0 0 0 1px var(--agency-color, var(--primary));
+}
+.agency-card-modern:hover::before {
+    opacity: 1;
+}
+
+.agency-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.agency-card-sigla {
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    padding: 6px 14px;
+    border-radius: var(--radius);
+}
+
+.agency-badge-modern {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.agency-badge-modern.federal {
+    background: rgba(251, 191, 36, 0.15);
+    color: #fbbf24;
+}
+.agency-badge-modern.estadual {
+    background: rgba(96, 165, 250, 0.15);
+    color: #60a5fa;
+}
+
+.agency-card-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.3;
+}
+
+.agency-card-setor {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.agency-card-vinc {
+    font-size: 11px;
+    color: var(--text-muted);
+    padding: 4px 8px;
+    background: var(--background);
+    border-radius: var(--radius);
+    display: inline-block;
+    align-self: flex-start;
+}
+
+.agency-card-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 8px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+}
+
+.agency-metric {
+    text-align: center;
+    padding: 8px 4px;
+    background: var(--background);
+    border-radius: var(--radius);
+}
+
+.agency-metric-value {
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.agency-metric-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-top: 2px;
+}
+
+.agency-card-directors {
+    padding-top: 8px;
+}
+
+.agency-directors-avatars {
+    display: flex;
+    gap: 0;
+}
+
+.agency-avatar-mini {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+    color: #000;
+    border: 2px solid var(--surface);
+    margin-left: -6px;
+    cursor: default;
+    transition: transform 0.2s ease;
+}
+.agency-avatar-mini:first-child {
+    margin-left: 0;
+}
+.agency-avatar-mini:hover {
+    transform: scale(1.2);
+    z-index: 5;
+}
+.agency-avatar-mini.more {
+    background: var(--surface-hover);
+    color: var(--text-muted);
+    font-size: 9px;
+}
+
+.agency-card-directors-empty {
+    font-size: 11px;
+    color: var(--text-disabled);
+    font-style: italic;
+    padding-top: 8px;
+}
+
+.agency-card-lei {
+    font-size: 10px;
+    color: var(--text-disabled);
+    border-top: 1px solid var(--border);
+    padding-top: 8px;
+    margin-top: auto;
 }
 
 /* ============================================

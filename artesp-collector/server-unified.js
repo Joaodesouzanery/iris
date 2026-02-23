@@ -19,6 +19,7 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const pdfParse = require('pdf-parse');
+const { createClient } = require('@supabase/supabase-js');
 
 // Importa serviços do coletor
 const { scrapeWithRetry } = require('./src/services/scraper');
@@ -29,6 +30,36 @@ const syncManager = require('./src/services/sync-manager');
 // Importa serviços do IRIS Core
 const irisCore = require('../iris-core/processador');
 const newsFetcher = require('../iris-core/services/news-fetcher');
+
+// ============================================================================
+// SUPABASE CLIENT INITIALIZATION
+// ============================================================================
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
+
+let supabase = null;
+let supabaseAdmin = null;
+
+function isSupabaseConfigured() {
+    return SUPABASE_URL &&
+           !SUPABASE_URL.includes('SEU_PROJECT_ID') &&
+           SUPABASE_ANON_KEY &&
+           !SUPABASE_ANON_KEY.includes('COLE_SUA');
+}
+
+if (isSupabaseConfigured()) {
+    supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    if (SUPABASE_SERVICE_KEY && !SUPABASE_SERVICE_KEY.includes('COLE_SUA')) {
+        supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+    }
+    console.log('[Supabase] Client initialized successfully');
+    console.log(`[Supabase] URL: ${SUPABASE_URL}`);
+    console.log(`[Supabase] Admin client: ${supabaseAdmin ? 'yes' : 'no (service key not set)'}`);
+} else {
+    console.warn('[Supabase] Not configured — using local data only');
+    console.warn('[Supabase] Set SUPABASE_URL and SUPABASE_ANON_KEY in .env to enable');
+}
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -182,7 +213,7 @@ app.use((req, res, next) => {
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com",
         "font-src 'self' https://fonts.gstatic.com",
         "img-src 'self' data: https: blob:",
-        "connect-src 'self' https://receitaws.com.br https://api.portaldatransparencia.gov.br",
+        "connect-src 'self' https://receitaws.com.br https://api.portaldatransparencia.gov.br https://*.supabase.co",
         "frame-ancestors 'self'"
     ].join('; '));
     // Permissions policy
@@ -3018,6 +3049,163 @@ app.get('/api/cruzamento/status', (req, res) => {
     });
 });
 
+// ============================================================================
+// SUPABASE API ENDPOINTS
+// ============================================================================
+
+// Status da conexão Supabase
+app.get('/api/supabase/status', async (req, res) => {
+    if (!isSupabaseConfigured()) {
+        return res.json({
+            success: true,
+            connected: false,
+            message: 'Supabase não configurado. Defina SUPABASE_URL e SUPABASE_ANON_KEY no .env',
+            env: {
+                url_set: !!SUPABASE_URL && !SUPABASE_URL.includes('SEU_PROJECT_ID'),
+                anon_key_set: !!SUPABASE_ANON_KEY && !SUPABASE_ANON_KEY.includes('COLE_SUA'),
+                service_key_set: !!SUPABASE_SERVICE_KEY && !SUPABASE_SERVICE_KEY.includes('COLE_SUA')
+            }
+        });
+    }
+
+    try {
+        const { data, error } = await supabase.from('deliberacoes_extraidas').select('id', { count: 'exact', head: true });
+        return res.json({
+            success: true,
+            connected: !error,
+            message: error ? `Erro: ${error.message}` : 'Conectado ao Supabase',
+            url: SUPABASE_URL,
+            has_admin: !!supabaseAdmin,
+            error: error ? error.message : null
+        });
+    } catch (e) {
+        return res.json({
+            success: true,
+            connected: false,
+            message: `Erro de conexão: ${e.message}`
+        });
+    }
+});
+
+// Sync deliberações locais para Supabase
+app.post('/api/supabase/sync', rateLimit(RATE_LIMIT_STRICT), async (req, res) => {
+    if (!supabaseAdmin && !supabase) {
+        return res.status(503).json({ success: false, erro: 'Supabase não configurado' });
+    }
+
+    const client = supabaseAdmin || supabase;
+    const deliberacoes = coletarTodasDeliberacoes();
+
+    if (deliberacoes.length === 0) {
+        return res.json({ success: true, synced: 0, message: 'Nenhuma deliberação local para sincronizar' });
+    }
+
+    let synced = 0;
+    let errors = 0;
+
+    for (const d of deliberacoes) {
+        const row = {
+            agencia: 'ARTESP',
+            processo: d.processo || null,
+            numero_reuniao: d.numero_reuniao || null,
+            data_reuniao: d.data_reuniao || null,
+            interessado: d.interessado || null,
+            tipo_deliberacao: d.tipo_deliberacao || null,
+            pauta_interna: d.pauta_interna || false,
+            microtema: d.microtema || null,
+            decisao: d.decisao || 'A classificar',
+            resumo_pleito: d.resumo || null,
+            fundamento_decisao: d.fundamentacao || null,
+            votos_favor: (d.votos_a_favor || []).join(', '),
+            votos_contra: (d.votos_contra || []).join(', '),
+            raw_data: d
+        };
+
+        const { error } = await client.from('deliberacoes_extraidas').upsert(row, {
+            onConflict: 'processo,numero_reuniao',
+            ignoreDuplicates: true
+        });
+
+        if (error) { errors++; } else { synced++; }
+    }
+
+    res.json({
+        success: true,
+        total: deliberacoes.length,
+        synced,
+        errors,
+        message: `${synced} deliberações sincronizadas com Supabase`
+    });
+});
+
+// Buscar deliberações do Supabase
+app.get('/api/supabase/deliberacoes', async (req, res) => {
+    if (!supabase) {
+        return res.status(503).json({ success: false, erro: 'Supabase não configurado' });
+    }
+
+    const limite = Math.min(Math.max(parseInt(req.query.limite) || 50, 1), 500);
+    const agencia = sanitizeString(req.query.agencia || '', 50);
+
+    let query = supabase.from('deliberacoes_extraidas')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(limite);
+
+    if (agencia) {
+        query = query.eq('agencia', agencia);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+        return res.status(500).json({ success: false, erro: error.message });
+    }
+
+    res.json({ success: true, total: data.length, deliberacoes: data });
+});
+
+// Buscar métricas do Supabase
+app.get('/api/supabase/metricas', async (req, res) => {
+    if (!supabase) {
+        return res.status(503).json({ success: false, erro: 'Supabase não configurado' });
+    }
+
+    try {
+        const [deliberacoes, directors, votes] = await Promise.all([
+            supabase.from('deliberacoes_extraidas').select('id, agencia, decisao, microtema', { count: 'exact' }),
+            supabase.from('directors').select('id, name, agency', { count: 'exact' }).eq('is_active', true),
+            supabase.from('votes').select('id', { count: 'exact' })
+        ]);
+
+        const delibs = deliberacoes.data || [];
+        const totalDelibs = delibs.length;
+        const deferidos = delibs.filter(d => d.decisao === 'Deferido').length;
+        const indeferidos = delibs.filter(d => d.decisao === 'Indeferido').length;
+
+        const agenciasMap = {};
+        delibs.forEach(d => {
+            if (!agenciasMap[d.agencia]) agenciasMap[d.agencia] = 0;
+            agenciasMap[d.agencia]++;
+        });
+
+        res.json({
+            success: true,
+            metricas: {
+                total_deliberacoes: totalDelibs,
+                total_diretores: (directors.data || []).length,
+                total_votos: votes.count || 0,
+                total_agencias: Object.keys(agenciasMap).length,
+                taxa_deferimento: totalDelibs > 0 ? Math.round((deferidos / totalDelibs) * 100) : 0,
+                por_agencia: agenciasMap,
+                decisoes: { deferidos, indeferidos, outros: totalDelibs - deferidos - indeferidos }
+            }
+        });
+    } catch (e) {
+        res.status(500).json({ success: false, erro: e.message });
+    }
+});
+
 // Inicia servidor
 app.listen(PORT, () => {
     console.log('');
@@ -3030,6 +3218,7 @@ app.listen(PORT, () => {
     console.log('╠══════════════════════════════════════════════════════════════╣');
     console.log('║                                                              ║');
     console.log('║   🌐 Acesse: http://localhost:' + PORT + '                          ║');
+    console.log('║   📦 Supabase: ' + (isSupabaseConfigured() ? '✅ Conectado' : '⚠️  Não configurado') + '                           ║');
     console.log('║                                                              ║');
     console.log('╚══════════════════════════════════════════════════════════════╝');
     console.log('');
