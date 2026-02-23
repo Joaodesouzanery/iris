@@ -1,19 +1,11 @@
 /**
  * Serviço de Persistência - IRIS
  *
- * Gerencia a persistência de deliberações e votos no Supabase.
- * Inclui atualização de status de reuniões.
+ * Gerencia a persistência de deliberações e votos.
+ * Supabase REST API com fallback para armazenamento em memória.
  *
- * DESIGN CHOICE: This module uses the Supabase REST API directly via axios
- * instead of the @supabase/supabase-js SDK. This is intentional for the
- * following reasons:
- *   1. Lightweight - no additional SDK dependency needed at runtime
- *   2. Transparent - all HTTP calls are explicit and easy to debug
- *   3. Portable - works with any PostgREST-compatible backend
- *   4. The axios dependency is already used elsewhere in the project
- *
- * If you prefer the SDK approach, @supabase/supabase-js is available in
- * package.json and can be used as an alternative client.
+ * Segurança: Todos os valores de filtro são sanitizados via encodeURIComponent
+ * antes de serem interpolados em query strings do PostgREST.
  */
 
 const logger = require('../utils/logger');
@@ -25,31 +17,62 @@ const logger = require('../utils/logger');
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY;
 
+// In-memory fallback storage
+const memoryStore = {
+    deliberacoes: [],
+    directors: [],
+    votes: [],
+    logs: [],
+    _idCounter: 1
+};
+
+function _generateId() {
+    return `mem-${Date.now()}-${memoryStore._idCounter++}`;
+}
+
 /**
- * Verifica se a configuração do Supabase está disponível
+ * Verifica se o Supabase está configurado e disponível
  */
-function verificarConfiguracao() {
-    if (!SUPABASE_URL || !SUPABASE_KEY) {
-        throw new Error(
-            'Configuração do Supabase não encontrada. ' +
-            'Configure SUPABASE_URL e SUPABASE_ANON_KEY no .env'
-        );
-    }
+function isSupabaseAvailable() {
+    return !!(SUPABASE_URL &&
+              !SUPABASE_URL.includes('SEU_PROJECT_ID') &&
+              SUPABASE_KEY &&
+              !SUPABASE_KEY.includes('COLE_SUA'));
+}
+
+/**
+ * Sanitiza valor para uso seguro em query PostgREST
+ */
+function sanitizeQueryValue(value) {
+    if (value === null || value === undefined) return '';
+    return encodeURIComponent(String(value));
+}
+
+/**
+ * Sanitiza inteiro para uso em limit/offset
+ */
+function sanitizeInt(value, defaultVal = 100, max = 10000) {
+    const parsed = parseInt(value);
+    if (isNaN(parsed) || parsed < 0) return defaultVal;
+    return Math.min(parsed, max);
 }
 
 /**
  * Faz requisição ao Supabase REST API
  */
 async function supabaseRequest(method, table, data = null, query = '') {
-    verificarConfiguracao();
+    if (!isSupabaseAvailable()) {
+        throw new Error('Supabase não configurado');
+    }
 
     const axios = require('axios');
 
-    const url = `${SUPABASE_URL}/rest/v1/${table}${query}`;
+    const url = `${SUPABASE_URL}/rest/v1/${encodeURIComponent(table)}${query}`;
 
     const config = {
         method,
         url,
+        timeout: 15000,
         headers: {
             'apikey': SUPABASE_KEY,
             'Authorization': `Bearer ${SUPABASE_KEY}`,
@@ -67,7 +90,7 @@ async function supabaseRequest(method, table, data = null, query = '') {
         return response.data;
     } catch (error) {
         const mensagem = error.response?.data?.message || error.message;
-        logger.error('Persistencia', `Erro na requisição Supabase: ${mensagem}`, {
+        logger.error('Persistencia', `Erro Supabase: ${mensagem}`, {
             method,
             table,
             status: error.response?.status
@@ -82,40 +105,53 @@ async function supabaseRequest(method, table, data = null, query = '') {
 
 /**
  * Busca deliberações existentes para verificação de duplicidade
- * @param {Object} filtros - Filtros de busca
- * @returns {Promise<Array>} Lista de deliberações
  */
 async function buscarDeliberacoes(filtros = {}) {
     logger.info('Persistencia', 'Buscando deliberações', filtros);
 
+    if (!isSupabaseAvailable()) {
+        // Fallback: busca em memória
+        let resultado = [...memoryStore.deliberacoes];
+
+        if (filtros.agencia) {
+            resultado = resultado.filter(d => d.agencia === filtros.agencia);
+        }
+        if (filtros.numeroReuniao) {
+            resultado = resultado.filter(d => d.numero_reuniao === filtros.numeroReuniao);
+        }
+
+        const limite = sanitizeInt(filtros.limite, 1000);
+        resultado = resultado.slice(0, limite);
+
+        return resultado.map(d => ({
+            id: d.id,
+            processos: d.raw_data?.processos || [],
+            numeroDeliberacao: d.processo,
+            hashTexto: d.raw_data?.hash,
+            texto: d.raw_data?.texto_completo
+        }));
+    }
+
     let query = '?select=id,processo,numero_reuniao,data_reuniao,link_pdf,raw_data';
 
-    // Aplica filtros
     if (filtros.agencia) {
-        query += `&agencia=eq.${filtros.agencia}`;
+        query += `&agencia=eq.${sanitizeQueryValue(filtros.agencia)}`;
     }
 
     if (filtros.numeroReuniao) {
-        query += `&numero_reuniao=eq.${filtros.numeroReuniao}`;
+        query += `&numero_reuniao=eq.${sanitizeQueryValue(filtros.numeroReuniao)}`;
     }
 
     if (filtros.dataReuniao) {
-        query += `&data_reuniao=eq.${filtros.dataReuniao}`;
+        query += `&data_reuniao=eq.${sanitizeQueryValue(filtros.dataReuniao)}`;
     }
 
-    // Limita resultados
-    if (filtros.limite) {
-        query += `&limit=${filtros.limite}`;
-    } else {
-        query += '&limit=1000';
-    }
-
-    // Ordena por data mais recente
+    const limite = sanitizeInt(filtros.limite, 1000);
+    query += `&limit=${limite}`;
     query += '&order=created_at.desc';
 
     const resultado = await supabaseRequest('GET', 'deliberacoes_extraidas', null, query);
 
-    // Transforma para formato de verificação de duplicidade
     return (resultado || []).map(d => ({
         id: d.id,
         processos: extrairProcessosDoRawData(d.raw_data),
@@ -125,29 +161,62 @@ async function buscarDeliberacoes(filtros = {}) {
     }));
 }
 
-/**
- * Extrai números de processo do raw_data
- */
 function extrairProcessosDoRawData(rawData) {
     if (!rawData) return [];
-
     const processos = [];
-
-    if (rawData.processos) {
-        processos.push(...rawData.processos);
-    }
-
-    if (rawData.numero_processo) {
-        processos.push(rawData.numero_processo);
-    }
-
+    if (rawData.processos) processos.push(...rawData.processos);
+    if (rawData.numero_processo) processos.push(rawData.numero_processo);
     return processos;
 }
 
 /**
- * Salva uma deliberação processada no banco
- * @param {Object} deliberacao - Dados da deliberação
- * @returns {Promise<Object>} Deliberação salva com ID
+ * Busca deliberações completas com filtros avançados (para endpoints de leitura)
+ */
+async function buscarDeliberacoesCompletas(filtros = {}) {
+    if (!isSupabaseAvailable()) {
+        let resultado = [...memoryStore.deliberacoes];
+
+        if (filtros.agencia) resultado = resultado.filter(d => d.agencia === filtros.agencia);
+        if (filtros.decisao) resultado = resultado.filter(d => d.decisao === filtros.decisao);
+        if (filtros.microtema) resultado = resultado.filter(d => d.microtema && d.microtema.toLowerCase().includes(filtros.microtema.toLowerCase()));
+        if (filtros.interessado) resultado = resultado.filter(d => d.interessado && d.interessado.toLowerCase().includes(filtros.interessado.toLowerCase()));
+
+        const offset = sanitizeInt(filtros.offset, 0);
+        const limite = sanitizeInt(filtros.limite, 100, 500);
+        return resultado.slice(offset, offset + limite);
+    }
+
+    let query = '?select=id,processo,numero_reuniao,data_reuniao,interessado,tipo_deliberacao,microtema,decisao,resumo_pleito,votos_favor,votos_contra,agencia,link_pdf,created_at';
+
+    if (filtros.agencia) {
+        query += `&agencia=eq.${sanitizeQueryValue(filtros.agencia)}`;
+    }
+    if (filtros.decisao) {
+        query += `&decisao=eq.${sanitizeQueryValue(filtros.decisao)}`;
+    }
+    if (filtros.microtema) {
+        query += `&microtema=ilike.*${sanitizeQueryValue(filtros.microtema)}*`;
+    }
+    if (filtros.interessado) {
+        query += `&interessado=ilike.*${sanitizeQueryValue(filtros.interessado)}*`;
+    }
+    if (filtros.dataInicio) {
+        query += `&data_reuniao=gte.${sanitizeQueryValue(filtros.dataInicio)}`;
+    }
+    if (filtros.dataFim) {
+        query += `&data_reuniao=lte.${sanitizeQueryValue(filtros.dataFim)}`;
+    }
+
+    const limite = sanitizeInt(filtros.limite, 100, 500);
+    const offset = sanitizeInt(filtros.offset, 0);
+    query += `&limit=${limite}&offset=${offset}`;
+    query += '&order=created_at.desc';
+
+    return await supabaseRequest('GET', 'deliberacoes_extraidas', null, query);
+}
+
+/**
+ * Salva uma deliberação processada
  */
 async function salvarDeliberacao(deliberacao) {
     logger.info('Persistencia', 'Salvando deliberação', {
@@ -162,13 +231,15 @@ async function salvarDeliberacao(deliberacao) {
         data_reuniao: deliberacao.dataReuniao,
         processo: deliberacao.processo || deliberacao.processos?.[0],
         interessado: deliberacao.interessado || 'A identificar',
+        tipo_deliberacao: deliberacao.tipo,
         pauta_interna: deliberacao.tipo === 'Ato Administrativo Interno',
         microtema: deliberacao.microtema,
         resumo_pleito: deliberacao.resumoPleito || deliberacao.texto?.substring(0, 500),
         decisao: deliberacao.decisao,
+        votos_favor: deliberacao.votosFavoraveis ? (Array.isArray(deliberacao.votosFavoraveis) ? deliberacao.votosFavoraveis.join(', ') : String(deliberacao.votosFavoraveis)) : null,
+        votos_contra: deliberacao.votosContrarios ? (Array.isArray(deliberacao.votosContrarios) ? deliberacao.votosContrarios.join(', ') : String(deliberacao.votosContrarios)) : null,
         link_pdf: deliberacao.linkPdf,
         raw_data: {
-            // Dados de classificação
             tipo: deliberacao.tipo,
             tipo_confianca: deliberacao.tipoConfianca,
             tipo_justificativa: deliberacao.tipoJustificativa,
@@ -177,32 +248,31 @@ async function salvarDeliberacao(deliberacao) {
             microtema_confianca: deliberacao.microtemaConfianca,
             microtema_justificativa: deliberacao.microtemaJustificativa,
             confianca_geral: deliberacao.confiancaGeral,
-
-            // Dados de votação
             tipo_votacao: deliberacao.tipoVotacao,
             total_votantes: deliberacao.totalVotantes,
             votos_favoraveis: deliberacao.votosFavoraveis,
             votos_contrarios: deliberacao.votosContrarios,
             abstencoes: deliberacao.abstencoes,
-
-            // Dados originais
-            texto_completo: deliberacao.texto,
             hash: deliberacao.hashTexto,
             processos: deliberacao.processos,
-
-            // Metadados
             fonte: 'iris-core',
             processado_em: new Date().toISOString(),
-            versao_processador: '1.0.0'
+            versao_processador: '2.0.0'
         }
     };
+
+    if (!isSupabaseAvailable()) {
+        // Fallback: salva em memória
+        const record = { id: _generateId(), ...dados, created_at: new Date().toISOString() };
+        memoryStore.deliberacoes.push(record);
+        logger.info('Persistencia', 'Deliberação salva em memória', { id: record.id });
+        return record;
+    }
 
     const resultado = await supabaseRequest('POST', 'deliberacoes_extraidas', dados);
 
     if (resultado && resultado.length > 0) {
-        logger.info('Persistencia', 'Deliberação salva com sucesso', {
-            id: resultado[0].id
-        });
+        logger.info('Persistencia', 'Deliberação salva no Supabase', { id: resultado[0].id });
         return resultado[0];
     }
 
@@ -211,19 +281,20 @@ async function salvarDeliberacao(deliberacao) {
 
 /**
  * Atualiza uma deliberação existente
- * @param {string} id - ID da deliberação
- * @param {Object} dados - Dados para atualizar
- * @returns {Promise<Object>} Deliberação atualizada
  */
 async function atualizarDeliberacao(id, dados) {
     logger.info('Persistencia', 'Atualizando deliberação', { id });
 
-    const query = `?id=eq.${id}`;
+    if (!isSupabaseAvailable()) {
+        const idx = memoryStore.deliberacoes.findIndex(d => d.id === id);
+        if (idx >= 0) {
+            memoryStore.deliberacoes[idx] = { ...memoryStore.deliberacoes[idx], ...dados };
+        }
+        return { id, ...dados };
+    }
 
+    const query = `?id=eq.${sanitizeQueryValue(id)}`;
     await supabaseRequest('PATCH', 'deliberacoes_extraidas', dados, query);
-
-    logger.info('Persistencia', 'Deliberação atualizada', { id });
-
     return { id, ...dados };
 }
 
@@ -231,43 +302,37 @@ async function atualizarDeliberacao(id, dados) {
 // OPERAÇÕES COM VOTOS
 // ============================================================================
 
-/**
- * Salva votos de uma deliberação
- * @param {string} deliberacaoId - ID da deliberação
- * @param {Array<Object>} votos - Lista de votos
- * @returns {Promise<Array>} Votos salvos
- */
 async function salvarVotos(deliberacaoId, votos) {
-    if (!votos || votos.length === 0) {
-        return [];
-    }
+    if (!votos || votos.length === 0) return [];
 
     logger.info('Persistencia', 'Salvando votos', {
         deliberacaoId,
         totalVotos: votos.length
     });
 
-    // Primeiro, busca ou cria os diretores
     const votosSalvos = [];
 
     for (const voto of votos) {
         try {
-            // Busca ou cria o diretor
             const diretor = await buscarOuCriarDiretor(voto.diretor, voto.cargo);
 
-            // Salva o voto
             const dadosVoto = {
                 deliberacao_id: deliberacaoId,
                 director_id: diretor?.id,
                 vote_type: mapearTipoVoto(voto.voto),
-                confidence_score: voto.confianca / 100, // Converte para 0-1
+                confidence_score: Math.min(1, Math.max(0, (voto.confianca || 50) / 100)),
                 notes: voto.observacao
             };
 
-            const resultado = await supabaseRequest('POST', 'votes', dadosVoto);
-
-            if (resultado && resultado.length > 0) {
-                votosSalvos.push(resultado[0]);
+            if (!isSupabaseAvailable()) {
+                const record = { id: _generateId(), ...dadosVoto, created_at: new Date().toISOString() };
+                memoryStore.votes.push(record);
+                votosSalvos.push(record);
+            } else {
+                const resultado = await supabaseRequest('POST', 'votes', dadosVoto);
+                if (resultado && resultado.length > 0) {
+                    votosSalvos.push(resultado[0]);
+                }
             }
         } catch (error) {
             logger.warn('Persistencia', `Erro ao salvar voto de ${voto.diretor}`, {
@@ -285,22 +350,35 @@ async function salvarVotos(deliberacaoId, votos) {
     return votosSalvos;
 }
 
-/**
- * Busca ou cria um diretor no banco
- */
 async function buscarOuCriarDiretor(nome, cargo) {
     if (!nome) return null;
 
+    if (!isSupabaseAvailable()) {
+        let existing = memoryStore.directors.find(
+            d => d.name.toLowerCase() === nome.toLowerCase()
+        );
+        if (existing) return existing;
+
+        const record = {
+            id: _generateId(),
+            name: nome,
+            role: cargo || 'Diretor',
+            agency: 'ARTESP',
+            is_active: true,
+            created_at: new Date().toISOString()
+        };
+        memoryStore.directors.push(record);
+        return record;
+    }
+
     try {
-        // Busca diretor existente
-        const query = `?name=ilike.${encodeURIComponent(nome)}&limit=1`;
+        const query = `?name=ilike.${sanitizeQueryValue(nome)}&limit=1`;
         const existentes = await supabaseRequest('GET', 'directors', null, query);
 
         if (existentes && existentes.length > 0) {
             return existentes[0];
         }
 
-        // Cria novo diretor
         const novoDiretor = {
             name: nome,
             role: cargo || 'Diretor',
@@ -323,12 +401,6 @@ async function buscarOuCriarDiretor(nome, cargo) {
     return null;
 }
 
-/**
- * Mapeia tipo de voto para enum do banco (vote_type_enum).
- * Valores validos: FAVORABLE, AGAINST, ABSTENTION, ABSENT.
- * Fallback para FAVORABLE quando o tipo nao e reconhecido,
- * pois 'UNKNOWN' nao existe no vote_type_enum do PostgreSQL.
- */
 function mapearTipoVoto(voto) {
     const mapeamento = {
         'Favorável': 'FAVORABLE',
@@ -336,7 +408,6 @@ function mapearTipoVoto(voto) {
         'Abstenção': 'ABSTENTION',
         'Ausente/Impedido': 'ABSENT'
     };
-
     return mapeamento[voto] || 'FAVORABLE';
 }
 
@@ -344,53 +415,36 @@ function mapearTipoVoto(voto) {
 // OPERAÇÕES COM STATUS DE REUNIÃO
 // ============================================================================
 
-/**
- * Atualiza o status de processamento de uma reunião
- * @param {Object} filtros - Filtros para identificar a reunião
- * @param {string} status - Novo status
- * @param {Object} dados - Dados adicionais
- * @returns {Promise<void>}
- */
 async function atualizarStatusReuniao(filtros, status, dados = {}) {
-    logger.info('Persistencia', 'Atualizando status da reunião', {
-        filtros,
-        status
-    });
+    logger.info('Persistencia', 'Atualizando status da reunião', { filtros, status });
 
-    // Status possíveis: pendente, processando, processado, erro
-    const statusMap = {
-        'pendente': 'PENDING',
-        'processando': 'PROCESSING',
-        'processado': 'COMPLETED',
-        'erro': 'ERROR'
-    };
-
-    const dadosAtualizacao = {
-        processing_status: statusMap[status] || status,
-        last_processed_at: new Date().toISOString(),
-        ...dados
-    };
-
-    // Tenta atualizar via reunioes_monitoradas se existir
-    // Se não existir, atualiza o raw_data das deliberações
+    if (!isSupabaseAvailable()) {
+        // Em memória: atualiza raw_data das deliberações que correspondem
+        memoryStore.deliberacoes.forEach(d => {
+            const matchReuniao = !filtros.numeroReuniao || d.numero_reuniao === filtros.numeroReuniao;
+            const matchData = !filtros.dataReuniao || d.data_reuniao === filtros.dataReuniao;
+            if (matchReuniao && matchData) {
+                d.raw_data = { ...d.raw_data, status_reuniao: status };
+            }
+        });
+        return;
+    }
 
     try {
-        // Busca deliberações da reunião
         let query = '?select=id,raw_data';
 
         if (filtros.numeroReuniao) {
-            query += `&numero_reuniao=eq.${filtros.numeroReuniao}`;
+            query += `&numero_reuniao=eq.${sanitizeQueryValue(filtros.numeroReuniao)}`;
         }
 
         if (filtros.dataReuniao) {
-            query += `&data_reuniao=eq.${filtros.dataReuniao}`;
+            query += `&data_reuniao=eq.${sanitizeQueryValue(filtros.dataReuniao)}`;
         }
 
         query += '&limit=100';
 
         const deliberacoes = await supabaseRequest('GET', 'deliberacoes_extraidas', null, query);
 
-        // Atualiza cada deliberação com o status
         for (const delib of deliberacoes || []) {
             const rawDataAtualizado = {
                 ...delib.raw_data,
@@ -402,7 +456,7 @@ async function atualizarStatusReuniao(filtros, status, dados = {}) {
                 'PATCH',
                 'deliberacoes_extraidas',
                 { raw_data: rawDataAtualizado },
-                `?id=eq.${delib.id}`
+                `?id=eq.${sanitizeQueryValue(delib.id)}`
             );
         }
 
@@ -417,11 +471,6 @@ async function atualizarStatusReuniao(filtros, status, dados = {}) {
     }
 }
 
-/**
- * Registra log de processamento no banco
- * @param {Object} logData - Dados do log
- * @returns {Promise<void>}
- */
 async function registrarLogProcessamento(logData) {
     try {
         const dados = {
@@ -432,11 +481,14 @@ async function registrarLogProcessamento(logData) {
             created_at: new Date().toISOString()
         };
 
-        // Tenta salvar na tabela de logs se existir
+        if (!isSupabaseAvailable()) {
+            memoryStore.logs.push({ id: _generateId(), ...dados });
+            return;
+        }
+
         await supabaseRequest('POST', 'processing_logs', dados);
 
     } catch (error) {
-        // Se a tabela não existir, apenas loga localmente
         logger.debug('Persistencia', 'Tabela de logs não disponível', {
             erro: error.message
         });
@@ -447,23 +499,30 @@ async function registrarLogProcessamento(logData) {
 // OPERAÇÕES DE CONSULTA
 // ============================================================================
 
-/**
- * Busca estatísticas de processamento
- * @returns {Promise<Object>} Estatísticas
- */
 async function buscarEstatisticas() {
-    try {
-        // Total de deliberações
-        const totalQuery = '?select=count&agencia=eq.ARTESP';
-        const totalResult = await supabaseRequest('GET', 'deliberacoes_extraidas', null, totalQuery);
-
-        // Deliberações por decisão
-        const decisoesQuery = '?select=decisao,count&agencia=eq.ARTESP';
-        // Nota: Supabase não suporta GROUP BY via REST diretamente
-        // Seria necessário uma função RPC ou view
-
+    if (!isSupabaseAvailable()) {
+        const delibs = memoryStore.deliberacoes;
         return {
-            total: totalResult?.[0]?.count || 0,
+            total: delibs.length,
+            deferidos: delibs.filter(d => d.decisao === 'Deferido').length,
+            indeferidos: delibs.filter(d => d.decisao === 'Indeferido').length,
+            ultimaAtualizacao: new Date().toISOString()
+        };
+    }
+
+    try {
+        const resultado = await supabaseRequest(
+            'GET',
+            'deliberacoes_extraidas',
+            null,
+            '?select=id,decisao&agencia=eq.ARTESP'
+        );
+
+        const delibs = resultado || [];
+        return {
+            total: delibs.length,
+            deferidos: delibs.filter(d => d.decisao === 'Deferido').length,
+            indeferidos: delibs.filter(d => d.decisao === 'Indeferido').length,
             ultimaAtualizacao: new Date().toISOString()
         };
 
@@ -475,20 +534,101 @@ async function buscarEstatisticas() {
     }
 }
 
+/**
+ * Busca diretores com resumo de votos
+ */
+async function buscarDiretores(filtros = {}) {
+    if (!isSupabaseAvailable()) {
+        return memoryStore.directors;
+    }
+
+    let query = '?select=id,name,role,agency,is_active,mandate_start,mandate_end';
+
+    if (filtros.agency) {
+        query += `&agency=eq.${sanitizeQueryValue(filtros.agency)}`;
+    }
+    if (filtros.ativo !== undefined) {
+        query += `&is_active=eq.${filtros.ativo ? 'true' : 'false'}`;
+    }
+
+    query += '&order=name.asc';
+    const limite = sanitizeInt(filtros.limite, 100);
+    query += `&limit=${limite}`;
+
+    return await supabaseRequest('GET', 'directors', null, query);
+}
+
+/**
+ * Busca votos com detalhes
+ */
+async function buscarVotos(filtros = {}) {
+    if (!isSupabaseAvailable()) {
+        let resultado = [...memoryStore.votes];
+        if (filtros.deliberacaoId) {
+            resultado = resultado.filter(v => v.deliberacao_id === filtros.deliberacaoId);
+        }
+        return resultado;
+    }
+
+    let query = '?select=id,deliberacao_id,director_id,vote_type,confidence_score,notes,created_at';
+
+    if (filtros.deliberacaoId) {
+        query += `&deliberacao_id=eq.${sanitizeQueryValue(filtros.deliberacaoId)}`;
+    }
+    if (filtros.directorId) {
+        query += `&director_id=eq.${sanitizeQueryValue(filtros.directorId)}`;
+    }
+
+    const limite = sanitizeInt(filtros.limite, 100);
+    query += `&limit=${limite}`;
+    query += '&order=created_at.desc';
+
+    return await supabaseRequest('GET', 'votes', null, query);
+}
+
+/**
+ * Retorna o status da conexão com Supabase
+ */
+function getStatus() {
+    return {
+        supabaseConfigured: isSupabaseAvailable(),
+        mode: isSupabaseAvailable() ? 'supabase' : 'memory',
+        memoryStats: {
+            deliberacoes: memoryStore.deliberacoes.length,
+            directors: memoryStore.directors.length,
+            votes: memoryStore.votes.length,
+            logs: memoryStore.logs.length
+        }
+    };
+}
+
 module.exports = {
-    // Verificação
-    verificarConfiguracao,
+    // Status
+    isSupabaseAvailable,
+    getStatus,
+
+    // Verificação (backwards compat)
+    verificarConfiguracao: () => {
+        if (!isSupabaseAvailable()) {
+            logger.warn('Persistencia', 'Supabase não configurado, usando memória');
+        }
+    },
 
     // Deliberações
     buscarDeliberacoes,
+    buscarDeliberacoesCompletas,
     salvarDeliberacao,
     atualizarDeliberacao,
 
     // Votos
     salvarVotos,
     buscarOuCriarDiretor,
+    buscarVotos,
 
-    // Status
+    // Diretores
+    buscarDiretores,
+
+    // Status de reunião
     atualizarStatusReuniao,
     registrarLogProcessamento,
 

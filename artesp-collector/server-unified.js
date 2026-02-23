@@ -37,6 +37,7 @@ const syncManager = require('./src/services/sync-manager');
 // Importa serviços do IRIS Core
 const irisCore = require('../iris-core/processador');
 const newsFetcher = require('../iris-core/services/news-fetcher');
+const persistencia = require('../iris-core/services/persistencia');
 
 // ============================================================================
 // SUPABASE CLIENT INITIALIZATION
@@ -548,7 +549,7 @@ app.post('/api/analisar', (req, res) => {
     }
 });
 
-app.post('/api/analisar-pdf/:index', (req, res) => {
+app.post('/api/analisar-pdf/:index', async (req, res) => {
     try {
         const index = parseInt(req.params.index);
 
@@ -583,11 +584,39 @@ app.post('/api/analisar-pdf/:index', (req, res) => {
         pdfsProcessados[index].analise = analise;
         pdfsProcessados[index].empresasDetectadas = empresasDetectadas;
 
+        // Persiste deliberações no Supabase/memória
+        let persistidas = 0;
+        for (const delib of extracao.deliberations) {
+            try {
+                await persistencia.salvarDeliberacao({
+                    agencia: 'ARTESP',
+                    numeroReuniao: delib.reuniao_ordinaria || '',
+                    processo: delib.numero_deliberacao || delib.processo || '',
+                    interessado: delib.interessado || '',
+                    tipo: delib.classificacao || analiseTradicional.tipo || '',
+                    microtema: delib.microtema || analiseTradicional.microtema || '',
+                    decisao: delib.resultado || analiseTradicional.decisao || '',
+                    resumoPleito: delib.texto_resumo || '',
+                    votosFavoraveis: delib.votos_a_favor || [],
+                    votosContrarios: delib.votos_contra || [],
+                    linkPdf: pdf.url || '',
+                    confiancaGeral: analiseTradicional.confiancaGeral || 0,
+                    hashTexto: analiseTradicional.hashTexto || ''
+                });
+                persistidas++;
+            } catch (err) {
+                console.log(`[IRIS] Aviso: não persistiu deliberação: ${err.message}`);
+            }
+        }
+
+        console.log(`[IRIS] ${persistidas}/${extracao.deliberations.length} deliberações persistidas`);
+
         res.json({
             sucesso: true,
             nomeArquivo: pdf.nomeArquivo,
             analise,
-            empresasDetectadas
+            empresasDetectadas,
+            persistidas
         });
 
     } catch (error) {
@@ -603,6 +632,7 @@ app.post('/api/analisar-todos', async (req, res) => {
 
         const resultados = [];
         let totalDeliberacoes = 0;
+        let totalPersistidas = 0;
         const todasEmpresas = new Map();
 
         for (let i = 0; i < pdfsProcessados.length; i++) {
@@ -627,6 +657,30 @@ app.post('/api/analisar-todos', async (req, res) => {
                 pdfsProcessados[i].empresasDetectadas = empresasDetectadas;
                 totalDeliberacoes += extracao.total;
 
+                // Persiste deliberações no Supabase/memória
+                for (const delib of extracao.deliberations) {
+                    try {
+                        await persistencia.salvarDeliberacao({
+                            agencia: 'ARTESP',
+                            numeroReuniao: delib.reuniao_ordinaria || '',
+                            processo: delib.numero_deliberacao || delib.processo || '',
+                            interessado: delib.interessado || '',
+                            tipo: delib.classificacao || analiseTradicional.tipo || '',
+                            microtema: delib.microtema || analiseTradicional.microtema || '',
+                            decisao: delib.resultado || analiseTradicional.decisao || '',
+                            resumoPleito: delib.texto_resumo || '',
+                            votosFavoraveis: delib.votos_a_favor || [],
+                            votosContrarios: delib.votos_contra || [],
+                            linkPdf: pdf.url || '',
+                            confiancaGeral: analiseTradicional.confiancaGeral || 0,
+                            hashTexto: analiseTradicional.hashTexto || ''
+                        });
+                        totalPersistidas++;
+                    } catch (err) {
+                        // Continua mesmo se persistência falhar (ex: duplicata)
+                    }
+                }
+
                 // Agrega empresas detectadas
                 for (const emp of empresasDetectadas) {
                     if (todasEmpresas.has(emp.nome)) {
@@ -650,10 +704,13 @@ app.post('/api/analisar-todos', async (req, res) => {
             }
         }
 
+        console.log(`[IRIS] Total: ${totalPersistidas}/${totalDeliberacoes} deliberações persistidas`);
+
         res.json({
             sucesso: true,
             totalAnalisados: resultados.length,
             totalDeliberacoes,
+            totalPersistidas,
             empresasAgregadas: Array.from(todasEmpresas.values()).sort((a, b) => b.mencoes - a.mencoes),
             resultados
         });
@@ -3062,12 +3119,20 @@ app.get('/api/cruzamento/status', (req, res) => {
 // ============================================================================
 
 // Status da conexão Supabase
+// ============================================================================
+// API - PERSISTÊNCIA (Supabase + fallback memória via iris-core/persistencia)
+// ============================================================================
+
 app.get('/api/supabase/status', async (req, res) => {
-    if (!isSupabaseConfigured()) {
+    const status = persistencia.getStatus();
+
+    if (!status.supabaseConfigured) {
         return res.json({
             success: true,
             connected: false,
-            message: 'Supabase não configurado. Defina SUPABASE_URL e SUPABASE_ANON_KEY no .env',
+            mode: 'memory',
+            message: 'Supabase não configurado. Usando armazenamento em memória.',
+            memoryStats: status.memoryStats,
             env: {
                 url_set: !!SUPABASE_URL && !SUPABASE_URL.includes('SEU_PROJECT_ID'),
                 anon_key_set: !!SUPABASE_ANON_KEY && !SUPABASE_ANON_KEY.includes('COLE_SUA'),
@@ -3077,31 +3142,29 @@ app.get('/api/supabase/status', async (req, res) => {
     }
 
     try {
-        const { data, error } = await supabase.from('deliberacoes_extraidas').select('id', { count: 'exact', head: true });
+        // Testa conexão buscando 1 registro
+        const delibs = await persistencia.buscarDeliberacoesCompletas({ limite: 1 });
         return res.json({
             success: true,
-            connected: !error,
-            message: error ? `Erro: ${error.message}` : 'Conectado ao Supabase',
+            connected: true,
+            mode: 'supabase',
+            message: 'Conectado ao Supabase',
             url: SUPABASE_URL,
-            has_admin: !!supabaseAdmin,
-            error: error ? error.message : null
+            has_admin: !!supabaseAdmin
         });
     } catch (e) {
         return res.json({
             success: true,
             connected: false,
-            message: `Erro de conexão: ${e.message}`
+            mode: 'memory',
+            message: `Erro de conexão: ${e.message}`,
+            memoryStats: status.memoryStats
         });
     }
 });
 
-// Sync deliberações locais para Supabase
+// Sync deliberações locais (em memória do servidor) para Supabase
 app.post('/api/supabase/sync', rateLimit(RATE_LIMIT_STRICT), async (req, res) => {
-    if (!supabaseAdmin && !supabase) {
-        return res.status(503).json({ success: false, erro: 'Supabase não configurado' });
-    }
-
-    const client = supabaseAdmin || supabase;
     const deliberacoes = coletarTodasDeliberacoes();
 
     if (deliberacoes.length === 0) {
@@ -3112,29 +3175,25 @@ app.post('/api/supabase/sync', rateLimit(RATE_LIMIT_STRICT), async (req, res) =>
     let errors = 0;
 
     for (const d of deliberacoes) {
-        const row = {
-            agencia: 'ARTESP',
-            processo: d.processo || null,
-            numero_reuniao: d.numero_reuniao || null,
-            data_reuniao: d.data_reuniao || null,
-            interessado: d.interessado || null,
-            tipo_deliberacao: d.tipo_deliberacao || null,
-            pauta_interna: d.pauta_interna || false,
-            microtema: d.microtema || null,
-            decisao: d.decisao || 'A classificar',
-            resumo_pleito: d.resumo || null,
-            fundamento_decisao: d.fundamentacao || null,
-            votos_favor: (d.votos_a_favor || []).join(', '),
-            votos_contra: (d.votos_contra || []).join(', '),
-            raw_data: d
-        };
-
-        const { error } = await client.from('deliberacoes_extraidas').upsert(row, {
-            onConflict: 'processo,numero_reuniao',
-            ignoreDuplicates: true
-        });
-
-        if (error) { errors++; } else { synced++; }
+        try {
+            await persistencia.salvarDeliberacao({
+                agencia: 'ARTESP',
+                processo: d.numero_deliberacao || d.processo || null,
+                numeroReuniao: d.reuniao_ordinaria || d.numero_reuniao || null,
+                interessado: d.interessado || null,
+                tipo: d.classificacao || d.tipo_deliberacao || null,
+                microtema: d.microtema || null,
+                decisao: d.resultado || d.decisao || 'A classificar',
+                resumoPleito: d.resumo || null,
+                votosFavoraveis: d.votos_a_favor || [],
+                votosContrarios: d.votos_contra || [],
+                linkPdf: d.link_pdf || null,
+                confiancaGeral: d.confianca || 0
+            });
+            synced++;
+        } catch (err) {
+            errors++;
+        }
     }
 
     res.json({
@@ -3142,71 +3201,56 @@ app.post('/api/supabase/sync', rateLimit(RATE_LIMIT_STRICT), async (req, res) =>
         total: deliberacoes.length,
         synced,
         errors,
-        message: `${synced} deliberações sincronizadas com Supabase`
+        message: `${synced} deliberações sincronizadas`
     });
 });
 
-// Buscar deliberações do Supabase
+// Buscar deliberações do banco (Supabase ou memória)
 app.get('/api/supabase/deliberacoes', async (req, res) => {
-    if (!supabase) {
-        return res.status(503).json({ success: false, erro: 'Supabase não configurado' });
-    }
-
-    const limite = Math.min(Math.max(parseInt(req.query.limite) || 50, 1), 500);
-    const agencia = sanitizeString(req.query.agencia || '', 50);
-
-    let query = supabase.from('deliberacoes_extraidas')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(limite);
-
-    if (agencia) {
-        query = query.eq('agencia', agencia);
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-        return res.status(500).json({ success: false, erro: error.message });
-    }
-
-    res.json({ success: true, total: data.length, deliberacoes: data });
-});
-
-// Buscar métricas do Supabase
-app.get('/api/supabase/metricas', async (req, res) => {
-    if (!supabase) {
-        return res.status(503).json({ success: false, erro: 'Supabase não configurado' });
-    }
-
     try {
-        const [deliberacoes, directors, votes] = await Promise.all([
-            supabase.from('deliberacoes_extraidas').select('id, agencia, decisao, microtema', { count: 'exact' }),
-            supabase.from('directors').select('id, name, agency', { count: 'exact' }).eq('is_active', true),
-            supabase.from('votes').select('id', { count: 'exact' })
-        ]);
+        const limite = Math.min(Math.max(parseInt(req.query.limite) || 50, 1), 500);
+        const agencia = sanitizeString(req.query.agencia || '', 50);
+        const decisao = sanitizeString(req.query.decisao || '', 50);
+        const microtema = sanitizeString(req.query.microtema || '', 100);
+        const interessado = sanitizeString(req.query.interessado || '', 200);
+        const offset = Math.max(parseInt(req.query.offset) || 0, 0);
 
-        const delibs = deliberacoes.data || [];
-        const totalDelibs = delibs.length;
-        const deferidos = delibs.filter(d => d.decisao === 'Deferido').length;
-        const indeferidos = delibs.filter(d => d.decisao === 'Indeferido').length;
+        const filtros = { limite, offset };
+        if (agencia) filtros.agencia = agencia;
+        if (decisao) filtros.decisao = decisao;
+        if (microtema) filtros.microtema = microtema;
+        if (interessado) filtros.interessado = interessado;
 
-        const agenciasMap = {};
-        delibs.forEach(d => {
-            if (!agenciasMap[d.agencia]) agenciasMap[d.agencia] = 0;
-            agenciasMap[d.agencia]++;
-        });
+        const data = await persistencia.buscarDeliberacoesCompletas(filtros);
 
         res.json({
             success: true,
+            total: data.length,
+            offset,
+            limite,
+            deliberacoes: data
+        });
+    } catch (e) {
+        res.status(500).json({ success: false, erro: e.message });
+    }
+});
+
+// Buscar métricas do banco
+app.get('/api/supabase/metricas', async (req, res) => {
+    try {
+        const stats = await persistencia.buscarEstatisticas();
+        const diretores = await persistencia.buscarDiretores({ ativo: true });
+
+        res.json({
+            success: true,
+            mode: persistencia.getStatus().mode,
             metricas: {
-                total_deliberacoes: totalDelibs,
-                total_diretores: (directors.data || []).length,
-                total_votos: votes.count || 0,
-                total_agencias: Object.keys(agenciasMap).length,
-                taxa_deferimento: totalDelibs > 0 ? Math.round((deferidos / totalDelibs) * 100) : 0,
-                por_agencia: agenciasMap,
-                decisoes: { deferidos, indeferidos, outros: totalDelibs - deferidos - indeferidos }
+                total_deliberacoes: stats.total || 0,
+                deferidos: stats.deferidos || 0,
+                indeferidos: stats.indeferidos || 0,
+                total_diretores: diretores.length || 0,
+                taxa_deferimento: stats.total > 0 ? Math.round(((stats.deferidos || 0) / stats.total) * 100) : 0,
+                ultimaAtualizacao: stats.ultimaAtualizacao
             }
         });
     } catch (e) {
@@ -3214,19 +3258,72 @@ app.get('/api/supabase/metricas', async (req, res) => {
     }
 });
 
+// Buscar diretores do banco
+app.get('/api/supabase/diretores', async (req, res) => {
+    try {
+        const agency = sanitizeString(req.query.agency || '', 50);
+        const filtros = {};
+        if (agency) filtros.agency = agency;
+
+        const diretores = await persistencia.buscarDiretores(filtros);
+
+        res.json({
+            success: true,
+            total: diretores.length,
+            diretores
+        });
+    } catch (e) {
+        res.status(500).json({ success: false, erro: e.message });
+    }
+});
+
+// Buscar votos do banco
+app.get('/api/supabase/votos', async (req, res) => {
+    try {
+        const deliberacaoId = sanitizeString(req.query.deliberacao_id || '', 100);
+        const directorId = sanitizeString(req.query.director_id || '', 100);
+        const filtros = {};
+        if (deliberacaoId) filtros.deliberacaoId = deliberacaoId;
+        if (directorId) filtros.directorId = directorId;
+
+        const votos = await persistencia.buscarVotos(filtros);
+
+        res.json({
+            success: true,
+            total: votos.length,
+            votos
+        });
+    } catch (e) {
+        res.status(500).json({ success: false, erro: e.message });
+    }
+});
+
+// Buscar estatísticas do banco
+app.get('/api/supabase/estatisticas', async (req, res) => {
+    try {
+        const stats = await persistencia.buscarEstatisticas();
+        res.json({ success: true, ...stats });
+    } catch (e) {
+        res.status(500).json({ success: false, erro: e.message });
+    }
+});
+
 // Inicia servidor
 app.listen(PORT, () => {
+    const dbStatus = persistencia.getStatus();
+    const dbLabel = dbStatus.supabaseConfigured ? 'Supabase' : 'Memoria local';
+
     console.log('');
     console.log('╔══════════════════════════════════════════════════════════════╗');
     console.log('║                                                              ║');
-    console.log('║   🔍 IRIS PLATFORM - Plataforma Unificada                   ║');
+    console.log('║   IRIS PLATFORM - Plataforma Unificada                      ║');
     console.log('║                                                              ║');
-    console.log('║   Coleta de PDFs + Análise de Deliberações                  ║');
+    console.log('║   Coleta de PDFs + Analise de Deliberacoes                  ║');
     console.log('║                                                              ║');
     console.log('╠══════════════════════════════════════════════════════════════╣');
     console.log('║                                                              ║');
-    console.log('║   🌐 Acesse: http://localhost:' + PORT + '                          ║');
-    console.log('║   📦 Supabase: ' + (isSupabaseConfigured() ? '✅ Conectado' : '⚠️  Não configurado') + '                           ║');
+    console.log(`║   Acesse: http://localhost:${PORT}                          ║`);
+    console.log(`║   Banco: ${dbLabel.padEnd(20)}                        ║`);
     console.log('║                                                              ║');
     console.log('╚══════════════════════════════════════════════════════════════╝');
     console.log('');
