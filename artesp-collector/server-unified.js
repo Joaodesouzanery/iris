@@ -19,7 +19,14 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const pdfParse = require('pdf-parse');
-const { createClient } = require('@supabase/supabase-js');
+
+// Supabase SDK — optional dependency (server works without it)
+let createClient = null;
+try {
+    createClient = require('@supabase/supabase-js').createClient;
+} catch (_) {
+    console.warn('[Supabase] Pacote @supabase/supabase-js não instalado. Rode: npm install');
+}
 
 // Importa serviços do coletor
 const { scrapeWithRetry } = require('./src/services/scraper');
@@ -42,7 +49,8 @@ let supabase = null;
 let supabaseAdmin = null;
 
 function isSupabaseConfigured() {
-    return SUPABASE_URL &&
+    return createClient &&
+           SUPABASE_URL &&
            !SUPABASE_URL.includes('SEU_PROJECT_ID') &&
            SUPABASE_ANON_KEY &&
            !SUPABASE_ANON_KEY.includes('COLE_SUA');
