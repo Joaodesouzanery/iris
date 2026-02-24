@@ -2108,6 +2108,11 @@ app.post('/api/reunioes-monitoradas/:id/processar', async (req, res) => {
             const extracao = irisCore.extrairDeliberacoesEstruturadas(texto);
             const analise = irisCore.analisarTexto(texto);
 
+            // Auto-detect agency from PDF text
+            const agenciasConhecidas = ['ARTESP', 'ANEEL', 'ANATEL', 'ANP', 'ANTT', 'ANTAQ', 'ANS', 'ANVISA', 'ANA', 'ANAC', 'ANM', 'ANCINE', 'ARSESP'];
+            const textoAgencia = texto.substring(0, 3000).toUpperCase();
+            const agenciaDetectada = agenciasConhecidas.find(a => textoAgencia.includes(a)) || 'ARTESP';
+
             // 4. Persistir deliberações
             reuniao.progresso = 80;
             let persistidas = 0;
@@ -2116,7 +2121,7 @@ app.post('/api/reunioes-monitoradas/:id/processar', async (req, res) => {
             for (const delib of extracao.deliberations) {
                 try {
                     await persistencia.salvarDeliberacao({
-                        agencia: 'ARTESP',
+                        agencia: agenciaDetectada,
                         numeroReuniao: delib.reuniao_ordinaria || '',
                         processo: delib.numero_deliberacao || delib.processo || '',
                         interessado: delib.interessado || '',
@@ -2142,6 +2147,7 @@ app.post('/api/reunioes-monitoradas/:id/processar', async (req, res) => {
             reuniao.status = 'processado';
             reuniao.progresso = 100;
             reuniao.resultado = {
+                agencia: agenciaDetectada,
                 totalDeliberacoes: extracao.deliberations.length,
                 persistidas,
                 erros: erros.length > 0 ? erros : undefined,
