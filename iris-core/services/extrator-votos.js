@@ -84,9 +84,9 @@ const CARGOS_DIRETORIA = [
 ];
 
 /**
- * Diretores conhecidos da ARTESP (para identificação direta)
+ * Diretores conhecidos da ARTESP (fallback quando Supabase indisponível)
  */
-const DIRETORES_CONHECIDOS = [
+const DIRETORES_FALLBACK = [
     // Diretoria atual (2024-2025)
     { nome: 'André Isper Rodrigues Barnabé', cargo: 'Diretor-Presidente', variantes: ['Andre Isper', 'Barnabé', 'Barnabe'] },
     { nome: 'Diego Albert Zanatto', cargo: 'Diretor de Fiscalização', variantes: ['Diego Zanatto', 'Zanatto'] },
@@ -99,6 +99,73 @@ const DIRETORES_CONHECIDOS = [
     { nome: 'Antonio Carlos de Almeida', cargo: 'Diretor', variantes: ['Antonio Almeida'] },
     { nome: 'Flavio Augusto Trevisan Saes', cargo: 'Diretor', variantes: ['Trevisan Saes', 'Flavio Saes'] }
 ];
+
+// Lista ativa de diretores (atualizada do banco quando disponível)
+let DIRETORES_CONHECIDOS = [...DIRETORES_FALLBACK];
+let _diretoresCarregados = false;
+
+/**
+ * Gera variantes de nome automaticamente a partir do nome completo.
+ * Ex: "André Isper Rodrigues Barnabé" → ["André Isper", "Barnabé", "Isper Barnabé"]
+ */
+function gerarVariantes(nomeCompleto) {
+    const partes = nomeCompleto.split(/\s+/);
+    if (partes.length < 2) return [];
+
+    const variantes = [];
+    const primeiro = partes[0];
+    const ultimo = partes[partes.length - 1];
+
+    // Primeiro + Último
+    if (partes.length > 2) variantes.push(`${primeiro} ${ultimo}`);
+    // Só o último sobrenome
+    variantes.push(ultimo);
+    // Penúltimo + Último (se existir)
+    if (partes.length > 2) variantes.push(`${partes[partes.length - 2]} ${ultimo}`);
+    // Versão sem acentos
+    const semAcento = nomeCompleto.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    if (semAcento !== nomeCompleto) variantes.push(semAcento);
+
+    return [...new Set(variantes)];
+}
+
+/**
+ * Carrega diretores do Supabase e atualiza a lista conhecida.
+ * Mantém fallback se o banco estiver indisponível.
+ */
+async function carregarDiretoresDoBanco() {
+    if (_diretoresCarregados) return;
+
+    try {
+        const persistencia = require('./persistencia');
+        if (!persistencia.isSupabaseAvailable()) {
+            logger.info('ExtratorVotos', 'Supabase indisponível, usando lista de diretores local');
+            return;
+        }
+
+        const diretores = await persistencia.buscarDiretores({ limite: 200 });
+        if (diretores && diretores.length > 0) {
+            // Mescla com fallback: diretores do banco têm prioridade
+            const nomesDoBanco = new Set(diretores.map(d => d.name.toLowerCase()));
+            const doFallback = DIRETORES_FALLBACK.filter(d => !nomesDoBanco.has(d.nome.toLowerCase()));
+
+            DIRETORES_CONHECIDOS = [
+                ...diretores.map(d => ({
+                    nome: d.name,
+                    cargo: d.role || 'Diretor(a)',
+                    variantes: gerarVariantes(d.name)
+                })),
+                ...doFallback
+            ];
+
+            logger.info('ExtratorVotos', `Diretores carregados do banco: ${diretores.length} (+ ${doFallback.length} do fallback)`);
+        }
+    } catch (err) {
+        logger.warn('ExtratorVotos', `Erro ao carregar diretores do banco: ${err.message}. Usando fallback.`);
+    }
+
+    _diretoresCarregados = true;
+}
 
 // ============================================================================
 // FUNÇÕES DE EXTRAÇÃO
@@ -454,12 +521,15 @@ function identificarVotoIndividual(texto, nomeDiretor) {
  * @param {string} texto - Texto da deliberação
  * @returns {Object} Informações completas de votação
  */
-function extrairVotacao(texto) {
+async function extrairVotacao(texto) {
     const startTime = Date.now();
 
     logger.info('ExtratorVotos', 'Iniciando extração de votos', {
         tamanhoTexto: texto?.length || 0
     });
+
+    // Carrega diretores do banco na primeira chamada
+    await carregarDiretoresDoBanco();
 
     const diretores = extrairDiretores(texto);
     const tipoVotacao = identificarTipoVotacao(texto);
@@ -501,9 +571,11 @@ module.exports = {
     identificarTipoVotacao,
     extrairVotosIndividuais,
     extrairVotacao,
+    carregarDiretoresDoBanco,
 
     // Exporta constantes para testes
     CARGOS_DIRETORIA,
-    DIRETORES_CONHECIDOS,
+    get DIRETORES_CONHECIDOS() { return DIRETORES_CONHECIDOS; },
+    DIRETORES_FALLBACK,
     PATTERNS_VOTACAO
 };

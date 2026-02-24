@@ -633,6 +633,7 @@ app.post('/api/analisar-todos', async (req, res) => {
         const resultados = [];
         let totalDeliberacoes = 0;
         let totalPersistidas = 0;
+        const errosPersistencia = [];
         const todasEmpresas = new Map();
 
         for (let i = 0; i < pdfsProcessados.length; i++) {
@@ -677,7 +678,14 @@ app.post('/api/analisar-todos', async (req, res) => {
                         });
                         totalPersistidas++;
                     } catch (err) {
-                        // Continua mesmo se persistência falhar (ex: duplicata)
+                        const isDuplicate = err.message && err.message.includes('duplicate');
+                        if (!isDuplicate) {
+                            console.warn(`[IRIS] Erro ao persistir deliberação: ${err.message}`);
+                        }
+                        errosPersistencia.push({
+                            processo: delib.numero_deliberacao || delib.processo || 'N/A',
+                            erro: isDuplicate ? 'Duplicata ignorada' : err.message
+                        });
                     }
                 }
 
@@ -705,12 +713,16 @@ app.post('/api/analisar-todos', async (req, res) => {
         }
 
         console.log(`[IRIS] Total: ${totalPersistidas}/${totalDeliberacoes} deliberações persistidas`);
+        if (errosPersistencia.length > 0) {
+            console.warn(`[IRIS] ${errosPersistencia.filter(e => e.erro !== 'Duplicata ignorada').length} erros de persistência`);
+        }
 
         res.json({
             sucesso: true,
             totalAnalisados: resultados.length,
             totalDeliberacoes,
             totalPersistidas,
+            errosPersistencia: errosPersistencia.length > 0 ? errosPersistencia : undefined,
             empresasAgregadas: Array.from(todasEmpresas.values()).sort((a, b) => b.mencoes - a.mencoes),
             resultados
         });
@@ -2033,17 +2045,102 @@ app.post('/api/reunioes-monitoradas/:id/processar', async (req, res) => {
         return res.status(404).json({ erro: 'Reunião não encontrada' });
     }
 
-    // Simula início do processamento
     reuniao.status = 'processando';
     reuniao.progresso = 10;
     reuniao.tentativas++;
 
-    // Em produção, aqui seria chamada a função de processamento real
+    // Responder imediatamente e processar em background
     res.json({
         sucesso: true,
-        mensagem: 'Processamento iniciado',
+        mensagem: 'Processamento iniciado — acompanhe via /api/reunioes-monitoradas',
         reuniao
     });
+
+    // Processamento real em background
+    (async () => {
+        try {
+            const url = reuniao.url_origem;
+            if (!url) {
+                reuniao.status = 'erro';
+                reuniao.error_message = 'URL de origem não definida';
+                return;
+            }
+
+            // 1. Baixar PDF
+            reuniao.progresso = 20;
+            console.log(`[IRIS] Processando reunião ${id}: baixando PDF de ${url}`);
+            const axios = require('axios');
+            const pdfResponse = await axios.get(url, {
+                responseType: 'arraybuffer',
+                timeout: 60000,
+                headers: { 'User-Agent': 'IRIS-Platform/2.0' }
+            });
+
+            // 2. Extrair texto do PDF
+            reuniao.progresso = 40;
+            const pdfBuffer = Buffer.from(pdfResponse.data);
+            const pdfData = await pdfParse(pdfBuffer);
+            const texto = pdfData.text;
+
+            if (!texto || texto.trim().length < 50) {
+                reuniao.status = 'erro';
+                reuniao.error_message = 'PDF sem texto extraível';
+                return;
+            }
+
+            // 3. Extrair deliberações estruturadas
+            reuniao.progresso = 60;
+            const extracao = irisCore.extrairDeliberacoesEstruturadas(texto);
+            const analise = irisCore.analisarTexto(texto);
+
+            // 4. Persistir deliberações
+            reuniao.progresso = 80;
+            let persistidas = 0;
+            const erros = [];
+
+            for (const delib of extracao.deliberations) {
+                try {
+                    await persistencia.salvarDeliberacao({
+                        agencia: 'ARTESP',
+                        numeroReuniao: delib.reuniao_ordinaria || '',
+                        processo: delib.numero_deliberacao || delib.processo || '',
+                        interessado: delib.interessado || '',
+                        tipo: delib.classificacao || analise.tipo || '',
+                        microtema: delib.microtema || analise.microtema || '',
+                        decisao: delib.resultado || analise.decisao || '',
+                        resumoPleito: delib.texto_resumo || '',
+                        votosFavoraveis: delib.votos_a_favor || [],
+                        votosContrarios: delib.votos_contra || [],
+                        linkPdf: url,
+                        confiancaGeral: analise.confiancaGeral || 0,
+                        hashTexto: analise.hashTexto || ''
+                    });
+                    persistidas++;
+                } catch (err) {
+                    if (!err.message?.includes('duplicate')) {
+                        erros.push(err.message);
+                    }
+                }
+            }
+
+            // 5. Finalizar
+            reuniao.status = 'processado';
+            reuniao.progresso = 100;
+            reuniao.resultado = {
+                totalDeliberacoes: extracao.deliberations.length,
+                persistidas,
+                erros: erros.length > 0 ? erros : undefined,
+                processadoEm: new Date().toISOString()
+            };
+
+            console.log(`[IRIS] Reunião ${id} processada: ${persistidas}/${extracao.deliberations.length} deliberações salvas`);
+
+        } catch (err) {
+            reuniao.status = 'erro';
+            reuniao.error_message = err.message;
+            console.error(`[IRIS] Erro ao processar reunião ${id}: ${err.message}`);
+        }
+    })();
 });
 
 app.delete('/api/reunioes-monitoradas/:id', (req, res) => {
