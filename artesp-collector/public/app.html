@@ -4710,8 +4710,8 @@
                             </h1>
                             <p class="lp-hero-subtitle">A IRIS coleta, classifica e analisa automaticamente milhares de decisões regulatórias. Em tempo real. Com IA.</p>
                             <div class="lp-hero-actions">
-                                <a href="#lp-demo" class="lp-btn-primary">
-                                    Solicitar Demonstração
+                                <a data-route="/hub" class="lp-btn-primary">
+                                    Acessar Plataforma
                                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
                                 </a>
                                 <a href="#lp-modulos" class="lp-btn-secondary">
@@ -5930,7 +5930,7 @@
             document.getElementById('landing-page').style.display = 'none';
             document.getElementById('app-platform').style.display = 'flex';
             if (window.App) {
-                window.App.Router.navigate('/hub');
+                window.App.Router.navigate('/landing');
             }
         },
 
