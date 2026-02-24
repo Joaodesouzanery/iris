@@ -5873,43 +5873,52 @@
                 { nome: 'Artur Watt Neto', cargo: 'Diretor-Geral', iniciais: 'AW', mandato: '2025-2029' },
                 { nome: 'Symone Christine de Santana Araújo', cargo: 'Diretora', iniciais: 'SA', mandato: '2023-2027' },
                 { nome: 'Daniel Maia Vieira', cargo: 'Diretor', iniciais: 'DM', mandato: '2022-2026' },
-                { nome: 'Fernando Luiz Gonçalves Moura', cargo: 'Diretor', iniciais: 'FM', mandato: '2022-2026' },
+                { nome: 'Fernando Wandscheer de Moura Alves', cargo: 'Diretor', iniciais: 'FM', mandato: '2022-2026' },
                 { nome: 'Pietro Adamo Sampaio Mendes', cargo: 'Diretor', iniciais: 'PM', mandato: '2025-2029' }
             ]},
             { id: 'anvisa', nome: 'ANVISA', nomeCompleto: 'Agência Nacional de Vigilância Sanitária', setor: 'Vigilância Sanitária', esfera: 'Federal', uf: 'DF', decisoes: 3210, aprovadas: 2568, cor: '#A78BFA', lei: 'Lei nº 9.782/1999', vinculacao: 'Min. da Saúde', diretores: [
                 { nome: 'Leandro Pinheiro Safatle', cargo: 'Diretor-Presidente', iniciais: 'LS', mandato: '2025-2030' },
                 { nome: 'Daniel Meirelles Fernandes Pereira', cargo: 'Diretor', iniciais: 'DP', mandato: '2023-2028' },
-                { nome: 'Daniela Marreco Cerqueira', cargo: 'Diretora', iniciais: 'DC', mandato: '2025-2030' }
+                { nome: 'Daniela Marreco Cerqueira', cargo: 'Diretora', iniciais: 'DC', mandato: '2025-2030' },
+                { nome: 'Thiago Lopes Cardoso Campos', cargo: 'Diretor', iniciais: 'TC', mandato: '2025-2030' }
             ]},
             { id: 'anac', nome: 'ANAC', nomeCompleto: 'Agência Nacional de Aviação Civil', setor: 'Aviação Civil', esfera: 'Federal', uf: 'DF', decisoes: 980, aprovadas: 784, cor: '#8B5CF6', lei: 'Lei nº 11.182/2005', vinculacao: 'Min. de Portos e Aeroportos', diretores: [
-                { nome: 'Tiago Sousa Pereira', cargo: 'Diretor-Presidente', iniciais: 'TP', mandato: '2024-2029' },
-                { nome: 'Flávio Nunes Ferreira', cargo: 'Diretor', iniciais: 'FF', mandato: '2025-2030' }
+                { nome: 'Tiago Chagas Faierstein', cargo: 'Diretor-Presidente', iniciais: 'TF', mandato: '2025-2030' },
+                { nome: 'Tiago Sousa Pereira', cargo: 'Diretor', iniciais: 'TP', mandato: '2022-2026' },
+                { nome: 'Luiz Ricardo de Souza Nascimento', cargo: 'Diretor', iniciais: 'LN', mandato: '2022-2026' },
+                { nome: 'Rui Chagas Mesquita', cargo: 'Diretor', iniciais: 'RM', mandato: '2025-2030' },
+                { nome: 'Antônio Mathias Nogueira Moreira', cargo: 'Diretor', iniciais: 'AM', mandato: '2025-2030' }
             ]},
             { id: 'antt', nome: 'ANTT', nomeCompleto: 'Agência Nacional de Transportes Terrestres', setor: 'Transportes Terrestres', esfera: 'Federal', uf: 'DF', decisoes: 1567, aprovadas: 1175, cor: '#60A5FA', lei: 'Lei nº 10.233/2001', vinculacao: 'Min. dos Transportes', diretores: [
-                { nome: 'Rafael Vitale Rodrigues', cargo: 'Diretor-Geral', iniciais: 'RV', mandato: '2023-2027' },
-                { nome: 'Guilherme Sampaio', cargo: 'Diretor', iniciais: 'GS', mandato: '2020-2024' },
-                { nome: 'Davi Barreto', cargo: 'Diretor', iniciais: 'DB', mandato: '2023-2027' }
+                { nome: 'Guilherme Theo Rodrigues da Rocha Sampaio', cargo: 'Diretor-Geral', iniciais: 'GS', mandato: '2025-2030' },
+                { nome: 'Alex Antônio de Azevedo Cruz', cargo: 'Diretor', iniciais: 'AC', mandato: '2025-2030' },
+                { nome: 'Felipe Fernandes Queiroz', cargo: 'Diretor', iniciais: 'FQ', mandato: '2023-2027' }
             ]},
             { id: 'antaq', nome: 'ANTAQ', nomeCompleto: 'Agência Nacional de Transportes Aquaviários', setor: 'Transportes Aquaviários', esfera: 'Federal', uf: 'DF', decisoes: 678, aprovadas: 475, cor: '#22D3EE', lei: 'Lei nº 10.233/2001', vinculacao: 'Min. de Portos e Aeroportos', diretores: [
-                { nome: 'Eduardo Nery Machado Filho', cargo: 'Diretor-Geral', iniciais: 'EN', mandato: '2024-2029' },
-                { nome: 'Wilson Lima Filho', cargo: 'Diretor', iniciais: 'WL', mandato: '2023-2027' }
+                { nome: 'Frederico Carvalho Dias', cargo: 'Diretor-Geral', iniciais: 'FD', mandato: '2025-2030' },
+                { nome: 'Wilson Lima Filho', cargo: 'Diretor', iniciais: 'WL', mandato: '2025-2029' }
             ]},
             { id: 'ana', nome: 'ANA', nomeCompleto: 'Agência Nacional de Águas e Saneamento Básico', setor: 'Águas', esfera: 'Federal', uf: 'DF', decisoes: 890, aprovadas: 712, cor: '#06B6D4', lei: 'Lei nº 9.984/2000', vinculacao: 'Min. do Meio Ambiente', diretores: [
-                { nome: 'Veronica Sánchez Marques da Cruz', cargo: 'Diretora-Presidente', iniciais: 'VC', mandato: '2023-2027' }
+                { nome: 'Ana Carolina Argolo Nascimento de Castro', cargo: 'Diretora-Presidente Interina', iniciais: 'AC', mandato: '2026-2026' },
+                { nome: 'Larissa Oliveira Rego', cargo: 'Diretora', iniciais: 'LR', mandato: '2025-2030' },
+                { nome: 'Cristiane Collet Battiston', cargo: 'Diretora', iniciais: 'CB', mandato: '2025-2030' },
+                { nome: 'Leonardo Goes Silva', cargo: 'Diretor', iniciais: 'LG', mandato: '2025-2030' }
             ]},
             { id: 'ancine', nome: 'ANCINE', nomeCompleto: 'Agência Nacional do Cinema', setor: 'Cinema e Audiovisual', esfera: 'Federal', uf: 'RJ', decisoes: 345, aprovadas: 276, cor: '#FB923C', lei: 'MP nº 2.228-1/2001', vinculacao: 'Min. da Cultura', diretores: [
                 { nome: 'Alex Braga Muniz', cargo: 'Diretor-Presidente', iniciais: 'AM', mandato: '2023-2027' }
             ]},
             { id: 'ans', nome: 'ANS', nomeCompleto: 'Agência Nacional de Saúde Suplementar', setor: 'Saúde Suplementar', esfera: 'Federal', uf: 'RJ', decisoes: 1890, aprovadas: 1323, cor: '#F87171', lei: 'Lei nº 9.961/2000', vinculacao: 'Min. da Saúde', diretores: [
-                { nome: 'Paulo Roberto Vanderlei Rebello Filho', cargo: 'Diretor-Presidente', iniciais: 'PR', mandato: '2022-2027' },
-                { nome: 'Jorge Dias de Souza', cargo: 'Diretor', iniciais: 'JS', mandato: '2024-2029' }
+                { nome: 'Wadih Nemer Damous Filho', cargo: 'Diretor-Presidente', iniciais: 'WD', mandato: '2025-2029' },
+                { nome: 'Eliane Aparecida de Castro Medeiros', cargo: 'Diretora de Fiscalização', iniciais: 'EM', mandato: '2022-2026' },
+                { nome: 'Jorge Antônio Aquino Lopes', cargo: 'Diretor', iniciais: 'JL', mandato: '2024-2029' },
+                { nome: 'Lenise Barcellos de Mello Secchin', cargo: 'Diretora', iniciais: 'LS', mandato: '2025-2030' }
             ]},
             { id: 'anm', nome: 'ANM', nomeCompleto: 'Agência Nacional de Mineração', setor: 'Mineração', esfera: 'Federal', uf: 'DF', decisoes: 892, aprovadas: 654, cor: '#818CF8', lei: 'Lei nº 13.575/2017', vinculacao: 'Min. de Minas e Energia', diretores: [
                 { nome: 'Mauro Henrique Moreira Sousa', cargo: 'Diretor-Geral', iniciais: 'MM', mandato: '2022-2026' },
                 { nome: 'José Fernando de Mendonça Gomes Junior', cargo: 'Diretor', iniciais: 'JG', mandato: '2022-2026' }
             ]},
             { id: 'arsesp', nome: 'ARSESP', nomeCompleto: 'Agência Reguladora de Serviços Públicos de SP', setor: 'Saneamento e Energia SP', esfera: 'Estadual', uf: 'SP', decisoes: 567, aprovadas: 397, cor: '#34D399', lei: 'LC nº 1.025/2007', vinculacao: 'Governo do Estado de SP', diretores: [
-                { nome: 'Gustavo Guimarães Bueno', cargo: 'Diretor-Presidente', iniciais: 'GB', mandato: '2023-2027' }
+                { nome: 'Thiago Mesquita Nunes', cargo: 'Diretor-Presidente', iniciais: 'TN', mandato: '2023-2027' }
             ]},
             { id: 'agetransp', nome: 'AGETRANSP', nomeCompleto: 'Agência Reguladora de Transportes do RJ', setor: 'Transportes', esfera: 'Estadual', uf: 'RJ', decisoes: 423, aprovadas: 296, cor: '#FCA5A5', lei: 'Lei nº 4.555/2005', vinculacao: 'Governo do Estado do RJ', diretores: []},
             { id: 'agergs', nome: 'AGERGS', nomeCompleto: 'Agência Estadual de Regulação do RS', setor: 'Transporte Rodoviário RS', esfera: 'Estadual', uf: 'RS', decisoes: 389, aprovadas: 272, cor: '#93C5FD', lei: 'Lei nº 10.931/1997', vinculacao: 'Governo do Estado do RS', diretores: []},
