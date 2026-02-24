@@ -38,6 +38,10 @@ CREATE TABLE IF NOT EXISTS reunioes_monitoradas (
     updated_at TIMESTAMPTZ DEFAULT now()
 );
 
+COMMENT ON TABLE reunioes_monitoradas IS 'Controla o status de processamento de reunioes coletadas dos portais das agencias';
+COMMENT ON COLUMN reunioes_monitoradas.status IS 'pendente, processando, processado, erro';
+COMMENT ON COLUMN reunioes_monitoradas.progresso IS 'Percentual de progresso do processamento (0-100)';
+
 -- Diretores das agências reguladoras
 CREATE TABLE IF NOT EXISTS directors (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -51,6 +55,10 @@ CREATE TABLE IF NOT EXISTS directors (
     updated_at TIMESTAMPTZ DEFAULT now(),
     CONSTRAINT directors_unique_name_agency UNIQUE (name, agency)
 );
+
+COMMENT ON TABLE directors IS 'Diretores das agencias reguladoras com dados de mandato';
+COMMENT ON COLUMN directors.role IS 'Cargo do diretor (ex: Diretor(a), Presidente, Conselheiro(a))';
+COMMENT ON COLUMN directors.is_active IS 'Se o diretor esta em exercicio ativo';
 
 CREATE INDEX IF NOT EXISTS idx_directors_agency ON directors(agency);
 CREATE INDEX IF NOT EXISTS idx_directors_name ON directors(name);
@@ -79,6 +87,16 @@ CREATE TABLE IF NOT EXISTS deliberacoes_extraidas (
     updated_at TIMESTAMPTZ DEFAULT now()
 );
 
+COMMENT ON TABLE deliberacoes_extraidas IS 'Deliberacoes extraidas de PDFs das agencias reguladoras';
+COMMENT ON COLUMN deliberacoes_extraidas.reuniao_id IS 'Referencia a reuniao monitorada de origem';
+COMMENT ON COLUMN deliberacoes_extraidas.tipo_deliberacao IS 'Pleito Externo ou Ato Administrativo Interno';
+COMMENT ON COLUMN deliberacoes_extraidas.pauta_interna IS 'True se for assunto interno da agencia';
+COMMENT ON COLUMN deliberacoes_extraidas.decisao IS 'Deferido, Indeferido, Parcialmente Deferido ou A classificar';
+COMMENT ON COLUMN deliberacoes_extraidas.fundamento_decisao IS 'Fundamentacao juridica ou tecnica da decisao';
+COMMENT ON COLUMN deliberacoes_extraidas.votos_favor IS 'Nomes dos diretores que votaram a favor (texto livre)';
+COMMENT ON COLUMN deliberacoes_extraidas.votos_contra IS 'Nomes dos diretores que votaram contra (texto livre)';
+COMMENT ON COLUMN deliberacoes_extraidas.raw_data IS 'Dados brutos do processamento incluindo confianca e metadados';
+
 CREATE INDEX IF NOT EXISTS idx_delib_agencia ON deliberacoes_extraidas(agencia);
 CREATE INDEX IF NOT EXISTS idx_delib_reuniao ON deliberacoes_extraidas(numero_reuniao);
 CREATE INDEX IF NOT EXISTS idx_delib_data ON deliberacoes_extraidas(data_reuniao);
@@ -104,6 +122,10 @@ CREATE TABLE IF NOT EXISTS votes (
     created_at TIMESTAMPTZ DEFAULT now()
 );
 
+COMMENT ON TABLE votes IS 'Votos individuais dos diretores em deliberacoes';
+COMMENT ON COLUMN votes.vote_type IS 'FAVORABLE, AGAINST, ABSTENTION ou ABSENT';
+COMMENT ON COLUMN votes.confidence_score IS 'Score de confianca da classificacao (0.0 a 1.0)';
+
 CREATE INDEX IF NOT EXISTS idx_votes_delib ON votes(deliberacao_id);
 CREATE INDEX IF NOT EXISTS idx_votes_director ON votes(director_id);
 CREATE INDEX IF NOT EXISTS idx_votes_type ON votes(vote_type);
@@ -118,45 +140,12 @@ CREATE TABLE IF NOT EXISTS processing_logs (
     created_at TIMESTAMPTZ DEFAULT now()
 );
 
+COMMENT ON TABLE processing_logs IS 'Logs de processamento para auditoria e debugging';
+COMMENT ON COLUMN processing_logs.tipo IS 'Tipo do evento (PROCESSAMENTO, COLETA, CLASSIFICACAO, etc)';
+COMMENT ON COLUMN processing_logs.nivel IS 'Nivel do log (DEBUG, INFO, WARN, ERROR)';
+
 CREATE INDEX IF NOT EXISTS idx_logs_tipo ON processing_logs(tipo);
 CREATE INDEX IF NOT EXISTS idx_logs_created ON processing_logs(created_at);
-
--- Reuniões colegiadas (formato multi-agência)
-CREATE TABLE IF NOT EXISTS meetings (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    agency TEXT NOT NULL,
-    meeting_number TEXT,
-    meeting_date DATE,
-    status TEXT DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'PROCESSING', 'COMPLETED', 'ERROR')),
-    pdf_url TEXT,
-    total_deliberations INTEGER DEFAULT 0,
-    metadata JSONB DEFAULT '{}',
-    created_at TIMESTAMPTZ DEFAULT now(),
-    updated_at TIMESTAMPTZ DEFAULT now()
-);
-
-CREATE INDEX IF NOT EXISTS idx_meetings_agency ON meetings(agency);
-CREATE INDEX IF NOT EXISTS idx_meetings_date ON meetings(meeting_date);
-CREATE INDEX IF NOT EXISTS idx_meetings_status ON meetings(status);
-
--- Cache de notícias
-CREATE TABLE IF NOT EXISTS news_cache (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    agencia TEXT NOT NULL,
-    titulo TEXT NOT NULL,
-    resumo TEXT,
-    link TEXT,
-    data_publicacao DATE,
-    tipo TEXT DEFAULT 'noticia',
-    esfera TEXT DEFAULT 'federal',
-    fonte TEXT,
-    cor TEXT,
-    fetched_at TIMESTAMPTZ DEFAULT now()
-);
-
-CREATE INDEX IF NOT EXISTS idx_news_agencia ON news_cache(agencia);
-CREATE INDEX IF NOT EXISTS idx_news_data ON news_cache(data_publicacao);
-CREATE INDEX IF NOT EXISTS idx_news_fetched ON news_cache(fetched_at);
 
 
 -- =============================================================================
@@ -175,6 +164,8 @@ FROM deliberacoes_extraidas
 GROUP BY decisao
 ORDER BY total DESC;
 
+COMMENT ON VIEW vw_estatisticas_decisao IS 'Estatisticas agregadas por tipo de decisao';
+
 CREATE OR REPLACE VIEW vw_estatisticas_microtema AS
 SELECT
     microtema,
@@ -184,6 +175,8 @@ SELECT
 FROM deliberacoes_extraidas
 GROUP BY microtema
 ORDER BY total DESC;
+
+COMMENT ON VIEW vw_estatisticas_microtema IS 'Estatisticas agregadas por microtema com breakdown de decisoes';
 
 CREATE OR REPLACE VIEW vw_deliberacoes_recentes AS
 SELECT
@@ -201,6 +194,8 @@ SELECT
 FROM deliberacoes_extraidas
 ORDER BY created_at DESC
 LIMIT 100;
+
+COMMENT ON VIEW vw_deliberacoes_recentes IS 'Ultimas 100 deliberacoes para exibicao rapida no dashboard';
 
 -- View: Deliberações com votos detalhados
 CREATE OR REPLACE VIEW vw_deliberacoes_com_votos AS
@@ -227,6 +222,8 @@ LEFT JOIN votes v ON v.deliberacao_id = d.id
 GROUP BY d.id
 ORDER BY d.created_at DESC;
 
+COMMENT ON VIEW vw_deliberacoes_com_votos IS 'Deliberacoes com contagem detalhada de votos por tipo';
+
 -- View: Resumo por diretor
 CREATE OR REPLACE VIEW vw_resumo_diretores AS
 SELECT
@@ -247,6 +244,8 @@ LEFT JOIN votes v ON v.director_id = dir.id
 GROUP BY dir.id
 ORDER BY total_votos DESC;
 
+COMMENT ON VIEW vw_resumo_diretores IS 'Resumo por diretor com contagem de votos e confianca media';
+
 
 -- =============================================================================
 -- 4. FUNÇÕES RPC PARA ANALYTICS
@@ -263,6 +262,8 @@ BEGIN
     ORDER BY total DESC;
 END;
 $$ LANGUAGE plpgsql;
+
+COMMENT ON FUNCTION get_deliberacoes_por_agencia IS 'Retorna contagem de deliberacoes agrupadas por agencia';
 
 -- Contagem de votos por diretor
 CREATE OR REPLACE FUNCTION get_votos_por_diretor(p_agency TEXT DEFAULT NULL)
@@ -291,6 +292,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+COMMENT ON FUNCTION get_votos_por_diretor IS 'Retorna contagem de votos por diretor, com filtro opcional por agencia';
+
 -- Resumo geral de métricas
 CREATE OR REPLACE FUNCTION get_metricas_resumo()
 RETURNS TABLE(
@@ -308,6 +311,8 @@ BEGIN
         (SELECT COUNT(DISTINCT agencia) FROM deliberacoes_extraidas);
 END;
 $$ LANGUAGE plpgsql;
+
+COMMENT ON FUNCTION get_metricas_resumo IS 'Retorna metricas resumidas da plataforma (totais de deliberacoes, diretores, votos e agencias)';
 
 -- Busca de deliberações com filtros (para o endpoint REST)
 CREATE OR REPLACE FUNCTION buscar_deliberacoes(
@@ -356,6 +361,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+COMMENT ON FUNCTION buscar_deliberacoes IS 'Busca deliberacoes com filtros combinaveis (agencia, decisao, microtema, interessado, periodo)';
+
 -- Estatísticas avançadas por diretor
 CREATE OR REPLACE FUNCTION get_estatisticas_diretor(p_director_name TEXT DEFAULT NULL)
 RETURNS TABLE(
@@ -398,6 +405,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+COMMENT ON FUNCTION get_estatisticas_diretor IS 'Estatisticas avancadas por diretor com taxa de aprovacao e temas mais votados';
+
 
 -- =============================================================================
 -- 5. TRIGGERS
@@ -415,7 +424,6 @@ $$ LANGUAGE plpgsql;
 DROP TRIGGER IF EXISTS trigger_reunioes_updated ON reunioes_monitoradas;
 DROP TRIGGER IF EXISTS trigger_deliberacoes_updated ON deliberacoes_extraidas;
 DROP TRIGGER IF EXISTS trigger_directors_updated ON directors;
-DROP TRIGGER IF EXISTS trigger_meetings_updated ON meetings;
 
 CREATE TRIGGER trigger_reunioes_updated
     BEFORE UPDATE ON reunioes_monitoradas
@@ -429,10 +437,6 @@ CREATE TRIGGER trigger_directors_updated
     BEFORE UPDATE ON directors
     FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
-CREATE TRIGGER trigger_meetings_updated
-    BEFORE UPDATE ON meetings
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at();
-
 
 -- =============================================================================
 -- 6. ROW LEVEL SECURITY (RLS)
@@ -443,8 +447,6 @@ ALTER TABLE deliberacoes_extraidas ENABLE ROW LEVEL SECURITY;
 ALTER TABLE directors ENABLE ROW LEVEL SECURITY;
 ALTER TABLE votes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE processing_logs ENABLE ROW LEVEL SECURITY;
-ALTER TABLE meetings ENABLE ROW LEVEL SECURITY;
-ALTER TABLE news_cache ENABLE ROW LEVEL SECURITY;
 
 -- Drop policies existentes para permitir re-execução
 DO $$ BEGIN
@@ -466,13 +468,6 @@ DO $$ BEGIN
     -- processing_logs
     DROP POLICY IF EXISTS "Leitura publica de logs" ON processing_logs;
     DROP POLICY IF EXISTS "Insercao via service_role de logs" ON processing_logs;
-    -- meetings
-    DROP POLICY IF EXISTS "Leitura publica de meetings" ON meetings;
-    DROP POLICY IF EXISTS "Insercao via service_role de meetings" ON meetings;
-    DROP POLICY IF EXISTS "Atualizacao via service_role de meetings" ON meetings;
-    -- news_cache
-    DROP POLICY IF EXISTS "Leitura publica de noticias" ON news_cache;
-    DROP POLICY IF EXISTS "Insercao via service_role de noticias" ON news_cache;
 END $$;
 
 -- Policies: Leitura pública + escrita via service_role
@@ -494,13 +489,6 @@ CREATE POLICY "Insercao via service_role de votos" ON votes FOR INSERT WITH CHEC
 CREATE POLICY "Leitura publica de logs" ON processing_logs FOR SELECT USING (true);
 CREATE POLICY "Insercao via service_role de logs" ON processing_logs FOR INSERT WITH CHECK (true);
 
-CREATE POLICY "Leitura publica de meetings" ON meetings FOR SELECT USING (true);
-CREATE POLICY "Insercao via service_role de meetings" ON meetings FOR INSERT WITH CHECK (true);
-CREATE POLICY "Atualizacao via service_role de meetings" ON meetings FOR UPDATE USING (true);
-
-CREATE POLICY "Leitura publica de noticias" ON news_cache FOR SELECT USING (true);
-CREATE POLICY "Insercao via service_role de noticias" ON news_cache FOR INSERT WITH CHECK (true);
-
 
 -- =============================================================================
 -- 7. DADOS INICIAIS - Diretores ARTESP atuais
@@ -520,11 +508,11 @@ ON CONFLICT (name, agency) DO UPDATE SET
 
 
 -- =============================================================================
--- SETUP COMPLETO! ✅
+-- SETUP COMPLETO!
 -- =============================================================================
--- Tabelas criadas: 7
+-- Tabelas criadas: 5
 -- Views criadas: 5
--- Funções RPC: 6
+-- Funções RPC: 5 (+1 trigger helper)
 -- Policies RLS: 13
 -- Diretores inseridos: 4
 -- =============================================================================

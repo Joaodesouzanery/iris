@@ -1,6 +1,6 @@
 -- =============================================================================
 -- IRIS Platform - Unified Database Schema (Supabase/PostgreSQL)
--- Version: 2.0.0
+-- Version: 3.0.0
 -- Description: Authoritative single schema for the IRIS regulatory intelligence
 --              platform. Includes all tables, indexes, views, RPC functions,
 --              RLS policies, and triggers.
@@ -11,7 +11,8 @@
 --   3. RLS (Row Level Security) sera habilitado automaticamente
 --
 -- NOTA: Este arquivo e a fonte unica de verdade para o schema do banco.
---       O migration file em supabase/migrations/ deve ser identico a este.
+--       O migration file em supabase/migrations/ e o supabase-setup.sql
+--       devem estar sincronizados com este.
 -- =============================================================================
 
 
@@ -174,50 +175,6 @@ COMMENT ON COLUMN processing_logs.nivel IS 'Nivel do log (DEBUG, INFO, WARN, ERR
 CREATE INDEX IF NOT EXISTS idx_logs_tipo ON processing_logs(tipo);
 CREATE INDEX IF NOT EXISTS idx_logs_created ON processing_logs(created_at);
 
--- ── Tabela: meetings (Reunioes colegiadas - formato multi-agencia) ──
--- Formato normalizado para reunioes de qualquer agencia
-CREATE TABLE IF NOT EXISTS meetings (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    agency TEXT NOT NULL,
-    meeting_number TEXT,
-    meeting_date DATE,
-    status TEXT DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'PROCESSING', 'COMPLETED', 'ERROR')),
-    pdf_url TEXT,
-    total_deliberations INTEGER DEFAULT 0,
-    metadata JSONB DEFAULT '{}',
-    created_at TIMESTAMPTZ DEFAULT now(),
-    updated_at TIMESTAMPTZ DEFAULT now()
-);
-
-COMMENT ON TABLE meetings IS 'Reunioes colegiadas em formato normalizado multi-agencia';
-COMMENT ON COLUMN meetings.status IS 'PENDING, PROCESSING, COMPLETED ou ERROR';
-
-CREATE INDEX IF NOT EXISTS idx_meetings_agency ON meetings(agency);
-CREATE INDEX IF NOT EXISTS idx_meetings_date ON meetings(meeting_date);
-CREATE INDEX IF NOT EXISTS idx_meetings_status ON meetings(status);
-
--- ── Tabela: news_cache (Cache de noticias - opcional) ──
--- Cache local de noticias coletadas para o dashboard
-CREATE TABLE IF NOT EXISTS news_cache (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    agencia TEXT NOT NULL,
-    titulo TEXT NOT NULL,
-    resumo TEXT,
-    link TEXT,
-    data_publicacao DATE,
-    tipo TEXT DEFAULT 'noticia',
-    esfera TEXT DEFAULT 'federal',
-    fonte TEXT,
-    cor TEXT,
-    fetched_at TIMESTAMPTZ DEFAULT now()
-);
-
-COMMENT ON TABLE news_cache IS 'Cache de noticias regulatorias coletadas para o dashboard';
-
-CREATE INDEX IF NOT EXISTS idx_news_agencia ON news_cache(agencia);
-CREATE INDEX IF NOT EXISTS idx_news_data ON news_cache(data_publicacao);
-CREATE INDEX IF NOT EXISTS idx_news_fetched ON news_cache(fetched_at);
-
 
 -- =============================================================================
 -- VIEWS PARA DASHBOARD
@@ -263,12 +220,67 @@ SELECT
     microtema,
     decisao,
     data_reuniao,
+    numero_reuniao,
+    agencia,
+    votos_favor,
+    votos_contra,
     created_at
 FROM deliberacoes_extraidas
 ORDER BY created_at DESC
 LIMIT 100;
 
 COMMENT ON VIEW vw_deliberacoes_recentes IS 'Ultimas 100 deliberacoes para exibicao rapida no dashboard';
+
+-- View: Deliberacoes com votos detalhados
+-- Junta deliberacoes com contagem de votos por tipo
+CREATE OR REPLACE VIEW vw_deliberacoes_com_votos AS
+SELECT
+    d.id,
+    d.processo,
+    d.interessado,
+    d.microtema,
+    d.decisao,
+    d.numero_reuniao,
+    d.data_reuniao,
+    d.agencia,
+    d.tipo_deliberacao,
+    d.votos_favor,
+    d.votos_contra,
+    d.resumo_pleito,
+    COUNT(v.id) AS total_votos_registrados,
+    COUNT(v.id) FILTER (WHERE v.vote_type = 'FAVORABLE') AS votos_favoraveis,
+    COUNT(v.id) FILTER (WHERE v.vote_type = 'AGAINST') AS votos_contrarios,
+    COUNT(v.id) FILTER (WHERE v.vote_type = 'ABSTENTION') AS abstencoes,
+    d.created_at
+FROM deliberacoes_extraidas d
+LEFT JOIN votes v ON v.deliberacao_id = d.id
+GROUP BY d.id
+ORDER BY d.created_at DESC;
+
+COMMENT ON VIEW vw_deliberacoes_com_votos IS 'Deliberacoes com contagem detalhada de votos por tipo';
+
+-- View: Resumo por diretor
+-- Agrega votos e confianca por diretor
+CREATE OR REPLACE VIEW vw_resumo_diretores AS
+SELECT
+    dir.id,
+    dir.name,
+    dir.role,
+    dir.agency,
+    dir.is_active,
+    dir.mandate_start,
+    dir.mandate_end,
+    COUNT(v.id) AS total_votos,
+    COUNT(v.id) FILTER (WHERE v.vote_type = 'FAVORABLE') AS votos_favoraveis,
+    COUNT(v.id) FILTER (WHERE v.vote_type = 'AGAINST') AS votos_contrarios,
+    COUNT(v.id) FILTER (WHERE v.vote_type = 'ABSTENTION') AS abstencoes,
+    ROUND(AVG(v.confidence_score)::numeric, 2) AS confianca_media
+FROM directors dir
+LEFT JOIN votes v ON v.director_id = dir.id
+GROUP BY dir.id
+ORDER BY total_votos DESC;
+
+COMMENT ON VIEW vw_resumo_diretores IS 'Resumo por diretor com contagem de votos e confianca media';
 
 
 -- =============================================================================
@@ -338,6 +350,99 @@ $$ LANGUAGE plpgsql;
 
 COMMENT ON FUNCTION get_metricas_resumo IS 'Retorna metricas resumidas da plataforma (totais de deliberacoes, diretores, votos e agencias)';
 
+-- Busca de deliberacoes com filtros (para o endpoint REST)
+CREATE OR REPLACE FUNCTION buscar_deliberacoes(
+    p_agencia TEXT DEFAULT NULL,
+    p_decisao TEXT DEFAULT NULL,
+    p_microtema TEXT DEFAULT NULL,
+    p_interessado TEXT DEFAULT NULL,
+    p_data_inicio DATE DEFAULT NULL,
+    p_data_fim DATE DEFAULT NULL,
+    p_limite INTEGER DEFAULT 100,
+    p_offset INTEGER DEFAULT 0
+)
+RETURNS TABLE(
+    id UUID,
+    processo VARCHAR,
+    numero_reuniao VARCHAR,
+    data_reuniao DATE,
+    interessado TEXT,
+    tipo_deliberacao VARCHAR,
+    microtema VARCHAR,
+    decisao VARCHAR,
+    resumo_pleito TEXT,
+    votos_favor TEXT,
+    votos_contra TEXT,
+    agencia TEXT,
+    created_at TIMESTAMPTZ
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        d.id, d.processo, d.numero_reuniao, d.data_reuniao,
+        d.interessado, d.tipo_deliberacao, d.microtema, d.decisao,
+        d.resumo_pleito, d.votos_favor, d.votos_contra, d.agencia,
+        d.created_at
+    FROM deliberacoes_extraidas d
+    WHERE
+        (p_agencia IS NULL OR d.agencia = p_agencia)
+        AND (p_decisao IS NULL OR d.decisao = p_decisao)
+        AND (p_microtema IS NULL OR d.microtema ILIKE '%' || p_microtema || '%')
+        AND (p_interessado IS NULL OR d.interessado ILIKE '%' || p_interessado || '%')
+        AND (p_data_inicio IS NULL OR d.data_reuniao >= p_data_inicio)
+        AND (p_data_fim IS NULL OR d.data_reuniao <= p_data_fim)
+    ORDER BY d.created_at DESC
+    LIMIT p_limite
+    OFFSET p_offset;
+END;
+$$ LANGUAGE plpgsql;
+
+COMMENT ON FUNCTION buscar_deliberacoes IS 'Busca deliberacoes com filtros combinaveis (agencia, decisao, microtema, interessado, periodo)';
+
+-- Estatisticas avancadas por diretor
+CREATE OR REPLACE FUNCTION get_estatisticas_diretor(p_director_name TEXT DEFAULT NULL)
+RETURNS TABLE(
+    director_name TEXT,
+    director_role TEXT,
+    agency TEXT,
+    total_votos BIGINT,
+    favoraveis BIGINT,
+    contrarios BIGINT,
+    abstencoes BIGINT,
+    taxa_favoravel NUMERIC,
+    temas_mais_votados JSONB
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        dir.name,
+        dir.role,
+        dir.agency,
+        COUNT(v.id) AS total_votos,
+        COUNT(v.id) FILTER (WHERE v.vote_type = 'FAVORABLE') AS favoraveis,
+        COUNT(v.id) FILTER (WHERE v.vote_type = 'AGAINST') AS contrarios,
+        COUNT(v.id) FILTER (WHERE v.vote_type = 'ABSTENTION') AS abstencoes,
+        CASE WHEN COUNT(v.id) > 0
+            THEN ROUND(COUNT(v.id) FILTER (WHERE v.vote_type = 'FAVORABLE') * 100.0 / COUNT(v.id), 1)
+            ELSE 0
+        END AS taxa_favoravel,
+        COALESCE(
+            jsonb_agg(DISTINCT jsonb_build_object('tema', de.microtema, 'count', 1))
+            FILTER (WHERE de.microtema IS NOT NULL),
+            '[]'::jsonb
+        ) AS temas_mais_votados
+    FROM directors dir
+    LEFT JOIN votes v ON v.director_id = dir.id
+    LEFT JOIN deliberacoes_extraidas de ON de.id = v.deliberacao_id
+    WHERE (p_director_name IS NULL OR dir.name ILIKE '%' || p_director_name || '%')
+    GROUP BY dir.id, dir.name, dir.role, dir.agency
+    HAVING COUNT(v.id) > 0
+    ORDER BY total_votos DESC;
+END;
+$$ LANGUAGE plpgsql;
+
+COMMENT ON FUNCTION get_estatisticas_diretor IS 'Estatisticas avancadas por diretor com taxa de aprovacao e temas mais votados';
+
 
 -- =============================================================================
 -- TRIGGERS
@@ -365,10 +470,6 @@ CREATE OR REPLACE TRIGGER trigger_directors_updated
     BEFORE UPDATE ON directors
     FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
-CREATE OR REPLACE TRIGGER trigger_meetings_updated
-    BEFORE UPDATE ON meetings
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at();
-
 
 -- =============================================================================
 -- ROW LEVEL SECURITY (RLS)
@@ -382,8 +483,6 @@ ALTER TABLE deliberacoes_extraidas ENABLE ROW LEVEL SECURITY;
 ALTER TABLE directors ENABLE ROW LEVEL SECURITY;
 ALTER TABLE votes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE processing_logs ENABLE ROW LEVEL SECURITY;
-ALTER TABLE meetings ENABLE ROW LEVEL SECURITY;
-ALTER TABLE news_cache ENABLE ROW LEVEL SECURITY;
 
 -- Reunioes monitoradas: leitura publica, escrita via service_role
 CREATE POLICY "Leitura publica de reunioes" ON reunioes_monitoradas
@@ -421,19 +520,22 @@ CREATE POLICY "Leitura publica de logs" ON processing_logs
 CREATE POLICY "Insercao via service_role de logs" ON processing_logs
     FOR INSERT WITH CHECK (true);
 
--- Meetings: leitura publica, escrita via service_role
-CREATE POLICY "Leitura publica de meetings" ON meetings
-    FOR SELECT USING (true);
-CREATE POLICY "Insercao via service_role de meetings" ON meetings
-    FOR INSERT WITH CHECK (true);
-CREATE POLICY "Atualizacao via service_role de meetings" ON meetings
-    FOR UPDATE USING (true);
 
--- News cache: leitura publica, escrita via service_role
-CREATE POLICY "Leitura publica de noticias" ON news_cache
-    FOR SELECT USING (true);
-CREATE POLICY "Insercao via service_role de noticias" ON news_cache
-    FOR INSERT WITH CHECK (true);
+-- =============================================================================
+-- DADOS INICIAIS - Diretores ARTESP atuais
+-- =============================================================================
+
+INSERT INTO directors (name, role, agency, is_active, mandate_start, mandate_end)
+VALUES
+    ('André Isper Rodrigues Barnabé', 'Diretor-Presidente', 'ARTESP', true, '2024-09-10', '2029-09-09'),
+    ('Diego Albert Zanatto', 'Diretor', 'ARTESP', true, '2024-08-14', '2029-08-13'),
+    ('Fernanda Esbízaro Rodrigues Rudnik', 'Diretora', 'ARTESP', true, '2025-08-28', '2030-08-27'),
+    ('Raquel França Carneiro', 'Diretora', 'ARTESP', true, '2025-05-14', '2030-05-13')
+ON CONFLICT (name, agency) DO UPDATE SET
+    role = EXCLUDED.role,
+    is_active = EXCLUDED.is_active,
+    mandate_start = EXCLUDED.mandate_start,
+    mandate_end = EXCLUDED.mandate_end;
 
 
 -- =============================================================================
