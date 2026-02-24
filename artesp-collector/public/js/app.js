@@ -73,7 +73,8 @@
                 '/grafo': 'Grafo de Conexões',
                 '/monitoramento': 'Monitoramento 24/7',
                 '/dossie': 'Dossiês Automáticos',
-                '/cruzamento': 'Cruzamento de Dados'
+                '/cruzamento': 'Cruzamento de Dados',
+                '/landing': 'Conheça a IRIS'
             };
             const breadcrumb = document.getElementById('breadcrumb-page');
             if (breadcrumb) {
@@ -6396,6 +6397,270 @@
     };
 
     // ============================================
+    // PAGE: Landing Page — Conheça a IRIS
+    // ============================================
+    const PageLanding = {
+        modulesData: [
+            { id:'dashboard', title:'Dashboard Geral', desc:'KPIs consolidados, taxa de deferimento, tendências temporais e visão 360° da atividade regulatória.', cat:'analise', icon:'pie-chart' },
+            { id:'deliberacoes', title:'Deliberações', desc:'Lista pesquisável com filtros por tipo, decisão, tema, empresa e diretor. Exportação em múltiplos formatos.', cat:'coleta', icon:'file-text' },
+            { id:'monitor', title:'Monitor de Reuniões', desc:'Processamento de PDFs em tempo real com extração automática de deliberações, votos e decisões.', cat:'coleta', icon:'monitor' },
+            { id:'diretores', title:'Diretores e Mandatos', desc:'Composição da diretoria, timeline de mandatos, expiração e histórico de participação em reuniões.', cat:'analise', icon:'users' },
+            { id:'jurimetria', title:'Jurimetria', desc:'Padrões de votação, divergências entre diretores, análise comparativa e previsibilidade de decisões.', cat:'analise', icon:'scale' },
+            { id:'governanca', title:'Governança Regulatória', desc:'Conformidade, transparência, aderência normativa e indicadores de qualidade regulatória.', cat:'auditoria', icon:'building' },
+            { id:'boletim', title:'Boletim Mensal', desc:'Resumo executivo automático com principais decisões, tendências e alertas do período.', cat:'analise', icon:'newspaper' },
+            { id:'upload', title:'Upload de PDFs', desc:'Drag-and-drop para análise manual de documentos regulatórios com processamento inteligente.', cat:'coleta', icon:'upload' },
+            { id:'analise', title:'Análise de PDFs', desc:'Extração e estruturação de dados de documentos regulatórios com classificação automática por IA.', cat:'coleta', icon:'file-search' },
+            { id:'auditoria', title:'Auditoria Forense', desc:'Detecção de anomalias, padrões suspeitos e desvios estatísticos em decisões regulatórias.', cat:'auditoria', icon:'shield' },
+            { id:'agencias', title:'Agências Reguladoras', desc:'Visão comparativa multi-agência com métricas de desempenho e análise cruzada.', cat:'visualizacao', icon:'landmark' },
+            { id:'mapa', title:'Mapa do Brasil', desc:'Distribuição geográfica de deliberações, concessões e atividade regulatória por região.', cat:'visualizacao', icon:'map' },
+            { id:'grafo', title:'Rede de Conexões', desc:'Grafo de relações entre diretores, empresas e temas regulatórios. Inteligência de rede.', cat:'visualizacao', icon:'network' },
+            { id:'noticias', title:'Feed de Notícias', desc:'RSS regulatório em tempo real com 34+ fontes oficiais, filtros por agência e setor.', cat:'coleta', icon:'rss' },
+        ],
+
+        faqData: [
+            { q:'O que a IRIS faz que eu não consigo com uma planilha?', a:'Planilhas armazenam dados. A IRIS gera inteligência: classifica automaticamente, detecta padrões, mapeia conexões e identifica anomalias que análise manual jamais encontraria.' },
+            { q:'Quais agências reguladoras são cobertas?', a:'Atualmente a IRIS processa dados da ARTESP com arquitetura pronta para expandir para ANEEL, ANP, ANATEL, ANVISA, ANTT e outras agências federais e estaduais.' },
+            { q:'Os dados são atualizados em tempo real?', a:'A IRIS faz varredura automática a cada 30 minutos e processa novos documentos assim que publicados.' },
+            { q:'Preciso instalar algum software?', a:'Não. A IRIS é 100% web, acessível por qualquer navegador moderno.' },
+            { q:'Como funciona a detecção de anomalias?', a:'Algoritmos analisam padrões históricos de votação, tempo de tramitação e consistência de decisões para identificar desvios estatisticamente significativos.' },
+            { q:'Posso fazer upload dos meus próprios documentos?', a:'Sim. O módulo de Upload aceita PDFs via drag-and-drop e os processa com a mesma inteligência da coleta automática.' },
+            { q:'Quem pode se beneficiar da IRIS?', a:'Empresas reguladas, escritórios de advocacia, consultorias, áreas de compliance, pesquisadores e qualquer profissional que precise entender decisões regulatórias.' },
+            { q:'Como solicito uma demonstração?', a:'Preencha o formulário nesta página ou entre em contato diretamente. Fazemos uma demo personalizada para seu caso de uso.' },
+        ],
+
+        moduleIcons: {
+            'pie-chart': '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"/></svg>',
+            'file-text': '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>',
+            'monitor': '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>',
+            'users': '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>',
+            'scale': '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg>',
+            'building': '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>',
+            'newspaper': '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/></svg>',
+            'upload': '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>',
+            'file-search': '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 21h7a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v11m0 5l4.879-4.879m0 0a3 3 0 104.243-4.242 3 3 0 00-4.243 4.242z"/></svg>',
+            'shield': '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>',
+            'landmark': '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"/></svg>',
+            'map': '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>',
+            'network': '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><circle cx="6" cy="6" r="3" stroke-width="2"/><circle cx="18" cy="18" r="3" stroke-width="2"/><circle cx="18" cy="6" r="3" stroke-width="2"/><circle cx="6" cy="18" r="3" stroke-width="2"/><path stroke-width="2" d="M8.5 8.5l7 7M15.5 8.5l-7 7"/></svg>',
+            'rss': '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 5c7.18 0 13 5.82 13 13M6 11a7 7 0 017 7m-6 0a1 1 0 11-2 0 1 1 0 012 0z"/></svg>',
+        },
+
+        formStep: 1,
+        selectedAgencies: [],
+
+        init() {
+            const page = document.getElementById('page-landing');
+            page.classList.add('active');
+            this.renderModules('all');
+            this.renderFAQ();
+            this.animateCounters();
+            this.setupScrollAnimations();
+            this.bindEvents();
+        },
+
+        renderModules(filter) {
+            const grid = document.getElementById('lp-modules-grid');
+            if (!grid) return;
+            const catMap = { coleta:'Coleta', analise:'Análise', visualizacao:'Visualização', auditoria:'Auditoria' };
+            const catClass = { coleta:'lp-cat-coleta', analise:'lp-cat-analise', visualizacao:'lp-cat-visualizacao', auditoria:'lp-cat-auditoria' };
+            const filtered = filter === 'all' ? this.modulesData : this.modulesData.filter(m => m.cat === filter);
+            grid.innerHTML = filtered.map(m => `
+                <div class="lp-module-card lp-fade-in" data-cat="${m.cat}">
+                    <div class="lp-module-card-header">
+                        <div class="lp-module-card-icon">${this.moduleIcons[m.icon] || ''}</div>
+                        <div>
+                            <h3>${m.title}</h3>
+                            <span class="lp-module-card-cat ${catClass[m.cat]}">${catMap[m.cat]}</span>
+                        </div>
+                    </div>
+                    <p>${m.desc}</p>
+                </div>
+            `).join('');
+            // Trigger fade-in after render
+            requestAnimationFrame(() => {
+                grid.querySelectorAll('.lp-fade-in').forEach((el, i) => {
+                    setTimeout(() => el.classList.add('lp-visible'), i * 60);
+                });
+            });
+        },
+
+        renderFAQ() {
+            const list = document.getElementById('lp-faq-list');
+            if (!list) return;
+            list.innerHTML = this.faqData.map((f, i) => `
+                <div class="lp-faq-item${i === 0 ? ' open' : ''}">
+                    <button class="lp-faq-question" data-faq="${i}">
+                        ${f.q}
+                        <svg class="lp-faq-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div class="lp-faq-answer"><p>${f.a}</p></div>
+                </div>
+            `).join('');
+        },
+
+        animateCounters() {
+            const els = document.querySelectorAll('#page-landing .lp-hero-stat-value[data-target], #page-landing .lp-roi-value[data-target]');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (!entry.isIntersecting || entry.target.dataset.animated) return;
+                    entry.target.dataset.animated = 'true';
+                    const target = parseInt(entry.target.dataset.target);
+                    const suffix = entry.target.dataset.suffix || '';
+                    const start = performance.now();
+                    const duration = 2000;
+                    const step = (now) => {
+                        const elapsed = now - start;
+                        const progress = Math.min(elapsed / duration, 1);
+                        const eased = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+                        entry.target.textContent = Math.floor(eased * target) + suffix;
+                        if (progress < 1) requestAnimationFrame(step);
+                    };
+                    requestAnimationFrame(step);
+                });
+            }, { threshold: 0.3 });
+            els.forEach(el => observer.observe(el));
+        },
+
+        setupScrollAnimations() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('lp-visible');
+                    }
+                });
+            }, { threshold: 0.1, rootMargin: '-50px' });
+            document.querySelectorAll('#page-landing .lp-fade-in').forEach(el => observer.observe(el));
+        },
+
+        bindEvents() {
+            // Module filters
+            document.querySelectorAll('#page-landing .lp-filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('#page-landing .lp-filter-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    this.renderModules(btn.dataset.filter);
+                });
+            });
+
+            // FAQ accordion
+            document.getElementById('lp-faq-list')?.addEventListener('click', (e) => {
+                const btn = e.target.closest('.lp-faq-question');
+                if (!btn) return;
+                const item = btn.closest('.lp-faq-item');
+                const wasOpen = item.classList.contains('open');
+                document.querySelectorAll('.lp-faq-item').forEach(i => i.classList.remove('open'));
+                if (!wasOpen) item.classList.add('open');
+            });
+
+            // Agency selection
+            document.getElementById('lp-agencies-select')?.addEventListener('click', (e) => {
+                const btn = e.target.closest('.lp-agency-btn');
+                if (!btn) return;
+                btn.classList.toggle('selected');
+                const agency = btn.dataset.agency;
+                if (this.selectedAgencies.includes(agency)) {
+                    this.selectedAgencies = this.selectedAgencies.filter(a => a !== agency);
+                } else {
+                    this.selectedAgencies.push(agency);
+                }
+            });
+
+            // Form navigation
+            document.getElementById('lp-form-next')?.addEventListener('click', () => this.nextStep());
+            document.getElementById('lp-form-back')?.addEventListener('click', () => this.prevStep());
+
+            // Smooth scroll for anchor links within landing
+            document.getElementById('page-landing')?.addEventListener('click', (e) => {
+                const link = e.target.closest('a[href^="#lp-"]');
+                if (!link) return;
+                e.preventDefault();
+                const target = document.querySelector(link.getAttribute('href'));
+                if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        },
+
+        nextStep() {
+            // Validate current step
+            if (this.formStep === 1) {
+                const name = document.getElementById('lp-name')?.value?.trim();
+                const email = document.getElementById('lp-email')?.value?.trim();
+                if (!name || !email) return;
+                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return;
+            }
+            if (this.formStep === 2) {
+                const company = document.getElementById('lp-company')?.value?.trim();
+                const role = document.getElementById('lp-role')?.value;
+                if (!company || !role) return;
+            }
+            if (this.formStep === 3) {
+                if (this.selectedAgencies.length === 0) return;
+            }
+            if (this.formStep === 4) {
+                this.submitForm();
+                return;
+            }
+
+            this.formStep++;
+            this.updateFormUI();
+        },
+
+        prevStep() {
+            if (this.formStep <= 1) return;
+            this.formStep--;
+            this.updateFormUI();
+        },
+
+        updateFormUI() {
+            document.querySelectorAll('#page-landing .lp-form-step').forEach(s => s.classList.remove('active'));
+            const current = document.querySelector(`#page-landing .lp-form-step[data-step="${this.formStep}"]`);
+            if (current) current.classList.add('active');
+
+            const bar = document.getElementById('lp-form-progress-bar');
+            if (bar) bar.style.width = (this.formStep * 25) + '%';
+
+            const label = document.getElementById('lp-step-current');
+            if (label) label.textContent = this.formStep;
+
+            const back = document.getElementById('lp-form-back');
+            if (back) back.style.visibility = this.formStep > 1 ? 'visible' : 'hidden';
+
+            const next = document.getElementById('lp-form-next');
+            if (next) next.textContent = this.formStep === 4 ? 'Solicitar Demo' : 'Próximo';
+        },
+
+        async submitForm() {
+            const data = {
+                name: document.getElementById('lp-name')?.value?.trim(),
+                email: document.getElementById('lp-email')?.value?.trim(),
+                phone: document.getElementById('lp-phone')?.value?.trim(),
+                company: document.getElementById('lp-company')?.value?.trim(),
+                role: document.getElementById('lp-role')?.value,
+                agencies: this.selectedAgencies,
+                description: document.getElementById('lp-description')?.value?.trim(),
+            };
+
+            try {
+                await fetch('/api/leads', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data),
+                });
+            } catch (e) {
+                console.log('[LEAD]', JSON.stringify(data));
+            }
+
+            // Show success
+            document.querySelectorAll('#page-landing .lp-form-step').forEach(s => s.classList.remove('active'));
+            const success = document.getElementById('lp-form-success');
+            if (success) success.style.display = 'block';
+            const nav = document.getElementById('lp-form-nav');
+            if (nav) nav.style.display = 'none';
+            const progressLabel = document.querySelector('#page-landing .lp-form-step-label');
+            if (progressLabel) progressLabel.style.display = 'none';
+        }
+    };
+
+    // ============================================
     // APP INITIALIZATION
     // ============================================
     const App = {
@@ -6426,6 +6691,7 @@
         PageMonitoramento,
         PageDossie,
         PageCruzamento,
+        PageLanding,
 
         init() {
             // Register routes
@@ -6518,6 +6784,10 @@
             Router.register('/cruzamento', () => {
                 PageMonitor.destroy();
                 PageCruzamento.init();
+            });
+            Router.register('/landing', () => {
+                PageMonitor.destroy();
+                PageLanding.init();
             });
             Router.register('/', () => {
                 PageMonitor.destroy();
