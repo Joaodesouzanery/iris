@@ -306,16 +306,18 @@ app.use((req, res, next) => {
     next();
 });
 
-// Servir arquivos estáticos com cache headers
+// Servir arquivos estáticos — sem cache em dev para evitar CSS/JS desatualizado
 app.use(express.static(path.join(__dirname, 'public'), {
-    maxAge: '1h',
+    maxAge: process.env.NODE_ENV === 'production' ? '1h' : 0,
     etag: true,
     lastModified: true,
     setHeaders: (res, filePath) => {
         if (filePath.endsWith('.html')) {
-            res.setHeader('Cache-Control', 'no-cache');
+            res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
         } else if (filePath.endsWith('.css') || filePath.endsWith('.js')) {
-            res.setHeader('Cache-Control', 'public, max-age=3600');
+            res.setHeader('Cache-Control', process.env.NODE_ENV === 'production'
+                ? 'public, max-age=3600'
+                : 'no-cache, no-store, must-revalidate');
         }
     }
 }));
@@ -563,6 +565,12 @@ app.post('/api/analisar-pdf/:index', async (req, res) => {
             return res.status(400).json({ erro: 'PDF não possui texto extraído' });
         }
 
+        // Auto-detecta agência a partir do texto do PDF
+        const agenciasConhecidas = ['ARTESP', 'ANEEL', 'ANATEL', 'ANP', 'ANTT', 'ANTAQ', 'ANS', 'ANVISA', 'ANA', 'ANAC', 'ANM', 'ANCINE'];
+        const textoUpper = pdf.texto.substring(0, 3000).toUpperCase();
+        const agenciaDetectada = agenciasConhecidas.find(a => textoUpper.includes(a)) || 'ARTESP';
+        console.log(`[IRIS] Agência detectada no PDF: ${agenciaDetectada}`);
+
         // Usa a nova extração estruturada
         const extracao = irisCore.extrairDeliberacoesEstruturadas(pdf.texto);
 
@@ -577,7 +585,8 @@ app.post('/api/analisar-pdf/:index', async (req, res) => {
             ...analiseTradicional,
             deliberacoes: extracao.deliberations,
             totalDeliberacoes: extracao.total,
-            empresasDetectadas: empresasDetectadas
+            empresasDetectadas: empresasDetectadas,
+            agenciaDetectada
         };
 
         // Salva análise no PDF
@@ -589,7 +598,7 @@ app.post('/api/analisar-pdf/:index', async (req, res) => {
         for (const delib of extracao.deliberations) {
             try {
                 await persistencia.salvarDeliberacao({
-                    agencia: 'ARTESP',
+                    agencia: agenciaDetectada,
                     numeroReuniao: delib.reuniao_ordinaria || '',
                     processo: delib.numero_deliberacao || delib.processo || '',
                     interessado: delib.interessado || '',
@@ -640,6 +649,11 @@ app.post('/api/analisar-todos', async (req, res) => {
             const pdf = pdfsProcessados[i];
 
             if (pdf.texto) {
+                // Auto-detecta agência
+                const agenciasConhecidas = ['ARTESP', 'ANEEL', 'ANATEL', 'ANP', 'ANTT', 'ANTAQ', 'ANS', 'ANVISA', 'ANA', 'ANAC', 'ANM', 'ANCINE'];
+                const textoUpper = pdf.texto.substring(0, 3000).toUpperCase();
+                const agenciaDetectada = agenciasConhecidas.find(a => textoUpper.includes(a)) || 'ARTESP';
+
                 // Usa a nova extração estruturada
                 const extracao = irisCore.extrairDeliberacoesEstruturadas(pdf.texto);
                 const analiseTradicional = irisCore.analisarTexto(pdf.texto);
@@ -651,7 +665,8 @@ app.post('/api/analisar-todos', async (req, res) => {
                     ...analiseTradicional,
                     deliberacoes: extracao.deliberations,
                     totalDeliberacoes: extracao.total,
-                    empresasDetectadas: empresasDetectadas
+                    empresasDetectadas: empresasDetectadas,
+                    agenciaDetectada
                 };
 
                 pdfsProcessados[i].analise = analise;
@@ -662,7 +677,7 @@ app.post('/api/analisar-todos', async (req, res) => {
                 for (const delib of extracao.deliberations) {
                     try {
                         await persistencia.salvarDeliberacao({
-                            agencia: 'ARTESP',
+                            agencia: agenciaDetectada,
                             numeroReuniao: delib.reuniao_ordinaria || '',
                             processo: delib.numero_deliberacao || delib.processo || '',
                             interessado: delib.interessado || '',

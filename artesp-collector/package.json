@@ -7,6 +7,7 @@
     "start": "node server-unified.js",
     "old": "node server.js",
     "dev": "node --watch server-unified.js",
+    "test": "node --test tests/server.test.js",
     "cli": "node cli.js",
     "cli:force": "node cli.js --force",
     "cli:status": "node cli.js --status",
