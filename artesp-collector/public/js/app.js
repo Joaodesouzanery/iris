@@ -6455,6 +6455,7 @@
             this.renderFAQ();
             this.animateCounters();
             this.setupScrollAnimations();
+            this.initCarousel();
             this.bindEvents();
         },
 
@@ -6531,6 +6532,41 @@
             }, { threshold: 0.1, rootMargin: '-50px' });
             document.querySelectorAll('#page-landing .lp-fade-in').forEach(el => observer.observe(el));
         },
+
+        // Carousel
+        currentSlide: 0,
+        carouselTimer: null,
+
+        initCarousel() {
+            const slides = document.querySelectorAll('#page-landing .lp-screenshot-slide');
+            if (!slides.length) return;
+
+            document.getElementById('lp-carousel-prev')?.addEventListener('click', () => this.prevSlide());
+            document.getElementById('lp-carousel-next')?.addEventListener('click', () => this.nextSlide());
+            document.getElementById('lp-carousel-dots')?.addEventListener('click', (e) => {
+                const dot = e.target.closest('.lp-carousel-dot');
+                if (dot) this.goToSlide(parseInt(dot.dataset.slide));
+            });
+
+            this.carouselTimer = setInterval(() => this.nextSlide(), 5000);
+        },
+
+        goToSlide(index) {
+            const slides = document.querySelectorAll('#page-landing .lp-screenshot-slide');
+            const dots = document.querySelectorAll('#page-landing .lp-carousel-dot');
+            if (!slides.length) return;
+            this.currentSlide = ((index % slides.length) + slides.length) % slides.length;
+            slides.forEach(s => s.classList.remove('active'));
+            dots.forEach(d => d.classList.remove('active'));
+            slides[this.currentSlide].classList.add('active');
+            if (dots[this.currentSlide]) dots[this.currentSlide].classList.add('active');
+            // Reset auto-advance
+            clearInterval(this.carouselTimer);
+            this.carouselTimer = setInterval(() => this.nextSlide(), 5000);
+        },
+
+        nextSlide() { this.goToSlide(this.currentSlide + 1); },
+        prevSlide() { this.goToSlide(this.currentSlide - 1); },
 
         bindEvents() {
             // Module filters
