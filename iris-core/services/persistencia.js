@@ -235,6 +235,7 @@ async function salvarDeliberacao(deliberacao) {
         pauta_interna: deliberacao.tipo === 'Ato Administrativo Interno',
         microtema: deliberacao.microtema,
         resumo_pleito: deliberacao.resumoPleito || deliberacao.texto?.substring(0, 500),
+        fundamento_decisao: deliberacao.fundamentoDecisao || null,
         decisao: deliberacao.decisao,
         votos_favor: deliberacao.votosFavoraveis ? (Array.isArray(deliberacao.votosFavoraveis) ? deliberacao.votosFavoraveis.join(', ') : String(deliberacao.votosFavoraveis)) : null,
         votos_contra: deliberacao.votosContrarios ? (Array.isArray(deliberacao.votosContrarios) ? deliberacao.votosContrarios.join(', ') : String(deliberacao.votosContrarios)) : null,

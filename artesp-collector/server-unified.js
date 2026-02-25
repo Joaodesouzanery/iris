@@ -41,6 +41,7 @@ const irisCore = require('../iris-core/processador');
 const newsFetcher = require('../iris-core/services/news-fetcher');
 const persistencia = require('../iris-core/services/persistencia');
 const intelligence = require('../iris-core/services/intelligence-correlator');
+const geminiAnalyzer = require('../iris-core/services/gemini-analyzer');
 
 // ── Backup Service ──
 const backupService = require('./src/services/backup');
@@ -751,22 +752,36 @@ app.post('/api/analisar-pdf/:index', authenticate, async (req, res) => {
         const agenciaDetectada = agenciasConhecidas.find(a => textoUpper.includes(a)) || 'ARTESP';
         console.log(`[IRIS] Agência detectada no PDF: ${agenciaDetectada}`);
 
-        // Usa a nova extração estruturada
-        const extracao = irisCore.extrairDeliberacoesEstruturadas(pdf.texto);
+        // Tenta extração via Gemini (IA) - se disponível
+        let deliberacoesGemini = null;
+        let fonteExtracao = 'regex';
+        if (geminiAnalyzer.isGeminiAvailable()) {
+            console.log('[IRIS] Gemini disponível — usando IA para extração');
+            deliberacoesGemini = await geminiAnalyzer.analisarMultiplasDeliberacoes(pdf.texto);
+            if (deliberacoesGemini) {
+                fonteExtracao = 'gemini';
+                console.log(`[IRIS] Gemini extraiu ${deliberacoesGemini.length} deliberação(ões)`);
+            }
+        }
 
-        // Também faz análise tradicional para manter compatibilidade
+        // Extração regex (sempre roda — como fallback ou complemento)
+        const extracao = irisCore.extrairDeliberacoesEstruturadas(pdf.texto);
         const analiseTradicional = irisCore.analisarTexto(pdf.texto);
 
         // Detecta empresas mencionadas no texto
         const empresasDetectadas = detectarEmpresas(pdf.texto);
 
+        // Decide qual fonte de deliberações usar
+        const deliberacoesFinais = deliberacoesGemini || extracao.deliberations;
+
         // Combina os resultados
         const analise = {
             ...analiseTradicional,
-            deliberacoes: extracao.deliberations,
-            totalDeliberacoes: extracao.total,
+            deliberacoes: deliberacoesFinais,
+            totalDeliberacoes: deliberacoesFinais.length,
             empresasDetectadas: empresasDetectadas,
-            agenciaDetectada
+            agenciaDetectada,
+            fonteExtracao
         };
 
         // Salva análise no PDF
@@ -775,17 +790,19 @@ app.post('/api/analisar-pdf/:index', authenticate, async (req, res) => {
 
         // Persiste deliberações no Supabase/memória
         let persistidas = 0;
-        for (const delib of extracao.deliberations) {
+        for (const delib of deliberacoesFinais) {
             try {
                 await persistencia.salvarDeliberacao({
                     agencia: agenciaDetectada,
-                    numeroReuniao: delib.reuniao_ordinaria || '',
-                    processo: delib.numero_deliberacao || delib.processo || '',
+                    numeroReuniao: delib.numero_reuniao || delib.reuniao_ordinaria || '',
+                    dataReuniao: delib.data_reuniao || '',
+                    processo: delib.processo || delib.numero_deliberacao || '',
                     interessado: delib.interessado || '',
-                    tipo: delib.classificacao || analiseTradicional.tipo || '',
+                    tipo: delib.pauta_interna ? 'Ato Administrativo Interno' : (delib.classificacao || analiseTradicional.tipo || 'Pleito Externo'),
                     microtema: delib.microtema || analiseTradicional.microtema || '',
-                    decisao: delib.resultado || analiseTradicional.decisao || '',
-                    resumoPleito: delib.texto_resumo || '',
+                    decisao: delib.decisao || delib.resultado || analiseTradicional.decisao || '',
+                    resumoPleito: delib.resumo_pleito || delib.texto_resumo || '',
+                    fundamentoDecisao: delib.fundamento_decisao || '',
                     votosFavoraveis: delib.votos_a_favor || [],
                     votosContrarios: delib.votos_contra || [],
                     linkPdf: pdf.url || '',
@@ -798,14 +815,15 @@ app.post('/api/analisar-pdf/:index', authenticate, async (req, res) => {
             }
         }
 
-        console.log(`[IRIS] ${persistidas}/${extracao.deliberations.length} deliberações persistidas`);
+        console.log(`[IRIS] ${persistidas}/${deliberacoesFinais.length} deliberações persistidas (fonte: ${fonteExtracao})`);
 
         res.json({
             sucesso: true,
             nomeArquivo: pdf.nomeArquivo,
             analise,
             empresasDetectadas,
-            persistidas
+            persistidas,
+            fonteExtracao
         });
 
     } catch (error) {
@@ -834,37 +852,51 @@ app.post('/api/analisar-todos', authenticate, async (req, res) => {
                 const textoUpper = pdf.texto.substring(0, 3000).toUpperCase();
                 const agenciaDetectada = agenciasConhecidas.find(a => textoUpper.includes(a)) || 'ARTESP';
 
-                // Usa a nova extração estruturada
+                // Tenta Gemini (IA) se disponível
+                let deliberacoesGemini = null;
+                let fonteExtracao = 'regex';
+                if (geminiAnalyzer.isGeminiAvailable()) {
+                    deliberacoesGemini = await geminiAnalyzer.analisarMultiplasDeliberacoes(pdf.texto);
+                    if (deliberacoesGemini) fonteExtracao = 'gemini';
+                }
+
+                // Extração regex (sempre roda)
                 const extracao = irisCore.extrairDeliberacoesEstruturadas(pdf.texto);
                 const analiseTradicional = irisCore.analisarTexto(pdf.texto);
 
                 // Detecta empresas mencionadas
                 const empresasDetectadas = detectarEmpresas(pdf.texto);
 
+                // Decide fonte de deliberações
+                const deliberacoesFinais = deliberacoesGemini || extracao.deliberations;
+
                 const analise = {
                     ...analiseTradicional,
-                    deliberacoes: extracao.deliberations,
-                    totalDeliberacoes: extracao.total,
+                    deliberacoes: deliberacoesFinais,
+                    totalDeliberacoes: deliberacoesFinais.length,
                     empresasDetectadas: empresasDetectadas,
-                    agenciaDetectada
+                    agenciaDetectada,
+                    fonteExtracao
                 };
 
                 pdfsProcessados[i].analise = analise;
                 pdfsProcessados[i].empresasDetectadas = empresasDetectadas;
-                totalDeliberacoes += extracao.total;
+                totalDeliberacoes += deliberacoesFinais.length;
 
                 // Persiste deliberações no Supabase/memória
-                for (const delib of extracao.deliberations) {
+                for (const delib of deliberacoesFinais) {
                     try {
                         await persistencia.salvarDeliberacao({
                             agencia: agenciaDetectada,
-                            numeroReuniao: delib.reuniao_ordinaria || '',
-                            processo: delib.numero_deliberacao || delib.processo || '',
+                            numeroReuniao: delib.numero_reuniao || delib.reuniao_ordinaria || '',
+                            dataReuniao: delib.data_reuniao || '',
+                            processo: delib.processo || delib.numero_deliberacao || '',
                             interessado: delib.interessado || '',
-                            tipo: delib.classificacao || analiseTradicional.tipo || '',
+                            tipo: delib.pauta_interna ? 'Ato Administrativo Interno' : (delib.classificacao || analiseTradicional.tipo || 'Pleito Externo'),
                             microtema: delib.microtema || analiseTradicional.microtema || '',
-                            decisao: delib.resultado || analiseTradicional.decisao || '',
-                            resumoPleito: delib.texto_resumo || '',
+                            decisao: delib.decisao || delib.resultado || analiseTradicional.decisao || '',
+                            resumoPleito: delib.resumo_pleito || delib.texto_resumo || '',
+                            fundamentoDecisao: delib.fundamento_decisao || '',
                             votosFavoraveis: delib.votos_a_favor || [],
                             votosContrarios: delib.votos_contra || [],
                             linkPdf: pdf.url || '',
@@ -2309,17 +2341,26 @@ app.post('/api/reunioes-monitoradas/:id/processar', authenticate, async (req, re
             let persistidas = 0;
             const erros = [];
 
-            for (const delib of extracao.deliberations) {
+            // Tenta Gemini para esta reunião também
+            let deliberacoesFinaisReuniao = extracao.deliberations;
+            if (geminiAnalyzer.isGeminiAvailable()) {
+                const geminiResult = await geminiAnalyzer.analisarMultiplasDeliberacoes(texto);
+                if (geminiResult) deliberacoesFinaisReuniao = geminiResult;
+            }
+
+            for (const delib of deliberacoesFinaisReuniao) {
                 try {
                     await persistencia.salvarDeliberacao({
                         agencia: agenciaDetectada,
-                        numeroReuniao: delib.reuniao_ordinaria || '',
-                        processo: delib.numero_deliberacao || delib.processo || '',
+                        numeroReuniao: delib.numero_reuniao || delib.reuniao_ordinaria || '',
+                        dataReuniao: delib.data_reuniao || '',
+                        processo: delib.processo || delib.numero_deliberacao || '',
                         interessado: delib.interessado || '',
-                        tipo: delib.classificacao || analise.tipo || '',
+                        tipo: delib.pauta_interna ? 'Ato Administrativo Interno' : (delib.classificacao || analise.tipo || 'Pleito Externo'),
                         microtema: delib.microtema || analise.microtema || '',
-                        decisao: delib.resultado || analise.decisao || '',
-                        resumoPleito: delib.texto_resumo || '',
+                        decisao: delib.decisao || delib.resultado || analise.decisao || '',
+                        resumoPleito: delib.resumo_pleito || delib.texto_resumo || '',
+                        fundamentoDecisao: delib.fundamento_decisao || '',
                         votosFavoraveis: delib.votos_a_favor || [],
                         votosContrarios: delib.votos_contra || [],
                         linkPdf: url,
@@ -3493,7 +3534,8 @@ app.post('/api/supabase/sync', authenticate, rateLimit(RATE_LIMIT_STRICT), async
                 tipo: d.classificacao || d.tipo_deliberacao || null,
                 microtema: d.microtema || null,
                 decisao: d.resultado || d.decisao || 'A classificar',
-                resumoPleito: d.resumo || null,
+                resumoPleito: d.resumo_pleito || d.resumo || null,
+                fundamentoDecisao: d.fundamento_decisao || null,
                 votosFavoraveis: d.votos_a_favor || [],
                 votosContrarios: d.votos_contra || [],
                 linkPdf: d.link_pdf || null,

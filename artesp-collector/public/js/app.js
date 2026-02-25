@@ -4781,37 +4781,48 @@
                 });
             };
 
-            let successCount = 0, errorCount = 0;
-            const errorFiles = [];
-
-            for (let i = 0; i < files.length; i++) {
-                const file = files[i];
-                const pct = Math.round(((i) / files.length) * 100);
-                const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
-
-                progressText.textContent = `Enviando ${file.name} (${sizeMB} MB)... ${i + 1} de ${files.length}`;
-                progressPercent.textContent = pct + '%';
-                progressBar.style.width = pct + '%';
-                progressBar.classList.remove('success', 'danger');
-
+            // Upload a single file
+            const uploadOne = async (file) => {
                 try {
                     const base64 = await fileToBase64(file);
-
                     const response = await fetch('/api/upload-pdf', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ arquivo: base64, nomeArquivo: file.name })
                     });
                     const result = await response.json();
-                    if (result.sucesso) {
+                    return { file: file.name, sucesso: !!result.sucesso, erro: result.erro };
+                } catch (error) {
+                    return { file: file.name, sucesso: false, erro: error.message };
+                }
+            };
+
+            let successCount = 0, errorCount = 0, completed = 0;
+            const errorFiles = [];
+            const CONCURRENCY = 3;
+            const total = files.length;
+
+            // Process files in parallel batches of CONCURRENCY
+            for (let i = 0; i < total; i += CONCURRENCY) {
+                const batch = Array.from(files).slice(i, i + CONCURRENCY);
+                const batchNames = batch.map(f => f.name).join(', ');
+                const pct = Math.round((completed / total) * 100);
+
+                progressText.textContent = `Enviando ${batch.length} PDFs em paralelo... ${completed + 1}-${Math.min(completed + batch.length, total)} de ${total}`;
+                progressPercent.textContent = pct + '%';
+                progressBar.style.width = pct + '%';
+                progressBar.classList.remove('success', 'danger');
+
+                const results = await Promise.all(batch.map(uploadOne));
+
+                for (const r of results) {
+                    completed++;
+                    if (r.sucesso) {
                         successCount++;
                     } else {
                         errorCount++;
-                        errorFiles.push(`${file.name}: ${result.erro || 'Erro desconhecido'}`);
+                        errorFiles.push(`${r.file}: ${r.erro || 'Erro desconhecido'}`);
                     }
-                } catch (error) {
-                    errorCount++;
-                    errorFiles.push(`${file.name}: ${error.message}`);
                 }
             }
 
