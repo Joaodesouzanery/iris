@@ -2934,22 +2934,49 @@
             if (!bar || !text) return;
 
             bar.style.display = 'flex';
-            try {
-                const resp = await fetch('/api/supabase/status');
-                const data = await resp.json();
-                if (data.connected) {
-                    bar.classList.add('connected');
-                    bar.classList.remove('disconnected');
-                    text.textContent = 'Supabase conectado — dados sincronizados';
-                    setTimeout(() => { bar.style.display = 'none'; }, 4000);
-                } else {
-                    bar.classList.add('disconnected');
-                    bar.classList.remove('connected');
-                    text.textContent = data.message || 'Supabase não configurado — usando dados locais';
+            text.textContent = 'Verificando conexao Supabase...';
+
+            // Retry up to 3 times with increasing delay (server may still be starting)
+            const maxRetries = 3;
+            const delays = [2000, 3000, 5000];
+
+            for (let attempt = 0; attempt < maxRetries; attempt++) {
+                try {
+                    const controller = new AbortController();
+                    const timeout = setTimeout(() => controller.abort(), 10000);
+
+                    const resp = await fetch('/api/supabase/status', { signal: controller.signal });
+                    clearTimeout(timeout);
+
+                    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+
+                    const data = await resp.json();
+                    if (data.connected) {
+                        bar.classList.add('connected');
+                        bar.classList.remove('disconnected');
+                        text.textContent = 'Supabase conectado — dados sincronizados';
+                        setTimeout(() => { bar.style.display = 'none'; }, 4000);
+                        return;
+                    } else {
+                        bar.classList.add('disconnected');
+                        bar.classList.remove('connected');
+                        const msg = data.message || 'Supabase nao configurado';
+                        const envInfo = data.env
+                            ? ' (URL: ' + (data.env.url_set ? 'OK' : 'falta') + ', Key: ' + (data.env.anon_key_set ? 'OK' : 'falta') + ')'
+                            : '';
+                        text.textContent = msg + envInfo;
+                        return;
+                    }
+                } catch (e) {
+                    if (attempt < maxRetries - 1) {
+                        text.textContent = 'Verificando conexao... (tentativa ' + (attempt + 2) + '/' + maxRetries + ')';
+                        await new Promise(function(r) { setTimeout(r, delays[attempt]); });
+                    } else {
+                        bar.classList.add('disconnected');
+                        const reason = e.name === 'AbortError' ? 'timeout' : e.message;
+                        text.textContent = 'Dados locais em uso — servidor nao respondeu (' + reason + '). Verifique se o servidor esta rodando.';
+                    }
                 }
-            } catch (e) {
-                bar.classList.add('disconnected');
-                text.textContent = 'Usando dados locais (Supabase indisponível)';
             }
         },
 
@@ -5530,26 +5557,44 @@
                     forceRefresh: forceRefresh ? 'true' : 'false'
                 });
 
-                const response = await fetch(`/api/noticias?${params}`);
+                // Usa endpoint com inteligencia (cruzamento com deliberacoes)
+                const response = await fetch('/api/noticias/inteligencia?' + params);
                 const data = await response.json();
 
                 if (data.success && data.noticias) {
-                    this.noticiasReais = data.noticias.map(n => ({
-                        agencia: n.agencia,
-                        tipo: n.tipo || 'noticia',
-                        titulo: n.titulo,
-                        resumo: n.resumo,
-                        data: n.data,
-                        esfera: n.esfera || 'federal',
-                        fonte: n.fonte,
-                        link: n.link,
-                        cor: n.cor
-                    }));
-                    console.log(`[Hub] Carregadas ${this.noticiasReais.length} noticias reais`);
+                    this.noticiasReais = data.noticias.map(function(n) {
+                        return {
+                            agencia: n.agencia,
+                            tipo: n.tipo || 'noticia',
+                            titulo: n.titulo,
+                            resumo: n.resumo,
+                            data: n.data,
+                            esfera: n.esfera || 'federal',
+                            fonte: n.fonte,
+                            link: n.link,
+                            cor: n.cor,
+                            inteligencia: n.inteligencia || null
+                        };
+                    });
+                    this.statsInteligencia = {
+                        comInteligencia: data.comInteligencia || 0,
+                        deliberacoesDisponiveis: data.deliberacoesDisponiveis || 0,
+                        alertasDisparados: data.alertasDisparados || 0
+                    };
+                    console.log('[Hub] ' + this.noticiasReais.length + ' noticias | ' + data.comInteligencia + ' com inteligencia');
                 }
             } catch (error) {
-                console.warn('[Hub] Erro ao carregar notícias reais:', error.message);
-                this.noticiasReais = [];
+                console.warn('[Hub] Fallback para noticias sem inteligencia:', error.message);
+                // Fallback: tenta endpoint simples
+                try {
+                    var resp2 = await fetch('/api/noticias?limite=50');
+                    var data2 = await resp2.json();
+                    if (data2.success && data2.noticias) {
+                        this.noticiasReais = data2.noticias;
+                    }
+                } catch (e2) {
+                    this.noticiasReais = [];
+                }
             }
 
             this.carregandoNoticias = false;
@@ -5655,34 +5700,64 @@
                 return;
             }
 
-            container.innerHTML = '<div class="hub-news-list">' + news.map(n => {
-                const cor = this.getAgenciaColor(n.agencia);
-                const tipo = this.getTipoBadge(n.tipo);
-                const dataFormatada = new Date(n.data + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+            container.innerHTML = '<div class="hub-news-list">' + news.map(function(n) {
+                var cor = PageHub.getAgenciaColor(n.agencia);
+                var tipo = PageHub.getTipoBadge(n.tipo);
+                var dataFormatada = new Date(n.data + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+                var intel = n.inteligencia;
+                var temIntel = intel && intel.temInteligencia;
 
-                return `
-                    <div class="hub-news-item">
-                        <div class="hub-news-badge" style="background: ${cor}20; color: ${cor};">
-                            ${n.agencia}
-                        </div>
-                        <div class="hub-news-content">
-                            <div class="hub-news-meta">
-                                <span class="hub-news-agency" style="color: ${cor};">${n.agencia}</span>
-                                <span class="hub-news-type" style="background: ${tipo.bg}; color: ${tipo.color};">${tipo.label}</span>
-                                <span class="hub-news-date">${dataFormatada}</span>
-                            </div>
-                            <div class="hub-news-title">${n.link ? `<a href="${n.link}" target="_blank" rel="noopener noreferrer">${n.titulo}</a>` : n.titulo}</div>
-                            <div class="hub-news-excerpt">${n.resumo}</div>
-                            <div class="hub-news-footer">
-                                <div class="hub-news-source">
-                                    <span class="hub-news-source-dot"></span>
-                                    ${n.fonte}
-                                </div>
-                                ${n.link ? `<a href="${n.link}" target="_blank" rel="noopener noreferrer" class="hub-news-link">Ver original <svg viewBox="0 0 20 20" fill="currentColor" width="12" height="12"><path fill-rule="evenodd" d="M4.25 5.5a.75.75 0 00-.75.75v8.5c0 .414.336.75.75.75h8.5a.75.75 0 00.75-.75v-4a.75.75 0 011.5 0v4A2.25 2.25 0 0112.75 17h-8.5A2.25 2.25 0 012 14.75v-8.5A2.25 2.25 0 014.25 4h5a.75.75 0 010 1.5h-5z" clip-rule="evenodd"/><path fill-rule="evenodd" d="M6.194 12.753a.75.75 0 001.06.053L16.5 4.44v2.81a.75.75 0 001.5 0v-4.5a.75.75 0 00-.75-.75h-4.5a.75.75 0 000 1.5h2.553l-9.056 8.194a.75.75 0 00-.053 1.06z" clip-rule="evenodd"/></svg></a>` : ''}
-                            </div>
-                        </div>
-                    </div>
-                `;
+                // Badge de inteligencia (cruzamento com deliberacoes)
+                var intelBadgeHtml = '';
+                if (temIntel) {
+                    var numDelibs = intel.deliberacoesRelacionadas.length;
+                    var empresasHtml = intel.empresasMencionadas.map(function(e) {
+                        return '<span class="intel-empresa-chip">' + e + '</span>';
+                    }).join('');
+
+                    var delibsHtml = intel.deliberacoesRelacionadas.slice(0, 3).map(function(d) {
+                        var decisaoCor = (d.decisao || '').toLowerCase().includes('deferido') && !(d.decisao || '').toLowerCase().includes('indeferido')
+                            ? '#4ADE80' : (d.decisao || '').toLowerCase().includes('indeferido') ? '#F87171' : '#FBBF24';
+                        return '<div class="intel-delib-item">' +
+                            '<span class="intel-delib-proc">' + (d.processo || 'S/N') + '</span>' +
+                            '<span class="intel-delib-decisao" style="color:' + decisaoCor + ';">' + (d.decisao || '-') + '</span>' +
+                            '<span class="intel-delib-data">' + (d.data_reuniao || '') + '</span>' +
+                            '</div>';
+                    }).join('');
+
+                    intelBadgeHtml = '<div class="intel-section">' +
+                        '<div class="intel-badge" onclick="this.parentElement.classList.toggle(\'expanded\')">' +
+                            '<span class="intel-icon">&#x1F4CA;</span> ' +
+                            numDelibs + ' delibera' + (numDelibs === 1 ? 'cao' : 'coes') + ' relacionada' + (numDelibs === 1 ? '' : 's') +
+                        '</div>' +
+                        (empresasHtml ? '<div class="intel-empresas">' + empresasHtml + '</div>' : '') +
+                        '<div class="intel-delibs-detail">' + delibsHtml + '</div>' +
+                    '</div>';
+                }
+
+                return '<div class="hub-news-item' + (temIntel ? ' has-intelligence' : '') + '">' +
+                    '<div class="hub-news-badge" style="background: ' + cor + '20; color: ' + cor + ';">' +
+                        n.agencia +
+                    '</div>' +
+                    '<div class="hub-news-content">' +
+                        '<div class="hub-news-meta">' +
+                            '<span class="hub-news-agency" style="color: ' + cor + ';">' + n.agencia + '</span>' +
+                            '<span class="hub-news-type" style="background: ' + tipo.bg + '; color: ' + tipo.color + ';">' + tipo.label + '</span>' +
+                            '<span class="hub-news-date">' + dataFormatada + '</span>' +
+                            (temIntel ? '<span class="intel-indicator" title="Cruzamento com deliberacoes da IRIS">INTEL</span>' : '') +
+                        '</div>' +
+                        '<div class="hub-news-title">' + (n.link ? '<a href="' + n.link + '" target="_blank" rel="noopener noreferrer">' + n.titulo + '</a>' : n.titulo) + '</div>' +
+                        '<div class="hub-news-excerpt">' + n.resumo + '</div>' +
+                        intelBadgeHtml +
+                        '<div class="hub-news-footer">' +
+                            '<div class="hub-news-source">' +
+                                '<span class="hub-news-source-dot"></span>' +
+                                n.fonte +
+                            '</div>' +
+                            (n.link ? '<a href="' + n.link + '" target="_blank" rel="noopener noreferrer" class="hub-news-link">Ver original</a>' : '') +
+                        '</div>' +
+                    '</div>' +
+                '</div>';
             }).join('') + '</div>';
 
             // Adiciona indicador de fonte de dados
@@ -5696,32 +5771,160 @@
         },
 
         renderFontes() {
-            const container = document.getElementById('hub-fontes-container');
+            var container = document.getElementById('hub-fontes-container');
             if (!container) return;
 
-            const fontes = [
+            // Renderiza Radar Regulatorio (dados reais) + Fontes + Alertas
+            container.innerHTML = '<div class="hub-sidebar-sections">' +
+                '<div id="hub-radar-section" class="hub-sidebar-section">' +
+                    '<h4 class="hub-sidebar-title">Radar Regulatorio</h4>' +
+                    '<div id="hub-radar-content" class="hub-radar-loading">Carregando radar...</div>' +
+                '</div>' +
+                '<div id="hub-alertas-section" class="hub-sidebar-section">' +
+                    '<h4 class="hub-sidebar-title">Alertas Configurados</h4>' +
+                    '<div id="hub-alertas-content"></div>' +
+                    '<div class="hub-alerta-form">' +
+                        '<select id="hub-alerta-tipo" class="hub-alerta-select">' +
+                            '<option value="empresa">Empresa</option>' +
+                            '<option value="tema">Tema</option>' +
+                            '<option value="agencia">Agencia</option>' +
+                        '</select>' +
+                        '<input id="hub-alerta-valor" type="text" placeholder="Ex: CCR, tarifa, ANEEL" class="hub-alerta-input">' +
+                        '<button onclick="App.PageHub.criarAlerta()" class="hub-alerta-btn">+</button>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="hub-sidebar-section">' +
+                    '<h4 class="hub-sidebar-title">Fontes de Dados</h4>' +
+                    '<div id="hub-fontes-list"></div>' +
+                '</div>' +
+            '</div>';
+
+            // Fontes de dados
+            var fontes = [
                 { nome: 'DOU - Diario Oficial', tipo: 'API REST', status: 'online', cor: '#A78BFA' },
-                { nome: 'PNCP - Contratacoes', tipo: 'API REST', status: 'online', cor: '#4ADE80' },
-                { nome: 'Gov.br RSS', tipo: 'RSS Feed', status: 'online', cor: '#60A5FA' },
+                { nome: 'Gov.br RSS (28 fontes)', tipo: 'RSS Feed', status: 'online', cor: '#60A5FA' },
                 { nome: 'ANEEL Dados Abertos', tipo: 'API REST', status: 'online', cor: '#FFEF4D' },
-                { nome: 'ANATEL Dados', tipo: 'API REST', status: 'online', cor: '#14B8A6' },
-                { nome: 'ANS Dados Abertos', tipo: 'API REST', status: 'online', cor: '#F97316' },
-                { nome: 'ANA SNIRH', tipo: 'API', status: 'online', cor: '#06B6D4' },
-                { nome: 'ANM SIGMINE', tipo: 'API', status: 'online', cor: '#EF4444' }
+                { nome: 'ANP Composicao', tipo: 'Web', status: 'online', cor: '#14B8A6' }
             ];
 
-            container.innerHTML = fontes.map(f => `
-                <div class="hub-fonte-item">
-                    <div class="hub-fonte-icon" style="background: ${f.cor}20; color: ${f.cor};">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"></path></svg>
-                    </div>
-                    <div class="hub-fonte-info">
-                        <div class="hub-fonte-nome">${f.nome}</div>
-                        <div class="hub-fonte-tipo">${f.tipo}</div>
-                    </div>
-                    <div class="hub-fonte-status ${f.status}"></div>
-                </div>
-            `).join('');
+            var fontesList = document.getElementById('hub-fontes-list');
+            if (fontesList) {
+                fontesList.innerHTML = fontes.map(function(f) {
+                    return '<div class="hub-fonte-item">' +
+                        '<div class="hub-fonte-icon" style="background: ' + f.cor + '20; color: ' + f.cor + ';">' +
+                            '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"></path></svg>' +
+                        '</div>' +
+                        '<div class="hub-fonte-info">' +
+                            '<div class="hub-fonte-nome">' + f.nome + '</div>' +
+                            '<div class="hub-fonte-tipo">' + f.tipo + '</div>' +
+                        '</div>' +
+                        '<div class="hub-fonte-status ' + f.status + '"></div>' +
+                    '</div>';
+                }).join('');
+            }
+
+            // Carrega radar regulatorio (async)
+            this.carregarRadar();
+            // Carrega alertas
+            this.carregarAlertas();
+        },
+
+        async carregarRadar() {
+            var radarEl = document.getElementById('hub-radar-content');
+            if (!radarEl) return;
+
+            try {
+                var resp = await fetch('/api/inteligencia/radar?dias=7');
+                var data = await resp.json();
+
+                if (data.success && data.temas && data.temas.length > 0) {
+                    var maxIntensidade = data.temas[0].intensidade || 1;
+                    radarEl.innerHTML = data.temas.slice(0, 8).map(function(t) {
+                        var pct = Math.round((t.intensidade / maxIntensidade) * 100);
+                        var cores = {
+                            critico: '#EF4444',
+                            alto: '#F97316',
+                            medio: '#FBBF24',
+                            baixo: '#6B7280'
+                        };
+                        var cor = cores[t.nivel] || '#6B7280';
+                        return '<div class="radar-item">' +
+                            '<div class="radar-item-header">' +
+                                '<span class="radar-tema">' + t.temaLabel + '</span>' +
+                                '<span class="radar-count" style="color:' + cor + ';">' + t.total + '</span>' +
+                            '</div>' +
+                            '<div class="radar-bar-bg">' +
+                                '<div class="radar-bar-fill" style="width:' + pct + '%; background:' + cor + ';"></div>' +
+                            '</div>' +
+                            '<div class="radar-detail">' +
+                                t.noticias + ' not. | ' + t.deliberacoes + ' delib.' +
+                                (t.empresas.length > 0 ? ' | ' + t.empresas.slice(0, 2).join(', ') : '') +
+                            '</div>' +
+                        '</div>';
+                    }).join('');
+
+                    if (data.temasQuentes > 0) {
+                        radarEl.innerHTML = '<div class="radar-alert">' + data.temasQuentes + ' tema(s) quente(s) esta semana</div>' + radarEl.innerHTML;
+                    }
+                } else {
+                    radarEl.innerHTML = '<div class="radar-empty">Nenhum tema detectado nos ultimos 7 dias. Colete PDFs para ativar o radar.</div>';
+                }
+            } catch (e) {
+                radarEl.innerHTML = '<div class="radar-empty">Radar indisponivel</div>';
+            }
+        },
+
+        async carregarAlertas() {
+            var alertasEl = document.getElementById('hub-alertas-content');
+            if (!alertasEl) return;
+
+            try {
+                var resp = await fetch('/api/inteligencia/alertas');
+                var data = await resp.json();
+
+                if (data.success && data.alertas.length > 0) {
+                    alertasEl.innerHTML = data.alertas.map(function(a) {
+                        var tipoIcon = a.tipo === 'empresa' ? '&#x1F3E2;' : a.tipo === 'tema' ? '&#x1F4CB;' : '&#x1F3DB;';
+                        return '<div class="alerta-item">' +
+                            '<span class="alerta-icon">' + tipoIcon + '</span>' +
+                            '<span class="alerta-valor">' + a.valor + '</span>' +
+                            '<span class="alerta-tipo-tag">' + a.tipo + '</span>' +
+                            '<button class="alerta-remove" onclick="App.PageHub.removerAlerta(\'' + a.id + '\')" title="Remover">x</button>' +
+                        '</div>';
+                    }).join('');
+                } else {
+                    alertasEl.innerHTML = '<div class="alertas-empty">Nenhum alerta. Crie um abaixo.</div>';
+                }
+            } catch (e) {
+                alertasEl.innerHTML = '<div class="alertas-empty">Alertas indisponiveis</div>';
+            }
+        },
+
+        async criarAlerta() {
+            var tipo = document.getElementById('hub-alerta-tipo');
+            var valor = document.getElementById('hub-alerta-valor');
+            if (!tipo || !valor || !valor.value.trim()) return;
+
+            try {
+                await fetch('/api/inteligencia/alertas', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ tipo: tipo.value, valor: valor.value.trim() })
+                });
+                valor.value = '';
+                this.carregarAlertas();
+            } catch (e) {
+                console.error('[Hub] Erro ao criar alerta:', e.message);
+            }
+        },
+
+        async removerAlerta(id) {
+            try {
+                await fetch('/api/inteligencia/alertas/' + id, { method: 'DELETE' });
+                this.carregarAlertas();
+            } catch (e) {
+                console.error('[Hub] Erro ao remover alerta:', e.message);
+            }
         },
 
         renderTabelaFederais() {

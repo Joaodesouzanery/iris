@@ -40,6 +40,7 @@ const { processarPipeline } = require('./src/services/pipeline-processor');
 const irisCore = require('../iris-core/processador');
 const newsFetcher = require('../iris-core/services/news-fetcher');
 const persistencia = require('../iris-core/services/persistencia');
+const intelligence = require('../iris-core/services/intelligence-correlator');
 
 // ── Backup Service ──
 const backupService = require('./src/services/backup');
@@ -413,6 +414,146 @@ app.get('/api/noticias/status', (req, res) => {
         fontes: newsFetcher.getStatusFontes ? newsFetcher.getStatusFontes() : [],
         total: Object.keys(newsFetcher.FONTES_RSS).length
     });
+});
+
+// ============================================================================
+// API - INTELIGENCIA REGULATORIA (cruzamento noticias x deliberacoes)
+// ============================================================================
+
+// Noticias enriquecidas com inteligencia (empresas, deliberacoes relacionadas)
+app.get('/api/noticias/inteligencia', async (req, res) => {
+    try {
+        const limite = Math.min(Math.max(parseInt(req.query.limite) || 50, 1), 200);
+        const forceRefresh = req.query.forceRefresh === 'true';
+
+        // 1. Busca noticias
+        let noticias = await newsFetcher.fetchNoticiasComCache(forceRefresh);
+        noticias = noticias.slice(0, limite);
+
+        // 2. Busca deliberacoes disponíveis
+        const deliberacoes = coletarTodasDeliberacoes();
+
+        // 3. Cruza noticias com deliberacoes
+        const noticiasEnriquecidas = intelligence.enriquecerNoticias(noticias, deliberacoes);
+
+        // 4. Verifica alertas configurados
+        const alertasNovos = intelligence.verificarAlertas(noticias);
+
+        const comInteligencia = noticiasEnriquecidas.filter(n => n.inteligencia && n.inteligencia.temInteligencia);
+
+        res.json({
+            success: true,
+            noticias: noticiasEnriquecidas,
+            total: noticiasEnriquecidas.length,
+            comInteligencia: comInteligencia.length,
+            deliberacoesDisponiveis: deliberacoes.length,
+            alertasDisparados: alertasNovos.length,
+            fontes: Object.keys(newsFetcher.FONTES_RSS).length,
+            atualizadoEm: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error('[Inteligencia] Erro:', error.message);
+        res.status(500).json({ success: false, erro: error.message });
+    }
+});
+
+// Radar regulatorio — temas quentes da semana
+app.get('/api/inteligencia/radar', async (req, res) => {
+    try {
+        const dias = Math.min(Math.max(parseInt(req.query.dias) || 7, 1), 90);
+
+        const noticias = await newsFetcher.fetchNoticiasComCache(false);
+        const deliberacoes = coletarTodasDeliberacoes();
+
+        const radar = intelligence.gerarRadarRegulatorio(noticias, deliberacoes, dias);
+
+        res.json({
+            success: true,
+            periodo: dias + ' dias',
+            temas: radar,
+            totalTemas: radar.length,
+            temasQuentes: radar.filter(t => t.nivel === 'critico' || t.nivel === 'alto').length,
+            geradoEm: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error('[Radar] Erro:', error.message);
+        res.status(500).json({ success: false, erro: error.message });
+    }
+});
+
+// Listar alertas configurados
+app.get('/api/inteligencia/alertas', (req, res) => {
+    res.json({
+        success: true,
+        alertas: intelligence.listarAlertas(),
+        total: intelligence.listarAlertas().length
+    });
+});
+
+// Criar alerta
+app.post('/api/inteligencia/alertas', authenticate, (req, res) => {
+    const { tipo, valor } = req.body || {};
+
+    if (!tipo || !valor) {
+        return res.status(400).json({ success: false, erro: 'Campos tipo e valor sao obrigatorios' });
+    }
+
+    const tiposValidos = ['empresa', 'tema', 'agencia'];
+    if (!tiposValidos.includes(tipo)) {
+        return res.status(400).json({ success: false, erro: 'Tipo deve ser: empresa, tema ou agencia' });
+    }
+
+    const valorSanitizado = sanitizeStr(valor, 200);
+    const alerta = intelligence.adicionarAlerta({ tipo, valor: valorSanitizado });
+
+    res.json({ success: true, alerta });
+});
+
+// Remover alerta
+app.delete('/api/inteligencia/alertas/:id', authenticate, (req, res) => {
+    const removido = intelligence.removerAlerta(req.params.id);
+    res.json({ success: true, removido });
+});
+
+// Verificar alertas contra noticias recentes
+app.get('/api/inteligencia/alertas/verificar', async (req, res) => {
+    try {
+        const noticias = await newsFetcher.fetchNoticiasComCache(false);
+        const novosAlertas = intelligence.verificarAlertas(noticias);
+
+        res.json({
+            success: true,
+            novosAlertas,
+            total: novosAlertas.length,
+            verificadoEm: new Date().toISOString()
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, erro: error.message });
+    }
+});
+
+// Historico de alertas disparados
+app.get('/api/inteligencia/alertas/historico', (req, res) => {
+    const limite = Math.min(Math.max(parseInt(req.query.limite) || 50, 1), 200);
+    res.json({
+        success: true,
+        historico: intelligence.historicoAlertas(limite)
+    });
+});
+
+// Perfil completo de uma empresa
+app.get('/api/inteligencia/empresa/:nome', async (req, res) => {
+    try {
+        const nome = decodeURIComponent(req.params.nome);
+        const deliberacoes = coletarTodasDeliberacoes();
+        const noticias = await newsFetcher.fetchNoticiasComCache(false);
+
+        const perfil = intelligence.perfilEmpresa(nome, deliberacoes, noticias);
+
+        res.json({ success: true, perfil });
+    } catch (error) {
+        res.status(500).json({ success: false, erro: error.message });
+    }
 });
 
 // ============================================================================

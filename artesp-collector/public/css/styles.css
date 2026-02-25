@@ -13624,3 +13624,291 @@ h1, h2, h3 {
         padding: 8px 4px;
     }
 }
+
+/* ============================================================================
+   INTELLIGENCE HUB - Badges, Radar, Alertas
+   ============================================================================ */
+
+/* Intel indicator badge on news meta */
+.intel-indicator {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    background: rgba(168, 85, 247, 0.2);
+    color: #A855F7;
+    margin-left: 6px;
+}
+
+/* News item with intelligence highlight */
+.hub-news-item.has-intelligence {
+    border-left: 3px solid #A855F7;
+}
+
+/* Intelligence section in news card */
+.intel-section {
+    margin: 8px 0;
+    padding: 8px 10px;
+    background: rgba(168, 85, 247, 0.06);
+    border-radius: 8px;
+    border: 1px solid rgba(168, 85, 247, 0.15);
+}
+
+.intel-badge {
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    color: #A855F7;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.intel-badge:hover {
+    color: #9333EA;
+}
+
+.intel-icon {
+    font-size: 14px;
+}
+
+.intel-empresas {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+}
+
+.intel-empresa-chip {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 600;
+    background: rgba(96, 165, 250, 0.15);
+    color: #60A5FA;
+}
+
+/* Expandable deliberations detail */
+.intel-delibs-detail {
+    display: none;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(168, 85, 247, 0.1);
+}
+
+.intel-section.expanded .intel-delibs-detail {
+    display: block;
+}
+
+.intel-delib-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+    font-size: 11px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.intel-delib-proc {
+    color: var(--text-secondary, #94a3b8);
+    font-family: monospace;
+    font-size: 11px;
+}
+
+.intel-delib-decisao {
+    font-weight: 600;
+    font-size: 11px;
+}
+
+.intel-delib-data {
+    color: var(--text-muted, #64748b);
+    font-size: 10px;
+}
+
+/* ── Radar Regulatório ── */
+
+.hub-sidebar-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.hub-sidebar-section {
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.hub-sidebar-title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary, #94a3b8);
+    margin: 0 0 10px 0;
+}
+
+.hub-radar-loading,
+.radar-empty {
+    font-size: 12px;
+    color: var(--text-muted, #64748b);
+    text-align: center;
+    padding: 12px 0;
+}
+
+.radar-alert {
+    padding: 6px 10px;
+    margin-bottom: 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    background: rgba(239, 68, 68, 0.1);
+    color: #EF4444;
+    text-align: center;
+}
+
+.radar-item {
+    margin-bottom: 10px;
+}
+
+.radar-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 3px;
+}
+
+.radar-tema {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-primary, #e2e8f0);
+    text-transform: capitalize;
+}
+
+.radar-count {
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.radar-bar-bg {
+    height: 4px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.radar-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.5s ease;
+}
+
+.radar-detail {
+    font-size: 10px;
+    color: var(--text-muted, #64748b);
+    margin-top: 2px;
+}
+
+/* ── Alertas ── */
+
+.alerta-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    font-size: 12px;
+}
+
+.alerta-icon {
+    font-size: 14px;
+}
+
+.alerta-valor {
+    flex: 1;
+    font-weight: 600;
+    color: var(--text-primary, #e2e8f0);
+}
+
+.alerta-tipo-tag {
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    background: rgba(168, 85, 247, 0.15);
+    color: #A855F7;
+}
+
+.alerta-remove {
+    background: none;
+    border: none;
+    color: var(--text-muted, #64748b);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 0 4px;
+    border-radius: 4px;
+}
+
+.alerta-remove:hover {
+    color: #EF4444;
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.alertas-empty {
+    font-size: 11px;
+    color: var(--text-muted, #64748b);
+    text-align: center;
+    padding: 8px 0;
+}
+
+.hub-alerta-form {
+    display: flex;
+    gap: 4px;
+    margin-top: 8px;
+}
+
+.hub-alerta-select {
+    flex: 0 0 auto;
+    padding: 4px 6px;
+    font-size: 11px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary, #e2e8f0);
+}
+
+.hub-alerta-input {
+    flex: 1;
+    min-width: 0;
+    padding: 4px 8px;
+    font-size: 11px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary, #e2e8f0);
+}
+
+.hub-alerta-input::placeholder {
+    color: var(--text-muted, #64748b);
+}
+
+.hub-alerta-btn {
+    flex: 0 0 auto;
+    padding: 4px 10px;
+    font-size: 14px;
+    font-weight: 700;
+    border-radius: 6px;
+    border: none;
+    background: #A855F7;
+    color: white;
+    cursor: pointer;
+}
+
+.hub-alerta-btn:hover {
+    background: #9333EA;
+}
