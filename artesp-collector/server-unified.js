@@ -40,6 +40,9 @@ const irisCore = require('../iris-core/processador');
 const newsFetcher = require('../iris-core/services/news-fetcher');
 const persistencia = require('../iris-core/services/persistencia');
 
+// ── Backup Service ──
+const backupService = require('./src/services/backup');
+
 // ── Authentication & Sanitization Middleware ──
 const { authenticate, optionalAuth, registerAuthRoutes } = require('./src/middleware/auth');
 const {
@@ -86,7 +89,8 @@ if (isSupabaseConfigured()) {
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Armazena PDFs processados em memória
+// Armazena PDFs processados em memória (limited to prevent OOM)
+const MAX_PDFS_IN_MEMORY = 200;
 let pdfsProcessados = [];
 let ultimaColeta = null;
 
@@ -217,6 +221,25 @@ function contarMencoes(texto, termo) {
 // Middleware - body parsers (limit to 50MB — 500MB is dangerous)
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// ── CORS Configuration ──
+app.use((req, res, next) => {
+    const allowedOrigins = process.env.ALLOWED_ORIGINS
+        ? process.env.ALLOWED_ORIGINS.split(',')
+        : ['http://localhost:3000', 'http://localhost:5173'];
+    const origin = req.headers.origin;
+    if (origin && allowedOrigins.includes(origin)) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+    }
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-CSRF-Token');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Max-Age', '86400');
+    if (req.method === 'OPTIONS') {
+        return res.status(204).end();
+    }
+    next();
+});
 
 // ── Authentication System ──
 registerAuthRoutes(app);
@@ -406,7 +429,7 @@ app.get('/api/health', (req, res) => {
     });
 });
 
-app.post('/api/scrape-and-extract', rateLimit(RATE_LIMIT_STRICT), async (req, res) => {
+app.post('/api/scrape-and-extract', authenticate, rateLimit(RATE_LIMIT_STRICT), async (req, res) => {
     try {
         const forceComplete = req.query.force === 'true';
 
@@ -551,7 +574,7 @@ app.get('/api/pdfs/:index', (req, res) => {
 // API - ANÁLISE IRIS CORE
 // ============================================================================
 
-app.post('/api/analisar', (req, res) => {
+app.post('/api/analisar', authenticate, (req, res) => {
     try {
         const { texto } = req.body;
 
@@ -567,7 +590,7 @@ app.post('/api/analisar', (req, res) => {
     }
 });
 
-app.post('/api/analisar-pdf/:index', async (req, res) => {
+app.post('/api/analisar-pdf/:index', authenticate, async (req, res) => {
     try {
         const index = parseInt(req.params.index);
 
@@ -649,7 +672,7 @@ app.post('/api/analisar-pdf/:index', async (req, res) => {
     }
 });
 
-app.post('/api/analisar-todos', async (req, res) => {
+app.post('/api/analisar-todos', authenticate, async (req, res) => {
     try {
         if (pdfsProcessados.length === 0) {
             return res.status(400).json({ erro: 'Nenhum PDF em memória. Execute a coleta primeiro.' });
@@ -828,7 +851,7 @@ app.get('/api/empresas/detectadas', (req, res) => {
 });
 
 // Endpoint para adicionar empresa a partir de deteccao
-app.post('/api/empresas/adicionar', rateLimit(RATE_LIMIT_STRICT), (req, res) => {
+app.post('/api/empresas/adicionar', authenticate, rateLimit(RATE_LIMIT_STRICT), (req, res) => {
     const nome = sanitizeString(req.body.nome, 200);
     const setor = sanitizeString(req.body.setor, 100);
     const tipo = sanitizeString(req.body.tipo, 100);
@@ -863,7 +886,7 @@ app.post('/api/empresas/adicionar', rateLimit(RATE_LIMIT_STRICT), (req, res) => 
 // ============================================================================
 
 // Endpoint para upload de PDFs (aceita base64)
-app.post('/api/upload-pdf', async (req, res) => {
+app.post('/api/upload-pdf', authenticate, async (req, res) => {
     try {
         const { arquivo, nomeArquivo } = req.body;
 
@@ -894,6 +917,10 @@ app.post('/api/upload-pdf', async (req, res) => {
             empresasDetectadas: empresasDetectadas
         };
 
+        if (pdfsProcessados.length >= MAX_PDFS_IN_MEMORY) {
+            pdfsProcessados.shift(); // Remove oldest to make room
+            console.warn(`[IRIS] Limite de ${MAX_PDFS_IN_MEMORY} PDFs em memoria atingido - removendo mais antigo`);
+        }
         pdfsProcessados.push(pdf);
 
         console.log(`[IRIS] Upload processado: ${pdf.nomeArquivo} (${pdf.numPaginas} páginas)`);
@@ -920,7 +947,7 @@ app.post('/api/upload-pdf', async (req, res) => {
 });
 
 // Endpoint para upload múltiplo
-app.post('/api/upload-multiplo', async (req, res) => {
+app.post('/api/upload-multiplo', authenticate, async (req, res) => {
     try {
         const { arquivos } = req.body;
 
@@ -1007,7 +1034,7 @@ app.post('/api/upload-multiplo', async (req, res) => {
 });
 
 // Endpoint para upload via URL
-app.post('/api/upload-url', async (req, res) => {
+app.post('/api/upload-url', authenticate, async (req, res) => {
     try {
         const { url } = req.body;
 
@@ -1075,7 +1102,7 @@ app.post('/api/upload-url', async (req, res) => {
 });
 
 // Endpoint para excluir PDF
-app.delete('/api/pdf/:index', (req, res) => {
+app.delete('/api/pdf/:index', authenticate, (req, res) => {
     try {
         const index = parseInt(req.params.index);
 
@@ -1151,7 +1178,7 @@ async function verificarNovosDocumentos() {
 }
 
 // Iniciar monitoramento
-app.post('/api/monitoramento/iniciar', (req, res) => {
+app.post('/api/monitoramento/iniciar', authenticate, (req, res) => {
     if (monitoramentoAtivo) {
         return res.json({ sucesso: false, mensagem: 'Monitoramento já está ativo' });
     }
@@ -1174,7 +1201,7 @@ app.post('/api/monitoramento/iniciar', (req, res) => {
 });
 
 // Parar monitoramento
-app.post('/api/monitoramento/parar', (req, res) => {
+app.post('/api/monitoramento/parar', authenticate, (req, res) => {
     if (!monitoramentoAtivo) {
         return res.json({ sucesso: false, mensagem: 'Monitoramento não está ativo' });
     }
@@ -1214,7 +1241,7 @@ app.get('/api/monitoramento/novos', (req, res) => {
 });
 
 // Marcar documentos como lidos
-app.post('/api/monitoramento/marcar-lidos', (req, res) => {
+app.post('/api/monitoramento/marcar-lidos', authenticate, (req, res) => {
     const naoLidos = novosDocumentos.filter(d => !d.lido).length;
     novosDocumentos.forEach(d => d.lido = true);
 
@@ -1225,13 +1252,13 @@ app.post('/api/monitoramento/marcar-lidos', (req, res) => {
 });
 
 // Verificar agora (manual)
-app.post('/api/monitoramento/verificar-agora', async (req, res) => {
+app.post('/api/monitoramento/verificar-agora', authenticate, async (req, res) => {
     const resultado = await verificarNovosDocumentos();
     res.json(resultado);
 });
 
 // Limpar PDFs da memória
-app.post('/api/limpar-pdfs', (req, res) => {
+app.post('/api/limpar-pdfs', authenticate, (req, res) => {
     const total = pdfsProcessados.length;
     pdfsProcessados = [];
     ultimaColeta = null;
@@ -2049,7 +2076,7 @@ app.get('/api/reunioes-monitoradas', (req, res) => {
     });
 });
 
-app.post('/api/reunioes-monitoradas', (req, res) => {
+app.post('/api/reunioes-monitoradas', authenticate, (req, res) => {
     const { url, tipo } = req.body;
 
     if (!url) {
@@ -2075,7 +2102,7 @@ app.post('/api/reunioes-monitoradas', (req, res) => {
     });
 });
 
-app.post('/api/reunioes-monitoradas/:id/processar', async (req, res) => {
+app.post('/api/reunioes-monitoradas/:id/processar', authenticate, async (req, res) => {
     const { id } = req.params;
     const reuniao = reunioesMonitoradas.find(r => r.id === id);
 
@@ -2187,7 +2214,7 @@ app.post('/api/reunioes-monitoradas/:id/processar', async (req, res) => {
     })();
 });
 
-app.delete('/api/reunioes-monitoradas/:id', (req, res) => {
+app.delete('/api/reunioes-monitoradas/:id', authenticate, (req, res) => {
     const { id } = req.params;
     const index = reunioesMonitoradas.findIndex(r => r.id === id);
 
@@ -3305,7 +3332,7 @@ app.get('/api/supabase/status', async (req, res) => {
 });
 
 // Sync deliberações locais (em memória do servidor) para Supabase
-app.post('/api/supabase/sync', rateLimit(RATE_LIMIT_STRICT), async (req, res) => {
+app.post('/api/supabase/sync', authenticate, rateLimit(RATE_LIMIT_STRICT), async (req, res) => {
     const deliberacoes = coletarTodasDeliberacoes();
 
     if (deliberacoes.length === 0) {
@@ -3595,6 +3622,47 @@ app.get('/api/monitoring/ready', (req, res) => {
 app.get('/api/monitoring/live', (req, res) => {
     res.status(200).json({ alive: true, uptime: process.uptime() });
 });
+
+// ============================================================================
+// BACKUP SYSTEM
+// ============================================================================
+const backupDataSource = {
+    getPdfs: () => pdfsProcessados,
+    getDeliberacoes: () => {
+        const todas = [];
+        for (const pdf of pdfsProcessados) {
+            if (pdf.analise && pdf.analise.deliberacoes) {
+                for (const d of pdf.analise.deliberacoes) {
+                    todas.push({ ...d, arquivoOrigem: pdf.nomeArquivo, dataArquivo: pdf.data });
+                }
+            }
+        }
+        return todas;
+    },
+    getEmpresas: () => {
+        const empresasAgregadas = new Map();
+        for (const pdf of pdfsProcessados) {
+            for (const emp of (pdf.empresasDetectadas || [])) {
+                if (empresasAgregadas.has(emp.nome)) {
+                    empresasAgregadas.get(emp.nome).mencoes += emp.mencoes;
+                } else {
+                    empresasAgregadas.set(emp.nome, { ...emp });
+                }
+            }
+        }
+        return Array.from(empresasAgregadas.values());
+    },
+    getReunioes: () => typeof reunioesMonitoradas !== 'undefined' ? reunioesMonitoradas : [],
+    getMetricas: () => ({
+        totalPdfs: pdfsProcessados.length,
+        pdfsAnalisados: pdfsProcessados.filter(p => p.analise).length,
+        ultimaColeta,
+        monitoramentoAtivo,
+        timestamp: new Date().toISOString()
+    })
+};
+
+backupService.registerBackupRoutes(app, authenticate, backupDataSource);
 
 // Inicia servidor
 app.listen(PORT, () => {
