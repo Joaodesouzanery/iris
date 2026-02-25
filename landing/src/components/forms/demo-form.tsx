@@ -110,9 +110,12 @@ export function DemoForm() {
           <Check className="w-8 h-8 text-[#22C55E]" />
         </div>
         <h3 className="text-2xl font-bold text-white mb-2">Solicitação Enviada!</h3>
-        <p className="text-[#A1A1AA]">
+        <p className="text-[#A1A1AA] mb-6">
           Entraremos em contato em até 24 horas com uma demonstração personalizada.
         </p>
+        <Button variant="secondary" href="#hero">
+          Voltar para o início
+        </Button>
       </motion.div>
     );
   }
@@ -140,11 +143,14 @@ export function DemoForm() {
               <input
                 id="name"
                 {...register("name")}
-                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-[#52525B] focus:border-[#8B5CF6] focus:outline-none focus:ring-1 focus:ring-[#8B5CF6]/50 transition-colors"
+                aria-describedby={errors.name ? "name-error" : undefined}
+                aria-invalid={!!errors.name}
+                onBlur={() => trigger("name")}
+                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-[#6B7280] focus:border-[#8B5CF6] focus:outline-none focus:ring-1 focus:ring-[#8B5CF6]/50 transition-colors"
                 placeholder="Seu nome"
               />
               {errors.name && (
-                <p className="text-xs text-[#EF4444] mt-1">{errors.name.message}</p>
+                <p id="name-error" className="text-xs text-[#EF4444] mt-1">{errors.name.message}</p>
               )}
             </div>
 
@@ -156,11 +162,14 @@ export function DemoForm() {
                 id="email"
                 type="email"
                 {...register("email")}
-                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-[#52525B] focus:border-[#8B5CF6] focus:outline-none focus:ring-1 focus:ring-[#8B5CF6]/50 transition-colors"
+                aria-describedby={errors.email ? "email-error" : undefined}
+                aria-invalid={!!errors.email}
+                onBlur={() => trigger("email")}
+                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-[#6B7280] focus:border-[#8B5CF6] focus:outline-none focus:ring-1 focus:ring-[#8B5CF6]/50 transition-colors"
                 placeholder="seu@empresa.com"
               />
               {errors.email && (
-                <p className="text-xs text-[#EF4444] mt-1">{errors.email.message}</p>
+                <p id="email-error" className="text-xs text-[#EF4444] mt-1">{errors.email.message}</p>
               )}
             </div>
 
@@ -172,11 +181,13 @@ export function DemoForm() {
                 id="phone"
                 type="tel"
                 {...register("phone")}
-                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-[#52525B] focus:border-[#8B5CF6] focus:outline-none focus:ring-1 focus:ring-[#8B5CF6]/50 transition-colors"
+                aria-describedby={errors.phone ? "phone-error" : undefined}
+                aria-invalid={!!errors.phone}
+                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-[#6B7280] focus:border-[#8B5CF6] focus:outline-none focus:ring-1 focus:ring-[#8B5CF6]/50 transition-colors"
                 placeholder="(11) 99999-9999"
               />
               {errors.phone && (
-                <p className="text-xs text-[#EF4444] mt-1">{errors.phone.message}</p>
+                <p id="phone-error" className="text-xs text-[#EF4444] mt-1">{errors.phone.message}</p>
               )}
             </div>
           </motion.div>
@@ -200,11 +211,14 @@ export function DemoForm() {
               <input
                 id="company"
                 {...register("company")}
-                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-[#52525B] focus:border-[#8B5CF6] focus:outline-none focus:ring-1 focus:ring-[#8B5CF6]/50 transition-colors"
+                aria-describedby={errors.company ? "company-error" : undefined}
+                aria-invalid={!!errors.company}
+                onBlur={() => trigger("company")}
+                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-[#6B7280] focus:border-[#8B5CF6] focus:outline-none focus:ring-1 focus:ring-[#8B5CF6]/50 transition-colors"
                 placeholder="Nome da empresa"
               />
               {errors.company && (
-                <p className="text-xs text-[#EF4444] mt-1">{errors.company.message}</p>
+                <p id="company-error" className="text-xs text-[#EF4444] mt-1">{errors.company.message}</p>
               )}
             </div>
 
@@ -225,7 +239,7 @@ export function DemoForm() {
                 ))}
               </select>
               {errors.role && (
-                <p className="text-xs text-[#EF4444] mt-1">{errors.role.message}</p>
+                <p id="role-error" className="text-xs text-[#EF4444] mt-1">{errors.role.message}</p>
               )}
             </div>
           </motion.div>
@@ -264,7 +278,7 @@ export function DemoForm() {
               ))}
             </div>
             {errors.agencies && (
-              <p className="text-xs text-[#EF4444] mt-1">{errors.agencies.message}</p>
+              <p id="agencies-error" role="alert" className="text-xs text-[#EF4444] mt-1">{errors.agencies.message}</p>
             )}
           </motion.div>
         )}

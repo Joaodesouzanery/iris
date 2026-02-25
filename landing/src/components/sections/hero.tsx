@@ -7,10 +7,17 @@ import { Container } from "@/components/ui/container";
 import { AnimatedCounter } from "@/components/animations/animated-counter";
 import { HERO_STATS } from "@/lib/constants";
 
+const PARTICLE_COUNT_DESKTOP = 20;
+const PARTICLE_COUNT_MOBILE = 8;
+
 function Particles() {
+  const count = typeof window !== "undefined" && window.innerWidth < 768
+    ? PARTICLE_COUNT_MOBILE
+    : PARTICLE_COUNT_DESKTOP;
+
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-      {Array.from({ length: 20 }).map((_, i) => (
+      {Array.from({ length: count }).map((_, i) => (
         <div
           key={i}
           className="particle absolute rounded-full"
@@ -44,8 +51,8 @@ export function HeroSection() {
       <Particles />
 
       {/* Glow orbs */}
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#8B5CF6]/10 rounded-full blur-[128px] pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#06B6D4]/8 rounded-full blur-[128px] pointer-events-none" />
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#8B5CF6]/10 rounded-full blur-[128px] pointer-events-none" aria-hidden="true" />
+      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#06B6D4]/8 rounded-full blur-[128px] pointer-events-none" aria-hidden="true" />
 
       <Container className="relative z-10 pt-32 pb-24">
         <div className="max-w-4xl mx-auto text-center">

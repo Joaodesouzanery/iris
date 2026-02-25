@@ -92,10 +92,80 @@ if (isSupabaseConfigured()) {
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Armazena PDFs processados em memória (limited to prevent OOM)
+// Armazena PDFs processados em memória (LRU-style, limited to prevent OOM)
 const MAX_PDFS_IN_MEMORY = 200;
+const MAX_PDF_MEMORY_BYTES = 500 * 1024 * 1024; // 500MB
 let pdfsProcessados = [];
 let ultimaColeta = null;
+
+// ── Standardized API Response Helper ──
+function apiResponse(res, data, status = 200) {
+    return res.status(status).json({
+        success: status < 400,
+        data,
+        timestamp: new Date().toISOString()
+    });
+}
+
+function apiError(res, message, status = 500, context = {}) {
+    return res.status(status).json({
+        success: false,
+        error: message,
+        ...context,
+        timestamp: new Date().toISOString()
+    });
+}
+
+// ── Circuit Breaker for external services ──
+const circuitBreaker = {
+    artesp: { state: 'closed', failures: 0, lastFailureTime: null, threshold: 5, cooldown: 60000 }
+};
+
+function checkCircuitBreaker(service) {
+    const cb = circuitBreaker[service];
+    if (!cb) return true;
+    if (cb.state === 'open') {
+        if (Date.now() - cb.lastFailureTime > cb.cooldown) {
+            cb.state = 'half-open';
+            cb.failures = 0;
+            return true;
+        }
+        return false;
+    }
+    return true;
+}
+
+function recordCircuitFailure(service) {
+    const cb = circuitBreaker[service];
+    if (!cb) return;
+    cb.failures++;
+    cb.lastFailureTime = Date.now();
+    if (cb.failures >= cb.threshold) {
+        cb.state = 'open';
+    }
+}
+
+function recordCircuitSuccess(service) {
+    const cb = circuitBreaker[service];
+    if (!cb) return;
+    cb.state = 'closed';
+    cb.failures = 0;
+}
+
+// ── Memory-safe PDF storage ──
+function addPdfToMemory(pdf) {
+    if (pdfsProcessados.length >= MAX_PDFS_IN_MEMORY) {
+        pdfsProcessados.shift();
+    }
+    // Estimate memory usage
+    const totalSize = pdfsProcessados.reduce((sum, p) => sum + (p.texto?.length || 0), 0) + (pdf.texto?.length || 0);
+    if (totalSize > MAX_PDF_MEMORY_BYTES) {
+        while (pdfsProcessados.length > 0 && pdfsProcessados.reduce((s, p) => s + (p.texto?.length || 0), 0) > MAX_PDF_MEMORY_BYTES * 0.8) {
+            pdfsProcessados.shift();
+        }
+    }
+    pdfsProcessados.push(pdf);
+}
 
 // Sistema de Monitoramento
 let monitoramentoAtivo = false;
@@ -277,34 +347,37 @@ app.use((req, res, next) => {
     next();
 });
 
-// ── Rate Limiting (sem dependência externa) ──
-const rateLimitStore = {};
+// ── Rate Limiting (Map-based, prevents memory leak) ──
+const rateLimitStore = new Map();
 const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minuto
 const RATE_LIMIT_MAX = 120; // 120 req/min por IP (generoso para SPA)
 const RATE_LIMIT_STRICT = 20; // 20 req/min para endpoints pesados
 
 function rateLimit(maxReqs = RATE_LIMIT_MAX) {
     return (req, res, next) => {
-        const ip = req.ip || req.connection.remoteAddress || 'unknown';
-        const key = `${ip}:${maxReqs}`;
+        // Use authenticated user if available, otherwise IP
+        const identifier = req.user?.id || req.ip || req.connection.remoteAddress || 'unknown';
+        const key = `${identifier}:${maxReqs}`;
         const now = Date.now();
 
-        if (!rateLimitStore[key] || (now - rateLimitStore[key].start) > RATE_LIMIT_WINDOW) {
-            rateLimitStore[key] = { count: 1, start: now };
+        const entry = rateLimitStore.get(key);
+        if (!entry || (now - entry.start) > RATE_LIMIT_WINDOW) {
+            rateLimitStore.set(key, { count: 1, start: now });
         } else {
-            rateLimitStore[key].count++;
+            entry.count++;
         }
 
-        if (rateLimitStore[key].count > maxReqs) {
+        const current = rateLimitStore.get(key);
+        if (current.count > maxReqs) {
             return res.status(429).json({
                 success: false,
-                erro: 'Limite de requisições excedido. Tente novamente em 1 minuto.',
-                retryAfter: Math.ceil((RATE_LIMIT_WINDOW - (now - rateLimitStore[key].start)) / 1000)
+                error: 'Limite de requisições excedido. Tente novamente em 1 minuto.',
+                retryAfter: Math.ceil((RATE_LIMIT_WINDOW - (now - current.start)) / 1000)
             });
         }
 
         res.setHeader('X-RateLimit-Limit', maxReqs);
-        res.setHeader('X-RateLimit-Remaining', maxReqs - rateLimitStore[key].count);
+        res.setHeader('X-RateLimit-Remaining', maxReqs - current.count);
         next();
     };
 }
@@ -312,9 +385,9 @@ function rateLimit(maxReqs = RATE_LIMIT_MAX) {
 // Limpar entradas antigas do rate limit store a cada 5 min
 setInterval(() => {
     const now = Date.now();
-    for (const key of Object.keys(rateLimitStore)) {
-        if ((now - rateLimitStore[key].start) > RATE_LIMIT_WINDOW * 2) {
-            delete rateLimitStore[key];
+    for (const [key, value] of rateLimitStore.entries()) {
+        if ((now - value.start) > RATE_LIMIT_WINDOW * 2) {
+            rateLimitStore.delete(key);
         }
     }
 }, 5 * 60 * 1000);
@@ -883,35 +956,41 @@ app.post('/api/analisar-todos', authenticate, async (req, res) => {
                 pdfsProcessados[i].empresasDetectadas = empresasDetectadas;
                 totalDeliberacoes += deliberacoesFinais.length;
 
-                // Persiste deliberações no Supabase/memória
-                for (const delib of deliberacoesFinais) {
-                    try {
-                        await persistencia.salvarDeliberacao({
-                            agencia: agenciaDetectada,
-                            numeroReuniao: delib.numero_reuniao || delib.reuniao_ordinaria || '',
-                            dataReuniao: delib.data_reuniao || '',
-                            processo: delib.processo || delib.numero_deliberacao || '',
-                            interessado: delib.interessado || '',
-                            tipo: delib.pauta_interna ? 'Ato Administrativo Interno' : (delib.classificacao || analiseTradicional.tipo || 'Pleito Externo'),
-                            microtema: delib.microtema || analiseTradicional.microtema || '',
-                            decisao: delib.decisao || delib.resultado || analiseTradicional.decisao || '',
-                            resumoPleito: delib.resumo_pleito || delib.texto_resumo || '',
-                            fundamentoDecisao: delib.fundamento_decisao || '',
-                            votosFavoraveis: delib.votos_a_favor || [],
-                            votosContrarios: delib.votos_contra || [],
-                            linkPdf: pdf.url || '',
-                            confiancaGeral: analiseTradicional.confiancaGeral || 0,
-                            hashTexto: analiseTradicional.hashTexto || ''
-                        });
+                // Persiste deliberações em paralelo (Promise.allSettled)
+                const savePromises = deliberacoesFinais.map(delib =>
+                    persistencia.salvarDeliberacao({
+                        agencia: agenciaDetectada,
+                        numeroReuniao: delib.numero_reuniao || delib.reuniao_ordinaria || '',
+                        dataReuniao: delib.data_reuniao || '',
+                        processo: delib.processo || delib.numero_deliberacao || '',
+                        interessado: delib.interessado || '',
+                        tipo: delib.pauta_interna ? 'Ato Administrativo Interno' : (delib.classificacao || analiseTradicional.tipo || 'Pleito Externo'),
+                        microtema: delib.microtema || analiseTradicional.microtema || '',
+                        decisao: delib.decisao || delib.resultado || analiseTradicional.decisao || '',
+                        resumoPleito: delib.resumo_pleito || delib.texto_resumo || '',
+                        fundamentoDecisao: delib.fundamento_decisao || '',
+                        votosFavoraveis: delib.votos_a_favor || [],
+                        votosContrarios: delib.votos_contra || [],
+                        linkPdf: pdf.url || '',
+                        confiancaGeral: analiseTradicional.confiancaGeral || 0,
+                        hashTexto: analiseTradicional.hashTexto || ''
+                    }).then(() => ({ status: 'ok', processo: delib.processo || delib.numero_deliberacao }))
+                      .catch(err => ({ status: 'error', processo: delib.processo || delib.numero_deliberacao || 'N/A', error: err.message }))
+                );
+
+                const saveResults = await Promise.allSettled(savePromises);
+                for (const result of saveResults) {
+                    const val = result.status === 'fulfilled' ? result.value : { status: 'error', error: result.reason?.message };
+                    if (val.status === 'ok') {
                         totalPersistidas++;
-                    } catch (err) {
-                        const isDuplicate = err.message && err.message.includes('duplicate');
+                    } else {
+                        const isDuplicate = val.error && val.error.includes('duplicate');
                         if (!isDuplicate) {
-                            console.warn(`[IRIS] Erro ao persistir deliberação: ${err.message}`);
+                            console.warn(`[IRIS] Erro ao persistir deliberação: ${val.error}`);
                         }
                         errosPersistencia.push({
-                            processo: delib.numero_deliberacao || delib.processo || 'N/A',
-                            erro: isDuplicate ? 'Duplicata ignorada' : err.message
+                            processo: val.processo || 'N/A',
+                            erro: isDuplicate ? 'Duplicata ignorada' : val.error
                         });
                     }
                 }
@@ -960,23 +1039,28 @@ app.post('/api/analisar-todos', authenticate, async (req, res) => {
 });
 
 app.get('/api/estatisticas', (req, res) => {
-    const analisados = pdfsProcessados.filter(p => p.analise);
-
-    const stats = {
+    // Single-pass reduce instead of 6 separate .filter() calls
+    const stats = pdfsProcessados.reduce((acc, p) => {
+        if (!p.analise) return acc;
+        acc.totalAnalisados++;
+        // Por tipo
+        const tipo = p.analise.tipo;
+        if (tipo === 'Pleito Externo') acc.porTipo.pleitoExterno++;
+        else if (tipo === 'Ato Administrativo Interno') acc.porTipo.atoInterno++;
+        else acc.porTipo.naoClassificado++;
+        // Por decisao
+        const decisao = p.analise.decisao;
+        if (decisao === 'Deferido') acc.porDecisao.deferido++;
+        else if (decisao === 'Indeferido') acc.porDecisao.indeferido++;
+        else acc.porDecisao.naoIdentificado++;
+        return acc;
+    }, {
         totalPdfs: pdfsProcessados.length,
-        totalAnalisados: analisados.length,
-        porTipo: {
-            pleitoExterno: analisados.filter(p => p.analise.tipo === 'Pleito Externo').length,
-            atoInterno: analisados.filter(p => p.analise.tipo === 'Ato Administrativo Interno').length,
-            naoClassificado: analisados.filter(p => p.analise.tipo === 'Não Classificado').length
-        },
-        porDecisao: {
-            deferido: analisados.filter(p => p.analise.decisao === 'Deferido').length,
-            indeferido: analisados.filter(p => p.analise.decisao === 'Indeferido').length,
-            naoIdentificado: analisados.filter(p => p.analise.decisao === 'Não Identificada').length
-        },
+        totalAnalisados: 0,
+        porTipo: { pleitoExterno: 0, atoInterno: 0, naoClassificado: 0 },
+        porDecisao: { deferido: 0, indeferido: 0, naoIdentificado: 0 },
         ultimaColeta
-    };
+    });
 
     res.json(stats);
 });
@@ -1090,11 +1174,7 @@ app.post('/api/upload-pdf', authenticate, async (req, res) => {
             empresasDetectadas: empresasDetectadas
         };
 
-        if (pdfsProcessados.length >= MAX_PDFS_IN_MEMORY) {
-            pdfsProcessados.shift(); // Remove oldest to make room
-            console.warn(`[IRIS] Limite de ${MAX_PDFS_IN_MEMORY} PDFs em memoria atingido - removendo mais antigo`);
-        }
-        pdfsProcessados.push(pdf);
+        addPdfToMemory(pdf);
 
         console.log(`[IRIS] Upload processado: ${pdf.nomeArquivo} (${pdf.numPaginas} páginas)`);
         if (empresasDetectadas.length > 0) {
@@ -2126,39 +2206,56 @@ app.get('/api/dossie/:entidade', (req, res) => {
         });
     });
 
-    // Voting pattern analysis (for directors)
+    // Voting pattern analysis (for directors) — single-pass reduce (avoids N+1)
     let padraoVotos = null;
     if (tipo === 'diretor') {
-        const aFavor = deliberacoes.filter(d => (d.votos_a_favor || []).includes(entidadeNome)).length;
-        const contra = deliberacoes.filter(d => (d.votos_contra || []).includes(entidadeNome)).length;
-        const total = aFavor + contra;
-        const deferidos = delibsRelevantes.filter(d => d.resultado === 'Deferido').length;
-        const indeferidos = delibsRelevantes.filter(d => d.resultado === 'Indeferido').length;
-        padraoVotos = { aFavor, contra, total, deferidos, indeferidos, taxaDeferimento: total > 0 ? Math.round((deferidos / total) * 100) : 0 };
+        const voteStats = deliberacoes.reduce((acc, d) => {
+            if ((d.votos_a_favor || []).includes(entidadeNome)) acc.aFavor++;
+            if ((d.votos_contra || []).includes(entidadeNome)) acc.contra++;
+            return acc;
+        }, { aFavor: 0, contra: 0 });
+        const total = voteStats.aFavor + voteStats.contra;
+        // Single-pass for relevant delib stats
+        const relStats = delibsRelevantes.reduce((acc, d) => {
+            if (d.resultado === 'Deferido') acc.deferidos++;
+            if (d.resultado === 'Indeferido') acc.indeferidos++;
+            return acc;
+        }, { deferidos: 0, indeferidos: 0 });
+        padraoVotos = { ...voteStats, total, ...relStats, taxaDeferimento: total > 0 ? Math.round((relStats.deferidos / total) * 100) : 0 };
     }
 
-    // Risk alerts
+    // Risk alerts + stats — single-pass reduce over delibsRelevantes
+    const delibStats = delibsRelevantes.reduce((acc, d) => {
+        if (d.resultado === 'Deferido') acc.deferidos++;
+        if (d.resultado === 'Indeferido') acc.indeferidos++;
+        acc.confiancaTotal += (d.confianca || 0);
+        if ((d.confianca || 0) < 50) acc.baixaConfianca++;
+        const dt = d.data_reuniao;
+        if (dt) {
+            if (!acc.primeiraData || dt < acc.primeiraData) acc.primeiraData = dt;
+            if (!acc.ultimaData || dt > acc.ultimaData) acc.ultimaData = dt;
+        }
+        return acc;
+    }, { deferidos: 0, indeferidos: 0, confiancaTotal: 0, baixaConfianca: 0, primeiraData: null, ultimaData: null });
+
     const alertas = [];
     if (tipo === 'empresa') {
-        const indeferidos = delibsRelevantes.filter(d => d.resultado === 'Indeferido');
-        if (indeferidos.length > 3) alertas.push({ nivel: 'alto', mensagem: `${indeferidos.length} deliberações indeferidas`, detalhe: 'Volume acima do normal de decisões negativas' });
-        const baixaConfianca = delibsRelevantes.filter(d => (d.confianca || 0) < 50);
-        if (baixaConfianca.length > delibsRelevantes.length * 0.3) alertas.push({ nivel: 'medio', mensagem: `${baixaConfianca.length} extrações com baixa confiança`, detalhe: 'Verifique manualmente estas deliberações' });
+        if (delibStats.indeferidos > 3) alertas.push({ nivel: 'alto', mensagem: `${delibStats.indeferidos} deliberações indeferidas`, detalhe: 'Volume acima do normal de decisões negativas' });
+        if (delibStats.baixaConfianca > delibsRelevantes.length * 0.3) alertas.push({ nivel: 'medio', mensagem: `${delibStats.baixaConfianca} extrações com baixa confiança`, detalhe: 'Verifique manualmente estas deliberações' });
     }
-    if (tipo === 'diretor') {
-        const votosContra = deliberacoes.filter(d => (d.votos_contra || []).includes(entidadeNome));
-        if (votosContra.length > 5) alertas.push({ nivel: 'medio', mensagem: `${votosContra.length} votos contrários registrados`, detalhe: 'Padrão divergente detectado' });
+    if (tipo === 'diretor' && padraoVotos) {
+        if (padraoVotos.contra > 5) alertas.push({ nivel: 'medio', mensagem: `${padraoVotos.contra} votos contrários registrados`, detalhe: 'Padrão divergente detectado' });
     }
     if (delibsRelevantes.length === 0) alertas.push({ nivel: 'info', mensagem: 'Nenhuma deliberação encontrada', detalhe: 'Faça upload de PDFs para gerar o dossiê' });
 
-    // Stats summary
+    // Stats summary (reuses single-pass results)
     const resumo = {
         totalDeliberacoes: delibsRelevantes.length,
-        deferidos: delibsRelevantes.filter(d => d.resultado === 'Deferido').length,
-        indeferidos: delibsRelevantes.filter(d => d.resultado === 'Indeferido').length,
-        confiancaMedia: delibsRelevantes.length > 0 ? Math.round(delibsRelevantes.reduce((s, d) => s + (d.confianca || 0), 0) / delibsRelevantes.length) : 0,
-        primeiraData: delibsRelevantes.map(d => d.data_reuniao).filter(Boolean).sort()[0] || null,
-        ultimaData: delibsRelevantes.map(d => d.data_reuniao).filter(Boolean).sort().pop() || null,
+        deferidos: delibStats.deferidos,
+        indeferidos: delibStats.indeferidos,
+        confiancaMedia: delibsRelevantes.length > 0 ? Math.round(delibStats.confiancaTotal / delibsRelevantes.length) : 0,
+        primeiraData: delibStats.primeiraData,
+        ultimaData: delibStats.ultimaData,
         totalConexoes: Object.keys(entidadesConectadas.diretores).length + Object.keys(entidadesConectadas.empresas).length + Object.keys(entidadesConectadas.temas).length
     };
 
@@ -2179,24 +2276,32 @@ app.get('/api/dossie/:entidade', (req, res) => {
     });
 });
 
-// API: Listar entidades disponíveis para dossiê
+// API: Listar entidades disponíveis para dossiê — O(n) with Map instead of O(n²)
 app.get('/api/dossie-entidades', (req, res) => {
     const deliberacoes = coletarTodasDeliberacoes();
-    const diretores = new Set();
-    const empresas = new Set();
+
+    // Single-pass: count deliberations per entity using Maps
+    const diretorCounts = new Map();
+    const empresaCounts = new Map();
 
     deliberacoes.forEach(d => {
-        [...(d.votos_a_favor || []), ...(d.votos_contra || [])].forEach(v => diretores.add(v));
-        if (d.interessado && d.interessado !== 'ARTESP' && d.interessado.length > 2) empresas.add(d.interessado);
+        [...(d.votos_a_favor || []), ...(d.votos_contra || [])].forEach(v => {
+            diretorCounts.set(v, (diretorCounts.get(v) || 0) + 1);
+        });
+        if (d.interessado && d.interessado !== 'ARTESP' && d.interessado.length > 2) {
+            empresaCounts.set(d.interessado, (empresaCounts.get(d.interessado) || 0) + 1);
+        }
     });
+
+    const entidades = [
+        { nome: 'ARTESP', tipo: 'agencia', deliberacoes: deliberacoes.length },
+        ...[...diretorCounts.entries()].map(([nome, count]) => ({ nome, tipo: 'diretor', deliberacoes: count })),
+        ...[...empresaCounts.entries()].map(([nome, count]) => ({ nome, tipo: 'empresa', deliberacoes: count }))
+    ];
 
     res.json({
         success: true,
-        entidades: [
-            { nome: 'ARTESP', tipo: 'agencia', deliberacoes: deliberacoes.length },
-            ...[...diretores].map(d => ({ nome: d, tipo: 'diretor', deliberacoes: deliberacoes.filter(dl => [...(dl.votos_a_favor || []), ...(dl.votos_contra || [])].includes(d)).length })),
-            ...[...empresas].map(e => ({ nome: e, tipo: 'empresa', deliberacoes: deliberacoes.filter(dl => dl.interessado === e).length }))
-        ].sort((a, b) => b.deliberacoes - a.deliberacoes)
+        entidades: entidades.sort((a, b) => b.deliberacoes - a.deliberacoes)
     });
 });
 

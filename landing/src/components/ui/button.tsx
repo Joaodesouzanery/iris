@@ -15,7 +15,7 @@ const variantStyles: Record<Variant, string> = {
   primary:
     "bg-[#8B5CF6] text-white hover:bg-[#7C3AED] active:scale-[0.98] focus:ring-2 focus:ring-[#8B5CF6]/50 focus:ring-offset-2 focus:ring-offset-[#09090B] shadow-lg shadow-[#8B5CF6]/20 hover:shadow-[#8B5CF6]/30",
   secondary:
-    "bg-transparent border border-white/20 text-white hover:bg-white/5 hover:border-white/30 focus:ring-2 focus:ring-white/20 focus:ring-offset-2 focus:ring-offset-[#09090B]",
+    "bg-transparent border border-white/20 text-white hover:bg-white/5 hover:border-white/50 focus:ring-2 focus:ring-white/20 focus:ring-offset-2 focus:ring-offset-[#09090B]",
   ghost:
     "bg-transparent text-[#A1A1AA] hover:text-white hover:bg-white/5 focus:ring-2 focus:ring-white/10",
 };
@@ -32,7 +32,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
     if (href) {
       return (
-        <a href={href} className={classes} role="button">
+        <a href={href} className={classes}>
           {children}
         </a>
       );

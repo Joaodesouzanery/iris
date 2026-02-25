@@ -75,7 +75,7 @@ export function Navbar() {
                 <a
                   key={link.href}
                   href={link.href}
-                  className={`text-sm font-medium transition-colors duration-150 relative ${
+                  className={`text-sm font-medium transition-colors duration-150 relative rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B5CF6]/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#09090B] ${
                     activeSection === link.href.replace("#", "")
                       ? "text-[#8B5CF6]"
                       : "text-[#A1A1AA] hover:text-white"
@@ -130,7 +130,11 @@ export function Navbar() {
                   key={link.href}
                   href={link.href}
                   onClick={() => setIsMobileOpen(false)}
-                  className="text-2xl font-semibold text-white hover:text-[#8B5CF6] transition-colors"
+                  className={`text-2xl font-semibold transition-colors ${
+                    activeSection === link.href.replace("#", "")
+                      ? "text-[#8B5CF6]"
+                      : "text-white hover:text-[#8B5CF6]"
+                  }`}
                 >
                   {link.label}
                 </a>

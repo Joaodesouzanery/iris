@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, type Variants } from "framer-motion";
+import { motion, useReducedMotion, type Variants } from "framer-motion";
 import { type ReactNode } from "react";
 
 interface FadeInProps {
@@ -18,6 +18,12 @@ export function FadeIn({
   direction = "up",
   className = "",
 }: FadeInProps) {
+  const prefersReducedMotion = useReducedMotion();
+
+  if (prefersReducedMotion) {
+    return <div className={className}>{children}</div>;
+  }
+
   const offsets: Record<string, { x: number; y: number }> = {
     up: { x: 0, y: 30 },
     down: { x: 0, y: -30 },

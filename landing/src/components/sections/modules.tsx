@@ -111,6 +111,9 @@ export function ModulesSection() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
+              role="dialog"
+              aria-modal="true"
+              aria-label={selected ? `Detalhes do módulo ${selected.title}` : undefined}
               className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
               onClick={() => setSelectedModule(null)}
             >

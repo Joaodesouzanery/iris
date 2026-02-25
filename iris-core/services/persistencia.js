@@ -11,6 +11,34 @@
 const logger = require('../utils/logger');
 
 // ============================================================================
+// QUERY CACHE (TTL-based)
+// ============================================================================
+const queryCache = new Map();
+const QUERY_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+function getCachedQuery(key) {
+    const entry = queryCache.get(key);
+    if (!entry) return null;
+    if (Date.now() - entry.time > QUERY_CACHE_TTL) {
+        queryCache.delete(key);
+        return null;
+    }
+    return entry.data;
+}
+
+function setCachedQuery(key, data) {
+    if (queryCache.size > 200) {
+        const oldest = queryCache.keys().next().value;
+        queryCache.delete(oldest);
+    }
+    queryCache.set(key, { data, time: Date.now() });
+}
+
+function invalidateQueryCache() {
+    queryCache.clear();
+}
+
+// ============================================================================
 // CONFIGURAÇÃO DO SUPABASE
 // ============================================================================
 
@@ -109,6 +137,11 @@ async function supabaseRequest(method, table, data = null, query = '') {
 async function buscarDeliberacoes(filtros = {}) {
     logger.info('Persistencia', 'Buscando deliberações', filtros);
 
+    // Check query cache
+    const cacheKey = `delibs:${JSON.stringify(filtros)}`;
+    const cached = getCachedQuery(cacheKey);
+    if (cached) return cached;
+
     if (!isSupabaseAvailable()) {
         // Fallback: busca em memória
         let resultado = [...memoryStore.deliberacoes];
@@ -123,13 +156,15 @@ async function buscarDeliberacoes(filtros = {}) {
         const limite = sanitizeInt(filtros.limite, 1000);
         resultado = resultado.slice(0, limite);
 
-        return resultado.map(d => ({
+        const mapped = resultado.map(d => ({
             id: d.id,
             processos: d.raw_data?.processos || [],
             numeroDeliberacao: d.processo,
             hashTexto: d.raw_data?.hash,
             texto: d.raw_data?.texto_completo
         }));
+        setCachedQuery(cacheKey, mapped);
+        return mapped;
     }
 
     let query = '?select=id,processo,numero_reuniao,data_reuniao,link_pdf,raw_data';
@@ -152,13 +187,15 @@ async function buscarDeliberacoes(filtros = {}) {
 
     const resultado = await supabaseRequest('GET', 'deliberacoes_extraidas', null, query);
 
-    return (resultado || []).map(d => ({
+    const mapped = (resultado || []).map(d => ({
         id: d.id,
         processos: extrairProcessosDoRawData(d.raw_data),
         numeroDeliberacao: d.processo,
         hashTexto: d.raw_data?.hash,
         texto: d.raw_data?.texto_completo
     }));
+    setCachedQuery(cacheKey, mapped);
+    return mapped;
 }
 
 function extrairProcessosDoRawData(rawData) {
@@ -219,6 +256,9 @@ async function buscarDeliberacoesCompletas(filtros = {}) {
  * Salva uma deliberação processada
  */
 async function salvarDeliberacao(deliberacao) {
+    // Invalidate read cache on write
+    invalidateQueryCache();
+
     logger.info('Persistencia', 'Salvando deliberação', {
         tipo: deliberacao.tipo,
         decisao: deliberacao.decisao,
@@ -304,18 +344,27 @@ async function atualizarDeliberacao(id, dados) {
 // ============================================================================
 
 async function salvarVotos(deliberacaoId, votos) {
-    if (!votos || votos.length === 0) return [];
+    if (!votos || votos.length === 0) return { saved: [], errors: [], totalAttempted: 0 };
 
     logger.info('Persistencia', 'Salvando votos', {
         deliberacaoId,
         totalVotos: votos.length
     });
 
+    // Batch load directors to avoid N+1
+    const uniqueNames = [...new Set(votos.map(v => v.diretor).filter(Boolean))];
+    const diretorMap = new Map();
+    for (const nome of uniqueNames) {
+        const diretor = await buscarOuCriarDiretor(nome, votos.find(v => v.diretor === nome)?.cargo);
+        if (diretor) diretorMap.set(nome, diretor);
+    }
+
     const votosSalvos = [];
+    const erros = [];
 
     for (const voto of votos) {
         try {
-            const diretor = await buscarOuCriarDiretor(voto.diretor, voto.cargo);
+            const diretor = diretorMap.get(voto.diretor) || null;
 
             const dadosVoto = {
                 deliberacao_id: deliberacaoId,
@@ -336,6 +385,7 @@ async function salvarVotos(deliberacaoId, votos) {
                 }
             }
         } catch (error) {
+            erros.push({ diretor: voto.diretor, error: error.message });
             logger.warn('Persistencia', `Erro ao salvar voto de ${voto.diretor}`, {
                 erro: error.message
             });
@@ -345,10 +395,11 @@ async function salvarVotos(deliberacaoId, votos) {
     logger.info('Persistencia', 'Votos salvos', {
         deliberacaoId,
         salvos: votosSalvos.length,
+        erros: erros.length,
         total: votos.length
     });
 
-    return votosSalvos;
+    return { saved: votosSalvos, errors: erros, totalAttempted: votos.length };
 }
 
 async function buscarOuCriarDiretor(nome, cargo) {
@@ -501,14 +552,21 @@ async function registrarLogProcessamento(logData) {
 // ============================================================================
 
 async function buscarEstatisticas() {
+    // Check cache (stats don't change often)
+    const cached = getCachedQuery('stats:global');
+    if (cached) return cached;
+
     if (!isSupabaseAvailable()) {
-        const delibs = memoryStore.deliberacoes;
-        return {
-            total: delibs.length,
-            deferidos: delibs.filter(d => d.decisao === 'Deferido').length,
-            indeferidos: delibs.filter(d => d.decisao === 'Indeferido').length,
-            ultimaAtualizacao: new Date().toISOString()
-        };
+        // Single-pass reduce instead of multiple .filter()
+        const stats = memoryStore.deliberacoes.reduce((acc, d) => {
+            acc.total++;
+            if (d.decisao === 'Deferido') acc.deferidos++;
+            if (d.decisao === 'Indeferido') acc.indeferidos++;
+            return acc;
+        }, { total: 0, deferidos: 0, indeferidos: 0 });
+        const result = { ...stats, ultimaAtualizacao: new Date().toISOString() };
+        setCachedQuery('stats:global', result);
+        return result;
     }
 
     try {
@@ -519,13 +577,16 @@ async function buscarEstatisticas() {
             '?select=id,decisao&agencia=eq.ARTESP'
         );
 
-        const delibs = resultado || [];
-        return {
-            total: delibs.length,
-            deferidos: delibs.filter(d => d.decisao === 'Deferido').length,
-            indeferidos: delibs.filter(d => d.decisao === 'Indeferido').length,
-            ultimaAtualizacao: new Date().toISOString()
-        };
+        // Single-pass reduce
+        const stats = (resultado || []).reduce((acc, d) => {
+            acc.total++;
+            if (d.decisao === 'Deferido') acc.deferidos++;
+            if (d.decisao === 'Indeferido') acc.indeferidos++;
+            return acc;
+        }, { total: 0, deferidos: 0, indeferidos: 0 });
+        const result = { ...stats, ultimaAtualizacao: new Date().toISOString() };
+        setCachedQuery('stats:global', result);
+        return result;
 
     } catch (error) {
         logger.error('Persistencia', 'Erro ao buscar estatísticas', {
@@ -614,6 +675,9 @@ module.exports = {
             logger.warn('Persistencia', 'Supabase não configurado, usando memória');
         }
     },
+
+    // Cache control
+    invalidateQueryCache,
 
     // Deliberações
     buscarDeliberacoes,

@@ -8,9 +8,41 @@
  * para que o sistema use o extrator regex como fallback.
  */
 
+const crypto = require('crypto');
 const logger = require('../utils/logger');
 
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+
+// ── Response Cache (by text hash) ──
+const geminiCache = new Map();
+const CACHE_MAX_SIZE = 500;
+const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
+
+function getCacheKey(texto) {
+    return crypto.createHash('sha256').update(texto).digest('hex');
+}
+
+function getCachedResult(key) {
+    const entry = geminiCache.get(key);
+    if (!entry) return null;
+    if (Date.now() - entry.time > CACHE_TTL) {
+        geminiCache.delete(key);
+        return null;
+    }
+    return entry.data;
+}
+
+function setCachedResult(key, data) {
+    if (geminiCache.size >= CACHE_MAX_SIZE) {
+        const oldest = geminiCache.keys().next().value;
+        geminiCache.delete(oldest);
+    }
+    geminiCache.set(key, { data, time: Date.now() });
+}
+
+// ── Quota Tracking ──
+const geminiQuota = { calls: 0, resetTime: Date.now() + 3600000 };
+const MAX_CALLS_PER_HOUR = 60;
 
 /**
  * Verifica se a API Gemini está disponível
@@ -94,10 +126,29 @@ async function analisarComGemini(texto) {
         return null;
     }
 
-    const apiKey = process.env.GEMINI_API_KEY;
-
     // Limita o texto a ~30k chars para não exceder limite de tokens
     const textoTruncado = texto.length > 30000 ? texto.substring(0, 30000) : texto;
+
+    // Check cache first
+    const cacheKey = getCacheKey(textoTruncado);
+    const cached = getCachedResult(cacheKey);
+    if (cached) {
+        logger.info('GeminiAnalyzer', 'Cache hit', { keyPrefix: cacheKey.substring(0, 8) });
+        return cached;
+    }
+
+    // Check quota
+    if (Date.now() > geminiQuota.resetTime) {
+        geminiQuota.calls = 0;
+        geminiQuota.resetTime = Date.now() + 3600000;
+    }
+    if (geminiQuota.calls >= MAX_CALLS_PER_HOUR) {
+        logger.warn('GeminiAnalyzer', 'Quota por hora excedida, usando fallback regex');
+        return null;
+    }
+
+    const apiKey = process.env.GEMINI_API_KEY;
+    geminiQuota.calls++;
 
     try {
         const axios = require('axios');
@@ -127,14 +178,28 @@ async function analisarComGemini(texto) {
             .replace(/```\n?/g, '')
             .trim();
 
-        const parsed = JSON.parse(jsonLimpo);
+        let parsed;
+        try {
+            parsed = JSON.parse(jsonLimpo);
+        } catch (parseError) {
+            logger.error('GeminiAnalyzer', 'JSON inválido na resposta', { raw: resposta.substring(0, 200) });
+            return null;
+        }
 
         // Validar e normalizar campos
-        return normalizarResultado(parsed);
+        const resultado = normalizarResultado(parsed);
+
+        // Cache the result
+        setCachedResult(cacheKey, resultado);
+
+        return resultado;
 
     } catch (error) {
-        logger.warn('GeminiAnalyzer', `Erro na análise Gemini: ${error.message}`);
-        console.log(`[IRIS-Gemini] Erro: ${error.message} - usando fallback regex`);
+        const isTimeout = error.code === 'ECONNABORTED';
+        logger.warn('GeminiAnalyzer', `Erro na análise Gemini: ${isTimeout ? 'timeout (30s)' : 'falha na requisição'}`, {
+            status: error.response?.status,
+            timeout: isTimeout
+        });
         return null;
     }
 }
@@ -161,8 +226,28 @@ async function analisarMultiplasDeliberacoes(texto) {
     }
 
     // Para textos longos, tentar extrair múltiplas deliberações
-    const apiKey = process.env.GEMINI_API_KEY;
     const textoTruncado = texto.length > 50000 ? texto.substring(0, 50000) : texto;
+
+    // Check cache
+    const cacheKey = getCacheKey('multi:' + textoTruncado);
+    const cached = getCachedResult(cacheKey);
+    if (cached) {
+        logger.info('GeminiAnalyzer', 'Cache hit (múltiplas)', { keyPrefix: cacheKey.substring(0, 8) });
+        return cached;
+    }
+
+    // Check quota
+    if (Date.now() > geminiQuota.resetTime) {
+        geminiQuota.calls = 0;
+        geminiQuota.resetTime = Date.now() + 3600000;
+    }
+    if (geminiQuota.calls >= MAX_CALLS_PER_HOUR) {
+        logger.warn('GeminiAnalyzer', 'Quota por hora excedida, usando fallback regex');
+        return null;
+    }
+
+    const apiKey = process.env.GEMINI_API_KEY;
+    geminiQuota.calls++;
 
     const promptMultiplo = `Analise o texto abaixo que pode conter MÚLTIPLAS deliberações da ARTESP.
 Extraia TODAS as deliberações encontradas.
@@ -204,17 +289,30 @@ ${textoTruncado}`;
         const resposta = response.data?.candidates?.[0]?.content?.parts?.[0]?.text || '[]';
         const jsonLimpo = resposta.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
 
-        let parsed = JSON.parse(jsonLimpo);
+        let parsed;
+        try {
+            parsed = JSON.parse(jsonLimpo);
+        } catch (parseError) {
+            logger.error('GeminiAnalyzer', 'JSON inválido na resposta múltipla', { raw: resposta.substring(0, 200) });
+            const resultado = await analisarComGemini(texto);
+            return resultado ? [resultado] : null;
+        }
 
         // Se retornou objeto único, wrappa em array
         if (!Array.isArray(parsed)) {
             parsed = [parsed];
         }
 
-        return parsed.map(normalizarResultado);
+        const resultados = parsed.map(normalizarResultado);
+        setCachedResult(cacheKey, resultados);
+        return resultados;
 
     } catch (error) {
-        logger.warn('GeminiAnalyzer', `Erro na análise múltipla: ${error.message}`);
+        const isTimeout = error.code === 'ECONNABORTED';
+        logger.warn('GeminiAnalyzer', `Erro na análise múltipla: ${isTimeout ? 'timeout (60s)' : 'falha na requisição'}`, {
+            status: error.response?.status,
+            timeout: isTimeout
+        });
         // Fallback: tenta análise simples
         const resultado = await analisarComGemini(texto);
         return resultado ? [resultado] : null;
