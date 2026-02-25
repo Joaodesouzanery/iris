@@ -34,6 +34,7 @@ const { scrapeWithRetry } = require('./src/services/scraper');
 const { downloadMultiplePDFs } = require('./src/services/downloader');
 const { extractFromMultiple, gerarEstatisticas } = require('./src/services/extractor');
 const syncManager = require('./src/services/sync-manager');
+const { processarPipeline } = require('./src/services/pipeline-processor');
 
 // Importa serviços do IRIS Core
 const irisCore = require('../iris-core/processador');
@@ -459,18 +460,24 @@ app.post('/api/scrape-and-extract', authenticate, rateLimit(RATE_LIMIT_STRICT), 
         let pdfsParaProcessar = links.map(pdf => ({ ...pdf, ehNovo: true }));
         console.log(`[IRIS] → ${pdfsParaProcessar.length} PDFs para processar`);
 
-        // 3. Download
-        console.log(`\n[IRIS] ETAPA 3: Download de ${pdfsParaProcessar.length} PDFs...`);
-        console.log('[IRIS] ⏳ Isso pode demorar alguns minutos...');
+        // 3+4. Pipeline: Download + Extração concorrente
+        console.log(`\n[IRIS] ETAPA 3: Pipeline rapido — download + extracao de ${pdfsParaProcessar.length} PDFs...`);
+        console.log('[IRIS] Concorrencia: 10 PDFs simultaneos | Custo: R$ 0,00');
 
-        const pdfsComBuffer = await downloadMultiplePDFs(pdfsParaProcessar);
+        const pdfsExtraidos = await processarPipeline(pdfsParaProcessar, {
+            concurrency: 10,
+            staggerMs: 200,
+            batchPauseMs: 1000
+        });
 
-        const downloadSucesso = pdfsComBuffer.filter(p => p.status === 'sucesso').length;
-        const downloadErro = pdfsComBuffer.filter(p => p.status === 'erro').length;
-        console.log(`[IRIS] → Download: ${downloadSucesso} sucesso, ${downloadErro} erros`);
+        const downloadSucesso = pdfsExtraidos.filter(p => p.status === 'sucesso').length;
+        const downloadErro = pdfsExtraidos.filter(p => p.status === 'erro').length;
+        const extracaoSucesso = pdfsExtraidos.filter(p => p.statusExtracao === 'sucesso').length;
+
+        console.log(`[IRIS] → Pipeline: ${downloadSucesso} baixados, ${extracaoSucesso} extraidos, ${downloadErro} erros`);
 
         if (downloadSucesso === 0) {
-            console.log('[IRIS] ⚠️ Nenhum PDF baixado com sucesso!');
+            console.log('[IRIS] Nenhum PDF baixado com sucesso!');
             return res.json({
                 sucesso: false,
                 mensagem: `Nenhum PDF baixado. ${downloadErro} erros de download. Verifique o terminal.`,
@@ -480,15 +487,8 @@ app.post('/api/scrape-and-extract', authenticate, rateLimit(RATE_LIMIT_STRICT), 
             });
         }
 
-        // 4. Extração
-        console.log('\n[IRIS] ETAPA 4: Extração de texto...');
-        const pdfsExtraidos = await extractFromMultiple(pdfsComBuffer);
-
-        const extracaoSucesso = pdfsExtraidos.filter(p => p.statusExtracao === 'sucesso').length;
-        console.log(`[IRIS] → Extração: ${extracaoSucesso} PDFs com texto extraído`);
-
-        // 5. Atualiza histórico
-        console.log('\n[IRIS] ETAPA 5: Finalizando...');
+        // 4. Atualiza histórico
+        console.log('\n[IRIS] ETAPA 4: Finalizando...');
         await syncManager.updateHistory(pdfsExtraidos, true);
 
         // Armazena em memória
