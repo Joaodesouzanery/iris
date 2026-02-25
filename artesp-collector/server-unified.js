@@ -18,6 +18,7 @@ require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 const pdfParse = require('pdf-parse');
 
 // Supabase SDK — optional dependency (server works without it)
@@ -38,6 +39,18 @@ const syncManager = require('./src/services/sync-manager');
 const irisCore = require('../iris-core/processador');
 const newsFetcher = require('../iris-core/services/news-fetcher');
 const persistencia = require('../iris-core/services/persistencia');
+
+// ── Authentication & Sanitization Middleware ──
+const { authenticate, optionalAuth, registerAuthRoutes } = require('./src/middleware/auth');
+const {
+    sanitizeString: sanitizeStr,
+    deepSanitize,
+    validateCNPJ: validateCNPJFull,
+    validateUrl,
+    validatePDFUpload,
+    validateInt,
+    sanitizeRequestMiddleware
+} = require('./src/middleware/sanitize');
 
 // ============================================================================
 // SUPABASE CLIENT INITIALIZATION
@@ -205,6 +218,12 @@ function contarMencoes(texto, termo) {
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
+// ── Authentication System ──
+registerAuthRoutes(app);
+
+// ── Input Sanitization Middleware (query + params) ──
+app.use(sanitizeRequestMiddleware);
+
 // ── Security Headers (OWASP recommended) ──
 app.use((req, res, next) => {
     // Prevent MIME sniffing
@@ -284,16 +303,13 @@ app.use((req, res, next) => {
     next();
 });
 
-// ── Input Validation Helpers ──
+// ── Input Validation Helpers (enhanced from middleware/sanitize.js) ──
 function sanitizeString(str, maxLen = 500) {
-    if (typeof str !== 'string') return '';
-    return str.replace(/<[^>]*>/g, '').trim().substring(0, maxLen);
+    return sanitizeStr(str, maxLen);
 }
 
 function validateCNPJ(cnpj) {
-    if (typeof cnpj !== 'string') return false;
-    const cleaned = cnpj.replace(/[^\d]/g, '');
-    return cleaned.length === 14;
+    return validateCNPJFull(cnpj);
 }
 
 // ── Performance: Cache headers for API ──
@@ -999,15 +1015,22 @@ app.post('/api/upload-url', async (req, res) => {
             return res.status(400).json({ erro: 'URL é obrigatória' });
         }
 
-        console.log(`\n[IRIS] Baixando PDF de: ${url}`);
+        // Validate URL (SSRF prevention)
+        const urlValidation = validateUrl(url);
+        if (!urlValidation.valid) {
+            return res.status(400).json({ erro: urlValidation.error });
+        }
+
+        console.log(`\n[IRIS] Baixando PDF de: ${urlValidation.url} (trusted: ${urlValidation.trusted})`);
 
         // Baixa o PDF
         const axios = require('axios');
-        const response = await axios.get(url, {
+        const response = await axios.get(urlValidation.url, {
             responseType: 'arraybuffer',
             timeout: 60000,
+            maxRedirects: 3,
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                'User-Agent': 'IRIS-Platform/2.0'
             }
         });
 
@@ -3424,6 +3447,153 @@ app.get('/api/supabase/estatisticas', async (req, res) => {
     } catch (e) {
         res.status(500).json({ success: false, erro: e.message });
     }
+});
+
+// ============================================================================
+// MONITORING & UPTIME SYSTEM
+// ============================================================================
+
+const serverStartTime = Date.now();
+const requestMetrics = {
+    totalRequests: 0,
+    totalErrors: 0,
+    responseTimesMs: [],
+    statusCodes: {},
+    endpointHits: {},
+    lastHour: { requests: 0, errors: 0, startTime: Date.now() }
+};
+
+// Request tracking middleware
+app.use((req, res, next) => {
+    const start = Date.now();
+    requestMetrics.totalRequests++;
+    requestMetrics.lastHour.requests++;
+
+    // Track endpoint hits
+    const endpoint = `${req.method} ${req.route?.path || req.path}`;
+    requestMetrics.endpointHits[endpoint] = (requestMetrics.endpointHits[endpoint] || 0) + 1;
+
+    const originalEnd = res.end;
+    res.end = function(...args) {
+        const duration = Date.now() - start;
+
+        // Keep last 1000 response times for percentile calculation
+        requestMetrics.responseTimesMs.push(duration);
+        if (requestMetrics.responseTimesMs.length > 1000) {
+            requestMetrics.responseTimesMs.shift();
+        }
+
+        // Track status codes
+        const statusGroup = `${Math.floor(res.statusCode / 100)}xx`;
+        requestMetrics.statusCodes[statusGroup] = (requestMetrics.statusCodes[statusGroup] || 0) + 1;
+
+        if (res.statusCode >= 500) {
+            requestMetrics.totalErrors++;
+            requestMetrics.lastHour.errors++;
+        }
+
+        originalEnd.apply(res, args);
+    };
+
+    next();
+});
+
+// Reset hourly metrics
+setInterval(() => {
+    requestMetrics.lastHour = { requests: 0, errors: 0, startTime: Date.now() };
+}, 60 * 60 * 1000);
+
+// Enhanced health check with monitoring data
+app.get('/api/monitoring/health', (req, res) => {
+    const uptime = process.uptime();
+    const memUsage = process.memoryUsage();
+
+    // Calculate p50, p95, p99 response times
+    const sortedTimes = [...requestMetrics.responseTimesMs].sort((a, b) => a - b);
+    const p50 = sortedTimes[Math.floor(sortedTimes.length * 0.5)] || 0;
+    const p95 = sortedTimes[Math.floor(sortedTimes.length * 0.95)] || 0;
+    const p99 = sortedTimes[Math.floor(sortedTimes.length * 0.99)] || 0;
+
+    const health = {
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+        uptime: {
+            seconds: Math.round(uptime),
+            human: `${Math.floor(uptime / 86400)}d ${Math.floor((uptime % 86400) / 3600)}h ${Math.floor((uptime % 3600) / 60)}m`
+        },
+        memory: {
+            heapUsedMB: Math.round(memUsage.heapUsed / 1024 / 1024),
+            heapTotalMB: Math.round(memUsage.heapTotal / 1024 / 1024),
+            rssMB: Math.round(memUsage.rss / 1024 / 1024),
+            percentUsed: Math.round((memUsage.heapUsed / memUsage.heapTotal) * 100)
+        },
+        requests: {
+            total: requestMetrics.totalRequests,
+            errors: requestMetrics.totalErrors,
+            errorRate: requestMetrics.totalRequests > 0
+                ? (requestMetrics.totalErrors / requestMetrics.totalRequests * 100).toFixed(2) + '%'
+                : '0%',
+            lastHour: requestMetrics.lastHour,
+            statusCodes: requestMetrics.statusCodes
+        },
+        performance: {
+            p50ms: p50,
+            p95ms: p95,
+            p99ms: p99,
+            sampleSize: sortedTimes.length
+        },
+        data: {
+            pdfsInMemory: pdfsProcessados.length,
+            pdfsAnalyzed: pdfsProcessados.filter(p => p.analise).length,
+            lastCollection: ultimaColeta,
+            monitoringActive: monitoramentoAtivo
+        },
+        database: {
+            type: isSupabaseConfigured() ? 'supabase' : 'memory',
+            connected: isSupabaseConfigured()
+        },
+        environment: process.env.NODE_ENV || 'development',
+        nodeVersion: process.version
+    };
+
+    // Set warning status if issues detected
+    if (memUsage.heapUsed / memUsage.heapTotal > 0.9) {
+        health.status = 'warning';
+        health.warnings = health.warnings || [];
+        health.warnings.push('High memory usage (>90%)');
+    }
+    if (requestMetrics.lastHour.errors > 50) {
+        health.status = 'warning';
+        health.warnings = health.warnings || [];
+        health.warnings.push('High error rate in last hour');
+    }
+
+    res.json(health);
+});
+
+// Top endpoints by usage
+app.get('/api/monitoring/endpoints', (req, res) => {
+    const sorted = Object.entries(requestMetrics.endpointHits)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 20)
+        .map(([endpoint, hits]) => ({ endpoint, hits }));
+    res.json({ success: true, endpoints: sorted });
+});
+
+// Readiness probe (for load balancers/k8s)
+app.get('/api/monitoring/ready', (req, res) => {
+    // Check critical dependencies
+    const checks = {
+        server: true,
+        memory: process.memoryUsage().heapUsed / process.memoryUsage().heapTotal < 0.95
+    };
+    const ready = Object.values(checks).every(Boolean);
+    res.status(ready ? 200 : 503).json({ ready, checks });
+});
+
+// Liveness probe
+app.get('/api/monitoring/live', (req, res) => {
+    res.status(200).json({ alive: true, uptime: process.uptime() });
 });
 
 // Inicia servidor
