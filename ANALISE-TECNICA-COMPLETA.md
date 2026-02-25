@@ -22,20 +22,87 @@
 ### O que a IRIS tem HOJE
 
 Os diretores estao **hardcoded** no arquivo `iris-core/services/extrator-deliberacoes.js`.
-Nao ha consulta automatica a fontes externas. Os dados atuais sao:
+Nao ha consulta automatica a fontes externas. Abaixo estao os dados REAIS
+verificados em fontes oficiais publicas (Diarios Oficiais, Alesp, gov.br).
 
-### Diretoria Atual da ARTESP (2024-2029)
+---
 
-| Diretor | Cargo | Inicio Mandato | Termino Mandato |
-|---------|-------|----------------|-----------------|
-| Andre Isper Rodrigues Barnabe | Diretor-Presidente | 10/09/2024 | 09/09/2029 |
-| Diego Albert Zanatto | Diretor | 14/08/2024 | 13/08/2029 |
-| Fernanda Esbizaro Rodrigues Rudnik | Diretora | 28/08/2025 | 27/08/2030 |
-| Raquel Franca Carneiro | Diretora | 14/05/2025 | 13/05/2030 |
+### ARTESP - Diretoria Colegiada (Dados Reais Verificados)
 
-**Fonte:** Diarios Oficiais do Estado de Sao Paulo e atas de posse da ARTESP.
+Mandatos de 4 anos (Lei Complementar aprovada em 2024). Nomeados pelo Governador,
+aprovados pela Alesp.
 
-### Diretoria Anterior (para PDFs historicos)
+| Diretor | Cargo | Inicio | Termino | Nomeado por |
+|---------|-------|--------|---------|-------------|
+| Andre Isper Rodrigues Barnabe | Diretor-Presidente | Out/2024 | 30/06/2029 | Gov. Tarcisio de Freitas |
+| Diego Albert Zanatto | Dir. Controle Economico e Financeiro | Out/2024 | 30/06/2030 | Gov. Tarcisio de Freitas |
+| Raquel Franca Carneiro | Diretora de Investimento | Mai/2025 | ~Mai/2029 | Gov. Tarcisio de Freitas |
+| Fernanda Esbizaro Rodrigues Rudnik | Diretora (foco metroferroviario) | Ago/2025 | ~2029 | Gov. Tarcisio de Freitas |
+
+**Detalhes dos diretores:**
+- **Andre Isper** - Advogado, ex-Secretario Executivo da Sec. de Parcerias em Investimentos de SP. Aprovado pela Comissao de Transportes da Alesp em 04/09/2024. Substituiu Laercio Paulino Simoes.
+- **Diego Zanatto** - Economista (UNICAMP). Nomeado via DOE em 07/10/2024.
+- **Raquel Franca** - Engenheira civil, MSc em Planejamento de Sistemas de Transporte (USP). Aprovada pela Alesp em 14/05/2025 (PD Legislativo 9/2025). Substituiu Joao Luiz Lopes. Ex-diretora economico-financeira na CPP.
+- **Fernanda Esbizaro** - Advogada (PUC-SP), MSc (USP). Aprovada pela Comissao de Transportes da Alesp em 27/08/2025 (PD Legislativo 26/2025). Era chefe de gabinete da presidencia da ARTESP desde set/2024.
+
+**Fontes:**
+- artesp.sp.gov.br/artesp/institucional/relacao-de-autoridades
+- al.sp.gov.br (aprovacoes Alesp)
+- Diario Oficial do Estado de Sao Paulo
+
+---
+
+### ANEEL - Diretoria Colegiada (Dados Reais Verificados)
+
+Mandatos de 5 anos, nao renovaveis. 1 Diretor-Geral + 4 Diretores.
+
+| Diretor | Cargo | Inicio | Termino |
+|---------|-------|--------|---------|
+| Sandoval de Araujo Feitosa Neto | Diretor-Geral | 15/08/2022 | 13/08/2027 |
+| Agnes Maria de Aragao da Costa | Diretora | 03/12/2022 | 02/12/2028 |
+| Fernando Luiz Mosna Ferreira da Silva | Diretor | 14/08/2022 | 13/08/2026 |
+| Willamy Moreira Frota | Diretor | 16/09/2025 | ~Set/2029 |
+| Gentil Nogueira de Sa Junior | Diretor | 16/09/2025 | ~Mai/2030 |
+
+**Fonte:** gov.br/aneel/pt-br/composicao/diretoria-colegiada/diretores
+
+---
+
+### ANP - Diretoria Colegiada (Dados Reais Verificados)
+
+Mandatos de 4 anos, com possibilidade de 1 reconduncao.
+
+| Diretor | Cargo | Inicio | Termino |
+|---------|-------|--------|---------|
+| Artur Watt Neto | Diretor-Geral | 29/08/2025 | 22/12/2029 |
+| Symone Christine de Santana Araujo | Diretora (Dir. 1) | 18/04/2022 | 27/03/2027 |
+| Daniel Maia Vieira | Diretor (Dir. 2) | 20/04/2022 | 10/10/2026 |
+| Fernando Wandscheer de Moura Alves | Diretor (Dir. 3) | 20/04/2022 | 09/11/2026 |
+| Pietro Adamo Sampaio Mendes | Diretor (Dir. 4) | 29/08/2025 | 22/12/2028 |
+
+**Fonte:** gov.br/anp/pt-br/composicao/diretoria-colegiada/composicao-diretoria-colegiada
+(ANP e a mais transparente: publica datas exatas de inicio e fim de mandato)
+
+---
+
+### ANM - Diretoria Colegiada (Dados Reais Verificados)
+
+Mandatos de 4 anos, com possibilidade de 1 reconduncao. ATENCAO: ANM esta em
+situacao critica de governanca - quase toda a diretoria vence em 2026.
+
+| Diretor | Cargo | Inicio | Termino | Status |
+|---------|-------|--------|---------|--------|
+| Mauro Henrique Moreira Sousa | Diretor-Geral | 05/12/2022 | 04/12/2026 | Ativo |
+| Caio Mario Trivellato Seabra Filho | Diretor | 27/12/2023 | 04/12/2026 | Suspenso/Preso |
+| Jose Fernando Gomes Junior | Diretor | 01/09/2025 | 04/12/2028 | Ativo |
+| Luiz Paniago Neves | Diretor Substituto | 05/12/2025 | 02/06/2026 | Temporario |
+| (Vaga) | -- | -- | -- | Sem nomeacao |
+
+**Fonte:** gov.br/anm/pt-br/composicao/diretoria-colegiada/Diretores
+
+---
+
+### Diretoria Anterior da ARTESP (para PDFs historicos)
 
 | Diretor | Aliases no sistema |
 |---------|--------------------|
@@ -44,6 +111,10 @@ Nao ha consulta automatica a fontes externas. Os dados atuais sao:
 | Carlos Eduardo Simoes | Carlos Simoes, Simoes |
 | Antonio Carlos de Almeida | Antonio Almeida, Almeida |
 | Flavio Augusto Trevisan Saes | Flavio Saes, Trevisan, Saes |
+| Laercio Paulino Simoes | Laercio, Simoes (ex-Presidente, substituido por Andre Isper) |
+| Joao Luiz Lopes | Joao Lopes, Lopes (substituido por Raquel Franca) |
+
+---
 
 ### Posso trazer dados reais automaticamente?
 
@@ -59,21 +130,25 @@ Historico de mandatos (publico)           Informacoes de contato pessoal
 Votos em deliberacoes (publico)           Dados nao publicados
 ```
 
-### Fontes Confiaveis para Cada Agencia
+### Fontes Oficiais Verificadas por Agencia
 
 ```
-AGENCIA     FONTE DE DADOS DE DIRETORES                          CONFIAVEL?
-----------  -----------------------------------------------------  ----------
-ARTESP      artesp.sp.gov.br/quem-somos/diretoria                Sim
-ANEEL       gov.br/aneel/pt-br/acesso-a-informacao/institucional  Sim
-ANATEL      gov.br/anatel/pt-br/acesso-a-informacao               Sim
-ANP         gov.br/anp/pt-br/acesso-a-informacao                  Sim
-ANTT        gov.br/antt/pt-br/acesso-a-informacao                 Sim
-ANS         gov.br/ans/pt-br/acesso-a-informacao                  Sim
-ANVISA      gov.br/anvisa/pt-br/acesso-a-informacao               Sim
-ANA         gov.br/ana/pt-br/acesso-a-informacao                  Sim
-ANM         gov.br/anm/pt-br/acesso-a-informacao                  Sim
+AGENCIA   FONTE VERIFICADA                                                     TRANSPARENCIA
+--------  -------------------------------------------------------------------   -------------
+ARTESP    artesp.sp.gov.br/institucional/relacao-de-autoridades                 Media (pagina dinamica)
+ANEEL     gov.br/aneel/pt-br/composicao/diretoria-colegiada/diretores          Alta
+ANP       gov.br/anp/pt-br/composicao/diretoria-colegiada/composicao           Muito Alta (datas exatas)
+ANM       gov.br/anm/pt-br/composicao/diretoria-colegiada/Diretores            Media
+ANATEL    gov.br/anatel/pt-br/acesso-a-informacao                               Alta
+ANTT      gov.br/antt/pt-br/acesso-a-informacao                                 Alta
+ANS       gov.br/ans/pt-br/acesso-a-informacao                                  Alta
+ANVISA    gov.br/anvisa/pt-br/acesso-a-informacao                               Alta
+ANA       gov.br/ana/pt-br/acesso-a-informacao                                  Alta
 ```
+
+**Nota importante:** Em 2026, o Presidente Lula pode indicar ate 24 diretores
+para agencias reguladoras (mandatos vencendo). Isso significa que os dados
+acima MUDARAO em breve. Motivo a mais para o sistema de alerta automatico.
 
 ### Recomendacao: Abordagem Semi-Automatica
 
