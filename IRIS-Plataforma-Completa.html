@@ -22,51 +22,53 @@
     --primary-dark: #b08f20;
     --primary-light: #e0b82d;
     --primary-bg: rgba(201, 162, 39, 0.12);
+    --primary-glow: rgba(201, 162, 39, 0.08);
 
     /* Backgrounds - Deep Navy */
-    --background: #0f1729;
-    --surface: #162033;
-    --surface-hover: #1e2d47;
-    --surface-light: #253650;
+    --background: #0c1222;
+    --surface: #141c2f;
+    --surface-hover: #1a2740;
+    --surface-light: #213352;
+    --surface-elevated: #182538;
 
     /* Textos */
-    --text-primary: #e8ecf4;
-    --text-secondary: #94a3b8;
-    --text-muted: #64748b;
+    --text-primary: #edf1f7;
+    --text-secondary: #a0aec0;
+    --text-muted: #6b7a90;
 
     /* Bordas */
-    --border: #1e2d47;
-    --border-light: #2a3d5e;
+    --border: #1c2a42;
+    --border-light: #263a58;
 
     /* Cards */
-    --bg-card: #162033;
+    --bg-card: #141c2f;
     --accent: #c9a227;
 
     /* Estados */
     --success: #4ade80;
-    --success-bg: rgba(74, 222, 128, 0.15);
+    --success-bg: rgba(74, 222, 128, 0.12);
     --warning: #fbbf24;
-    --warning-bg: rgba(251, 191, 36, 0.15);
+    --warning-bg: rgba(251, 191, 36, 0.12);
     --danger: #f87171;
-    --danger-bg: rgba(248, 113, 113, 0.15);
+    --danger-bg: rgba(248, 113, 113, 0.12);
     --info: #60a5fa;
-    --info-bg: rgba(96, 165, 250, 0.15);
+    --info-bg: rgba(96, 165, 250, 0.12);
 
-    /* Sombras */
-    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
-    --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.3);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.3);
+    /* Sombras - Mais pronunciadas para depth */
+    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.4);
+    --shadow: 0 2px 6px 0 rgb(0 0 0 / 0.45), 0 1px 3px -1px rgb(0 0 0 / 0.35);
+    --shadow-md: 0 6px 12px -2px rgb(0 0 0 / 0.5), 0 3px 7px -3px rgb(0 0 0 / 0.4);
+    --shadow-lg: 0 12px 24px -4px rgb(0 0 0 / 0.5), 0 8px 16px -6px rgb(0 0 0 / 0.4);
 
-    /* Bordas arredondadas */
-    --radius-sm: 6px;
-    --radius: 8px;
-    --radius-lg: 12px;
-    --radius-xl: 16px;
+    /* Bordas arredondadas - Mais suaves */
+    --radius-sm: 8px;
+    --radius: 10px;
+    --radius-lg: 14px;
+    --radius-xl: 20px;
 
     /* Layout */
     --sidebar-width: 56px;
-    --sidebar-width-expanded: 200px;
+    --sidebar-width-expanded: 220px;
     --header-height: 64px;
 }
 
@@ -112,7 +114,7 @@ svg:not([width]):not([height]) {
    ============================================ */
 .sidebar {
     width: var(--sidebar-width);
-    background: linear-gradient(180deg, #0a1628 0%, #0d1e36 100%);
+    background: linear-gradient(180deg, #080e1e 0%, #0b1528 50%, #0d1a30 100%);
     height: 100vh;
     position: fixed;
     left: 0;
@@ -120,9 +122,10 @@ svg:not([width]):not([height]) {
     display: flex;
     flex-direction: column;
     z-index: 100;
-    transition: width 0.25s cubic-bezier(.4,0,.2,1);
-    border-right: 1px solid var(--border);
+    transition: width 0.3s cubic-bezier(.4,0,.2,1);
+    border-right: 1px solid rgba(28, 42, 66, 0.6);
     overflow: hidden;
+    box-shadow: 2px 0 12px rgba(0, 0, 0, 0.3);
 }
 
 .sidebar:hover {
@@ -240,33 +243,51 @@ svg:not([width]):not([height]) {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 7px 0;
+    padding: 8px 0;
     justify-content: center;
-    color: rgba(255, 255, 255, 0.65);
+    color: rgba(255, 255, 255, 0.55);
     text-decoration: none;
     border-radius: var(--radius);
     cursor: pointer;
     transition: all 0.2s ease;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 500;
     white-space: nowrap;
     overflow: hidden;
     position: relative;
+    margin-bottom: 2px;
 }
 
 .sidebar:hover .nav-item {
-    padding: 6px 10px;
+    padding: 8px 12px;
     justify-content: flex-start;
 }
 
 .nav-item:hover {
-    background: rgba(255, 255, 255, 0.08);
-    color: white;
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.9);
 }
 
 .nav-item.active {
-    background: rgba(201, 162, 39, 0.15);
+    background: rgba(201, 162, 39, 0.12);
     color: var(--primary);
+    font-weight: 600;
+}
+
+.nav-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 20px;
+    background: var(--primary);
+    border-radius: 0 3px 3px 0;
+}
+
+.sidebar:hover .nav-item.active::before {
+    left: 0;
 }
 
 .nav-item svg {
@@ -408,12 +429,14 @@ svg:not([width]):not([height]) {
    ============================================ */
 .top-header {
     height: var(--header-height);
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
+    background: rgba(20, 28, 47, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(28, 42, 66, 0.5);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 24px;
+    padding: 0 28px;
     position: sticky;
     top: 0;
     z-index: 50;
@@ -546,15 +569,17 @@ svg:not([width]):not([height]) {
 }
 
 .page-title {
-    font-size: 24px;
+    font-size: 26px;
     font-weight: 700;
-    color: var(--primary);
-    margin-bottom: 4px;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+    letter-spacing: -0.3px;
 }
 
 .page-subtitle {
     color: var(--text-secondary);
     font-size: 14px;
+    line-height: 1.5;
 }
 
 /* Section titles with gold accent */
@@ -723,21 +748,39 @@ svg:not([width]):not([height]) {
 }
 
 /* ============================================
-   CARDS
+   CARDS - Modern Style
    ============================================ */
 .card {
     background: var(--surface);
     border-radius: var(--radius-lg);
     border: 1px solid var(--border);
     box-shadow: var(--shadow-sm);
+    transition: all 0.25s ease;
+    overflow: hidden;
+}
+
+.card:hover {
+    box-shadow: var(--shadow);
 }
 
 .card-header {
-    padding: 16px 20px;
-    border-bottom: 1px solid var(--border-light);
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
     display: flex;
     justify-content: space-between;
     align-items: center;
+    position: relative;
+}
+
+.card-header::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 24px;
+    width: 40px;
+    height: 2px;
+    background: var(--primary);
+    border-radius: 1px;
 }
 
 .card-title {
@@ -746,7 +789,8 @@ svg:not([width]):not([height]) {
     color: var(--text-primary);
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
+    letter-spacing: 0.1px;
 }
 
 .card-title svg {
@@ -758,73 +802,127 @@ svg:not([width]):not([height]) {
 .card-subtitle {
     font-size: 13px;
     color: var(--text-secondary);
-    margin-top: 2px;
+    margin-top: 4px;
 }
 
 .card-body {
-    padding: 20px;
+    padding: 24px;
 }
 
 .card-footer {
-    padding: 16px 20px;
-    border-top: 1px solid var(--border-light);
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
     background: var(--background);
     border-radius: 0 0 var(--radius-lg) var(--radius-lg);
 }
 
 /* ============================================
-   STAT CARDS
+   STAT CARDS - Modern Dashboard Style
    ============================================ */
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 16px;
-    margin-bottom: 24px;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+    margin-bottom: 28px;
 }
 
 .stat-card {
     background: var(--surface);
     border-radius: var(--radius-lg);
     border: 1px solid var(--border);
-    padding: 20px;
+    padding: 24px;
     display: flex;
-    flex-direction: column;
-    gap: 8px;
+    align-items: center;
+    gap: 18px;
+    transition: all 0.25s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--primary), transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.stat-card:hover {
+    border-color: var(--border-light);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.stat-card:hover::before {
+    opacity: 1;
 }
 
 .stat-card-header {
     display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
 }
 
 .stat-card-title {
     font-size: 13px;
     color: var(--text-secondary);
     font-weight: 500;
+    letter-spacing: 0.2px;
 }
 
 .stat-card-icon {
-    width: 32px;
-    height: 32px;
+    width: 52px;
+    height: 52px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: var(--radius);
-    background: var(--background);
-    color: var(--text-muted);
+    border-radius: 50%;
+    flex-shrink: 0;
+    order: -1;
 }
 
 .stat-card-icon svg {
-    width: 18px;
-    height: 18px;
+    width: 22px;
+    height: 22px;
+}
+
+/* Icon color variants */
+.stat-card:nth-child(1) .stat-card-icon {
+    background: rgba(201, 162, 39, 0.15);
+    color: var(--primary);
+}
+.stat-card:nth-child(2) .stat-card-icon {
+    background: rgba(96, 165, 250, 0.15);
+    color: #60a5fa;
+}
+.stat-card:nth-child(3) .stat-card-icon {
+    background: rgba(74, 222, 128, 0.15);
+    color: #4ade80;
+}
+.stat-card:nth-child(4) .stat-card-icon {
+    background: rgba(251, 191, 36, 0.15);
+    color: #fbbf24;
+}
+.stat-card:nth-child(5) .stat-card-icon {
+    background: rgba(168, 85, 247, 0.15);
+    color: #a855f7;
+}
+.stat-card:nth-child(6) .stat-card-icon {
+    background: rgba(244, 114, 182, 0.15);
+    color: #f472b6;
 }
 
 .stat-card-value {
-    font-size: 32px;
+    font-size: 30px;
     font-weight: 700;
     color: var(--text-primary);
     line-height: 1;
+    letter-spacing: -0.5px;
 }
 
 .stat-card-value.success { color: var(--success); }
@@ -835,8 +933,8 @@ svg:not([width]):not([height]) {
 
 /* Stat card com destaque dourado */
 .stat-card.highlight {
-    border-color: var(--primary);
-    background: linear-gradient(135deg, var(--surface) 0%, rgba(201, 162, 39, 0.1) 100%);
+    border-color: rgba(201, 162, 39, 0.3);
+    background: linear-gradient(135deg, var(--surface) 0%, rgba(201, 162, 39, 0.08) 100%);
 }
 
 .stat-card.highlight .stat-card-value {
@@ -846,10 +944,32 @@ svg:not([width]):not([height]) {
 .stat-card-subtitle {
     font-size: 12px;
     color: var(--text-muted);
+    margin-top: 2px;
+}
+
+.stat-card-trend {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 6px;
+    margin-top: 4px;
+}
+
+.stat-card-trend.up {
+    color: var(--success);
+    background: var(--success-bg);
+}
+
+.stat-card-trend.down {
+    color: var(--danger);
+    background: var(--danger-bg);
 }
 
 /* ============================================
-   TABLES
+   TABLES - Modern Dashboard Style
    ============================================ */
 .table-container {
     background: var(--surface);
@@ -859,7 +979,7 @@ svg:not([width]):not([height]) {
 }
 
 .table-header {
-    padding: 16px 20px;
+    padding: 20px 24px;
     border-bottom: 1px solid var(--border);
     display: flex;
     justify-content: space-between;
@@ -872,45 +992,82 @@ table {
 }
 
 thead {
-    background: var(--background);
+    background: rgba(12, 18, 34, 0.6);
 }
 
 th {
-    padding: 12px 16px;
+    padding: 14px 20px;
     text-align: left;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
-    color: var(--text-secondary);
+    color: var(--text-muted);
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.8px;
     border-bottom: 1px solid var(--border);
 }
 
 td {
-    padding: 14px 16px;
+    padding: 16px 20px;
     font-size: 13px;
     color: var(--text-primary);
-    border-bottom: 1px solid var(--border-light);
+    border-bottom: 1px solid rgba(28, 42, 66, 0.5);
 }
 
 tr:last-child td {
     border-bottom: none;
 }
 
+tr {
+    transition: background 0.15s ease;
+}
+
 tr:hover {
-    background: var(--surface-hover);
+    background: rgba(26, 39, 64, 0.5);
+}
+
+/* Table avatar for director/user names */
+.table-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: white;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+    margin-right: 10px;
+    vertical-align: middle;
+    flex-shrink: 0;
+}
+
+.table-avatar.blue { background: #3b82f6; }
+.table-avatar.green { background: #22c55e; }
+.table-avatar.purple { background: #8b5cf6; }
+.table-avatar.orange { background: #f59e0b; }
+
+.table-name-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.table-name-cell strong {
+    font-weight: 600;
 }
 
 /* ============================================
-   BADGES
+   BADGES - Modern Pill Style
    ============================================ */
 .badge {
     display: inline-flex;
     align-items: center;
-    padding: 4px 10px;
+    padding: 4px 12px;
     border-radius: 20px;
     font-size: 12px;
-    font-weight: 500;
+    font-weight: 600;
+    letter-spacing: 0.2px;
 }
 
 .badge-success {
@@ -966,16 +1123,16 @@ tr:hover {
 }
 
 /* ============================================
-   CHARTS
+   CHARTS - Modern Style
    ============================================ */
 .chart-container {
-    padding: 20px;
+    padding: 24px;
 }
 
 .bar-chart {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 14px;
 }
 
 .bar-item {
@@ -994,32 +1151,155 @@ tr:hover {
 
 .bar-track {
     flex: 1;
-    height: 24px;
-    background: var(--background);
-    border-radius: var(--radius);
+    height: 28px;
+    background: rgba(12, 18, 34, 0.5);
+    border-radius: 6px;
     overflow: hidden;
 }
 
 .bar-fill {
     height: 100%;
-    background: var(--primary);
-    border-radius: var(--radius);
+    background: linear-gradient(90deg, var(--primary), var(--primary-light));
+    border-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    padding-right: 8px;
+    padding-right: 10px;
     font-size: 12px;
     font-weight: 600;
     color: white;
     min-width: 30px;
-    transition: width 0.5s ease;
+    transition: width 0.6s cubic-bezier(.4,0,.2,1);
+    box-shadow: 0 0 8px rgba(201, 162, 39, 0.3);
 }
 
 .bar-value {
     font-size: 13px;
-    font-weight: 600;
+    font-weight: 700;
     color: var(--text-primary);
     width: 40px;
+    text-align: right;
+}
+
+/* ============================================
+   STACKED BAR CHART - Vertical (Dashboard Style)
+   ============================================ */
+.stacked-chart-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.stacked-chart-legend {
+    display: flex;
+    gap: 20px;
+    justify-content: flex-end;
+    padding: 0 4px;
+}
+
+.stacked-chart-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.stacked-chart-legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+}
+
+.stacked-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+    height: 220px;
+    padding: 0 4px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+}
+
+.stacked-bars::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: repeating-linear-gradient(
+        180deg,
+        transparent,
+        transparent calc(25% - 1px),
+        rgba(28, 42, 66, 0.3) calc(25% - 1px),
+        rgba(28, 42, 66, 0.3) 25%
+    );
+    pointer-events: none;
+}
+
+.stacked-bar-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    position: relative;
+    z-index: 1;
+}
+
+.stacked-bar-segments {
+    width: 32px;
+    display: flex;
+    flex-direction: column-reverse;
+    border-radius: 4px 4px 0 0;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.stacked-bar-segments:hover {
+    filter: brightness(1.2);
+    transform: scaleX(1.1);
+}
+
+.stacked-bar-seg {
+    width: 100%;
+    transition: height 0.6s cubic-bezier(.4,0,.2,1);
+}
+
+.stacked-bar-seg.primary {
+    background: linear-gradient(180deg, var(--primary-light), var(--primary));
+}
+
+.stacked-bar-seg.secondary {
+    background: linear-gradient(180deg, #7c9ac4, #4a6fa5);
+}
+
+.stacked-bar-seg.tertiary {
+    background: linear-gradient(180deg, #7ee8aa, #4ade80);
+}
+
+.stacked-bar-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 10px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.stacked-y-axis {
+    position: absolute;
+    left: -30px;
+    top: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.stacked-y-label {
+    font-size: 10px;
+    color: var(--text-muted);
     text-align: right;
 }
 
@@ -3703,14 +3983,14 @@ tr:hover {
                 </svg>
             </div>
             <div class="login-title">IRIS</div>
-            <div class="login-subtitle">Instituto de Regulacao, Inovacao e Sustentabilidade</div>
+            <div class="login-subtitle">Instituto de Regulação, Inovação e Sustentabilidade</div>
 
             <div id="login-error" class="login-error"></div>
 
             <form id="login-form" autocomplete="on">
                 <div class="login-field">
-                    <label for="login-username">Usuario</label>
-                    <input type="text" id="login-username" name="username" autocomplete="username" placeholder="Digite seu usuario" required>
+                    <label for="login-username">Usuário</label>
+                    <input type="text" id="login-username" name="username" autocomplete="username" placeholder="Digite seu usuário" required>
                 </div>
                 <div class="login-field">
                     <label for="login-password">Senha</label>
@@ -3752,7 +4032,7 @@ tr:hover {
 
             <div class="sidebar-nav">
                 <div class="nav-section">
-                    <div class="nav-section-title">Decisoes</div>
+                    <div class="nav-section-title">Decisões</div>
                     <a data-route="/deliberacoes" class="nav-item" data-tooltip="Deliberações">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                         <span class="nav-label">Deliberações</span>
@@ -3882,8 +4162,8 @@ tr:hover {
                 <div id="page-metricas" class="page-view">
                     <div class="page-header">
                         <div class="page-title-section">
-                            <h1 class="page-title">Analytics Avancado</h1>
-                            <p class="page-subtitle">Visao consolidada e metricas inteligentes das deliberacoes regulatorias</p>
+                            <h1 class="page-title">Analytics Avançado</h1>
+                            <p class="page-subtitle">Visão consolidada e métricas inteligentes das deliberações regulatórias</p>
                         </div>
                         <div class="page-actions">
                             <div class="filter-group">
@@ -4032,35 +4312,64 @@ tr:hover {
                             </div>
                         </div>
 
-                        <!-- Grafico de Donut - Pauta Interna vs Externa -->
+                        <!-- Gráfico de Barras Empilhadas - Tendência de Decisões -->
                         <div class="card">
                             <div class="card-header">
                                 <div>
-                                    <h2 class="card-title">Pauta Interna vs Externa</h2>
-                                    <p class="card-subtitle">Proporção de assuntos</p>
+                                    <h2 class="card-title">
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                                        Tendência de Decisões
+                                    </h2>
+                                    <p class="card-subtitle">Deferidos vs Indeferidos por reunião</p>
                                 </div>
                             </div>
                             <div class="card-body">
-                                <div style="display: flex; align-items: center; justify-content: center; min-height: 280px; gap: 40px;">
-                                    <div class="donut-chart">
-                                        <svg width="200" height="200" viewBox="0 0 200 200">
-                                            <circle class="donut-bg" cx="100" cy="100" r="70"/>
-                                            <circle class="donut-fill" cx="100" cy="100" r="70" stroke-dasharray="440" stroke-dashoffset="135"/>
-                                            <circle cx="100" cy="100" r="70" fill="none" stroke="#0f172a" stroke-width="30" stroke-dasharray="440" stroke-dashoffset="305" style="transform: rotate(-90deg); transform-origin: center;"/>
-                                        </svg>
-                                        <div class="donut-center">
-                                            <div class="donut-value">69%</div>
-                                            <div class="donut-label">Externa</div>
+                                <div class="stacked-chart-container">
+                                    <div class="stacked-chart-legend">
+                                        <div class="stacked-chart-legend-item">
+                                            <div class="stacked-chart-legend-dot" style="background: linear-gradient(180deg, var(--primary-light), var(--primary));"></div>
+                                            <span>Deferidos</span>
+                                        </div>
+                                        <div class="stacked-chart-legend-item">
+                                            <div class="stacked-chart-legend-dot" style="background: linear-gradient(180deg, #7c9ac4, #4a6fa5);"></div>
+                                            <span>Indeferidos</span>
                                         </div>
                                     </div>
-                                    <div class="chart-legend">
-                                        <div class="legend-item">
-                                            <div class="legend-color" style="background: var(--primary);"></div>
-                                            <span>Pauta Interna: 31%</span>
+                                    <div class="stacked-bars">
+                                        <div class="stacked-bar-group">
+                                            <div class="stacked-bar-segments">
+                                                <div class="stacked-bar-seg primary" style="height: 80px;"></div>
+                                                <div class="stacked-bar-seg secondary" style="height: 50px;"></div>
+                                            </div>
+                                            <span class="stacked-bar-label">RO 1</span>
                                         </div>
-                                        <div class="legend-item">
-                                            <div class="legend-color" style="background: var(--text-primary);"></div>
-                                            <span>Pauta Externa: 69%</span>
+                                        <div class="stacked-bar-group">
+                                            <div class="stacked-bar-segments">
+                                                <div class="stacked-bar-seg primary" style="height: 100px;"></div>
+                                                <div class="stacked-bar-seg secondary" style="height: 65px;"></div>
+                                            </div>
+                                            <span class="stacked-bar-label">RO 2</span>
+                                        </div>
+                                        <div class="stacked-bar-group">
+                                            <div class="stacked-bar-segments">
+                                                <div class="stacked-bar-seg primary" style="height: 70px;"></div>
+                                                <div class="stacked-bar-seg secondary" style="height: 45px;"></div>
+                                            </div>
+                                            <span class="stacked-bar-label">RO 3</span>
+                                        </div>
+                                        <div class="stacked-bar-group">
+                                            <div class="stacked-bar-segments">
+                                                <div class="stacked-bar-seg primary" style="height: 120px;"></div>
+                                                <div class="stacked-bar-seg secondary" style="height: 70px;"></div>
+                                            </div>
+                                            <span class="stacked-bar-label">RO 4</span>
+                                        </div>
+                                        <div class="stacked-bar-group">
+                                            <div class="stacked-bar-segments">
+                                                <div class="stacked-bar-seg primary" style="height: 90px;"></div>
+                                                <div class="stacked-bar-seg secondary" style="height: 55px;"></div>
+                                            </div>
+                                            <span class="stacked-bar-label">RO 5</span>
                                         </div>
                                     </div>
                                 </div>
@@ -4088,12 +4397,12 @@ tr:hover {
                                         <th>Total Votos</th>
                                         <th>Favoráveis</th>
                                         <th>Contrários</th>
-                                        <th>Taxa Aprovacao</th>
+                                        <th>Taxa de Aprovação</th>
                                     </tr>
                                 </thead>
                                 <tbody id="metricas-diretores-tbody">
                                     <tr>
-                                        <td><strong>Andre Isper Rodrigues Barnabe</strong></td>
+                                        <td><div class="table-name-cell"><span class="table-avatar">AI</span><strong>André Isper Rodrigues Barnabé</strong></div></td>
                                         <td>Diretor-Presidente</td>
                                         <td>--</td>
                                         <td><span class="badge badge-success">--</span></td>
@@ -4101,15 +4410,15 @@ tr:hover {
                                         <td><strong style="color: var(--text-muted);">--</strong></td>
                                     </tr>
                                     <tr>
-                                        <td><strong>Diego Albert Zanatto</strong></td>
-                                        <td>Diretor de Fiscalizacao</td>
+                                        <td><div class="table-name-cell"><span class="table-avatar blue">DZ</span><strong>Diego Albert Zanatto</strong></div></td>
+                                        <td>Diretor de Fiscalização</td>
                                         <td>--</td>
                                         <td><span class="badge badge-success">--</span></td>
                                         <td><span class="badge badge-danger">--</span></td>
                                         <td><strong style="color: var(--text-muted);">--</strong></td>
                                     </tr>
                                     <tr>
-                                        <td><strong>Fernanda Esbizaro Rodrigues Rudnik</strong></td>
+                                        <td><div class="table-name-cell"><span class="table-avatar green">FR</span><strong>Fernanda Esbizaro Rodrigues Rudnik</strong></div></td>
                                         <td>Diretora de Planejamento</td>
                                         <td>--</td>
                                         <td><span class="badge badge-success">--</span></td>
@@ -4117,7 +4426,7 @@ tr:hover {
                                         <td><strong style="color: var(--text-muted);">--</strong></td>
                                     </tr>
                                     <tr>
-                                        <td><strong>Raquel Franca Carneiro</strong></td>
+                                        <td><div class="table-name-cell"><span class="table-avatar purple">RC</span><strong>Raquel França Carneiro</strong></div></td>
                                         <td>Diretora de Investimentos</td>
                                         <td>--</td>
                                         <td><span class="badge badge-success">--</span></td>
@@ -4338,7 +4647,7 @@ tr:hover {
                     <div class="page-header">
                         <div class="page-title-section">
                             <h1 class="page-title">Monitoramento de Mandatos</h1>
-                            <p class="page-subtitle">Composicao atual e historico do Conselho Diretor da ARTESP</p>
+                            <p class="page-subtitle">Composição atual e histórico do Conselho Diretor da ARTESP</p>
                         </div>
                     </div>
 
@@ -4909,7 +5218,7 @@ tr:hover {
                         </div>
                         <div class="stat-card">
                             <div class="stat-card-header">
-                                <span class="stat-card-title">Transparencia</span>
+                                <span class="stat-card-title">Transparência</span>
                             </div>
                             <div class="stat-card-value success">92%</div>
                         </div>
@@ -5387,7 +5696,7 @@ tr:hover {
                                         <div class="alert-title">Tempo de processamento acima da media</div>
                                         <span class="alert-severity severity-low">BAIXA</span>
                                     </div>
-                                    <div class="alert-body">15 processos ultrapassaram o prazo medio de 45 dias para julgamento, com tempo medio de 78 dias. Pode indicar necessidade de revisao de procedimentos.</div>
+                                    <div class="alert-body">15 processos ultrapassaram o prazo médio de 45 dias para julgamento, com tempo médio de 78 dias. Pode indicar necessidade de revisão de procedimentos.</div>
                                     <div class="alert-meta">
                                         <span>Detectado: 03/02/2026</span>
                                         <span>Processos afetados: 15</span>
@@ -5779,21 +6088,21 @@ tr:hover {
                                 <span class="stat-card-title">Estados Ativos</span>
                             </div>
                             <div class="stat-card-value">12</div>
-                            <div class="stat-card-subtitle">Com deliberacoes</div>
+                            <div class="stat-card-subtitle">Com deliberações</div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-card-header">
                                 <span class="stat-card-title">Estado Mais Ativo</span>
                             </div>
                             <div class="stat-card-value">SP</div>
-                            <div class="stat-card-subtitle">456 deliberacoes</div>
+                            <div class="stat-card-subtitle">456 deliberações</div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-card-header">
                                 <span class="stat-card-title">Regiao Sudeste</span>
                             </div>
                             <div class="stat-card-value">68%</div>
-                            <div class="stat-card-subtitle">Das deliberacoes</div>
+                            <div class="stat-card-subtitle">Das deliberações</div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-card-header">
@@ -6047,7 +6356,7 @@ tr:hover {
                     <div class="page-header">
                         <div class="page-title-section">
                             <h1 class="page-title">Hub de Noticias Regulatorias</h1>
-                            <p class="page-subtitle">Feed em tempo real de 25+ agencias reguladoras brasileiras</p>
+                            <p class="page-subtitle">Feed em tempo real de 25+ agências reguladoras brasileiras</p>
                         </div>
                         <div class="page-actions">
                             <select class="filter-select" id="news-filter-esfera">
@@ -6132,7 +6441,7 @@ tr:hover {
                     <div class="page-header">
                         <div class="page-title-section">
                             <h1 class="page-title">Dossies Automaticos</h1>
-                            <p class="page-subtitle">Perfil inteligente de empresas com historico regulatorio completo</p>
+                            <p class="page-subtitle">Perfil inteligente de empresas com histórico regulatório completo</p>
                         </div>
                         <div class="page-actions">
                             <input type="text" class="filter-select" id="dossie-search" placeholder="Buscar empresa..." style="min-width: 250px;">
@@ -6149,7 +6458,7 @@ tr:hover {
                             <div class="stat-card-value primary" id="dossie-empresas">16</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-card-header"><span class="stat-card-title">Deliberacoes Analisadas</span></div>
+                            <div class="stat-card-header"><span class="stat-card-title">Deliberações Analisadas</span></div>
                             <div class="stat-card-value" id="dossie-deliberacoes">--</div>
                         </div>
                         <div class="stat-card">
@@ -6192,7 +6501,7 @@ tr:hover {
                     <div class="page-header">
                         <div class="page-title-section">
                             <h1 class="page-title">Cruzamento de Dados</h1>
-                            <p class="page-subtitle">Correlacao inteligente entre noticias, deliberacoes e entidades reguladas</p>
+                            <p class="page-subtitle">Correlação inteligente entre notícias, deliberações e entidades reguladas</p>
                         </div>
                         <div class="page-actions">
                             <select class="filter-select" id="radar-periodo">
@@ -6376,23 +6685,23 @@ tr:hover {
 
             // Update breadcrumb
             const pageNames = {
-                '/metricas': 'Analytics Avancado',
-                '/deliberacoes': 'Deliberacoes',
-                '/monitor': 'Monitor de Reunioes',
+                '/metricas': 'Analytics Avançado',
+                '/deliberacoes': 'Deliberações',
+                '/monitor': 'Monitor de Reuniões',
                 '/diretores': 'Monitoramento de Mandatos',
                 '/jurimetria': 'Jurimetria',
-                '/governanca': 'Governanca Regulatoria',
-                '/noticias': 'Hub de Noticias Regulatorias',
-                '/dossies': 'Dossies Automaticos',
+                '/governanca': 'Governança Regulatória',
+                '/noticias': 'Hub de Notícias Regulatórias',
+                '/dossies': 'Dossiês Automáticos',
                 '/cruzamento': 'Cruzamento de Dados',
                 '/boletim': 'Boletim Mensal',
                 '/auditoria': 'Auditoria Forense',
-                '/documentos': 'Upload + Analise de PDFs',
-                '/upload': 'Upload + Analise de PDFs',
-                '/analise': 'Upload + Analise de PDFs',
-                '/agencias': 'Agencias Reguladoras',
+                '/documentos': 'Upload + Análise de PDFs',
+                '/upload': 'Upload + Análise de PDFs',
+                '/analise': 'Upload + Análise de PDFs',
+                '/agencias': 'Agências Reguladoras',
                 '/mapa': 'Mapa do Brasil',
-                '/conexoes': 'Rede de Conexoes'
+                '/conexoes': 'Rede de Conexões'
             };
             const breadcrumb = document.getElementById('breadcrumb-page');
             if (breadcrumb) {
@@ -6617,7 +6926,7 @@ tr:hover {
             this.render();
         },
 
-        // Normaliza campos para o modelo padrao
+        // Normaliza campos para o modelo padrão
         normalize(d) {
             const resultado = d.resultado || d.decisao || '-';
             const classificacao = d.classificacao || (d.pauta_interna ? 'Pauta Interna da Agência' : 'Pleito Externo');
@@ -6967,7 +7276,7 @@ tr:hover {
     const PageDiretores = {
         diretores: [
             { nome: 'Andre Isper Rodrigues Barnabe', iniciais: 'AI', cargo: 'Diretor-Presidente', inicio: '2024-09-10', fim: null, ativo: true, reunioes: 0, votos: 0, favoravel: 0, contrario: 0 },
-            { nome: 'Diego Albert Zanatto', iniciais: 'DZ', cargo: 'Diretor de Fiscalizacao', inicio: '2024-09-10', fim: null, ativo: true, reunioes: 0, votos: 0, favoravel: 0, contrario: 0 },
+            { nome: 'Diego Albert Zanatto', iniciais: 'DZ', cargo: 'Diretor de Fiscalização', inicio: '2024-09-10', fim: null, ativo: true, reunioes: 0, votos: 0, favoravel: 0, contrario: 0 },
             { nome: 'Fernanda Esbizaro Rodrigues Rudnik', iniciais: 'FR', cargo: 'Diretora de Planejamento', inicio: '2024-09-10', fim: null, ativo: true, reunioes: 0, votos: 0, favoravel: 0, contrario: 0 },
             { nome: 'Raquel Franca Carneiro', iniciais: 'RC', cargo: 'Diretora de Investimentos', inicio: '2024-09-10', fim: null, ativo: true, reunioes: 0, votos: 0, favoravel: 0, contrario: 0 },
             { nome: 'Milton Persoli', iniciais: 'MP', cargo: 'Diretor-Presidente (anterior)', inicio: '2021-01-15', fim: '2024-09-09', ativo: false, reunioes: 156, votos: 245, favoravel: 78.2, contrario: 15.5 },
@@ -7067,7 +7376,7 @@ tr:hover {
     // PAGE: Jurimetria
     // ============================================
     const PageJurimetria = {
-        // Diretores base com informacoes estaticas
+        // Diretores base com informações estáticas
         diretoresBase: [
             {
                 nome: 'Andre Isper Rodrigues Barnabe',
@@ -7156,7 +7465,7 @@ tr:hover {
                         ...base,
                         tempoMandato,
                         participacoes,
-                        relatorias: 0, // Nao disponivel na API ainda
+                        relatorias: 0, // Não disponível na API ainda
                         favoravel: votosFavor,
                         desfavoravel: votosContra,
                         vista: 0,
@@ -7982,26 +8291,26 @@ tr:hover {
             ];
             const tipos = ['resolucao', 'deliberacao', 'consulta', 'decreto', 'geral'];
             const titulos = [
-                { t: 'ANEEL aprova revisao tarifaria extraordinaria para distribuidoras do Nordeste', tipo: 'resolucao', f: 0 },
-                { t: 'ANATEL abre consulta publica sobre regulamentacao do 5G em areas rurais', tipo: 'consulta', f: 1 },
-                { t: 'ANP publica novas regras para exploracao de petroleo no pre-sal', tipo: 'resolucao', f: 2 },
-                { t: 'ARTESP delibera sobre reequilibrio economico-financeiro da Ecovias', tipo: 'deliberacao', f: 3 },
-                { t: 'ANVISA atualiza normas de registro de medicamentos biologicos', tipo: 'resolucao', f: 4 },
-                { t: 'Publicado no DOU decreto que altera marco regulatorio do saneamento', tipo: 'decreto', f: 5 },
-                { t: 'CADE analisa fusao entre operadoras de telecomunicacoes', tipo: 'deliberacao', f: 6 },
-                { t: 'TCU identifica irregularidades em contratos de concessao rodoviaria', tipo: 'auditoria', f: 7 },
-                { t: 'ANTT aprova reajuste de tarifas de pedagio em rodovias federais', tipo: 'resolucao', f: 8 },
-                { t: 'CGU publica relatorio de auditoria sobre agencias reguladoras', tipo: 'auditoria', f: 9 },
-                { t: 'ARSESP define metodologia para revisao tarifaria de gas canalizado', tipo: 'resolucao', f: 10 },
-                { t: 'CVM edita instrucao sobre divulgacao de informacoes por companhias abertas', tipo: 'resolucao', f: 11 },
-                { t: 'ANEEL publica resultado de leilao de energia eletrica A-5', tipo: 'geral', f: 0 },
-                { t: 'ARTESP aplica penalidades a concessionarias por descumprimento de metas', tipo: 'deliberacao', f: 3 },
-                { t: 'ANP realiza rodada de licitacoes para blocos exploratorios', tipo: 'geral', f: 2 },
-                { t: 'ANATEL publica relatorio de qualidade das operadoras de banda larga', tipo: 'geral', f: 1 },
-                { t: 'TCU suspende contrato por sobrepreco em obra de infraestrutura', tipo: 'auditoria', f: 7 },
-                { t: 'ANVISA autoriza uso emergencial de novo tratamento oncologico', tipo: 'resolucao', f: 4 },
-                { t: 'CADE aplica multa milionaria por formacao de cartel em licitacoes', tipo: 'deliberacao', f: 6 },
-                { t: 'DOU publica medida provisoria sobre reforma tributaria para o setor energetico', tipo: 'decreto', f: 5 }
+                { t: 'ANEEL aprova revisão tarifária extraordinária para distribuidoras do Nordeste', tipo: 'resolucao', f: 0 },
+                { t: 'ANATEL abre consulta pública sobre regulamentação do 5G em áreas rurais', tipo: 'consulta', f: 1 },
+                { t: 'ANP publica novas regras para exploração de petróleo no pré-sal', tipo: 'resolucao', f: 2 },
+                { t: 'ARTESP delibera sobre reequilíbrio econômico-financeiro da Ecovias', tipo: 'deliberacao', f: 3 },
+                { t: 'ANVISA atualiza normas de registro de medicamentos biológicos', tipo: 'resolucao', f: 4 },
+                { t: 'Publicado no DOU decreto que altera marco regulatório do saneamento', tipo: 'decreto', f: 5 },
+                { t: 'CADE analisa fusão entre operadoras de telecomunicações', tipo: 'deliberacao', f: 6 },
+                { t: 'TCU identifica irregularidades em contratos de concessão rodoviária', tipo: 'auditoria', f: 7 },
+                { t: 'ANTT aprova reajuste de tarifas de pedágio em rodovias federais', tipo: 'resolucao', f: 8 },
+                { t: 'CGU publica relatório de auditoria sobre agências reguladoras', tipo: 'auditoria', f: 9 },
+                { t: 'ARSESP define metodologia para revisão tarifária de gás canalizado', tipo: 'resolucao', f: 10 },
+                { t: 'CVM edita instrução sobre divulgação de informações por companhias abertas', tipo: 'resolucao', f: 11 },
+                { t: 'ANEEL publica resultado de leilão de energia elétrica A-5', tipo: 'geral', f: 0 },
+                { t: 'ARTESP aplica penalidades a concessionárias por descumprimento de metas', tipo: 'deliberacao', f: 3 },
+                { t: 'ANP realiza rodada de licitações para blocos exploratórios', tipo: 'geral', f: 2 },
+                { t: 'ANATEL publica relatório de qualidade das operadoras de banda larga', tipo: 'geral', f: 1 },
+                { t: 'TCU suspende contrato por sobrepreço em obra de infraestrutura', tipo: 'auditoria', f: 7 },
+                { t: 'ANVISA autoriza uso emergencial de novo tratamento oncológico', tipo: 'resolucao', f: 4 },
+                { t: 'CADE aplica multa milionária por formação de cartel em licitações', tipo: 'deliberacao', f: 6 },
+                { t: 'DOU publica medida provisória sobre reforma tributária para o setor energético', tipo: 'decreto', f: 5 }
             ];
 
             const hoje = new Date();
@@ -8011,7 +8320,7 @@ tr:hover {
                 d.setHours(d.getHours() - i * 3);
                 return {
                     titulo: item.t,
-                    resumo: 'Publicacao oficial da ' + f.agencia + ' referente a regulamentacao do setor. Documento disponivel para consulta no portal da agencia.',
+                    resumo: 'Publicação oficial da ' + f.agencia + ' referente à regulamentação do setor. Documento disponível para consulta no portal da agência.',
                     agencia: f.agencia,
                     fonte: f.agencia,
                     cor: f.cor,
@@ -8109,7 +8418,7 @@ tr:hover {
                         '<div><div class="dossie-card-name">' + e.nome + '</div><div class="dossie-card-sector">' + e.setor + '</div></div>' +
                     '</div>' +
                     '<div class="dossie-stats-row">' +
-                        '<div class="dossie-stat"><div class="dossie-stat-value">' + e.deliberacoes + '</div><div class="dossie-stat-label">Deliberacoes</div></div>' +
+                        '<div class="dossie-stat"><div class="dossie-stat-value">' + e.deliberacoes + '</div><div class="dossie-stat-label">Deliberações</div></div>' +
                         '<div class="dossie-stat"><div class="dossie-stat-value" style="color: ' + taxaCor + ';">' + (taxa > 0 ? taxa + '%' : '--') + '</div><div class="dossie-stat-label">Aprovacao</div></div>' +
                         '<div class="dossie-stat"><div class="dossie-stat-value">' + (e.noticias || '--') + '</div><div class="dossie-stat-label">Noticias</div></div>' +
                     '</div>' +
@@ -8137,7 +8446,7 @@ tr:hover {
                     const r = dossie.resumo || {};
                     body.innerHTML =
                         '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-bottom: 20px;">' +
-                            '<div class="dossie-stat" style="padding: 16px; background: var(--surface);"><div class="dossie-stat-value" style="font-size: 24px; color: var(--primary);">' + (r.totalDeliberacoes || 0) + '</div><div class="dossie-stat-label">Total Deliberacoes</div></div>' +
+                            '<div class="dossie-stat" style="padding: 16px; background: var(--surface);"><div class="dossie-stat-value" style="font-size: 24px; color: var(--primary);">' + (r.totalDeliberacoes || 0) + '</div><div class="dossie-stat-label">Total Deliberações</div></div>' +
                             '<div class="dossie-stat" style="padding: 16px; background: var(--surface);"><div class="dossie-stat-value" style="font-size: 24px; color: var(--success);">' + (r.deferidos || 0) + '</div><div class="dossie-stat-label">Deferidas</div></div>' +
                             '<div class="dossie-stat" style="padding: 16px; background: var(--surface);"><div class="dossie-stat-value" style="font-size: 24px; color: var(--danger);">' + (r.indeferidos || 0) + '</div><div class="dossie-stat-label">Indeferidas</div></div>' +
                             '<div class="dossie-stat" style="padding: 16px; background: var(--surface);"><div class="dossie-stat-value" style="font-size: 24px; color: var(--info);">' + (r.totalConexoes || 0) + '</div><div class="dossie-stat-label">Conexoes</div></div>' +
@@ -8156,23 +8465,23 @@ tr:hover {
                                 t.itens.slice(0, 3).map(item => '<div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">' + (item.numero || '') + ' - ' + (item.resultado || '') + ' - ' + (item.interessado || '') + '</div>').join('') +
                             '</div>').join('') +
                         '</div>' : '') +
-                        '<div style="padding: 12px; background: var(--surface); border-radius: var(--radius); border-left: 4px solid ' + e.cor + ';"><p style="color: var(--text-secondary); font-size: 13px;">Dossie gerado automaticamente pelo IRIS a partir de deliberacoes extraidas de PDFs da ARTESP. Gerado em: ' + (dossie.geradoEm ? new Date(dossie.geradoEm).toLocaleString('pt-BR') : 'agora') + '</p></div>';
+                        '<div style="padding: 12px; background: var(--surface); border-radius: var(--radius); border-left: 4px solid ' + e.cor + ';"><p style="color: var(--text-secondary); font-size: 13px;">Dossiê gerado automaticamente pelo IRIS a partir de deliberações extraídas de PDFs da ARTESP. Gerado em: ' + (dossie.geradoEm ? new Date(dossie.geradoEm).toLocaleString('pt-BR') : 'agora') + '</p></div>';
                     return;
                 }
             } catch (err) {
-                console.log('Dossie API falhou, mostrando dados basicos');
+                console.log('Dossiê API falhou, mostrando dados básicos');
             }
 
             // Fallback: show basic data
             const taxa = e.deliberacoes > 0 ? Math.round((e.deferidas || 0) / e.deliberacoes * 100) : 0;
             body.innerHTML =
                 '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-bottom: 20px;">' +
-                    '<div class="dossie-stat" style="padding: 16px; background: var(--surface);"><div class="dossie-stat-value" style="font-size: 24px; color: var(--primary);">' + e.deliberacoes + '</div><div class="dossie-stat-label">Total Deliberacoes</div></div>' +
+                    '<div class="dossie-stat" style="padding: 16px; background: var(--surface);"><div class="dossie-stat-value" style="font-size: 24px; color: var(--primary);">' + e.deliberacoes + '</div><div class="dossie-stat-label">Total Deliberações</div></div>' +
                     '<div class="dossie-stat" style="padding: 16px; background: var(--surface);"><div class="dossie-stat-value" style="font-size: 24px; color: var(--success);">' + (e.deferidas || '--') + '</div><div class="dossie-stat-label">Deferidas</div></div>' +
                     '<div class="dossie-stat" style="padding: 16px; background: var(--surface);"><div class="dossie-stat-value" style="font-size: 24px; color: var(--danger);">' + (e.indeferidas || '--') + '</div><div class="dossie-stat-label">Indeferidas</div></div>' +
                     '<div class="dossie-stat" style="padding: 16px; background: var(--surface);"><div class="dossie-stat-value" style="font-size: 24px; color: var(--info);">' + (e.noticias || '--') + '</div><div class="dossie-stat-label">Noticias</div></div>' +
                 '</div>' +
-                '<div style="padding: 16px; background: var(--surface); border-radius: var(--radius); border-left: 4px solid ' + e.cor + ';"><p style="color: var(--text-secondary); font-size: 13px;">Dossie gerado a partir dos dados disponiveis. Faca upload de mais PDFs para enriquecer o perfil.</p></div>';
+                '<div style="padding: 16px; background: var(--surface); border-radius: var(--radius); border-left: 4px solid ' + e.cor + ';"><p style="color: var(--text-secondary); font-size: 13px;">Dossiê gerado a partir dos dados disponíveis. Faça upload de mais PDFs para enriquecer o perfil.</p></div>';
 
             detail.scrollIntoView({ behavior: 'smooth', block: 'start' });
         },
@@ -8201,7 +8510,7 @@ tr:hover {
                         '<div><div class="dossie-card-name">' + e.nome + '</div><div class="dossie-card-sector">' + (e.setor || '') + '</div></div>' +
                     '</div>' +
                     '<div class="dossie-stats-row">' +
-                        '<div class="dossie-stat"><div class="dossie-stat-value">' + e.deliberacoes + '</div><div class="dossie-stat-label">Deliberacoes</div></div>' +
+                        '<div class="dossie-stat"><div class="dossie-stat-value">' + e.deliberacoes + '</div><div class="dossie-stat-label">Deliberações</div></div>' +
                         '<div class="dossie-stat"><div class="dossie-stat-value" style="color: ' + taxaCor + ';">' + (taxa > 0 ? taxa + '%' : '--') + '</div><div class="dossie-stat-label">Aprovacao</div></div>' +
                         '<div class="dossie-stat"><div class="dossie-stat-value">' + (e.noticias || '--') + '</div><div class="dossie-stat-label">Noticias</div></div>' +
                     '</div>' +
@@ -8288,12 +8597,12 @@ tr:hover {
 
         generateDemoCorrelacoes() {
             this.correlacoes = [
-                { score: 92, noticia: 'ARTESP aprova revisao tarifaria da Ecovias', deliberacao: 'DEL 145/2026 - Deferido pedido de reequilibrio', motivos: ['Empresa: Ecorodovias', 'Tema: reequilibrio', 'Agencia: ARTESP'] },
-                { score: 85, noticia: 'ANEEL publica resultado de leilao de energia A-5', deliberacao: 'RES 234/2026 - Homologacao de tarifas', motivos: ['Tema: tarifa', 'Agencia: ANEEL'] },
-                { score: 78, noticia: 'TCU identifica irregularidades em concessoes', deliberacao: 'DEL 098/2026 - Penalidade aplicada a concessionaria', motivos: ['Tema: fiscalizacao', 'Empresa: CCR'] },
-                { score: 71, noticia: 'CADE analisa concentracao no setor de telecom', deliberacao: 'DEL 067/2026 - Parecer sobre fusao de operadoras', motivos: ['Tema: telecom', 'Agencia: CADE'] },
-                { score: 65, noticia: 'ANP publica novas regras para pre-sal', deliberacao: 'RES 312/2026 - Regulamentacao de exploracao', motivos: ['Tema: petroleo', 'Agencia: ANP'] },
-                { score: 58, noticia: 'ARTESP delibera sobre investimentos rodoviarios', deliberacao: 'DEL 201/2026 - Aprovacao de plano de obras', motivos: ['Tema: obras', 'Agencia: ARTESP'] }
+                { score: 92, noticia: 'ARTESP aprova revisão tarifária da Ecovias', deliberacao: 'DEL 145/2026 - Deferido pedido de reequilíbrio', motivos: ['Empresa: Ecorodovias', 'Tema: reequilíbrio', 'Agência: ARTESP'] },
+                { score: 85, noticia: 'ANEEL publica resultado de leilão de energia A-5', deliberacao: 'RES 234/2026 - Homologação de tarifas', motivos: ['Tema: tarifa', 'Agência: ANEEL'] },
+                { score: 78, noticia: 'TCU identifica irregularidades em concessões', deliberacao: 'DEL 098/2026 - Penalidade aplicada a concessionária', motivos: ['Tema: fiscalização', 'Empresa: CCR'] },
+                { score: 71, noticia: 'CADE analisa concentração no setor de telecom', deliberacao: 'DEL 067/2026 - Parecer sobre fusão de operadoras', motivos: ['Tema: telecom', 'Agência: CADE'] },
+                { score: 65, noticia: 'ANP publica novas regras para pré-sal', deliberacao: 'RES 312/2026 - Regulamentação de exploração', motivos: ['Tema: petróleo', 'Agência: ANP'] },
+                { score: 58, noticia: 'ARTESP delibera sobre investimentos rodoviários', deliberacao: 'DEL 201/2026 - Aprovação de plano de obras', motivos: ['Tema: obras', 'Agência: ARTESP'] }
             ];
         },
 
@@ -8858,12 +9167,12 @@ tr:hover {
     // ============================================
     const PageAgencias = {
         agencias: [
-            { id: 'artesp', nome: 'ARTESP', nomeCompleto: 'Agencia de Transporte do Estado de SP', decisoes: 1247, aprovadas: 892, pendentes: 45, cor: '#c9a227', diretores: [] },
-            { id: 'antt', nome: 'ANTT', nomeCompleto: 'Agencia Nacional de Transportes Terrestres', decisoes: 3456, aprovadas: 2890, pendentes: 123, cor: '#4ADE80', diretores: [] },
-            { id: 'anm', nome: 'ANM', nomeCompleto: 'Agencia Nacional de Mineracao', decisoes: 892, aprovadas: 654, pendentes: 78, cor: '#60A5FA', diretores: [] },
-            { id: 'aneel', nome: 'ANEEL', nomeCompleto: 'Agencia Nacional de Energia Eletrica', decisoes: 2134, aprovadas: 1823, pendentes: 89, cor: '#F472B6', diretores: [] },
-            { id: 'antaq', nome: 'ANTAQ', nomeCompleto: 'Agencia Nacional de Transp. Aquaviarios', decisoes: 567, aprovadas: 432, pendentes: 34, cor: '#A78BFA', diretores: [] },
-            { id: 'arsesp', nome: 'ARSESP', nomeCompleto: 'Agencia Reguladora de Saneamento SP', decisoes: 345, aprovadas: 298, pendentes: 12, cor: '#FB923C', diretores: [] }
+            { id: 'artesp', nome: 'ARTESP', nomeCompleto: 'Agência de Transporte do Estado de SP', decisoes: 1247, aprovadas: 892, pendentes: 45, cor: '#c9a227', diretores: [] },
+            { id: 'antt', nome: 'ANTT', nomeCompleto: 'Agência Nacional de Transportes Terrestres', decisoes: 3456, aprovadas: 2890, pendentes: 123, cor: '#4ADE80', diretores: [] },
+            { id: 'anm', nome: 'ANM', nomeCompleto: 'Agência Nacional de Mineração', decisoes: 892, aprovadas: 654, pendentes: 78, cor: '#60A5FA', diretores: [] },
+            { id: 'aneel', nome: 'ANEEL', nomeCompleto: 'Agência Nacional de Energia Elétrica', decisoes: 2134, aprovadas: 1823, pendentes: 89, cor: '#F472B6', diretores: [] },
+            { id: 'antaq', nome: 'ANTAQ', nomeCompleto: 'Agência Nacional de Transp. Aquaviários', decisoes: 567, aprovadas: 432, pendentes: 34, cor: '#A78BFA', diretores: [] },
+            { id: 'arsesp', nome: 'ARSESP', nomeCompleto: 'Agência Reguladora de Saneamento SP', decisoes: 345, aprovadas: 298, pendentes: 12, cor: '#FB923C', diretores: [] }
         ],
 
         async init() {
@@ -8899,7 +9208,7 @@ tr:hover {
                     this.atualizarTabela();
                 }
             } catch (e) {
-                console.log('Agencias: API indisponivel, mantendo dados demo');
+                console.log('Agências: API indisponível, mantendo dados demo');
             }
         },
 
@@ -9131,7 +9440,7 @@ tr:hover {
             const agencias = estado.agencias ? estado.agencias.join(', ') : 'Sem agencias mapeadas';
             const tooltip = document.getElementById('map-tooltip');
             if (tooltip) {
-                tooltip.innerHTML = '<strong>' + estado.nome + ' (' + code + ')</strong><br>Decisoes: ' + estado.decisoes.toLocaleString('pt-BR') + '<br>Taxa Aprovacao: ' + estado.taxa + '%<br>Agencias: ' + agencias;
+                tooltip.innerHTML = '<strong>' + estado.nome + ' (' + code + ')</strong><br>Decisões: ' + estado.decisoes.toLocaleString('pt-BR') + '<br>Taxa Aprovação: ' + estado.taxa + '%<br>Agências: ' + agencias;
                 tooltip.style.display = 'block';
             }
         }
@@ -9841,11 +10150,11 @@ tr:hover {
                     if (result.success) {
                         this.showPlatform();
                     } else {
-                        errorEl.textContent = result.error || 'Credenciais invalidas';
+                        errorEl.textContent = result.error || 'Credenciais inválidas';
                         errorEl.classList.add('visible');
                     }
                 } catch {
-                    errorEl.textContent = 'Erro de conexao com o servidor';
+                    errorEl.textContent = 'Erro de conexão com o servidor';
                     errorEl.classList.add('visible');
                 }
 
