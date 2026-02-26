@@ -3842,38 +3842,38 @@ tr:hover {
                                         <th>Taxa Aprovacao</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody id="metricas-diretores-tbody">
                                     <tr>
-                                        <td><strong>Milton Persoli</strong></td>
+                                        <td><strong>Andre Isper Rodrigues Barnabe</strong></td>
                                         <td>Diretor-Presidente</td>
-                                        <td>245</td>
-                                        <td><span class="badge badge-success">192</span></td>
-                                        <td><span class="badge badge-danger">38</span></td>
-                                        <td><strong style="color: var(--success);">78.2%</strong></td>
+                                        <td>--</td>
+                                        <td><span class="badge badge-success">--</span></td>
+                                        <td><span class="badge badge-danger">--</span></td>
+                                        <td><strong style="color: var(--text-muted);">--</strong></td>
                                     </tr>
                                     <tr>
-                                        <td><strong>Marcos Antonio Ribeiro</strong></td>
-                                        <td>Diretor de Fiscalização</td>
-                                        <td>198</td>
-                                        <td><span class="badge badge-success">130</span></td>
-                                        <td><span class="badge badge-danger">56</span></td>
-                                        <td><strong style="color: var(--success);">65.4%</strong></td>
+                                        <td><strong>Diego Albert Zanatto</strong></td>
+                                        <td>Diretor de Fiscalizacao</td>
+                                        <td>--</td>
+                                        <td><span class="badge badge-success">--</span></td>
+                                        <td><span class="badge badge-danger">--</span></td>
+                                        <td><strong style="color: var(--text-muted);">--</strong></td>
                                     </tr>
                                     <tr>
-                                        <td><strong>Patricia Vanzolini</strong></td>
+                                        <td><strong>Fernanda Esbizaro Rodrigues Rudnik</strong></td>
                                         <td>Diretora de Planejamento</td>
-                                        <td>212</td>
-                                        <td><span class="badge badge-success">174</span></td>
-                                        <td><span class="badge badge-danger">26</span></td>
-                                        <td><strong style="color: var(--success);">82.1%</strong></td>
+                                        <td>--</td>
+                                        <td><span class="badge badge-success">--</span></td>
+                                        <td><span class="badge badge-danger">--</span></td>
+                                        <td><strong style="color: var(--text-muted);">--</strong></td>
                                     </tr>
                                     <tr>
-                                        <td><strong>Carlos Eduardo Silva</strong></td>
-                                        <td>Diretor de Investimentos</td>
-                                        <td>187</td>
-                                        <td><span class="badge badge-success">133</span></td>
-                                        <td><span class="badge badge-danger">42</span></td>
-                                        <td><strong style="color: var(--success);">71.2%</strong></td>
+                                        <td><strong>Raquel Franca Carneiro</strong></td>
+                                        <td>Diretora de Investimentos</td>
+                                        <td>--</td>
+                                        <td><span class="badge badge-success">--</span></td>
+                                        <td><span class="badge badge-danger">--</span></td>
+                                        <td><strong style="color: var(--text-muted);">--</strong></td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -6397,10 +6397,19 @@ tr:hover {
     const PageMonitor = {
         reunioes: [],
         refreshInterval: null,
+        monitoramentoAtivo: false,
 
         async init() {
             const page = document.getElementById('page-monitor');
             page.classList.add('active');
+
+            // Check monitoring status
+            try {
+                const status = await API.get('/api/monitoramento/status');
+                if (status) {
+                    this.monitoramentoAtivo = status.ativo || false;
+                }
+            } catch (e) {}
 
             await this.load();
 
@@ -7222,30 +7231,97 @@ tr:hover {
     const PageMetricas = {
         async init() {
             const page = document.getElementById('page-metricas');
-            if (page) {
-                page.classList.add('active');
-            }
+            if (page) page.classList.add('active');
             await this.carregarDados();
         },
 
         async carregarDados() {
             try {
-                const [metricas, health] = await Promise.all([
-                    API.get('/api/metricas'),
-                    API.get('/api/health')
+                const [resumo, porDiretor, porTema, institucional] = await Promise.all([
+                    API.get('/api/metricas/resumo'),
+                    API.get('/api/metricas/por-diretor'),
+                    API.get('/api/metricas/por-tema'),
+                    API.get('/api/metricas/institucional')
                 ]);
-                if (metricas) {
-                    this.atualizarCards(metricas);
-                }
+                if (resumo) this.atualizarCards(resumo);
+                if (porDiretor?.diretores) this.atualizarDiretores(porDiretor.diretores);
+                if (porTema?.temas) this.atualizarTemas(porTema.temas);
+                if (institucional) this.atualizarDonut(institucional);
             } catch (e) {
                 console.log('Metricas API indisponivel, mantendo dados visuais');
             }
         },
 
         atualizarCards(data) {
-            if (data.totalDeliberacoes) {
-                const el = document.querySelector('#page-metricas .stat-card-value');
-                if (el) el.textContent = data.totalDeliberacoes;
+            const cards = document.querySelectorAll('#page-metricas .stat-card-value');
+            if (cards[0] && data.totalDeliberacoes !== undefined) cards[0].textContent = data.totalDeliberacoes;
+            if (cards[1] && data.pautaExterna !== undefined) {
+                const pctExt = data.totalDeliberacoes > 0 ? Math.round((data.pautaExterna / data.totalDeliberacoes) * 100) : 0;
+                cards[1].textContent = pctExt + '%';
+                const sub1 = cards[1].parentElement?.querySelector('.stat-card-subtitle');
+                if (sub1) sub1.textContent = (100 - pctExt) + '% atos internos';
+            }
+            if (cards[2] && data.taxaDeferimento !== undefined) {
+                cards[2].textContent = data.taxaDeferimento + '%';
+                cards[2].className = 'stat-card-value ' + (data.taxaDeferimento >= 50 ? 'success' : 'danger');
+                const sub2 = cards[2].parentElement?.querySelector('.stat-card-subtitle');
+                if (sub2) sub2.textContent = (100 - data.taxaDeferimento) + '% indeferidos';
+            }
+            if (cards[3]) {
+                const reunioes = data.totalPdfs || 5;
+                cards[3].textContent = reunioes;
+                const sub0 = cards[0].parentElement?.querySelector('.stat-card-subtitle');
+                if (sub0) sub0.textContent = 'Em ' + reunioes + ' reunioes';
+            }
+        },
+
+        atualizarDiretores(diretores) {
+            const tbody = document.getElementById('metricas-diretores-tbody');
+            if (!tbody || diretores.length === 0) return;
+            tbody.innerHTML = diretores.sort((a, b) => b.totalVotos - a.totalVotos).slice(0, 10).map(d => {
+                const taxa = d.totalVotos > 0 ? Math.round((d.votosFavor / d.totalVotos) * 100) : 0;
+                const taxaCor = taxa >= 60 ? 'var(--success)' : taxa >= 40 ? 'var(--warning)' : 'var(--danger)';
+                return '<tr>' +
+                    '<td><strong>' + d.nome + '</strong></td>' +
+                    '<td>Diretor(a)</td>' +
+                    '<td>' + d.totalVotos + '</td>' +
+                    '<td><span class="badge badge-success">' + d.votosFavor + '</span></td>' +
+                    '<td><span class="badge badge-danger">' + d.votosContra + '</span></td>' +
+                    '<td><strong style="color: ' + taxaCor + ';">' + taxa + '%</strong></td>' +
+                '</tr>';
+            }).join('');
+        },
+
+        atualizarTemas(temas) {
+            const container = document.querySelector('#page-metricas .bar-chart');
+            if (!container || temas.length === 0) return;
+            const maxVal = Math.max(...temas.map(t => t.total), 1);
+            container.innerHTML = temas.slice(0, 8).map(t => {
+                const pct = Math.round((t.total / maxVal) * 100);
+                return '<div class="bar-item">' +
+                    '<span class="bar-label">' + t.tema + '</span>' +
+                    '<div class="bar-track"><div class="bar-fill" style="width: ' + pct + '%;"></div></div>' +
+                    '<span class="bar-value">' + t.total + '</span>' +
+                '</div>';
+            }).join('');
+        },
+
+        atualizarDonut(data) {
+            const pctExt = data.percentualPautaExterna || 69;
+            const pctInt = data.percentualPautaInterna || 31;
+            const donutValue = document.querySelector('#page-metricas .donut-value');
+            const donutLabel = document.querySelector('#page-metricas .donut-label');
+            if (donutValue) donutValue.textContent = pctExt + '%';
+            if (donutLabel) donutLabel.textContent = 'Externa';
+            const legends = document.querySelectorAll('#page-metricas .legend-item span');
+            if (legends[0]) legends[0].textContent = 'Pauta Interna: ' + pctInt + '%';
+            if (legends[1]) legends[1].textContent = 'Pauta Externa: ' + pctExt + '%';
+            // Update SVG donut
+            const fillCircle = document.querySelector('#page-metricas .donut-fill');
+            if (fillCircle) {
+                const circumference = 440;
+                const offset = circumference - (circumference * pctExt / 100);
+                fillCircle.setAttribute('stroke-dashoffset', offset);
             }
         },
 
@@ -7261,14 +7337,50 @@ tr:hover {
     // PAGE: Boletim
     // ============================================
     const PageBoletim = {
-        init() {
+        async init() {
             const page = document.getElementById('page-boletim');
             page.classList.add('active');
+            await this.carregarDados();
+        },
+
+        async carregarDados() {
+            try {
+                const [resumo, porTema] = await Promise.all([
+                    API.get('/api/metricas/resumo'),
+                    API.get('/api/metricas/por-tema')
+                ]);
+                if (resumo) this.atualizarCards(resumo);
+                if (porTema?.temas) this.atualizarTemas(porTema.temas);
+            } catch (e) {
+                console.log('Boletim: API indisponivel, mantendo dados visuais');
+            }
+        },
+
+        atualizarCards(data) {
+            const cards = document.querySelectorAll('#page-boletim .stat-card-value');
+            if (cards[0] && data.totalPdfs !== undefined) cards[0].textContent = data.totalPdfs || '--';
+            if (cards[1] && data.totalDeliberacoes !== undefined) cards[1].textContent = data.totalDeliberacoes;
+            if (cards[2] && data.deferidos !== undefined) cards[2].textContent = data.deferidos;
+            if (cards[3] && data.indeferidos !== undefined) cards[3].textContent = data.indeferidos;
+        },
+
+        atualizarTemas(temas) {
+            const container = document.querySelector('#page-boletim .bar-chart');
+            if (!container || temas.length === 0) return;
+            const maxVal = Math.max(...temas.map(t => t.total), 1);
+            container.innerHTML = temas.slice(0, 5).map(t => {
+                const pct = Math.round((t.total / maxVal) * 100);
+                return '<div class="bar-item">' +
+                    '<span class="bar-label">' + t.tema + '</span>' +
+                    '<div class="bar-track"><div class="bar-fill" style="width: ' + pct + '%;"></div></div>' +
+                    '<span class="bar-value">' + t.total + '</span>' +
+                '</div>';
+            }).join('');
         },
 
         gerar() {
-            const mes = document.getElementById('boletim-mes')?.value;
-            alert('Gerando boletim para ' + mes + '...\nEsta funcionalidade sera conectada a API de geracao de boletins.');
+            const mes = document.getElementById('boletim-mes')?.value || 'atual';
+            window.print();
         },
 
         imprimir() {
@@ -7497,7 +7609,8 @@ tr:hover {
     // PAGE: Dossies Automaticos
     // ============================================
     const PageDossies = {
-        empresas: [
+        empresas: [],
+        demoEmpresas: [
             { nome: 'CCR', sigla: 'CCR', setor: 'Rodovias', cor: '#60a5fa', deliberacoes: 34, deferidas: 26, indeferidas: 8, noticias: 12 },
             { nome: 'Ecorodovias', sigla: 'ECO', setor: 'Rodovias', cor: '#4ade80', deliberacoes: 28, deferidas: 22, indeferidas: 6, noticias: 9 },
             { nome: 'Arteris', sigla: 'ART', setor: 'Rodovias', cor: '#fbbf24', deliberacoes: 19, deferidas: 15, indeferidas: 4, noticias: 7 },
@@ -7512,45 +7625,79 @@ tr:hover {
             { nome: 'Comgas', sigla: 'COM', setor: 'Gas', cor: '#f472b6', deliberacoes: 14, deferidas: 12, indeferidas: 2, noticias: 4 }
         ],
 
-        init() {
+        async init() {
             const page = document.getElementById('page-dossies');
             page.classList.add('active');
+            await this.carregarDados();
+        },
+
+        async carregarDados() {
+            try {
+                const [entidadesResp, empresasResp] = await Promise.all([
+                    API.get('/api/dossie-entidades'),
+                    API.get('/api/empresas/conhecidas')
+                ]);
+                if (entidadesResp?.success && entidadesResp.entidades?.length > 0) {
+                    const cores = ['#60a5fa','#4ade80','#fbbf24','#a78bfa','#22d3ee','#f87171','#fb923c','#34d399','#818cf8','#2dd4bf','#e879f9','#f472b6'];
+                    const empresasConhecidas = empresasResp?.empresas || [];
+                    this.empresas = entidadesResp.entidades
+                        .filter(e => e.tipo === 'empresa')
+                        .map((e, i) => {
+                            const conhecida = empresasConhecidas.find(ec => e.nome.toLowerCase().includes(ec.nome?.toLowerCase() || ''));
+                            return {
+                                nome: e.nome,
+                                sigla: e.nome.split(' ')[0].substring(0, 3).toUpperCase(),
+                                setor: conhecida?.setor || 'Regulado',
+                                cor: cores[i % cores.length],
+                                deliberacoes: e.deliberacoes || 0,
+                                deferidas: 0,
+                                indeferidas: 0,
+                                noticias: 0
+                            };
+                        });
+                    if (this.empresas.length === 0) this.empresas = this.demoEmpresas;
+                } else {
+                    this.empresas = this.demoEmpresas;
+                }
+            } catch (e) {
+                this.empresas = this.demoEmpresas;
+            }
             this.renderGrid();
             this.updateStats();
         },
 
         updateStats() {
             const totalDelibs = this.empresas.reduce((s, e) => s + e.deliberacoes, 0);
-            const totalNews = this.empresas.reduce((s, e) => s + e.noticias, 0);
+            const totalNews = this.empresas.reduce((s, e) => s + (e.noticias || 0), 0);
             const el1 = document.getElementById('dossie-empresas');
             const el2 = document.getElementById('dossie-deliberacoes');
             const el3 = document.getElementById('dossie-noticias');
             if (el1) el1.textContent = this.empresas.length;
             if (el2) el2.textContent = totalDelibs;
-            if (el3) el3.textContent = totalNews;
+            if (el3) el3.textContent = totalNews || '--';
         },
 
         renderGrid() {
             const grid = document.getElementById('dossie-grid');
             if (!grid) return;
             grid.innerHTML = this.empresas.map((e, i) => {
-                const taxa = e.deliberacoes > 0 ? Math.round(e.deferidas / e.deliberacoes * 100) : 0;
-                const taxaCor = taxa >= 70 ? 'var(--success)' : taxa >= 50 ? 'var(--warning)' : 'var(--danger)';
+                const taxa = e.deliberacoes > 0 ? Math.round((e.deferidas || 0) / e.deliberacoes * 100) : 0;
+                const taxaCor = taxa >= 70 ? 'var(--success)' : taxa >= 50 ? 'var(--warning)' : taxa > 0 ? 'var(--danger)' : 'var(--text-muted)';
                 return '<div class="dossie-card" onclick="App.PageDossies.showDetail(' + i + ')">' +
                     '<div class="dossie-card-header">' +
-                        '<div class="dossie-avatar" style="background: ' + e.cor + ';">' + e.sigla.substring(0, 2) + '</div>' +
+                        '<div class="dossie-avatar" style="background: ' + e.cor + ';">' + (e.sigla || e.nome).substring(0, 2) + '</div>' +
                         '<div><div class="dossie-card-name">' + e.nome + '</div><div class="dossie-card-sector">' + e.setor + '</div></div>' +
                     '</div>' +
                     '<div class="dossie-stats-row">' +
                         '<div class="dossie-stat"><div class="dossie-stat-value">' + e.deliberacoes + '</div><div class="dossie-stat-label">Deliberacoes</div></div>' +
-                        '<div class="dossie-stat"><div class="dossie-stat-value" style="color: ' + taxaCor + ';">' + taxa + '%</div><div class="dossie-stat-label">Aprovacao</div></div>' +
-                        '<div class="dossie-stat"><div class="dossie-stat-value">' + e.noticias + '</div><div class="dossie-stat-label">Noticias</div></div>' +
+                        '<div class="dossie-stat"><div class="dossie-stat-value" style="color: ' + taxaCor + ';">' + (taxa > 0 ? taxa + '%' : '--') + '</div><div class="dossie-stat-label">Aprovacao</div></div>' +
+                        '<div class="dossie-stat"><div class="dossie-stat-value">' + (e.noticias || '--') + '</div><div class="dossie-stat-label">Noticias</div></div>' +
                     '</div>' +
                 '</div>';
             }).join('');
         },
 
-        showDetail(index) {
+        async showDetail(index) {
             const e = this.empresas[index];
             if (!e) return;
             const detail = document.getElementById('dossie-detail');
@@ -7559,43 +7706,64 @@ tr:hover {
             if (!detail || !body) return;
 
             detail.style.display = 'block';
-            if (title) title.innerHTML = '<span style="color: ' + e.cor + ';">' + e.sigla + '</span> — Dossie: ' + e.nome;
+            if (title) title.innerHTML = '<span style="color: ' + e.cor + ';">' + (e.sigla || e.nome).substring(0, 3) + '</span> — Dossie: ' + e.nome;
 
-            const taxa = e.deliberacoes > 0 ? Math.round(e.deferidas / e.deliberacoes * 100) : 0;
+            // Try to load rich dossie from API
+            body.innerHTML = '<div style="text-align: center; padding: 30px; color: var(--text-muted);"><div class="spinner" style="margin: 0 auto 12px;"></div>Carregando dossie...</div>';
+
+            try {
+                const dossie = await API.get('/api/dossie/' + encodeURIComponent(e.nome));
+                if (dossie?.success) {
+                    const r = dossie.resumo || {};
+                    body.innerHTML =
+                        '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-bottom: 20px;">' +
+                            '<div class="dossie-stat" style="padding: 16px; background: var(--surface);"><div class="dossie-stat-value" style="font-size: 24px; color: var(--primary);">' + (r.totalDeliberacoes || 0) + '</div><div class="dossie-stat-label">Total Deliberacoes</div></div>' +
+                            '<div class="dossie-stat" style="padding: 16px; background: var(--surface);"><div class="dossie-stat-value" style="font-size: 24px; color: var(--success);">' + (r.deferidos || 0) + '</div><div class="dossie-stat-label">Deferidas</div></div>' +
+                            '<div class="dossie-stat" style="padding: 16px; background: var(--surface);"><div class="dossie-stat-value" style="font-size: 24px; color: var(--danger);">' + (r.indeferidos || 0) + '</div><div class="dossie-stat-label">Indeferidas</div></div>' +
+                            '<div class="dossie-stat" style="padding: 16px; background: var(--surface);"><div class="dossie-stat-value" style="font-size: 24px; color: var(--info);">' + (r.totalConexoes || 0) + '</div><div class="dossie-stat-label">Conexoes</div></div>' +
+                        '</div>' +
+                        (dossie.conexoes?.temas?.length > 0 ? '<div style="margin-bottom: 16px;"><h3 style="margin-bottom: 8px; font-size: 14px; color: var(--text-secondary);">Temas Principais</h3>' +
+                            dossie.conexoes.temas.slice(0, 5).map(t => '<span class="news-badge" style="background: var(--primary-bg); color: var(--primary); margin: 2px;">' + t.nome + ' (' + t.ocorrencias + ')</span>').join('') +
+                        '</div>' : '') +
+                        (dossie.conexoes?.diretores?.length > 0 ? '<div style="margin-bottom: 16px;"><h3 style="margin-bottom: 8px; font-size: 14px; color: var(--text-secondary);">Diretores Envolvidos</h3>' +
+                            dossie.conexoes.diretores.slice(0, 5).map(d => '<span class="news-badge" style="background: var(--info-bg); color: var(--info); margin: 2px;">' + d.nome + ' (' + d.deliberacoes + ' delib.)</span>').join('') +
+                        '</div>' : '') +
+                        (dossie.alertas?.length > 0 ? '<div style="margin-bottom: 16px;">' +
+                            dossie.alertas.map(a => '<div style="padding: 10px; margin-bottom: 8px; background: ' + (a.nivel === 'alto' ? 'rgba(248,113,113,0.15)' : 'rgba(251,191,36,0.15)') + '; border-radius: 6px; border-left: 3px solid ' + (a.nivel === 'alto' ? 'var(--danger)' : 'var(--warning)') + ';"><strong style="font-size: 12px;">' + a.mensagem + '</strong><div style="font-size: 11px; color: var(--text-muted);">' + (a.detalhe || '') + '</div></div>').join('') +
+                        '</div>' : '') +
+                        (dossie.timeline?.length > 0 ? '<div style="margin-bottom: 16px;"><h3 style="margin-bottom: 8px; font-size: 14px; color: var(--text-secondary);">Timeline</h3>' +
+                            dossie.timeline.slice(0, 5).map(t => '<div style="padding: 8px 12px; margin-bottom: 6px; background: var(--surface); border-radius: 6px; border-left: 3px solid var(--primary);"><div style="font-size: 12px; color: var(--primary); font-weight: 600;">' + t.data + '</div>' +
+                                t.itens.slice(0, 3).map(item => '<div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">' + (item.numero || '') + ' - ' + (item.resultado || '') + ' - ' + (item.interessado || '') + '</div>').join('') +
+                            '</div>').join('') +
+                        '</div>' : '') +
+                        '<div style="padding: 12px; background: var(--surface); border-radius: var(--radius); border-left: 4px solid ' + e.cor + ';"><p style="color: var(--text-secondary); font-size: 13px;">Dossie gerado automaticamente pelo IRIS a partir de deliberacoes extraidas de PDFs da ARTESP. Gerado em: ' + (dossie.geradoEm ? new Date(dossie.geradoEm).toLocaleString('pt-BR') : 'agora') + '</p></div>';
+                    return;
+                }
+            } catch (err) {
+                console.log('Dossie API falhou, mostrando dados basicos');
+            }
+
+            // Fallback: show basic data
+            const taxa = e.deliberacoes > 0 ? Math.round((e.deferidas || 0) / e.deliberacoes * 100) : 0;
             body.innerHTML =
                 '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-bottom: 20px;">' +
-                    '<div class="dossie-stat" style="padding: 16px; background: var(--surface);"><div class="dossie-stat-value" style="font-size: 24px; color: var(--primary);">' + e.deliberacoes + '</div><div class="dossie-stat-label">Total de Deliberacoes</div></div>' +
-                    '<div class="dossie-stat" style="padding: 16px; background: var(--surface);"><div class="dossie-stat-value" style="font-size: 24px; color: var(--success);">' + e.deferidas + '</div><div class="dossie-stat-label">Deferidas</div></div>' +
-                    '<div class="dossie-stat" style="padding: 16px; background: var(--surface);"><div class="dossie-stat-value" style="font-size: 24px; color: var(--danger);">' + e.indeferidas + '</div><div class="dossie-stat-label">Indeferidas</div></div>' +
-                    '<div class="dossie-stat" style="padding: 16px; background: var(--surface);"><div class="dossie-stat-value" style="font-size: 24px; color: var(--info);">' + e.noticias + '</div><div class="dossie-stat-label">Mencoes em Noticias</div></div>' +
+                    '<div class="dossie-stat" style="padding: 16px; background: var(--surface);"><div class="dossie-stat-value" style="font-size: 24px; color: var(--primary);">' + e.deliberacoes + '</div><div class="dossie-stat-label">Total Deliberacoes</div></div>' +
+                    '<div class="dossie-stat" style="padding: 16px; background: var(--surface);"><div class="dossie-stat-value" style="font-size: 24px; color: var(--success);">' + (e.deferidas || '--') + '</div><div class="dossie-stat-label">Deferidas</div></div>' +
+                    '<div class="dossie-stat" style="padding: 16px; background: var(--surface);"><div class="dossie-stat-value" style="font-size: 24px; color: var(--danger);">' + (e.indeferidas || '--') + '</div><div class="dossie-stat-label">Indeferidas</div></div>' +
+                    '<div class="dossie-stat" style="padding: 16px; background: var(--surface);"><div class="dossie-stat-value" style="font-size: 24px; color: var(--info);">' + (e.noticias || '--') + '</div><div class="dossie-stat-label">Noticias</div></div>' +
                 '</div>' +
-                '<div style="margin-bottom: 16px;">' +
-                    '<h3 style="margin-bottom: 8px; font-size: 14px; color: var(--text-secondary);">Taxa de Aprovacao</h3>' +
-                    '<div style="background: var(--surface); border-radius: 8px; height: 24px; overflow: hidden;">' +
-                        '<div style="width: ' + taxa + '%; height: 100%; background: ' + (taxa >= 70 ? 'var(--success)' : taxa >= 50 ? 'var(--warning)' : 'var(--danger)') + '; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; color: #000;">' + taxa + '%</div>' +
-                    '</div>' +
-                '</div>' +
-                '<div style="margin-bottom: 16px;">' +
-                    '<h3 style="margin-bottom: 8px; font-size: 14px; color: var(--text-secondary);">Setor de Atuacao</h3>' +
-                    '<span class="news-badge" style="background: ' + e.cor + '22; color: ' + e.cor + ';">' + e.setor + '</span>' +
-                '</div>' +
-                '<div style="padding: 16px; background: var(--surface); border-radius: var(--radius); border-left: 4px solid ' + e.cor + ';">' +
-                    '<p style="color: var(--text-secondary); font-size: 13px;">Este dossie e gerado automaticamente a partir do cruzamento de deliberacoes extraidas de PDFs da ARTESP e noticias capturadas de fontes regulatorias. Os dados sao atualizados conforme novas reunioes sao processadas pelo sistema IRIS.</p>' +
-                '</div>';
+                '<div style="padding: 16px; background: var(--surface); border-radius: var(--radius); border-left: 4px solid ' + e.cor + ';"><p style="color: var(--text-secondary); font-size: 13px;">Dossie gerado a partir dos dados disponiveis. Faca upload de mais PDFs para enriquecer o perfil.</p></div>';
 
             detail.scrollIntoView({ behavior: 'smooth', block: 'start' });
         },
 
         buscar() {
             const termo = document.getElementById('dossie-search')?.value?.toLowerCase() || '';
-            if (!termo) {
-                this.renderGrid();
-                return;
-            }
+            if (!termo) { this.renderGrid(); return; }
             const filtered = this.empresas.filter(e =>
                 e.nome.toLowerCase().includes(termo) ||
-                e.sigla.toLowerCase().includes(termo) ||
-                e.setor.toLowerCase().includes(termo)
+                (e.sigla || '').toLowerCase().includes(termo) ||
+                (e.setor || '').toLowerCase().includes(termo)
             );
             const grid = document.getElementById('dossie-grid');
             if (!grid) return;
@@ -7603,20 +7771,19 @@ tr:hover {
                 grid.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-muted); grid-column: 1 / -1;">Nenhuma empresa encontrada para "' + termo + '"</div>';
                 return;
             }
-            // Re-render with filtered
             grid.innerHTML = filtered.map((e) => {
                 const origIdx = this.empresas.indexOf(e);
-                const taxa = e.deliberacoes > 0 ? Math.round(e.deferidas / e.deliberacoes * 100) : 0;
-                const taxaCor = taxa >= 70 ? 'var(--success)' : taxa >= 50 ? 'var(--warning)' : 'var(--danger)';
+                const taxa = e.deliberacoes > 0 ? Math.round((e.deferidas || 0) / e.deliberacoes * 100) : 0;
+                const taxaCor = taxa >= 70 ? 'var(--success)' : taxa >= 50 ? 'var(--warning)' : taxa > 0 ? 'var(--danger)' : 'var(--text-muted)';
                 return '<div class="dossie-card" onclick="App.PageDossies.showDetail(' + origIdx + ')">' +
                     '<div class="dossie-card-header">' +
-                        '<div class="dossie-avatar" style="background: ' + e.cor + ';">' + e.sigla.substring(0, 2) + '</div>' +
-                        '<div><div class="dossie-card-name">' + e.nome + '</div><div class="dossie-card-sector">' + e.setor + '</div></div>' +
+                        '<div class="dossie-avatar" style="background: ' + e.cor + ';">' + (e.sigla || e.nome).substring(0, 2) + '</div>' +
+                        '<div><div class="dossie-card-name">' + e.nome + '</div><div class="dossie-card-sector">' + (e.setor || '') + '</div></div>' +
                     '</div>' +
                     '<div class="dossie-stats-row">' +
                         '<div class="dossie-stat"><div class="dossie-stat-value">' + e.deliberacoes + '</div><div class="dossie-stat-label">Deliberacoes</div></div>' +
-                        '<div class="dossie-stat"><div class="dossie-stat-value" style="color: ' + taxaCor + ';">' + taxa + '%</div><div class="dossie-stat-label">Aprovacao</div></div>' +
-                        '<div class="dossie-stat"><div class="dossie-stat-value">' + e.noticias + '</div><div class="dossie-stat-label">Noticias</div></div>' +
+                        '<div class="dossie-stat"><div class="dossie-stat-value" style="color: ' + taxaCor + ';">' + (taxa > 0 ? taxa + '%' : '--') + '</div><div class="dossie-stat-label">Aprovacao</div></div>' +
+                        '<div class="dossie-stat"><div class="dossie-stat-value">' + (e.noticias || '--') + '</div><div class="dossie-stat-label">Noticias</div></div>' +
                     '</div>' +
                 '</div>';
             }).join('');
@@ -7629,25 +7796,62 @@ tr:hover {
     const PageCruzamento = {
         radarData: [],
         correlacoes: [],
-        alertas: [
-            { id: 1, tipo: 'empresa', valor: 'CCR', ativo: true },
-            { id: 2, tipo: 'tema', valor: 'reequilibrio', ativo: true },
-            { id: 3, tipo: 'agencia', valor: 'ARTESP', ativo: true },
-            { id: 4, tipo: 'empresa', valor: 'Petrobras', ativo: false },
-            { id: 5, tipo: 'tema', valor: 'tarifa', ativo: true }
-        ],
+        alertas: [],
 
-        init() {
+        async init() {
             const page = document.getElementById('page-cruzamento');
             page.classList.add('active');
-            this.generateData();
+            await this.carregarDados();
+        },
+
+        async carregarDados() {
+            try {
+                const [radarResp, alertasResp, alertasVerif] = await Promise.all([
+                    API.get('/api/inteligencia/radar?dias=30'),
+                    API.get('/api/inteligencia/alertas'),
+                    API.get('/api/inteligencia/alertas/verificar')
+                ]);
+                if (radarResp?.success && radarResp.temas?.length > 0) {
+                    this.radarData = radarResp.temas;
+                } else {
+                    this.generateDemoRadar();
+                }
+                if (alertasResp?.success) {
+                    this.alertas = alertasResp.alertas || [];
+                } else {
+                    this.alertas = [
+                        { id: 1, tipo: 'empresa', valor: 'CCR', ativo: true },
+                        { id: 2, tipo: 'tema', valor: 'reequilibrio', ativo: true },
+                        { id: 3, tipo: 'agencia', valor: 'ARTESP', ativo: true }
+                    ];
+                }
+                if (alertasVerif?.success && alertasVerif.novosAlertas?.length > 0) {
+                    this.correlacoes = alertasVerif.novosAlertas.map(a => ({
+                        score: a.confianca || 75,
+                        noticia: a.noticia?.titulo || a.titulo || 'Alerta detectado',
+                        deliberacao: a.match || a.descricao || '',
+                        motivos: a.tags || [a.tipo + ': ' + a.valor]
+                    }));
+                } else {
+                    this.generateDemoCorrelacoes();
+                }
+            } catch (e) {
+                console.log('Cruzamento: API indisponivel, mostrando dados demo');
+                this.generateDemoRadar();
+                this.generateDemoCorrelacoes();
+                this.alertas = [
+                    { id: 1, tipo: 'empresa', valor: 'CCR', ativo: true },
+                    { id: 2, tipo: 'tema', valor: 'reequilibrio', ativo: true },
+                    { id: 3, tipo: 'agencia', valor: 'ARTESP', ativo: true }
+                ];
+            }
             this.renderRadar();
             this.renderAlertas();
             this.renderCorrelacoes();
             this.updateStats();
         },
 
-        generateData() {
+        generateDemoRadar() {
             this.radarData = [
                 { tema: 'Reequilibrio Tarifario', noticias: 8, deliberacoes: 12, intensidade: 32, nivel: 'critico', agencias: ['ARTESP', 'ANEEL'], empresas: ['CCR', 'Ecorodovias'] },
                 { tema: 'Fiscalizacao e Multas', noticias: 6, deliberacoes: 9, intensidade: 24, nivel: 'alto', agencias: ['ARTESP', 'TCU'], empresas: ['Arteris', 'CCR'] },
@@ -7660,13 +7864,15 @@ tr:hover {
                 { tema: 'Meio Ambiente', noticias: 2, deliberacoes: 1, intensidade: 4, nivel: 'baixo', agencias: ['ARTESP'], empresas: ['Ecorodovias'] },
                 { tema: 'Saneamento', noticias: 1, deliberacoes: 2, intensidade: 5, nivel: 'baixo', agencias: ['ANA', 'ARSESP'], empresas: ['SABESP'] }
             ];
+        },
 
+        generateDemoCorrelacoes() {
             this.correlacoes = [
-                { score: 92, noticia: 'ARTESP aprova revisao tarifaria da Ecovias', deliberacao: 'DEL 145/2026 - Deferido pedido de reequilibrio', motivos: ['Empresa: Ecorodovias', 'Tema: reequilibrio', 'Agencia: ARTESP', 'Temporal: 3 dias'] },
-                { score: 85, noticia: 'ANEEL publica resultado de leilao de energia A-5', deliberacao: 'RES 234/2026 - Homologacao de tarifas', motivos: ['Tema: tarifa', 'Agencia: ANEEL', 'Temporal: 5 dias'] },
-                { score: 78, noticia: 'TCU identifica irregularidades em concessoes', deliberacao: 'DEL 098/2026 - Penalidade aplicada a concessionaria', motivos: ['Tema: fiscalizacao', 'Empresa: CCR', 'Temporal: 7 dias'] },
+                { score: 92, noticia: 'ARTESP aprova revisao tarifaria da Ecovias', deliberacao: 'DEL 145/2026 - Deferido pedido de reequilibrio', motivos: ['Empresa: Ecorodovias', 'Tema: reequilibrio', 'Agencia: ARTESP'] },
+                { score: 85, noticia: 'ANEEL publica resultado de leilao de energia A-5', deliberacao: 'RES 234/2026 - Homologacao de tarifas', motivos: ['Tema: tarifa', 'Agencia: ANEEL'] },
+                { score: 78, noticia: 'TCU identifica irregularidades em concessoes', deliberacao: 'DEL 098/2026 - Penalidade aplicada a concessionaria', motivos: ['Tema: fiscalizacao', 'Empresa: CCR'] },
                 { score: 71, noticia: 'CADE analisa concentracao no setor de telecom', deliberacao: 'DEL 067/2026 - Parecer sobre fusao de operadoras', motivos: ['Tema: telecom', 'Agencia: CADE'] },
-                { score: 65, noticia: 'ANP publica novas regras para pre-sal', deliberacao: 'RES 312/2026 - Regulamentacao de exploracao', motivos: ['Tema: petroleo', 'Agencia: ANP', 'Empresa: Petrobras'] },
+                { score: 65, noticia: 'ANP publica novas regras para pre-sal', deliberacao: 'RES 312/2026 - Regulamentacao de exploracao', motivos: ['Tema: petroleo', 'Agencia: ANP'] },
                 { score: 58, noticia: 'ARTESP delibera sobre investimentos rodoviarios', deliberacao: 'DEL 201/2026 - Aprovacao de plano de obras', motivos: ['Tema: obras', 'Agencia: ARTESP'] }
             ];
         },
@@ -7679,30 +7885,32 @@ tr:hover {
             if (el1) el1.textContent = this.correlacoes.length;
             if (el2) el2.textContent = this.radarData.length;
             if (el3) el3.textContent = this.radarData.filter(r => r.nivel === 'critico').length;
-            if (el4) el4.textContent = this.alertas.filter(a => a.ativo).length;
+            if (el4) el4.textContent = this.alertas.filter(a => a.ativo !== false).length;
         },
 
         renderRadar() {
             const container = document.getElementById('radar-container');
             if (!container) return;
-            const maxInt = Math.max(...this.radarData.map(r => r.intensidade), 1);
+            const maxInt = Math.max(...this.radarData.map(r => r.intensidade || 0), 1);
             container.innerHTML = this.radarData.map(r => {
-                const pct = Math.round(r.intensidade / maxInt * 100);
+                const pct = Math.round((r.intensidade || 0) / maxInt * 100);
                 const barColor = r.nivel === 'critico' ? 'var(--danger)' :
                                  r.nivel === 'alto' ? 'var(--warning)' :
                                  r.nivel === 'medio' ? 'var(--info)' : 'var(--success)';
+                const agencias = r.agencias || [];
+                const empresas = r.empresas || [];
                 return '<div class="radar-item">' +
-                    '<span class="radar-level ' + r.nivel + '">' + r.nivel.toUpperCase() + '</span>' +
+                    '<span class="radar-level ' + (r.nivel || 'baixo') + '">' + (r.nivel || 'baixo').toUpperCase() + '</span>' +
                     '<div style="flex: 1;">' +
                         '<div style="display: flex; justify-content: space-between; margin-bottom: 4px;">' +
-                            '<span style="font-weight: 600; font-size: 13px;">' + r.tema + '</span>' +
-                            '<span style="font-size: 12px; color: var(--text-muted);">' + r.noticias + ' noticias / ' + r.deliberacoes + ' deliberacoes</span>' +
+                            '<span style="font-weight: 600; font-size: 13px;">' + (r.tema || 'Tema') + '</span>' +
+                            '<span style="font-size: 12px; color: var(--text-muted);">' + (r.noticias || 0) + ' noticias / ' + (r.deliberacoes || 0) + ' deliberacoes</span>' +
                         '</div>' +
                         '<div class="radar-bar"><div class="radar-bar-fill" style="width: ' + pct + '%; background: ' + barColor + ';"></div></div>' +
-                        '<div style="margin-top: 4px; font-size: 11px; color: var(--text-muted);">' +
-                            r.agencias.map(a => '<span class="correlacao-tag">' + a + '</span>').join(' ') + ' ' +
-                            r.empresas.map(e => '<span class="correlacao-tag" style="border-color: var(--warning);">' + e + '</span>').join(' ') +
-                        '</div>' +
+                        (agencias.length > 0 || empresas.length > 0 ? '<div style="margin-top: 4px; font-size: 11px; color: var(--text-muted);">' +
+                            agencias.map(a => '<span class="correlacao-tag">' + a + '</span>').join(' ') + ' ' +
+                            empresas.map(e => '<span class="correlacao-tag" style="border-color: var(--warning);">' + e + '</span>').join(' ') +
+                        '</div>' : '') +
                     '</div>' +
                 '</div>';
             }).join('');
@@ -7711,25 +7919,26 @@ tr:hover {
         renderAlertas() {
             const container = document.getElementById('alertas-container');
             if (!container) return;
-            const tipoIcons = { empresa: '🏢', tema: '📋', agencia: '🏛️' };
+            const tipoIcons = { empresa: '&#x1F3E2;', tema: '&#x1F4CB;', agencia: '&#x1F3DB;' };
             container.innerHTML =
                 '<div style="margin-bottom: 16px;">' +
                     '<h3 style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">Alertas Configurados</h3>' +
-                    this.alertas.map(a => {
+                    (this.alertas.length > 0 ? this.alertas.map(a => {
+                        const ativo = a.ativo !== false;
                         return '<div class="alert-config-item">' +
                             '<div style="display: flex; align-items: center; gap: 10px;">' +
-                                '<span style="font-size: 18px;">' + (tipoIcons[a.tipo] || '📌') + '</span>' +
+                                '<span style="font-size: 18px;">' + (tipoIcons[a.tipo] || '&#x1F4CC;') + '</span>' +
                                 '<div>' +
-                                    '<div style="font-weight: 600; font-size: 13px;">' + a.valor + '</div>' +
-                                    '<div style="font-size: 11px; color: var(--text-muted); text-transform: capitalize;">' + a.tipo + '</div>' +
+                                    '<div style="font-weight: 600; font-size: 13px;">' + (a.valor || a.nome || '--') + '</div>' +
+                                    '<div style="font-size: 11px; color: var(--text-muted); text-transform: capitalize;">' + (a.tipo || 'geral') + '</div>' +
                                 '</div>' +
                             '</div>' +
-                            '<span class="news-badge" style="background: ' + (a.ativo ? 'var(--success-bg)' : 'var(--surface)') + '; color: ' + (a.ativo ? 'var(--success)' : 'var(--text-muted)') + ';">' + (a.ativo ? 'Ativo' : 'Inativo') + '</span>' +
+                            '<span class="news-badge" style="background: ' + (ativo ? 'var(--success-bg)' : 'var(--surface)') + '; color: ' + (ativo ? 'var(--success)' : 'var(--text-muted)') + ';">' + (ativo ? 'Ativo' : 'Inativo') + '</span>' +
                         '</div>';
-                    }).join('') +
+                    }).join('') : '<div style="text-align: center; padding: 20px; color: var(--text-muted);">Nenhum alerta configurado</div>') +
                 '</div>' +
                 '<div style="padding: 12px; background: var(--surface); border-radius: var(--radius); border-left: 3px solid var(--primary);">' +
-                    '<p style="font-size: 12px; color: var(--text-secondary);">O sistema de alertas monitora automaticamente noticias e deliberacoes que correspondam aos criterios configurados. Quando uma correlacao e detectada, o alerta e disparado em tempo real.</p>' +
+                    '<p style="font-size: 12px; color: var(--text-secondary);">O sistema de alertas monitora automaticamente noticias e deliberacoes que correspondam aos criterios configurados.</p>' +
                 '</div>';
         },
 
@@ -7737,26 +7946,25 @@ tr:hover {
             const container = document.getElementById('correlacoes-container');
             if (!container) return;
             container.innerHTML = this.correlacoes.map(c => {
-                const scoreCor = c.score >= 80 ? 'var(--success)' : c.score >= 60 ? 'var(--warning)' : 'var(--info)';
-                const scoreBg = c.score >= 80 ? 'var(--success-bg)' : c.score >= 60 ? 'var(--warning-bg)' : 'var(--info-bg)';
+                const score = c.score || c.confianca || 50;
+                const scoreCor = score >= 80 ? 'var(--success)' : score >= 60 ? 'var(--warning)' : 'var(--info)';
+                const scoreBg = score >= 80 ? 'var(--success-bg)' : score >= 60 ? 'var(--warning-bg)' : 'var(--info-bg)';
+                const motivos = c.motivos || c.tags || [];
                 return '<div class="correlacao-item">' +
-                    '<div class="correlacao-score" style="background: ' + scoreBg + '; color: ' + scoreCor + ';">' + c.score + '</div>' +
+                    '<div class="correlacao-score" style="background: ' + scoreBg + '; color: ' + scoreCor + ';">' + score + '</div>' +
                     '<div class="correlacao-body">' +
-                        '<div style="font-weight: 600; font-size: 13px; margin-bottom: 2px;">📰 ' + c.noticia + '</div>' +
-                        '<div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 6px;">📋 ' + c.deliberacao + '</div>' +
-                        '<div class="correlacao-tags">' +
-                            c.motivos.map(m => '<span class="correlacao-tag">' + m + '</span>').join('') +
-                        '</div>' +
+                        '<div style="font-weight: 600; font-size: 13px; margin-bottom: 2px;">' + (c.noticia || '') + '</div>' +
+                        '<div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 6px;">' + (c.deliberacao || '') + '</div>' +
+                        (motivos.length > 0 ? '<div class="correlacao-tags">' +
+                            motivos.map(m => '<span class="correlacao-tag">' + m + '</span>').join('') +
+                        '</div>' : '') +
                     '</div>' +
                 '</div>';
             }).join('');
         },
 
-        refresh() {
-            this.generateData();
-            this.renderRadar();
-            this.renderCorrelacoes();
-            this.updateStats();
+        async refresh() {
+            await this.carregarDados();
         }
     };
 
@@ -7764,9 +7972,105 @@ tr:hover {
     // PAGE: Auditoria
     // ============================================
     const PageAuditoria = {
-        init() {
+        async init() {
             const page = document.getElementById('page-auditoria');
             page.classList.add('active');
+            await this.carregarDados();
+        },
+
+        async carregarDados() {
+            try {
+                const [correlacoes, porDiretor, tendencias] = await Promise.all([
+                    API.get('/api/analytics/correlacoes'),
+                    API.get('/api/metricas/por-diretor'),
+                    API.get('/api/analytics/tendencias')
+                ]);
+                if (correlacoes?.success) this.atualizarCorrelacoes(correlacoes.correlacoes);
+                if (porDiretor?.diretores) this.atualizarPadroes(porDiretor.diretores);
+                if (tendencias?.success) this.atualizarStats(tendencias, porDiretor?.diretores);
+            } catch (e) {
+                console.log('Auditoria: API indisponivel, mantendo dados demo');
+            }
+        },
+
+        atualizarStats(tendencias, diretores) {
+            const cards = document.querySelectorAll('#page-auditoria .stat-card-value');
+            if (!cards.length) return;
+            // Count potential alerts from real data
+            let alertasCriticos = 0;
+            let alertasMedios = 0;
+            const totalDelibs = tendencias.total_deliberacoes || 0;
+            if (diretores) {
+                diretores.forEach(d => {
+                    if (d.votosContra > 5) alertasMedios++;
+                    if (d.totalVotos > 0 && d.votosContra / d.totalVotos > 0.3) alertasCriticos++;
+                });
+                // Check voting concentration
+                const maxVotos = Math.max(...diretores.map(d => d.totalVotos), 1);
+                const minVotos = Math.min(...diretores.map(d => d.totalVotos), 0);
+                if (maxVotos > 0 && minVotos / maxVotos < 0.3) alertasMedios++;
+            }
+            if (cards[0]) cards[0].textContent = alertasCriticos;
+            if (cards[1]) cards[1].textContent = alertasMedios;
+            if (cards[2]) cards[2].textContent = totalDelibs;
+            if (cards[3]) {
+                const conformidade = totalDelibs > 0 ? Math.max(80, 100 - alertasCriticos * 3 - alertasMedios * 1.5) : 94.2;
+                cards[3].textContent = conformidade.toFixed(1) + '%';
+            }
+        },
+
+        atualizarCorrelacoes(correlacoes) {
+            const alertList = document.querySelector('#page-auditoria .alert-list');
+            if (!alertList || !correlacoes || correlacoes.length === 0) return;
+            // Show top correlations as audit findings
+            const topPares = correlacoes.filter(c => c.total >= 3).slice(0, 5);
+            if (topPares.length === 0) return;
+            alertList.innerHTML = topPares.map(c => {
+                const concordancia = c.taxa_concordancia || 0;
+                const nivel = concordancia > 95 ? 'ALTA' : concordancia > 80 ? 'MEDIA' : 'BAIXA';
+                const nivelCor = nivel === 'ALTA' ? 'var(--danger)' : nivel === 'MEDIA' ? 'var(--warning)' : 'var(--info)';
+                return '<div class="alert-item">' +
+                    '<div class="alert-item-header">' +
+                        '<h3 class="alert-item-title">Correlacao de votos: ' + c.d1 + ' e ' + c.d2 + '</h3>' +
+                        '<span class="badge" style="background: ' + nivelCor + '22; color: ' + nivelCor + ';">' + nivel + '</span>' +
+                    '</div>' +
+                    '<div class="alert-item-body">' +
+                        '<p>Taxa de concordancia: ' + concordancia + '% em ' + c.total + ' votacoes conjuntas (' + c.concordam + ' concordancias, ' + c.discordam + ' divergencias)</p>' +
+                    '</div>' +
+                    '<div class="alert-item-meta">' +
+                        '<span>Detectado: ' + new Date().toLocaleDateString('pt-BR') + '</span>' +
+                        '<span>Confianca: ' + Math.min(99, concordancia) + '%</span>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
+        },
+
+        atualizarPadroes(diretores) {
+            const padroesGrid = document.querySelector('#page-auditoria .pattern-grid');
+            if (!padroesGrid || !diretores || diretores.length === 0) return;
+            // Calculate pattern metrics from real data
+            const totalVotos = diretores.reduce((s, d) => s + d.totalVotos, 0);
+            const totalFavor = diretores.reduce((s, d) => s + d.votosFavor, 0);
+            const totalContra = diretores.reduce((s, d) => s + d.votosContra, 0);
+            const consistencia = totalVotos > 0 ? Math.round((totalFavor / totalVotos) * 100) : 87;
+            const divergentes = totalContra;
+            // Concentration: Herfindahl index
+            const shares = diretores.map(d => totalVotos > 0 ? d.totalVotos / totalVotos : 0);
+            const hhi = shares.reduce((s, sh) => s + sh * sh, 0).toFixed(2);
+
+            const items = padroesGrid.querySelectorAll('.pattern-item');
+            if (items[0]) {
+                const val = items[0].querySelector('.pattern-value');
+                if (val) val.textContent = consistencia + '%';
+            }
+            if (items[1]) {
+                const val = items[1].querySelector('.pattern-value');
+                if (val) val.textContent = divergentes;
+            }
+            if (items[2]) {
+                const val = items[2].querySelector('.pattern-value');
+                if (val) val.textContent = hhi;
+            }
         }
     };
 
@@ -8134,19 +8438,64 @@ tr:hover {
     // ============================================
     const PageAgencias = {
         agencias: [
-            { id: 'artesp', nome: 'ARTESP', nomeCompleto: 'Agência de Transporte do Estado de SP', decisoes: 1247, aprovadas: 892, pendentes: 45, cor: '#FFEF4D' },
-            { id: 'antt', nome: 'ANTT', nomeCompleto: 'Agência Nacional de Transportes Terrestres', decisoes: 3456, aprovadas: 2890, pendentes: 123, cor: '#4ADE80' },
-            { id: 'anm', nome: 'ANM', nomeCompleto: 'Agência Nacional de Mineração', decisoes: 892, aprovadas: 654, pendentes: 78, cor: '#60A5FA' },
-            { id: 'aneel', nome: 'ANEEL', nomeCompleto: 'Agência Nacional de Energia Elétrica', decisoes: 2134, aprovadas: 1823, pendentes: 89, cor: '#F472B6' },
-            { id: 'antaq', nome: 'ANTAQ', nomeCompleto: 'Agência Nacional de Transp. Aquaviários', decisoes: 567, aprovadas: 432, pendentes: 34, cor: '#A78BFA' },
-            { id: 'arsesp', nome: 'ARSESP', nomeCompleto: 'Agência Reguladora de Saneamento SP', decisoes: 345, aprovadas: 298, pendentes: 12, cor: '#FB923C' }
+            { id: 'artesp', nome: 'ARTESP', nomeCompleto: 'Agencia de Transporte do Estado de SP', decisoes: 1247, aprovadas: 892, pendentes: 45, cor: '#FFEF4D', diretores: [] },
+            { id: 'antt', nome: 'ANTT', nomeCompleto: 'Agencia Nacional de Transportes Terrestres', decisoes: 3456, aprovadas: 2890, pendentes: 123, cor: '#4ADE80', diretores: [] },
+            { id: 'anm', nome: 'ANM', nomeCompleto: 'Agencia Nacional de Mineracao', decisoes: 892, aprovadas: 654, pendentes: 78, cor: '#60A5FA', diretores: [] },
+            { id: 'aneel', nome: 'ANEEL', nomeCompleto: 'Agencia Nacional de Energia Eletrica', decisoes: 2134, aprovadas: 1823, pendentes: 89, cor: '#F472B6', diretores: [] },
+            { id: 'antaq', nome: 'ANTAQ', nomeCompleto: 'Agencia Nacional de Transp. Aquaviarios', decisoes: 567, aprovadas: 432, pendentes: 34, cor: '#A78BFA', diretores: [] },
+            { id: 'arsesp', nome: 'ARSESP', nomeCompleto: 'Agencia Reguladora de Saneamento SP', decisoes: 345, aprovadas: 298, pendentes: 12, cor: '#FB923C', diretores: [] }
         ],
 
-        init() {
+        async init() {
             const page = document.getElementById('page-agencias');
             page.classList.add('active');
+            await this.carregarDados();
             this.setupInteractivity();
             this.updateStats();
+        },
+
+        async carregarDados() {
+            try {
+                const resp = await API.get('/api/agencias-reguladoras');
+                if (resp?.success && resp.agencias?.length > 0) {
+                    const cores = ['#FFEF4D', '#4ADE80', '#60A5FA', '#F472B6', '#A78BFA', '#FB923C', '#22D3EE', '#F97316', '#E879F9', '#14B8A6'];
+                    this.agencias = resp.agencias.map((ag, i) => ({
+                        id: (ag.sigla || '').toLowerCase(),
+                        nome: ag.sigla,
+                        nomeCompleto: ag.nome,
+                        esfera: ag.esfera,
+                        setor: ag.setor,
+                        site: ag.site,
+                        lei_criacao: ag.lei_criacao,
+                        vinculacao: ag.vinculacao,
+                        decisoes: 0,
+                        aprovadas: 0,
+                        pendentes: 0,
+                        cor: cores[i % cores.length],
+                        diretores: ag.diretores || [],
+                        total_diretores: ag.total_diretores || 0
+                    }));
+                    // Update the isometric cards and comparison table
+                    this.atualizarTabela();
+                }
+            } catch (e) {
+                console.log('Agencias: API indisponivel, mantendo dados demo');
+            }
+        },
+
+        atualizarTabela() {
+            const tbody = document.querySelector('#page-agencias table tbody');
+            if (!tbody) return;
+            tbody.innerHTML = this.agencias.map(ag => {
+                return '<tr>' +
+                    '<td><strong style="color: ' + ag.cor + ';">' + ag.nome + '</strong></td>' +
+                    '<td>' + (ag.esfera || 'Federal') + '</td>' +
+                    '<td>' + (ag.setor || '--') + '</td>' +
+                    '<td>' + (ag.total_diretores || ag.diretores.length) + '</td>' +
+                    '<td>' + (ag.lei_criacao || '--') + '</td>' +
+                    '<td>' + (ag.vinculacao || '--') + '</td>' +
+                '</tr>';
+            }).join('');
         },
 
         setupInteractivity() {
@@ -8154,49 +8503,36 @@ tr:hover {
             cards.forEach((card, index) => {
                 const agencia = this.agencias[index];
                 if (!agencia) return;
-
-                // Atualiza dados dinamicos
                 const decisoesEl = card.querySelector('.iso-metric-value');
-                const aprovEl = card.querySelectorAll('.iso-metric-value')[1];
-                const pendEl = card.querySelectorAll('.iso-metric-value')[2];
-
-                if (decisoesEl) decisoesEl.textContent = agencia.decisoes.toLocaleString('pt-BR');
-
-                // Efeitos de hover interativos
-                card.addEventListener('mouseenter', () => {
-                    card.style.transform = 'rotateX(55deg) rotateZ(-45deg) translateZ(40px)';
-                });
-
-                card.addEventListener('mouseleave', () => {
-                    card.style.transform = 'rotateX(55deg) rotateZ(-45deg) translateZ(20px)';
-                });
-
-                // Click para ver detalhes
-                card.addEventListener('click', () => {
-                    this.showAgenciaDetails(agencia);
-                });
+                if (decisoesEl) decisoesEl.textContent = agencia.total_diretores || agencia.diretores.length || '--';
+                card.addEventListener('mouseenter', () => { card.style.transform = 'rotateX(55deg) rotateZ(-45deg) translateZ(40px)'; });
+                card.addEventListener('mouseleave', () => { card.style.transform = 'rotateX(55deg) rotateZ(-45deg) translateZ(20px)'; });
+                card.addEventListener('click', () => { this.showAgenciaDetails(agencia); });
             });
         },
 
         updateStats() {
-            const totalDecisoes = this.agencias.reduce((sum, a) => sum + a.decisoes, 0);
-            const totalAprovadas = this.agencias.reduce((sum, a) => sum + a.aprovadas, 0);
-            const totalPendentes = this.agencias.reduce((sum, a) => sum + a.pendentes, 0);
-            const taxaMedia = Math.round((totalAprovadas / totalDecisoes) * 100);
-
-            // Atualiza stats cards se existirem
             const statsEl = document.querySelectorAll('#page-agencias .stats-value');
             if (statsEl.length >= 4) {
+                const totalDiretores = this.agencias.reduce((s, a) => s + (a.total_diretores || a.diretores.length || 0), 0);
                 statsEl[0].textContent = this.agencias.length;
-                statsEl[1].textContent = totalDecisoes.toLocaleString('pt-BR');
-                statsEl[2].textContent = totalAprovadas.toLocaleString('pt-BR');
-                statsEl[3].textContent = taxaMedia + '%';
+                statsEl[1].textContent = '--';
+                statsEl[2].textContent = totalDiretores;
+                statsEl[3].textContent = '--';
             }
         },
 
         showAgenciaDetails(agencia) {
-            const taxa = Math.round((agencia.aprovadas / agencia.decisoes) * 100);
-            alert(`${agencia.nome}\n${agencia.nomeCompleto}\n\nDecisoes: ${agencia.decisoes.toLocaleString('pt-BR')}\nAprovadas: ${agencia.aprovadas.toLocaleString('pt-BR')} (${taxa}%)\nPendentes: ${agencia.pendentes}`);
+            const diretoresInfo = agencia.diretores?.length > 0
+                ? '\n\nDiretores:\n' + agencia.diretores.map(d => '  - ' + d.nome + ' (' + d.cargo + ')').join('\n')
+                : '';
+            const info = agencia.nome + '\n' + agencia.nomeCompleto +
+                '\n\nEsfera: ' + (agencia.esfera || '--') +
+                '\nSetor: ' + (agencia.setor || '--') +
+                '\nLei de Criacao: ' + (agencia.lei_criacao || '--') +
+                '\nVinculacao: ' + (agencia.vinculacao || '--') +
+                diretoresInfo;
+            alert(info);
         }
     };
 
@@ -8242,12 +8578,36 @@ tr:hover {
             'Norte': { estados: ['PA', 'AM', 'RO', 'TO', 'AC', 'AP', 'RR'], cor: '#A78BFA' }
         },
 
-        init() {
+        async init() {
             const page = document.getElementById('page-mapa');
             page.classList.add('active');
+            await this.carregarDados();
             this.setupMapInteractivity();
             this.updateStats();
             this.renderRanking();
+        },
+
+        async carregarDados() {
+            try {
+                const resp = await API.get('/api/agencias-reguladoras');
+                if (resp?.success && resp.agencias?.length > 0) {
+                    // Map agencies to states based on known locations
+                    const agenciasPorEstado = {};
+                    resp.agencias.forEach(ag => {
+                        const uf = ag.esfera === 'estadual' && (ag.sigla || '').includes('SP') ? 'SP' : 'DF';
+                        if (!agenciasPorEstado[uf]) agenciasPorEstado[uf] = [];
+                        agenciasPorEstado[uf].push(ag.sigla);
+                    });
+                    // Enrich state data with agency count
+                    Object.entries(agenciasPorEstado).forEach(([uf, ags]) => {
+                        if (this.estados[uf]) {
+                            this.estados[uf].agencias = ags;
+                        }
+                    });
+                }
+            } catch (e) {
+                console.log('Mapa: API indisponivel, mantendo dados demo');
+            }
         },
 
         setupMapInteractivity() {
@@ -8348,7 +8708,12 @@ tr:hover {
         },
 
         showStateDetails(code, estado) {
-            alert(`${estado.nome} (${code})\n\nDecisoes: ${estado.decisoes.toLocaleString('pt-BR')}\nTaxa de Aprovação: ${estado.taxa}%`);
+            const agencias = estado.agencias ? estado.agencias.join(', ') : 'Sem agencias mapeadas';
+            const tooltip = document.getElementById('map-tooltip');
+            if (tooltip) {
+                tooltip.innerHTML = '<strong>' + estado.nome + ' (' + code + ')</strong><br>Decisoes: ' + estado.decisoes.toLocaleString('pt-BR') + '<br>Taxa Aprovacao: ' + estado.taxa + '%<br>Agencias: ' + agencias;
+                tooltip.style.display = 'block';
+            }
         }
     };
 
@@ -8453,14 +8818,49 @@ tr:hover {
             ]
         },
 
-        init() {
+        async init() {
             const page = document.getElementById('page-conexoes');
             page.classList.add('active');
+            await this.carregarDadosAPI();
             this.setupCanvas();
             this.buildGraph();
             this.setupEvents();
             this.animate();
             this.updateStats();
+        },
+
+        async carregarDadosAPI() {
+            try {
+                const resp = await API.get('/api/grafo-data-completo');
+                if (resp?.success && resp.nodes?.length > 0) {
+                    // Convert API format to internal graphData format
+                    const directors = resp.nodes.filter(n => n.type === 'director').map(n => ({
+                        id: n.id, label: n.label, full: n.label, role: n.role || 'Diretor(a)',
+                        votes: n.votesCount || 0, initials: n.initials || n.label.split(' ').map(w => w[0]).join('').substring(0, 2),
+                        photoColor: '#3b82f6', agency: n.agency || ''
+                    }));
+                    const companies = resp.nodes.filter(n => n.type === 'company').map(n => ({
+                        id: n.id, label: n.label, full: n.label, sector: n.setor || 'Regulado',
+                        contracts: n.mentions || 0, initials: n.initials || n.label.substring(0, 2).toUpperCase()
+                    }));
+                    const themes = resp.nodes.filter(n => n.type === 'theme').map(n => ({
+                        id: n.id, label: n.label, count: n.count || 0, category: 'geral', icon: '#'
+                    }));
+                    const agencies = resp.nodes.filter(n => n.type === 'agency').map(n => ({
+                        id: n.id, label: n.label, full: n.full || n.label, deliberations: n.deliberations || 0, initials: n.label.substring(0, 3)
+                    }));
+                    const connections = resp.edges.map(e => ({
+                        source: e.source, target: e.target, strength: e.strength || 0.5,
+                        label: e.label || (e.count ? e.count + ' deliberacoes' : '')
+                    }));
+                    if (directors.length > 0 || companies.length > 0) {
+                        this.graphData = { directors, companies, themes, agencies, connections };
+                        console.log('[Grafo] Dados reais carregados: ' + resp.nodes.length + ' nos, ' + resp.edges.length + ' conexoes');
+                    }
+                }
+            } catch (e) {
+                console.log('Grafo: API indisponivel, usando dados estaticos');
+            }
         },
 
         destroy() {
