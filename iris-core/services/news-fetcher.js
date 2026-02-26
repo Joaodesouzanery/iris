@@ -269,6 +269,16 @@ function fetchUrl(url, timeout = FETCH_TIMEOUT, maxRetries = MAX_RETRIES) {
                         const urlObj = new URL(url);
                         redirectUrl = `${urlObj.protocol}//${urlObj.host}${redirectUrl}`;
                     }
+                    // SSRF protection: only follow redirects to public HTTP(S) URLs
+                    try {
+                        const rUrl = new URL(redirectUrl);
+                        const blockedHosts = ['localhost', '127.0.0.1', '0.0.0.0', '[::1]'];
+                        if (!['http:', 'https:'].includes(rUrl.protocol) || blockedHosts.includes(rUrl.hostname) || rUrl.hostname.startsWith('10.') || rUrl.hostname.startsWith('192.168.') || rUrl.hostname.startsWith('172.')) {
+                            res.resume();
+                            reject(new Error('Blocked redirect to private network'));
+                            return;
+                        }
+                    } catch { res.resume(); reject(new Error('Invalid redirect URL')); return; }
                     res.resume(); // Drain response
                     return fetchUrl(redirectUrl, timeout, 0).then(resolve).catch(reject);
                 }

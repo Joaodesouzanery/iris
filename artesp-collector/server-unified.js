@@ -122,6 +122,7 @@ const backupService = require('./src/services/backup');
 const { authenticate, optionalAuth, registerAuthRoutes } = require('./src/middleware/auth');
 const {
     sanitizeString: sanitizeStr,
+    escapeHtml,
     deepSanitize,
     validateCNPJ: validateCNPJFull,
     validateUrl,
@@ -400,6 +401,10 @@ app.use((req, res, next) => {
     res.setHeader('X-Frame-Options', 'SAMEORIGIN');
     // XSS Protection (legacy browsers)
     res.setHeader('X-XSS-Protection', '1; mode=block');
+    // HSTS - force HTTPS in production
+    if (process.env.NODE_ENV === 'production') {
+        res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    }
     // Referrer policy
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
     // Content Security Policy
@@ -637,7 +642,7 @@ app.get('/api/inteligencia/alertas', (req, res) => {
 });
 
 // Criar alerta
-app.post('/api/inteligencia/alertas', optionalAuth, (req, res) => {
+app.post('/api/inteligencia/alertas', authenticate, (req, res) => {
     const { tipo, valor } = req.body || {};
 
     if (!tipo || !valor) {
@@ -656,7 +661,7 @@ app.post('/api/inteligencia/alertas', optionalAuth, (req, res) => {
 });
 
 // Remover alerta
-app.delete('/api/inteligencia/alertas/:id', optionalAuth, (req, res) => {
+app.delete('/api/inteligencia/alertas/:id', authenticate, (req, res) => {
     const removido = intelligence.removerAlerta(req.params.id);
     res.json({ success: true, removido });
 });
@@ -717,7 +722,7 @@ app.get('/api/health', (req, res) => {
     });
 });
 
-app.post('/api/scrape-and-extract', optionalAuth, rateLimit(RATE_LIMIT_STRICT), async (req, res) => {
+app.post('/api/scrape-and-extract', authenticate, rateLimit(RATE_LIMIT_STRICT), async (req, res) => {
     try {
         const forceComplete = req.query.force === 'true';
 
@@ -861,7 +866,7 @@ app.get('/api/pdfs/:index', (req, res) => {
 // API - ANÁLISE IRIS CORE
 // ============================================================================
 
-app.post('/api/analisar', optionalAuth, (req, res) => {
+app.post('/api/analisar', authenticate, (req, res) => {
     try {
         const { texto } = req.body;
 
@@ -877,7 +882,7 @@ app.post('/api/analisar', optionalAuth, (req, res) => {
     }
 });
 
-app.post('/api/analisar-pdf/:index', optionalAuth, async (req, res) => {
+app.post('/api/analisar-pdf/:index', authenticate, async (req, res) => {
     try {
         const index = parseInt(req.params.index);
 
@@ -976,7 +981,7 @@ app.post('/api/analisar-pdf/:index', optionalAuth, async (req, res) => {
     }
 });
 
-app.post('/api/analisar-todos', optionalAuth, async (req, res) => {
+app.post('/api/analisar-todos', authenticate, async (req, res) => {
     try {
         if (pdfsProcessados.length === 0) {
             return res.status(400).json({ erro: 'Nenhum PDF em memória. Execute a coleta primeiro.' });
@@ -1180,7 +1185,7 @@ app.get('/api/empresas/detectadas', (req, res) => {
 });
 
 // Endpoint para adicionar empresa a partir de deteccao
-app.post('/api/empresas/adicionar', optionalAuth, rateLimit(RATE_LIMIT_STRICT), (req, res) => {
+app.post('/api/empresas/adicionar', authenticate, rateLimit(RATE_LIMIT_STRICT), (req, res) => {
     const nome = sanitizeString(req.body.nome, 200);
     const setor = sanitizeString(req.body.setor, 100);
     const tipo = sanitizeString(req.body.tipo, 100);
@@ -1215,7 +1220,7 @@ app.post('/api/empresas/adicionar', optionalAuth, rateLimit(RATE_LIMIT_STRICT), 
 // ============================================================================
 
 // Endpoint para upload de PDFs (aceita base64)
-app.post('/api/upload-pdf', optionalAuth, async (req, res) => {
+app.post('/api/upload-pdf', authenticate, async (req, res) => {
     try {
         const { arquivo, nomeArquivo } = req.body;
 
@@ -1272,7 +1277,7 @@ app.post('/api/upload-pdf', optionalAuth, async (req, res) => {
 });
 
 // Endpoint para upload múltiplo
-app.post('/api/upload-multiplo', optionalAuth, async (req, res) => {
+app.post('/api/upload-multiplo', authenticate, async (req, res) => {
     try {
         const { arquivos } = req.body;
 
@@ -1359,7 +1364,7 @@ app.post('/api/upload-multiplo', optionalAuth, async (req, res) => {
 });
 
 // Endpoint para upload via URL
-app.post('/api/upload-url', optionalAuth, async (req, res) => {
+app.post('/api/upload-url', authenticate, async (req, res) => {
     try {
         const { url } = req.body;
 
@@ -1427,7 +1432,7 @@ app.post('/api/upload-url', optionalAuth, async (req, res) => {
 });
 
 // Endpoint para excluir PDF
-app.delete('/api/pdf/:index', optionalAuth, (req, res) => {
+app.delete('/api/pdf/:index', authenticate, (req, res) => {
     try {
         const index = parseInt(req.params.index);
 
@@ -1503,7 +1508,7 @@ async function verificarNovosDocumentos() {
 }
 
 // Iniciar monitoramento
-app.post('/api/monitoramento/iniciar', optionalAuth, (req, res) => {
+app.post('/api/monitoramento/iniciar', authenticate, (req, res) => {
     if (monitoramentoAtivo) {
         return res.json({ sucesso: false, mensagem: 'Monitoramento já está ativo' });
     }
@@ -1526,7 +1531,7 @@ app.post('/api/monitoramento/iniciar', optionalAuth, (req, res) => {
 });
 
 // Parar monitoramento
-app.post('/api/monitoramento/parar', optionalAuth, (req, res) => {
+app.post('/api/monitoramento/parar', authenticate, (req, res) => {
     if (!monitoramentoAtivo) {
         return res.json({ sucesso: false, mensagem: 'Monitoramento não está ativo' });
     }
@@ -1566,7 +1571,7 @@ app.get('/api/monitoramento/novos', (req, res) => {
 });
 
 // Marcar documentos como lidos
-app.post('/api/monitoramento/marcar-lidos', optionalAuth, (req, res) => {
+app.post('/api/monitoramento/marcar-lidos', authenticate, (req, res) => {
     const naoLidos = novosDocumentos.filter(d => !d.lido).length;
     novosDocumentos.forEach(d => d.lido = true);
 
@@ -1577,13 +1582,13 @@ app.post('/api/monitoramento/marcar-lidos', optionalAuth, (req, res) => {
 });
 
 // Verificar agora (manual)
-app.post('/api/monitoramento/verificar-agora', optionalAuth, async (req, res) => {
+app.post('/api/monitoramento/verificar-agora', authenticate, async (req, res) => {
     const resultado = await verificarNovosDocumentos();
     res.json(resultado);
 });
 
 // Limpar PDFs da memória
-app.post('/api/limpar-pdfs', optionalAuth, (req, res) => {
+app.post('/api/limpar-pdfs', authenticate, (req, res) => {
     const total = pdfsProcessados.length;
     pdfsProcessados = [];
     ultimaColeta = null;
@@ -2537,7 +2542,9 @@ app.get('/api/analytics/correlacoes', (req, res) => {
 // API: EXPORTAÇÃO PDF (HTML renderizável para impressão)
 // ============================================================================
 app.get('/api/dossie-pdf/:entidade', (req, res) => {
-    const entidadeNome = decodeURIComponent(req.params.entidade);
+    const entidadeRaw = sanitizeStr(decodeURIComponent(req.params.entidade), 300);
+    const entidadeNome = entidadeRaw;
+    const entidadeSafe = escapeHtml(entidadeRaw);
     const deliberacoes = coletarTodasDeliberacoes();
 
     // Re-use dossiê logic inline
@@ -2567,7 +2574,7 @@ app.get('/api/dossie-pdf/:entidade', (req, res) => {
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Dossiê IRIS — ${entidadeNome}</title>
+<title>Dossiê IRIS — ${entidadeSafe}</title>
 <style>
     @page { margin: 20mm; size: A4; }
     body { font-family: 'Segoe UI', -apple-system, sans-serif; color: #1e293b; max-width: 800px; margin: 0 auto; padding: 40px 20px; }
@@ -2601,7 +2608,7 @@ app.get('/api/dossie-pdf/:entidade', (req, res) => {
 <div class="header">
     <h1>DOSSIÊ IRIS</h1>
     <div style="display:flex;align-items:center;gap:12px;margin-top:8px;">
-        <span style="font-size:20px;font-weight:700;">${entidadeNome}</span>
+        <span style="font-size:20px;font-weight:700;">${entidadeSafe}</span>
         <span class="badge badge-blue">${tipoLabel[tipo] || tipo}</span>
     </div>
     <div class="subtitle">Gerado em ${new Date().toLocaleString('pt-BR')} | IRIS — Inteligência Regulatória</div>
@@ -2621,11 +2628,11 @@ app.get('/api/dossie-pdf/:entidade', (req, res) => {
         <tbody>
         ${delibsRelevantes.slice(0, 100).map(d => `
             <tr>
-                <td>${d.data_reuniao || d.dataArquivo || '--'}</td>
-                <td>${d.numero_deliberacao || '--'}</td>
-                <td>${d.interessado || '--'}</td>
-                <td>${d.microtema || '--'}</td>
-                <td><span class="badge ${d.resultado === 'Deferido' ? 'badge-green' : d.resultado === 'Indeferido' ? 'badge-red' : 'badge-blue'}">${d.resultado || '--'}</span></td>
+                <td>${escapeHtml(d.data_reuniao || d.dataArquivo || '--')}</td>
+                <td>${escapeHtml(d.numero_deliberacao || '--')}</td>
+                <td>${escapeHtml(d.interessado || '--')}</td>
+                <td>${escapeHtml(d.microtema || '--')}</td>
+                <td><span class="badge ${d.resultado === 'Deferido' ? 'badge-green' : d.resultado === 'Indeferido' ? 'badge-red' : 'badge-blue'}">${escapeHtml(d.resultado || '--')}</span></td>
             </tr>
         `).join('')}
         </tbody>
@@ -2710,7 +2717,7 @@ app.get('/api/reunioes-monitoradas', (req, res) => {
     });
 });
 
-app.post('/api/reunioes-monitoradas', optionalAuth, (req, res) => {
+app.post('/api/reunioes-monitoradas', authenticate, (req, res) => {
     const { url, tipo } = req.body;
 
     if (!url) {
@@ -2736,7 +2743,7 @@ app.post('/api/reunioes-monitoradas', optionalAuth, (req, res) => {
     });
 });
 
-app.post('/api/reunioes-monitoradas/:id/processar', optionalAuth, async (req, res) => {
+app.post('/api/reunioes-monitoradas/:id/processar', authenticate, async (req, res) => {
     const { id } = req.params;
     const reuniao = reunioesMonitoradas.find(r => r.id === id);
 
@@ -2857,7 +2864,7 @@ app.post('/api/reunioes-monitoradas/:id/processar', optionalAuth, async (req, re
     })();
 });
 
-app.delete('/api/reunioes-monitoradas/:id', optionalAuth, (req, res) => {
+app.delete('/api/reunioes-monitoradas/:id', authenticate, (req, res) => {
     const { id } = req.params;
     const index = reunioesMonitoradas.findIndex(r => r.id === id);
 
@@ -3960,11 +3967,7 @@ app.get('/api/supabase/status', async (req, res) => {
             mode: 'memory',
             message: 'Supabase não configurado. Usando armazenamento em memória.',
             memoryStats: status.memoryStats,
-            env: {
-                url_set: !!SUPABASE_URL && !SUPABASE_URL.includes('SEU_PROJECT_ID'),
-                anon_key_set: !!SUPABASE_ANON_KEY && !SUPABASE_ANON_KEY.includes('COLE_SUA'),
-                service_key_set: !!SUPABASE_SERVICE_KEY && !SUPABASE_SERVICE_KEY.includes('COLE_SUA')
-            }
+            configured: false
         });
     }
 
@@ -3975,9 +3978,7 @@ app.get('/api/supabase/status', async (req, res) => {
             success: true,
             connected: true,
             mode: 'supabase',
-            message: 'Conectado ao Supabase',
-            url: SUPABASE_URL,
-            has_admin: !!supabaseAdmin
+            message: 'Conectado ao Supabase'
         });
     } catch (e) {
         return res.json({

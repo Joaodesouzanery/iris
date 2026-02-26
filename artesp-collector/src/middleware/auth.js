@@ -402,6 +402,74 @@ function handleAuthStatus(req, res) {
     });
 }
 
+// ── Admin: Register New User ──
+async function handleRegisterUser(req, res) {
+    const { username, password, role } = req.body;
+
+    if (!username || !password) {
+        return res.status(400).json({ success: false, error: 'Username e password sao obrigatorios' });
+    }
+
+    if (username.length < 3 || username.length > 30 || !/^[a-zA-Z0-9._-]+$/.test(username)) {
+        return res.status(400).json({ success: false, error: 'Username deve ter 3-30 caracteres alfanumericos' });
+    }
+
+    if (password.length < 8) {
+        return res.status(400).json({ success: false, error: 'Senha deve ter no minimo 8 caracteres' });
+    }
+
+    if (users.has(username)) {
+        return res.status(409).json({ success: false, error: 'Username ja existe' });
+    }
+
+    const allowedRoles = ['associado', 'admin'];
+    const userRole = allowedRoles.includes(role) ? role : 'associado';
+
+    const hash = await bcrypt.hash(password, BCRYPT_ROUNDS);
+    const newUser = {
+        id: 'usr_' + crypto.randomBytes(8).toString('hex'),
+        username,
+        passwordHash: hash,
+        role: userRole,
+        mustChangePassword: true,
+        createdAt: new Date().toISOString(),
+        lastLogin: null
+    };
+    users.set(username, newUser);
+
+    console.log(`[Auth] New user '${username}' (${userRole}) created by '${req.user.username}'`);
+    res.json({
+        success: true,
+        user: { id: newUser.id, username: newUser.username, role: newUser.role }
+    });
+}
+
+// ── Admin: List Users ──
+function handleListUsers(req, res) {
+    const userList = Array.from(users.values()).map(u => ({
+        id: u.id,
+        username: u.username,
+        role: u.role,
+        createdAt: u.createdAt,
+        lastLogin: u.lastLogin
+    }));
+    res.json({ success: true, users: userList });
+}
+
+// ── Admin: Delete User ──
+function handleDeleteUser(req, res) {
+    const { username } = req.params;
+    if (username === req.user.username) {
+        return res.status(400).json({ success: false, error: 'Nao pode deletar a propria conta' });
+    }
+    if (!users.has(username)) {
+        return res.status(404).json({ success: false, error: 'Usuario nao encontrado' });
+    }
+    users.delete(username);
+    console.log(`[Auth] User '${username}' deleted by '${req.user.username}'`);
+    res.json({ success: true, message: 'Usuario removido com sucesso' });
+}
+
 // ── Register Auth Routes ──
 function registerAuthRoutes(app) {
     const cookieParser = require('cookie-parser');
@@ -415,6 +483,11 @@ function registerAuthRoutes(app) {
     // Protected auth endpoints
     app.get('/api/auth/status', authenticate, handleAuthStatus);
     app.post('/api/auth/change-password', authenticate, handleChangePassword);
+
+    // Admin-only endpoints
+    app.post('/api/auth/register', authenticate, requireAdmin, handleRegisterUser);
+    app.get('/api/auth/users', authenticate, requireAdmin, handleListUsers);
+    app.delete('/api/auth/users/:username', authenticate, requireAdmin, handleDeleteUser);
 
     // CSRF token endpoint (for SPA to get initial token)
     app.get('/api/auth/csrf', (req, res) => {
