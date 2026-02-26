@@ -1,0 +1,254 @@
+/**
+ * IRIS Platform - Design System
+ * Inteligência Regulatória
+ * Theme: Cyan (#00BCD4) + Dark (#0A0E1A)
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* ============================================
+   CSS VARIABLES
+   ============================================ */
+:root {
+    /* Backgrounds */
+    --bg-main: #0A0E1A;
+    --bg-card: #1A1F2E;
+    --bg-card-hover: #222840;
+    --bg-sidebar: #0D1117;
+    --bg-input: #151B28;
+    --bg-elevated: #1E2336;
+
+    /* Legacy aliases (keep JS working) */
+    --background: #0A0E1A;
+    --surface: #1A1F2E;
+    --surface-hover: #222840;
+    --surface-light: #2A3048;
+    --surface-elevated: #1E2336;
+
+    /* Borders */
+    --border-subtle: #2A2F3E;
+    --border: #2A2F3E;
+    --border-light: #353A4E;
+
+    /* Text */
+    --text-primary: #FFFFFF;
+    --text-secondary: #8A8FA8;
+    --text-tertiary: #5A5F72;
+    --text-header: #6B7080;
+    --text-muted: #5A5F72;
+
+    /* Accent Colors */
+    --accent-cyan: #00BCD4;
+    --accent-purple: #7C4DFF;
+    --accent-green: #00E676;
+    --accent-orange: #FFA726;
+    --accent-red: #FF5252;
+
+    /* Legacy aliases */
+    --primary: #00BCD4;
+    --primary-dark: #0097A7;
+    --primary-light: #26C6DA;
+    --primary-bg: rgba(0, 188, 212, 0.12);
+    --primary-glow: rgba(0, 188, 212, 0.08);
+    --accent: #00BCD4;
+    --bg-card-val: #1A1F2E;
+
+    /* States */
+    --success: #00E676;
+    --success-bg: rgba(0, 230, 118, 0.12);
+    --warning: #FFA726;
+    --warning-bg: rgba(255, 167, 38, 0.12);
+    --danger: #FF5252;
+    --danger-bg: rgba(255, 82, 82, 0.12);
+    --info: #00BCD4;
+    --info-bg: rgba(0, 188, 212, 0.12);
+
+    /* Shadows */
+    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.4);
+    --shadow: 0 2px 6px 0 rgb(0 0 0 / 0.45), 0 1px 3px -1px rgb(0 0 0 / 0.35);
+    --shadow-md: 0 6px 12px -2px rgb(0 0 0 / 0.5), 0 3px 7px -3px rgb(0 0 0 / 0.4);
+    --shadow-lg: 0 12px 24px -4px rgb(0 0 0 / 0.5), 0 8px 16px -6px rgb(0 0 0 / 0.4);
+
+    /* Border radius */
+    --radius-sm: 8px;
+    --radius: 12px;
+    --radius-lg: 14px;
+    --radius-xl: 20px;
+
+    /* Layout */
+    --sidebar-width: 260px;
+    --sidebar-width-collapsed: 64px;
+    --sidebar-width-expanded: 260px;
+    --header-height: 64px;
+}
+
+/* ============================================
+   RESET & BASE
+   ============================================ */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg-main);
+    color: var(--text-primary);
+    font-size: 14px;
+    line-height: 1.5;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* SVG default sizing */
+svg {
+    max-width: 100%;
+    height: auto;
+}
+
+svg:not([width]):not([height]) {
+    width: 24px;
+    height: 24px;
+}
+
+a {
+    color: var(--accent-cyan);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+a:hover {
+    color: #26C6DA;
+}
+
+/* ============================================
+   TYPOGRAPHY
+   ============================================ */
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.section-label,
+.stat-card-title,
+.card-header .card-title,
+.nav-section-title {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-tertiary);
+}
+
+.value-large {
+    font-size: 32px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-primary);
+}
+
+.value-medium {
+    font-size: 24px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ============================================
+   SCROLLBAR
+   ============================================ */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border-subtle);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #3A3F4E;
+}
+
+/* Firefox */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-subtle) transparent;
+}
+
+/* ============================================
+   TEXT SELECTION
+   ============================================ */
+::selection {
+    background: rgba(0, 188, 212, 0.25);
+    color: var(--text-primary);
+}
+
+::-moz-selection {
+    background: rgba(0, 188, 212, 0.25);
+    color: var(--text-primary);
+}
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInLeft {
+    from { opacity: 0; transform: translateX(-12px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+.fade-in {
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+.text-cyan { color: var(--accent-cyan) !important; }
+.text-purple { color: var(--accent-purple) !important; }
+.text-green { color: var(--accent-green) !important; }
+.text-orange { color: var(--accent-orange) !important; }
+.text-red { color: var(--accent-red) !important; }
+.text-muted { color: var(--text-secondary) !important; }
+
+.bg-cyan { background: var(--accent-cyan) !important; }
+.bg-purple { background: var(--accent-purple) !important; }
+.bg-green { background: var(--accent-green) !important; }
+
+.hidden { display: none !important; }
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
