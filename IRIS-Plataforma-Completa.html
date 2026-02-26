@@ -8,7 +8,7 @@
 /**
  * IRIS Platform - Identidade Visual Oficial
  * Instituto de Regulação, Inovação e Sustentabilidade
- * Tema: Sandy Yellow (#FFEF4D) + Ebony Clay (#2A428C)
+ * Tema: Gold (#c9a227) + Deep Navy (#0f1729)
  */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -17,30 +17,30 @@
    CSS VARIABLES - IRIS Brand Colors
    ============================================ */
 :root {
-    /* Cores principais IRIS - Sandy Yellow */
-    --primary: #FFEF4D;
-    --primary-dark: #e6d645;
-    --primary-light: #fff176;
-    --primary-bg: rgba(255, 239, 77, 0.15);
+    /* Cores principais IRIS - Gold */
+    --primary: #c9a227;
+    --primary-dark: #b08f20;
+    --primary-light: #e0b82d;
+    --primary-bg: rgba(201, 162, 39, 0.12);
 
-    /* Backgrounds - Ebony Clay */
-    --background: #2A428C;
-    --surface: #233770;
-    --surface-hover: #2d4594;
-    --surface-light: #3a55a8;
+    /* Backgrounds - Deep Navy */
+    --background: #0f1729;
+    --surface: #162033;
+    --surface-hover: #1e2d47;
+    --surface-light: #253650;
 
     /* Textos */
-    --text-primary: #ffffff;
-    --text-secondary: #c5d0e8;
-    --text-muted: #9aa8c7;
+    --text-primary: #e8ecf4;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
 
     /* Bordas */
-    --border: #3a55a8;
-    --border-light: #4a65b8;
+    --border: #1e2d47;
+    --border-light: #2a3d5e;
 
     /* Cards */
-    --bg-card: #233770;
-    --accent: #FFEF4D;
+    --bg-card: #162033;
+    --accent: #c9a227;
 
     /* Estados */
     --success: #4ade80;
@@ -3065,34 +3065,34 @@ tr:hover {
 /* ============================================
    INTELLIGENCE NETWORK GRAPH - CIA Style
    ============================================ */
+.graph-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+}
+
+.graph-stats-inline {
+    display: flex;
+    gap: 16px;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.graph-stats-inline strong {
+    color: var(--primary);
+    font-variant-numeric: tabular-nums;
+}
+
 .graph-wrapper {
     position: relative;
     width: 100%;
-    height: 650px;
-    background: #060a14;
+    height: 550px;
+    background: #080e1a;
     border-radius: 0 0 var(--radius-lg) var(--radius-lg);
     overflow: hidden;
-}
-
-.graph-wrapper::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background:
-        linear-gradient(rgba(42, 66, 140, 0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(42, 66, 140, 0.03) 1px, transparent 1px);
-    background-size: 40px 40px;
-    pointer-events: none;
-    z-index: 1;
-}
-
-.graph-wrapper::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(ellipse at center, transparent 40%, #060a14 100%);
-    pointer-events: none;
-    z-index: 2;
 }
 
 #graph-canvas {
@@ -3161,21 +3161,7 @@ tr:hover {
     margin: 0;
 }
 
-.classified-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 3px 10px;
-    background: rgba(248, 113, 113, 0.15);
-    border: 1px solid rgba(248, 113, 113, 0.3);
-    color: #f87171;
-    font-size: 9px;
-    font-weight: 700;
-    letter-spacing: 2px;
-    border-radius: 3px;
-    width: fit-content;
-    font-family: 'Courier New', monospace;
-}
+/* Removed: classified-badge — cleaner layout */
 
 .graph-info-body {
     padding: 16px;
@@ -3241,43 +3227,7 @@ tr:hover {
     border-color: rgba(96, 165, 250, 0.4);
 }
 
-.graph-classification {
-    position: absolute;
-    top: 16px;
-    left: 16px;
-    z-index: 15;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.graph-classification .classification-label {
-    padding: 4px 12px;
-    background: rgba(6, 10, 20, 0.85);
-    border: 1px solid rgba(96, 165, 250, 0.15);
-    border-radius: 6px;
-    color: #64748b;
-    font-size: 10px;
-    font-family: 'Courier New', monospace;
-    letter-spacing: 1px;
-    backdrop-filter: blur(8px);
-}
-
-.graph-scan-line {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, rgba(96, 165, 250, 0.3), transparent);
-    z-index: 4;
-    animation: scanLine 4s linear infinite;
-}
-
-@keyframes scanLine {
-    0% { top: 0; }
-    100% { top: 100%; }
-}
+/* Removed: scan line, classification labels — cleaner graph */
 
 .graph-legend-bar {
     display: flex;
@@ -3301,34 +3251,7 @@ tr:hover {
     display: inline-block;
 }
 
-.graph-search {
-    position: absolute;
-    bottom: 16px;
-    right: 16px;
-    z-index: 15;
-}
-
-.graph-search input {
-    padding: 8px 14px;
-    background: rgba(6, 10, 20, 0.85);
-    border: 1px solid rgba(96, 165, 250, 0.2);
-    border-radius: 8px;
-    color: #e2e8f0;
-    font-size: 12px;
-    width: 200px;
-    outline: none;
-    backdrop-filter: blur(8px);
-    transition: border-color 0.2s;
-}
-
-.graph-search input:focus {
-    border-color: rgba(96, 165, 250, 0.5);
-    box-shadow: 0 0 12px rgba(96, 165, 250, 0.1);
-}
-
-.graph-search input::placeholder {
-    color: #475569;
-}
+/* Search moved to page header toolbar */
 
 /* ============================================
    Hub de Noticias Styles
@@ -3985,7 +3908,7 @@ tr:hover {
                     <div class="page-header">
                         <div class="page-title-section">
                             <h1 class="page-title">Deliberações</h1>
-                            <p class="page-subtitle">Lista completa de todas as deliberações processadas da ARTESP</p>
+                            <p class="page-subtitle">Decisões extraídas das reuniões ordinárias da ARTESP</p>
                         </div>
                         <div class="page-actions">
                             <button class="btn btn-primary" onclick="App.PageDeliberacoes.exportCSV()">
@@ -3996,32 +3919,32 @@ tr:hover {
                     </div>
 
                     <div class="filters-bar">
-                        <div class="filter-group">
-                            <select class="filter-select" id="filtro-decisao" onchange="App.PageDeliberacoes.filter()">
-                                <option value="">Todas Decisões</option>
-                                <option value="Deferido">Deferido</option>
-                                <option value="Indeferido">Indeferido</option>
-                            </select>
-                        </div>
-                        <div class="filter-group">
-                            <select class="filter-select" id="filtro-tipo" onchange="App.PageDeliberacoes.filter()">
-                                <option value="">Todos Tipos</option>
-                                <option value="externo">Pleito Externo</option>
-                                <option value="interno">Ato Interno</option>
-                            </select>
-                        </div>
-                        <div class="filter-group">
-                            <select class="filter-select" id="filtro-microtema" onchange="App.PageDeliberacoes.filter()">
-                                <option value="">Todos Microtemas</option>
-                            </select>
-                        </div>
-                        <input type="text" class="filter-input" id="filtro-busca" placeholder="Buscar por processo ou interessado..." oninput="App.PageDeliberacoes.filter()">
+                        <select class="filter-select" id="filtro-decisao" onchange="App.PageDeliberacoes.filter()">
+                            <option value="">Resultado</option>
+                            <option value="Deferido">Deferido</option>
+                            <option value="Indeferido">Indeferido</option>
+                        </select>
+                        <select class="filter-select" id="filtro-tipo" onchange="App.PageDeliberacoes.filter()">
+                            <option value="">Classificação</option>
+                            <option value="externo">Pleito Externo</option>
+                            <option value="interno">Pauta Interna</option>
+                        </select>
+                        <select class="filter-select" id="filtro-microtema" onchange="App.PageDeliberacoes.filter()">
+                            <option value="">Microtema</option>
+                        </select>
+                        <select class="filter-select" id="filtro-diretor" onchange="App.PageDeliberacoes.filter()">
+                            <option value="">Diretor</option>
+                        </select>
+                        <select class="filter-select" id="filtro-reuniao" onchange="App.PageDeliberacoes.filter()">
+                            <option value="">Reunião</option>
+                        </select>
+                        <input type="text" class="filter-input" id="filtro-busca" placeholder="Buscar processo, interessado..." oninput="App.PageDeliberacoes.filter()" style="flex: 1; min-width: 180px;">
                     </div>
 
                     <div class="stats-grid">
                         <div class="stat-card">
                             <div class="stat-card-header">
-                                <span class="stat-card-title">Total de Deliberações</span>
+                                <span class="stat-card-title">Deliberações</span>
                             </div>
                             <div class="stat-card-value" id="stat-total-delibs">-</div>
                         </div>
@@ -4039,31 +3962,54 @@ tr:hover {
                         </div>
                         <div class="stat-card">
                             <div class="stat-card-header">
-                                <span class="stat-card-title">Taxa de Aprovação</span>
+                                <span class="stat-card-title">Taxa Deferimento</span>
                             </div>
                             <div class="stat-card-value primary" id="stat-taxa">-</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Pleitos Externos</span>
+                            </div>
+                            <div class="stat-card-value info" id="stat-externos">-</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-card-title">Pauta Interna</span>
+                            </div>
+                            <div class="stat-card-value warning" id="stat-internos">-</div>
                         </div>
                     </div>
 
                     <div class="card">
-                        <div class="card-body" style="padding: 0;">
+                        <div class="card-body" style="padding: 0; overflow-x: auto;">
                             <table>
                                 <thead>
                                     <tr>
+                                        <th style="width: 30px;"></th>
+                                        <th>Reunião</th>
                                         <th>Processo</th>
                                         <th>Interessado</th>
+                                        <th>Classificação</th>
                                         <th>Microtema</th>
-                                        <th>Decisao</th>
-                                        <th>Tipo</th>
-                                        <th>Reuniao</th>
+                                        <th>Resultado</th>
+                                        <th>Votação</th>
                                         <th>Data</th>
                                     </tr>
                                 </thead>
                                 <tbody id="deliberacoes-table-body">
-                                    <tr><td colspan="7"><div class="loading"><div class="spinner"></div><span>Carregando deliberações...</span></div></td></tr>
+                                    <tr><td colspan="9"><div class="loading"><div class="spinner"></div><span>Carregando deliberações...</span></div></td></tr>
                                 </tbody>
                             </table>
                         </div>
+                    </div>
+
+                    <!-- Detail panel (shown when expanding a row) -->
+                    <div id="delib-detail-panel" class="card" style="display: none; margin-top: 16px;">
+                        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                            <h2 class="card-title" id="delib-detail-title">Detalhes da Deliberação</h2>
+                            <button class="btn btn-outline btn-sm" onclick="document.getElementById('delib-detail-panel').style.display='none'">Fechar</button>
+                        </div>
+                        <div class="card-body" id="delib-detail-body"></div>
                     </div>
                 </div>
 
@@ -6090,90 +6036,53 @@ tr:hover {
                     <div class="page-header">
                         <div class="page-title-section">
                             <h1 class="page-title">Rede de Conexões</h1>
-                            <p class="page-subtitle">Mapa de inteligência das relações entre diretores, empresas e temas regulatórios</p>
+                            <p class="page-subtitle">Relações entre diretores, empresas e temas regulatórios</p>
                         </div>
                         <div class="page-actions">
                             <select class="filter-select" id="graph-filter-type">
-                                <option value="all">Todos os Nós</option>
+                                <option value="all">Todos</option>
                                 <option value="director">Diretores</option>
                                 <option value="company">Empresas</option>
                                 <option value="theme">Temas</option>
                             </select>
-                            <button class="btn btn-outline" id="graph-reset-btn">
+                            <input type="text" class="filter-select" id="graph-search-input" placeholder="Buscar..." style="width: 160px;" oninput="App.PageConexoes.search(this.value)">
+                            <button class="btn btn-outline" id="graph-reset-btn" onclick="App.PageConexoes.resetView()">
                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                                Resetar Visão
+                                Resetar
                             </button>
                         </div>
                     </div>
 
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <div class="stat-card-header">
-                                <span class="stat-card-title">Entidades Mapeadas</span>
-                            </div>
-                            <div class="stat-card-value primary" id="graph-total-nodes">22</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-card-header">
-                                <span class="stat-card-title">Conexões Identificadas</span>
-                            </div>
-                            <div class="stat-card-value" id="graph-total-edges">38</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-card-header">
-                                <span class="stat-card-title">Clusters Detectados</span>
-                            </div>
-                            <div class="stat-card-value warning">4</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-card-header">
-                                <span class="stat-card-title">Grau Máximo de Conexão</span>
-                            </div>
-                            <div class="stat-card-value success">8</div>
-                        </div>
-                    </div>
-
-                    <div class="card" style="overflow: hidden;">
-                        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
-                            <h2 class="card-title">
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
-                                Grafo de Inteligência
-                            </h2>
+                    <!-- Graph canvas area - clean layout -->
+                    <div class="card" style="overflow: hidden; padding: 0;">
+                        <div class="graph-toolbar">
                             <div class="graph-legend-bar">
                                 <span class="graph-legend-item"><span class="graph-dot" style="background: #60a5fa;"></span> Diretores</span>
-                                <span class="graph-legend-item"><span class="graph-dot" style="background: #fbbf24;"></span> Empresas</span>
+                                <span class="graph-legend-item"><span class="graph-dot" style="background: #c9a227;"></span> Empresas</span>
                                 <span class="graph-legend-item"><span class="graph-dot" style="background: #4ade80;"></span> Temas</span>
                                 <span class="graph-legend-item"><span class="graph-dot" style="background: #a78bfa;"></span> Agências</span>
                             </div>
+                            <div class="graph-stats-inline">
+                                <span><strong id="graph-total-nodes">22</strong> entidades</span>
+                                <span><strong id="graph-total-edges">38</strong> conexões</span>
+                            </div>
                         </div>
                         <div class="graph-wrapper">
-                            <div class="graph-scan-line"></div>
                             <canvas id="graph-canvas"></canvas>
                             <div id="graph-tooltip" class="graph-tooltip"></div>
 
-                            <div class="graph-classification">
-                                <div class="classification-label">IRIS // INTELIGÊNCIA REGULATÓRIA</div>
-                                <div class="classification-label">ANÁLISE DE VÍNCULOS v2.1</div>
-                            </div>
-
                             <div id="graph-info-panel" class="graph-info-panel">
                                 <div class="graph-info-header">
-                                    <span class="classified-badge">CLASSIFICADO</span>
                                     <h3 id="graph-info-title">Selecione uma Entidade</h3>
                                 </div>
                                 <div id="graph-info-body" class="graph-info-body">
-                                    <p style="color: #475569;">Clique em um nó do grafo para visualizar informações detalhadas sobre a entidade e suas conexões.</p>
+                                    <p style="color: var(--text-muted);">Clique em um nó para ver detalhes.</p>
                                 </div>
                             </div>
 
                             <div class="graph-controls">
                                 <button onclick="App.PageConexoes.zoomIn()" title="Zoom In">+</button>
                                 <button onclick="App.PageConexoes.zoomOut()" title="Zoom Out">−</button>
-                                <button onclick="App.PageConexoes.resetView()" title="Centralizar">⊙</button>
-                            </div>
-
-                            <div class="graph-search">
-                                <input type="text" id="graph-search-input" placeholder="Buscar entidade..." oninput="App.PageConexoes.search(this.value)">
                             </div>
                         </div>
                     </div>
@@ -6391,11 +6300,10 @@ tr:hover {
         async init() {
             const page = document.getElementById('page-deliberacoes');
             page.classList.add('active');
-
             Utils.showLoading('deliberacoes-table-body');
 
             const response = await API.get('/api/deliberacoes');
-            this.data = response?.deliberacoes || [];
+            this.data = (response?.deliberacoes || []).map(d => this.normalize(d));
             this.filtered = [...this.data];
 
             this.populateFilters();
@@ -6403,28 +6311,66 @@ tr:hover {
             this.render();
         },
 
+        // Normaliza campos para o modelo padrao
+        normalize(d) {
+            const resultado = d.resultado || d.decisao || '-';
+            const classificacao = d.classificacao || (d.pauta_interna ? 'Pauta Interna da Agência' : 'Pleito Externo');
+            const votosFavor = d.votos_a_favor || d.votosFavor || [];
+            const votosContra = d.votos_contra || d.votosContra || [];
+            const totalVotos = votosFavor.length + votosContra.length;
+            const unanime = votosContra.length === 0 && votosFavor.length > 0;
+            return {
+                ...d,
+                resultado,
+                classificacao,
+                votos_a_favor: votosFavor,
+                votos_contra: votosContra,
+                total_votos: totalVotos,
+                unanime,
+                reuniao: d.reuniao_ordinaria || d.numero_reuniao || d.reuniao || '-',
+                data: d.data_reuniao || d.data || '-',
+                processo: d.processo || '-',
+                interessado: d.interessado || '-',
+                microtema: d.microtema || '-',
+                resumo: d.resumo_pleito || d.resumo || '',
+                fundamento: d.fundamento_decisao || d.fundamento || ''
+            };
+        },
+
         populateFilters() {
-            const microtemas = [...new Set(this.data.map(d => d.microtema).filter(Boolean))];
-            const select = document.getElementById('filtro-microtema');
-            if (select) {
-                select.innerHTML = '<option value="">Todos</option>' +
-                    microtemas.map(m => `<option value="${m}">${m}</option>`).join('');
-            }
+            const microtemas = [...new Set(this.data.map(d => d.microtema).filter(m => m && m !== '-'))].sort();
+            const diretores = [...new Set(this.data.flatMap(d => [...(d.votos_a_favor || []), ...(d.votos_contra || [])]).filter(Boolean))].sort();
+            const reunioes = [...new Set(this.data.map(d => d.reuniao).filter(r => r && r !== '-'))].sort((a, b) => b - a);
+
+            const setOpts = (id, items, label) => {
+                const el = document.getElementById(id);
+                if (el) el.innerHTML = `<option value="">${label}</option>` + items.map(m => `<option value="${m}">${m}</option>`).join('');
+            };
+            setOpts('filtro-microtema', microtemas, 'Microtema');
+            setOpts('filtro-diretor', diretores.map(d => d.split(' ').slice(0, 2).join(' ')), 'Diretor');
+            setOpts('filtro-reuniao', reunioes, 'Reunião');
         },
 
         filter() {
-            const decisao = document.getElementById('filtro-decisao')?.value || '';
+            const resultado = document.getElementById('filtro-decisao')?.value || '';
             const tipo = document.getElementById('filtro-tipo')?.value || '';
             const microtema = document.getElementById('filtro-microtema')?.value || '';
+            const diretor = document.getElementById('filtro-diretor')?.value || '';
+            const reuniao = document.getElementById('filtro-reuniao')?.value || '';
             const busca = document.getElementById('filtro-busca')?.value?.toLowerCase() || '';
 
             this.filtered = this.data.filter(d => {
-                if (decisao && d.decisao !== decisao) return false;
-                if (tipo === 'externo' && d.pauta_interna) return false;
-                if (tipo === 'interno' && !d.pauta_interna) return false;
+                if (resultado && d.resultado !== resultado) return false;
+                if (tipo === 'externo' && d.classificacao.includes('Interna')) return false;
+                if (tipo === 'interno' && !d.classificacao.includes('Interna')) return false;
                 if (microtema && d.microtema !== microtema) return false;
+                if (reuniao && d.reuniao != reuniao) return false;
+                if (diretor) {
+                    const allVotos = [...(d.votos_a_favor || []), ...(d.votos_contra || [])];
+                    if (!allVotos.some(v => v.includes(diretor))) return false;
+                }
                 if (busca) {
-                    const texto = `${d.processo} ${d.interessado} ${d.resumo_pleito}`.toLowerCase();
+                    const texto = `${d.processo} ${d.interessado} ${d.resumo} ${d.microtema}`.toLowerCase();
                     if (!texto.includes(busca)) return false;
                 }
                 return true;
@@ -6436,54 +6382,123 @@ tr:hover {
 
         updateStats() {
             const total = this.filtered.length;
-            const deferidas = this.filtered.filter(d => d.decisao === 'Deferido').length;
-            const indeferidas = this.filtered.filter(d => d.decisao === 'Indeferido').length;
+            const deferidas = this.filtered.filter(d => d.resultado === 'Deferido').length;
+            const indeferidas = this.filtered.filter(d => d.resultado === 'Indeferido').length;
             const taxa = total > 0 ? ((deferidas / total) * 100).toFixed(1) : 0;
+            const externos = this.filtered.filter(d => !d.classificacao.includes('Interna')).length;
+            const internos = total - externos;
 
-            document.getElementById('stat-total-delibs').textContent = total;
-            document.getElementById('stat-deferidas').textContent = deferidas;
-            document.getElementById('stat-indeferidas').textContent = indeferidas;
-            document.getElementById('stat-taxa').textContent = taxa + '%';
+            const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+            set('stat-total-delibs', total);
+            set('stat-deferidas', deferidas);
+            set('stat-indeferidas', indeferidas);
+            set('stat-taxa', taxa + '%');
+            set('stat-externos', externos);
+            set('stat-internos', internos);
         },
 
         render() {
             const tbody = document.getElementById('deliberacoes-table-body');
-
             if (this.filtered.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state">Nenhuma deliberação encontrada</div></td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state"><h3>Nenhuma deliberação encontrada</h3><p>Faça upload de PDFs de atas de reunião para extrair deliberações automaticamente.</p></div></td></tr>';
                 return;
             }
 
-            tbody.innerHTML = this.filtered.map(d => {
-                const decisaoClass = d.decisao === 'Deferido' ? 'badge-deferido' :
-                                    d.decisao === 'Indeferido' ? 'badge-indeferido' : '';
-                const tipoClass = d.pauta_interna ? 'badge-interno' : 'badge-externo';
-                const tipoLabel = d.pauta_interna ? 'Ato Interno' : 'Pleito Externo';
+            tbody.innerHTML = this.filtered.map((d, i) => {
+                const resClass = d.resultado === 'Deferido' ? 'badge-success' : d.resultado === 'Indeferido' ? 'badge-danger' : 'badge-secondary';
+                const tipoClass = d.classificacao.includes('Interna') ? 'badge-warning' : 'badge-info';
+                const tipoLabel = d.classificacao.includes('Interna') ? 'Interna' : 'Externo';
+                const votacao = d.unanime ? 'Unânime' : d.votos_contra.length > 0 ? `${d.votos_a_favor.length}x${d.votos_contra.length}` : `${d.total_votos}v`;
 
-                return `<tr>
-                    <td><span class="processo-link">${d.processo || '-'}</span></td>
-                    <td>${d.interessado || '-'}</td>
-                    <td>${d.microtema || '-'}</td>
-                    <td><span class="badge ${decisaoClass}">${d.decisao || '-'}</span></td>
+                return `<tr style="cursor: pointer;" onclick="App.PageDeliberacoes.showDetail(${i})">
+                    <td style="color: var(--text-muted); font-size: 11px;">▸</td>
+                    <td><span style="font-variant-numeric: tabular-nums; font-weight: 600;">${d.reuniao}</span></td>
+                    <td><span class="processo-link" style="font-size: 11px;">${d.processo}</span></td>
+                    <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${d.interessado}</td>
                     <td><span class="badge ${tipoClass}">${tipoLabel}</span></td>
-                    <td>${d.numero_reuniao || '-'}</td>
-                    <td>${d.data_reuniao || '-'}</td>
+                    <td>${d.microtema}</td>
+                    <td><span class="badge ${resClass}">${d.resultado}</span></td>
+                    <td style="font-size: 11px; color: var(--text-secondary);">${votacao}</td>
+                    <td style="font-size: 11px; color: var(--text-muted); white-space: nowrap;">${d.data}</td>
                 </tr>`;
             }).join('');
         },
 
+        showDetail(index) {
+            const d = this.filtered[index];
+            if (!d) return;
+
+            const panel = document.getElementById('delib-detail-panel');
+            const title = document.getElementById('delib-detail-title');
+            const body = document.getElementById('delib-detail-body');
+
+            title.textContent = `Reunião ${d.reuniao} - ${d.processo}`;
+            body.innerHTML = `
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                    <div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 2px;">Interessado</div>
+                        <div style="font-weight: 600;">${d.interessado}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 2px;">Processo</div>
+                        <div style="font-family: monospace; font-size: 12px;">${d.processo}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 2px;">Classificação</div>
+                        <div>${d.classificacao}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 2px;">Microtema</div>
+                        <div>${d.microtema}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 2px;">Resultado</div>
+                        <div><span class="badge ${d.resultado === 'Deferido' ? 'badge-success' : 'badge-danger'}">${d.resultado}</span> ${d.unanime ? '(Unanimidade)' : ''}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 2px;">Data da Reunião</div>
+                        <div>${d.data}</div>
+                    </div>
+                </div>
+                ${d.votos_a_favor.length > 0 ? `
+                <div style="margin-bottom: 12px;">
+                    <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">Votos a Favor (${d.votos_a_favor.length})</div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                        ${d.votos_a_favor.map(v => `<span class="badge badge-success" style="font-size: 11px;">${v}</span>`).join('')}
+                    </div>
+                </div>` : ''}
+                ${d.votos_contra.length > 0 ? `
+                <div style="margin-bottom: 12px;">
+                    <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">Votos Contra (${d.votos_contra.length})</div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                        ${d.votos_contra.map(v => `<span class="badge badge-danger" style="font-size: 11px;">${v}</span>`).join('')}
+                    </div>
+                </div>` : ''}
+                ${d.resumo ? `
+                <div style="margin-bottom: 12px;">
+                    <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">Resumo do Pleito</div>
+                    <div style="font-size: 13px; line-height: 1.5; color: var(--text-secondary); background: var(--background); padding: 12px; border-radius: var(--radius);">${d.resumo}</div>
+                </div>` : ''}
+                ${d.fundamento ? `
+                <div>
+                    <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">Fundamento da Decisão</div>
+                    <div style="font-size: 13px; line-height: 1.5; color: var(--text-secondary); background: var(--background); padding: 12px; border-radius: var(--radius);">${d.fundamento}</div>
+                </div>` : ''}
+            `;
+            panel.style.display = 'block';
+            panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        },
+
         exportCSV() {
-            if (this.filtered.length === 0) {
-                alert('Nenhuma deliberação para exportar');
-                return;
-            }
+            if (this.filtered.length === 0) return;
             Utils.exportCSV(this.filtered, [
+                { key: 'reuniao', label: 'Reunião' },
+                { key: 'data', label: 'Data' },
                 { key: 'processo', label: 'Processo' },
                 { key: 'interessado', label: 'Interessado' },
+                { key: 'classificacao', label: 'Classificação' },
                 { key: 'microtema', label: 'Microtema' },
-                { key: 'decisao', label: 'Decisao' },
-                { key: 'numero_reuniao', label: 'Reunião' },
-                { key: 'data_reuniao', label: 'Data' }
+                { key: 'resultado', label: 'Resultado' }
             ], 'deliberacoes_iris.csv');
         }
     };
@@ -8535,7 +8550,7 @@ tr:hover {
     // ============================================
     const PageAgencias = {
         agencias: [
-            { id: 'artesp', nome: 'ARTESP', nomeCompleto: 'Agencia de Transporte do Estado de SP', decisoes: 1247, aprovadas: 892, pendentes: 45, cor: '#FFEF4D', diretores: [] },
+            { id: 'artesp', nome: 'ARTESP', nomeCompleto: 'Agencia de Transporte do Estado de SP', decisoes: 1247, aprovadas: 892, pendentes: 45, cor: '#c9a227', diretores: [] },
             { id: 'antt', nome: 'ANTT', nomeCompleto: 'Agencia Nacional de Transportes Terrestres', decisoes: 3456, aprovadas: 2890, pendentes: 123, cor: '#4ADE80', diretores: [] },
             { id: 'anm', nome: 'ANM', nomeCompleto: 'Agencia Nacional de Mineracao', decisoes: 892, aprovadas: 654, pendentes: 78, cor: '#60A5FA', diretores: [] },
             { id: 'aneel', nome: 'ANEEL', nomeCompleto: 'Agencia Nacional de Energia Eletrica', decisoes: 2134, aprovadas: 1823, pendentes: 89, cor: '#F472B6', diretores: [] },
@@ -8555,7 +8570,7 @@ tr:hover {
             try {
                 const resp = await API.get('/api/agencias-reguladoras');
                 if (resp?.success && resp.agencias?.length > 0) {
-                    const cores = ['#FFEF4D', '#4ADE80', '#60A5FA', '#F472B6', '#A78BFA', '#FB923C', '#22D3EE', '#F97316', '#E879F9', '#14B8A6'];
+                    const cores = ['#c9a227', '#4ADE80', '#60A5FA', '#F472B6', '#A78BFA', '#FB923C', '#22D3EE', '#F97316', '#E879F9', '#14B8A6'];
                     this.agencias = resp.agencias.map((ag, i) => ({
                         id: (ag.sigla || '').toLowerCase(),
                         nome: ag.sigla,
@@ -8668,7 +8683,7 @@ tr:hover {
         },
 
         regioes: {
-            'Sudeste': { estados: ['SP', 'RJ', 'MG', 'ES'], cor: '#FFEF4D' },
+            'Sudeste': { estados: ['SP', 'RJ', 'MG', 'ES'], cor: '#c9a227' },
             'Sul': { estados: ['PR', 'SC', 'RS'], cor: '#4ADE80' },
             'Nordeste': { estados: ['BA', 'PE', 'CE', 'MA', 'RN', 'PB', 'AL', 'PI', 'SE'], cor: '#60A5FA' },
             'Centro-Oeste': { estados: ['GO', 'MT', 'MS', 'DF'], cor: '#F472B6' },
@@ -8766,7 +8781,7 @@ tr:hover {
                     return data.cor;
                 }
             }
-            return '#FFEF4D';
+            return '#c9a227';
         },
 
         updateStats() {
@@ -9327,16 +9342,7 @@ tr:hover {
                 ctx.lineWidth = lineWidth;
                 ctx.stroke();
 
-                // Animated data pulse along edges
-                if (!dimmed) {
-                    const t = ((this.time * 0.5 + edge.phase) % 1);
-                    const px = edge.source.x + (edge.target.x - edge.source.x) * t;
-                    const py = edge.source.y + (edge.target.y - edge.source.y) * t;
-                    ctx.beginPath();
-                    ctx.arc(px, py, highlighted ? 2.5 : 1.5, 0, Math.PI * 2);
-                    ctx.fillStyle = highlighted ? 'rgba(96, 165, 250, 0.8)' : 'rgba(96, 165, 250, 0.3)';
-                    ctx.fill();
-                }
+                // Clean edges — no animated pulses
             });
 
             // Draw nodes
@@ -9360,18 +9366,6 @@ tr:hover {
                     ctx.beginPath();
                     ctx.arc(node.x, node.y, glowR, 0, Math.PI * 2);
                     ctx.fillStyle = glow;
-                    ctx.fill();
-                }
-
-                // Subtle ambient glow
-                if (!dimmed) {
-                    const ambR = r * 1.8 * pulse;
-                    const amb = ctx.createRadialGradient(node.x, node.y, r * 0.5, node.x, node.y, ambR);
-                    amb.addColorStop(0, node.color + '15');
-                    amb.addColorStop(1, node.color + '00');
-                    ctx.beginPath();
-                    ctx.arc(node.x, node.y, ambR, 0, Math.PI * 2);
-                    ctx.fillStyle = amb;
                     ctx.fill();
                 }
 

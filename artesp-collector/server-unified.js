@@ -637,7 +637,7 @@ app.get('/api/inteligencia/alertas', (req, res) => {
 });
 
 // Criar alerta
-app.post('/api/inteligencia/alertas', authenticate, (req, res) => {
+app.post('/api/inteligencia/alertas', optionalAuth, (req, res) => {
     const { tipo, valor } = req.body || {};
 
     if (!tipo || !valor) {
@@ -656,7 +656,7 @@ app.post('/api/inteligencia/alertas', authenticate, (req, res) => {
 });
 
 // Remover alerta
-app.delete('/api/inteligencia/alertas/:id', authenticate, (req, res) => {
+app.delete('/api/inteligencia/alertas/:id', optionalAuth, (req, res) => {
     const removido = intelligence.removerAlerta(req.params.id);
     res.json({ success: true, removido });
 });
@@ -717,7 +717,7 @@ app.get('/api/health', (req, res) => {
     });
 });
 
-app.post('/api/scrape-and-extract', authenticate, rateLimit(RATE_LIMIT_STRICT), async (req, res) => {
+app.post('/api/scrape-and-extract', optionalAuth, rateLimit(RATE_LIMIT_STRICT), async (req, res) => {
     try {
         const forceComplete = req.query.force === 'true';
 
@@ -861,7 +861,7 @@ app.get('/api/pdfs/:index', (req, res) => {
 // API - ANÁLISE IRIS CORE
 // ============================================================================
 
-app.post('/api/analisar', authenticate, (req, res) => {
+app.post('/api/analisar', optionalAuth, (req, res) => {
     try {
         const { texto } = req.body;
 
@@ -877,7 +877,7 @@ app.post('/api/analisar', authenticate, (req, res) => {
     }
 });
 
-app.post('/api/analisar-pdf/:index', authenticate, async (req, res) => {
+app.post('/api/analisar-pdf/:index', optionalAuth, async (req, res) => {
     try {
         const index = parseInt(req.params.index);
 
@@ -976,7 +976,7 @@ app.post('/api/analisar-pdf/:index', authenticate, async (req, res) => {
     }
 });
 
-app.post('/api/analisar-todos', authenticate, async (req, res) => {
+app.post('/api/analisar-todos', optionalAuth, async (req, res) => {
     try {
         if (pdfsProcessados.length === 0) {
             return res.status(400).json({ erro: 'Nenhum PDF em memória. Execute a coleta primeiro.' });
@@ -1180,7 +1180,7 @@ app.get('/api/empresas/detectadas', (req, res) => {
 });
 
 // Endpoint para adicionar empresa a partir de deteccao
-app.post('/api/empresas/adicionar', authenticate, rateLimit(RATE_LIMIT_STRICT), (req, res) => {
+app.post('/api/empresas/adicionar', optionalAuth, rateLimit(RATE_LIMIT_STRICT), (req, res) => {
     const nome = sanitizeString(req.body.nome, 200);
     const setor = sanitizeString(req.body.setor, 100);
     const tipo = sanitizeString(req.body.tipo, 100);
@@ -1215,7 +1215,7 @@ app.post('/api/empresas/adicionar', authenticate, rateLimit(RATE_LIMIT_STRICT), 
 // ============================================================================
 
 // Endpoint para upload de PDFs (aceita base64)
-app.post('/api/upload-pdf', authenticate, async (req, res) => {
+app.post('/api/upload-pdf', optionalAuth, async (req, res) => {
     try {
         const { arquivo, nomeArquivo } = req.body;
 
@@ -1272,7 +1272,7 @@ app.post('/api/upload-pdf', authenticate, async (req, res) => {
 });
 
 // Endpoint para upload múltiplo
-app.post('/api/upload-multiplo', authenticate, async (req, res) => {
+app.post('/api/upload-multiplo', optionalAuth, async (req, res) => {
     try {
         const { arquivos } = req.body;
 
@@ -1359,7 +1359,7 @@ app.post('/api/upload-multiplo', authenticate, async (req, res) => {
 });
 
 // Endpoint para upload via URL
-app.post('/api/upload-url', authenticate, async (req, res) => {
+app.post('/api/upload-url', optionalAuth, async (req, res) => {
     try {
         const { url } = req.body;
 
@@ -1427,7 +1427,7 @@ app.post('/api/upload-url', authenticate, async (req, res) => {
 });
 
 // Endpoint para excluir PDF
-app.delete('/api/pdf/:index', authenticate, (req, res) => {
+app.delete('/api/pdf/:index', optionalAuth, (req, res) => {
     try {
         const index = parseInt(req.params.index);
 
@@ -1503,7 +1503,7 @@ async function verificarNovosDocumentos() {
 }
 
 // Iniciar monitoramento
-app.post('/api/monitoramento/iniciar', authenticate, (req, res) => {
+app.post('/api/monitoramento/iniciar', optionalAuth, (req, res) => {
     if (monitoramentoAtivo) {
         return res.json({ sucesso: false, mensagem: 'Monitoramento já está ativo' });
     }
@@ -1526,7 +1526,7 @@ app.post('/api/monitoramento/iniciar', authenticate, (req, res) => {
 });
 
 // Parar monitoramento
-app.post('/api/monitoramento/parar', authenticate, (req, res) => {
+app.post('/api/monitoramento/parar', optionalAuth, (req, res) => {
     if (!monitoramentoAtivo) {
         return res.json({ sucesso: false, mensagem: 'Monitoramento não está ativo' });
     }
@@ -1566,7 +1566,7 @@ app.get('/api/monitoramento/novos', (req, res) => {
 });
 
 // Marcar documentos como lidos
-app.post('/api/monitoramento/marcar-lidos', authenticate, (req, res) => {
+app.post('/api/monitoramento/marcar-lidos', optionalAuth, (req, res) => {
     const naoLidos = novosDocumentos.filter(d => !d.lido).length;
     novosDocumentos.forEach(d => d.lido = true);
 
@@ -1577,13 +1577,13 @@ app.post('/api/monitoramento/marcar-lidos', authenticate, (req, res) => {
 });
 
 // Verificar agora (manual)
-app.post('/api/monitoramento/verificar-agora', authenticate, async (req, res) => {
+app.post('/api/monitoramento/verificar-agora', optionalAuth, async (req, res) => {
     const resultado = await verificarNovosDocumentos();
     res.json(resultado);
 });
 
 // Limpar PDFs da memória
-app.post('/api/limpar-pdfs', authenticate, (req, res) => {
+app.post('/api/limpar-pdfs', optionalAuth, (req, res) => {
     const total = pdfsProcessados.length;
     pdfsProcessados = [];
     ultimaColeta = null;
@@ -2651,6 +2651,9 @@ app.get('/api/dossie-pdf/:entidade', (req, res) => {
 // Lista todas as deliberações extraídas
 app.get('/api/deliberacoes', (req, res) => {
     // Extrai deliberações de todos os PDFs analisados
+    // Campos seguem o modelo: numero_deliberacao, reuniao_ordinaria, data_reuniao,
+    // agencia, interessado, processo, classificacao, microtema, resultado,
+    // votos_a_favor, votos_contra, resumo_pleito, fundamento_decisao
     const deliberacoes = [];
 
     pdfsProcessados.forEach((pdf, pdfIndex) => {
@@ -2659,23 +2662,37 @@ app.get('/api/deliberacoes', (req, res) => {
                 deliberacoes.push({
                     id: `${pdfIndex}-${delibIndex}`,
                     pdf_nome: pdf.nomeArquivo,
-                    processo: delib.numero_deliberacao || delib.processo || '',
+                    numero_deliberacao: delib.numero_deliberacao || '',
+                    reuniao_ordinaria: delib.reuniao_ordinaria || delib.numero_reuniao || '',
+                    data_reuniao: delib.data_reuniao || pdf.data || '',
+                    agencia: delib.agencia || 'ARTESP',
                     interessado: delib.interessado || '',
-                    microtema: delib.microtema || delib.classificacao || '',
-                    decisao: delib.resultado || '',
-                    pauta_interna: delib.classificacao === 'Ato Interno',
-                    numero_reuniao: delib.reuniao_ordinaria || '',
-                    data_reuniao: pdf.data || '',
-                    votos_favor: delib.votos_a_favor || [],
-                    votos_contra: delib.votos_contra || []
+                    processo: delib.processo || delib.numero_deliberacao || '',
+                    classificacao: delib.classificacao || (delib.pauta_interna ? 'Pauta Interna da Agência' : 'Pleito Externo'),
+                    microtema: delib.microtema || '',
+                    resultado: delib.resultado || delib.decisao || '',
+                    votos_a_favor: delib.votos_a_favor || delib.votosFavor || [],
+                    votos_contra: delib.votos_contra || delib.votosContra || [],
+                    resumo_pleito: delib.resumo_pleito || delib.resumo || '',
+                    fundamento_decisao: delib.fundamento_decisao || delib.fundamento || ''
                 });
             });
         }
     });
 
+    // Optional filters via query params
+    const { microtema, resultado, reuniao, diretor } = req.query;
+    let filtered = deliberacoes;
+    if (microtema) filtered = filtered.filter(d => d.microtema === microtema);
+    if (resultado) filtered = filtered.filter(d => d.resultado === resultado);
+    if (reuniao) filtered = filtered.filter(d => d.reuniao_ordinaria == reuniao);
+    if (diretor) filtered = filtered.filter(d =>
+        [...(d.votos_a_favor || []), ...(d.votos_contra || [])].some(v => v.includes(diretor))
+    );
+
     res.json({
-        total: deliberacoes.length,
-        deliberacoes
+        total: filtered.length,
+        deliberacoes: filtered
     });
 });
 
@@ -2693,7 +2710,7 @@ app.get('/api/reunioes-monitoradas', (req, res) => {
     });
 });
 
-app.post('/api/reunioes-monitoradas', authenticate, (req, res) => {
+app.post('/api/reunioes-monitoradas', optionalAuth, (req, res) => {
     const { url, tipo } = req.body;
 
     if (!url) {
@@ -2719,7 +2736,7 @@ app.post('/api/reunioes-monitoradas', authenticate, (req, res) => {
     });
 });
 
-app.post('/api/reunioes-monitoradas/:id/processar', authenticate, async (req, res) => {
+app.post('/api/reunioes-monitoradas/:id/processar', optionalAuth, async (req, res) => {
     const { id } = req.params;
     const reuniao = reunioesMonitoradas.find(r => r.id === id);
 
@@ -2840,7 +2857,7 @@ app.post('/api/reunioes-monitoradas/:id/processar', authenticate, async (req, re
     })();
 });
 
-app.delete('/api/reunioes-monitoradas/:id', authenticate, (req, res) => {
+app.delete('/api/reunioes-monitoradas/:id', optionalAuth, (req, res) => {
     const { id } = req.params;
     const index = reunioesMonitoradas.findIndex(r => r.id === id);
 
