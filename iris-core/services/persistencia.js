@@ -51,6 +51,7 @@ const memoryStore = {
     directors: [],
     votes: [],
     logs: [],
+    metricas_cache: [],
     _idCounter: 1
 };
 
@@ -267,38 +268,47 @@ async function salvarDeliberacao(deliberacao) {
 
     const dados = {
         agencia: deliberacao.agencia || 'ARTESP',
-        numero_reuniao: deliberacao.numeroReuniao,
-        data_reuniao: deliberacao.dataReuniao,
-        processo: deliberacao.processo || deliberacao.processos?.[0],
+        numero_reuniao: deliberacao.numeroReuniao || deliberacao.reuniao_ordinaria || '',
+        data_reuniao: deliberacao.dataReuniao || deliberacao.data_reuniao || null,
+        processo: deliberacao.processo || deliberacao.processos?.[0] || '',
         interessado: deliberacao.interessado || 'A identificar',
-        tipo_deliberacao: deliberacao.tipo,
-        pauta_interna: deliberacao.tipo === 'Ato Administrativo Interno',
-        microtema: deliberacao.microtema,
-        resumo_pleito: deliberacao.resumoPleito || deliberacao.texto?.substring(0, 500),
-        fundamento_decisao: deliberacao.fundamentoDecisao || null,
-        decisao: deliberacao.decisao,
-        votos_favor: deliberacao.votosFavoraveis ? (Array.isArray(deliberacao.votosFavoraveis) ? deliberacao.votosFavoraveis.join(', ') : String(deliberacao.votosFavoraveis)) : null,
-        votos_contra: deliberacao.votosContrarios ? (Array.isArray(deliberacao.votosContrarios) ? deliberacao.votosContrarios.join(', ') : String(deliberacao.votosContrarios)) : null,
-        link_pdf: deliberacao.linkPdf,
+        tipo_deliberacao: deliberacao.tipo || deliberacao.classificacao || 'Pleito Externo',
+        pauta_interna: deliberacao.tipo === 'Ato Administrativo Interno' ||
+                       deliberacao.classificacao === 'Pauta Interna da Agência' ||
+                       !!deliberacao.pauta_interna,
+        microtema: deliberacao.microtema || '',
+        resumo_pleito: deliberacao.resumoPleito || deliberacao.resumo_pleito || deliberacao.texto?.substring(0, 500) || '',
+        fundamento_decisao: deliberacao.fundamentoDecisao || deliberacao.fundamento_decisao || null,
+        decisao: deliberacao.decisao || deliberacao.resultado || '',
+        votos_favor: deliberacao.votosFavoraveis
+            ? (Array.isArray(deliberacao.votosFavoraveis) ? deliberacao.votosFavoraveis.join(', ') : String(deliberacao.votosFavoraveis))
+            : (deliberacao.votos_a_favor
+                ? (Array.isArray(deliberacao.votos_a_favor) ? deliberacao.votos_a_favor.join(', ') : String(deliberacao.votos_a_favor))
+                : null),
+        votos_contra: deliberacao.votosContrarios
+            ? (Array.isArray(deliberacao.votosContrarios) ? deliberacao.votosContrarios.join(', ') : String(deliberacao.votosContrarios))
+            : (deliberacao.votos_contra
+                ? (Array.isArray(deliberacao.votos_contra) ? deliberacao.votos_contra.join(', ') : String(deliberacao.votos_contra))
+                : null),
+        link_pdf: deliberacao.linkPdf || deliberacao.link_pdf || '',
         raw_data: {
-            tipo: deliberacao.tipo,
+            tipo: deliberacao.tipo || deliberacao.classificacao || '',
             tipo_confianca: deliberacao.tipoConfianca,
-            tipo_justificativa: deliberacao.tipoJustificativa,
             decisao_confianca: deliberacao.decisaoConfianca,
-            decisao_justificativa: deliberacao.decisaoJustificativa,
             microtema_confianca: deliberacao.microtemaConfianca,
-            microtema_justificativa: deliberacao.microtemaJustificativa,
-            confianca_geral: deliberacao.confiancaGeral,
-            tipo_votacao: deliberacao.tipoVotacao,
-            total_votantes: deliberacao.totalVotantes,
-            votos_favoraveis: deliberacao.votosFavoraveis,
-            votos_contrarios: deliberacao.votosContrarios,
-            abstencoes: deliberacao.abstencoes,
-            hash: deliberacao.hashTexto,
-            processos: deliberacao.processos,
-            fonte: 'iris-core',
+            confianca_geral: deliberacao.confiancaGeral || deliberacao.confianca || 0,
+            tipo_votacao: deliberacao.tipoVotacao || '',
+            total_votantes: deliberacao.totalVotantes || 0,
+            votos_favoraveis: deliberacao.votosFavoraveis || deliberacao.votos_a_favor || [],
+            votos_contrarios: deliberacao.votosContrarios || deliberacao.votos_contra || [],
+            abstencoes: deliberacao.abstencoes || [],
+            hash: deliberacao.hashTexto || deliberacao.hash_texto || '',
+            processos: deliberacao.processos || [],
+            numero_deliberacao: deliberacao.numero_deliberacao || '',
+            classificacao: deliberacao.classificacao || '',
+            fonte: deliberacao.fonte || 'iris-core',
             processado_em: new Date().toISOString(),
-            versao_processador: '2.0.0'
+            versao_processador: '3.0.0'
         }
     };
 
@@ -664,6 +674,107 @@ function getStatus() {
     };
 }
 
+/**
+ * Salva métricas calculadas no cache persistente
+ */
+async function salvarMetricasCache(tipo, dados) {
+    const registro = {
+        tipo,
+        dados,
+        gerado_em: new Date().toISOString()
+    };
+
+    if (!isSupabaseAvailable()) {
+        // Remove cache anterior do mesmo tipo
+        memoryStore.metricas_cache = memoryStore.metricas_cache.filter(m => m.tipo !== tipo);
+        memoryStore.metricas_cache.push({ id: _generateId(), ...registro });
+        return registro;
+    }
+
+    try {
+        // Upsert: deleta anterior e insere novo
+        await supabaseRequest('DELETE', 'metricas_cache', null, `?tipo=eq.${sanitizeQueryValue(tipo)}`).catch(() => {});
+        await supabaseRequest('POST', 'metricas_cache', registro);
+        return registro;
+    } catch (error) {
+        logger.debug('Persistencia', 'Tabela metricas_cache não disponível, usando memória', { erro: error.message });
+        memoryStore.metricas_cache = memoryStore.metricas_cache.filter(m => m.tipo !== tipo);
+        memoryStore.metricas_cache.push({ id: _generateId(), ...registro });
+        return registro;
+    }
+}
+
+/**
+ * Busca métricas do cache persistente
+ */
+async function buscarMetricasCache(tipo) {
+    if (!isSupabaseAvailable()) {
+        const cached = memoryStore.metricas_cache.find(m => m.tipo === tipo);
+        return cached || null;
+    }
+
+    try {
+        const resultado = await supabaseRequest('GET', 'metricas_cache', null, `?tipo=eq.${sanitizeQueryValue(tipo)}&limit=1&order=gerado_em.desc`);
+        return resultado && resultado.length > 0 ? resultado[0] : null;
+    } catch (error) {
+        const cached = memoryStore.metricas_cache.find(m => m.tipo === tipo);
+        return cached || null;
+    }
+}
+
+/**
+ * Busca todas as deliberações para cálculo de métricas
+ */
+async function buscarTodasDeliberacoesParaMetricas() {
+    if (!isSupabaseAvailable()) {
+        return memoryStore.deliberacoes.map(d => ({
+            numero_deliberacao: d.raw_data?.numero_deliberacao || d.processo || '',
+            reuniao_ordinaria: d.numero_reuniao || '',
+            data_reuniao: d.data_reuniao || '',
+            agencia: d.agencia || 'ARTESP',
+            interessado: d.interessado || '',
+            processo: d.processo || '',
+            classificacao: d.tipo_deliberacao || (d.pauta_interna ? 'Pauta Interna da Agência' : 'Pleito Externo'),
+            microtema: d.microtema || '',
+            resultado: d.decisao || '',
+            votos_a_favor: d.votos_favor ? d.votos_favor.split(', ').filter(Boolean) : (d.raw_data?.votos_favoraveis || []),
+            votos_contra: d.votos_contra ? d.votos_contra.split(', ').filter(Boolean) : (d.raw_data?.votos_contrarios || []),
+            resumo_pleito: d.resumo_pleito || '',
+            fundamento_decisao: d.fundamento_decisao || '',
+            fonte: d.raw_data?.fonte || 'iris-core'
+        }));
+    }
+
+    try {
+        const resultado = await supabaseRequest(
+            'GET',
+            'deliberacoes_extraidas',
+            null,
+            '?select=id,processo,numero_reuniao,data_reuniao,interessado,tipo_deliberacao,pauta_interna,microtema,decisao,resumo_pleito,fundamento_decisao,votos_favor,votos_contra,agencia,raw_data&order=created_at.desc&limit=5000'
+        );
+
+        return (resultado || []).map(d => ({
+            numero_deliberacao: d.raw_data?.numero_deliberacao || d.processo || '',
+            reuniao_ordinaria: d.numero_reuniao || '',
+            data_reuniao: d.data_reuniao || '',
+            agencia: d.agencia || 'ARTESP',
+            interessado: d.interessado || '',
+            processo: d.processo || '',
+            classificacao: d.tipo_deliberacao || (d.pauta_interna ? 'Pauta Interna da Agência' : 'Pleito Externo'),
+            microtema: d.microtema || '',
+            resultado: d.decisao || '',
+            votos_a_favor: d.votos_favor ? d.votos_favor.split(', ').filter(Boolean) : (d.raw_data?.votos_favoraveis || []),
+            votos_contra: d.votos_contra ? d.votos_contra.split(', ').filter(Boolean) : (d.raw_data?.votos_contrarios || []),
+            resumo_pleito: d.resumo_pleito || '',
+            fundamento_decisao: d.fundamento_decisao || '',
+            fonte: d.raw_data?.fonte || 'iris-core'
+        }));
+    } catch (error) {
+        logger.error('Persistencia', 'Erro ao buscar deliberações para métricas', { erro: error.message });
+        return [];
+    }
+}
+
 module.exports = {
     // Status
     isSupabaseAvailable,
@@ -698,5 +809,10 @@ module.exports = {
     registrarLogProcessamento,
 
     // Consultas
-    buscarEstatisticas
+    buscarEstatisticas,
+
+    // Métricas
+    salvarMetricasCache,
+    buscarMetricasCache,
+    buscarTodasDeliberacoesParaMetricas
 };

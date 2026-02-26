@@ -42,6 +42,8 @@ const newsFetcher = require('../iris-core/services/news-fetcher');
 const persistencia = require('../iris-core/services/persistencia');
 const intelligence = require('../iris-core/services/intelligence-correlator');
 const geminiAnalyzer = require('../iris-core/services/gemini-analyzer');
+const filaProcessamento = require('../iris-core/services/fila-processamento');
+const metricasEngine = require('../iris-core/services/metricas-engine');
 
 // ── ReceitaWS CNPJ Lookup Cache ──
 const cnpjCache = new Map();
@@ -1456,6 +1458,163 @@ app.delete('/api/pdf/:index', authenticate, (req, res) => {
 });
 
 // ============================================================================
+// API - PROCESSAMENTO UNIFICADO DE DELIBERAÇÕES
+// ============================================================================
+
+// Endpoint unificado: Upload + Extração + Análise + Métricas + Persistência
+app.post('/api/processar-deliberacoes', authenticate, async (req, res) => {
+    try {
+        const { arquivos, arquivo, nomeArquivo, url, agencia, forcarReprocessamento } = req.body;
+
+        // Monta lista de PDFs a processar
+        const pdfsParaProcessar = [];
+
+        // Caso 1: Upload único (base64)
+        if (arquivo) {
+            const base64Data = arquivo.replace(/^data:application\/pdf;base64,/, '');
+            const buffer = Buffer.from(base64Data, 'base64');
+            pdfsParaProcessar.push({ buffer, nomeArquivo: nomeArquivo || `upload_${Date.now()}.pdf` });
+        }
+
+        // Caso 2: Upload múltiplo (array de base64)
+        if (arquivos && Array.isArray(arquivos)) {
+            for (const arq of arquivos) {
+                const base64Data = arq.arquivo.replace(/^data:application\/pdf;base64,/, '');
+                const buffer = Buffer.from(base64Data, 'base64');
+                pdfsParaProcessar.push({ buffer, nomeArquivo: arq.nomeArquivo || `upload_${Date.now()}.pdf` });
+                arq.arquivo = null; // Libera memória
+            }
+        }
+
+        // Caso 3: Upload via URL
+        if (url) {
+            const urlValidation = validateUrl(url);
+            if (!urlValidation.valid) {
+                return res.status(400).json({ erro: urlValidation.error });
+            }
+
+            const axios = require('axios');
+            const response = await axios.get(urlValidation.url, {
+                responseType: 'arraybuffer',
+                timeout: 60000,
+                maxRedirects: 3,
+                headers: { 'User-Agent': 'IRIS-Platform/3.0' }
+            });
+
+            const buffer = Buffer.from(response.data);
+            const nome = url.split('/').pop() || `download_${Date.now()}.pdf`;
+            pdfsParaProcessar.push({ buffer, nomeArquivo: nome, url: urlValidation.url });
+        }
+
+        if (pdfsParaProcessar.length === 0) {
+            return res.status(400).json({ erro: 'Nenhum PDF enviado. Use "arquivo" (base64), "arquivos" (array) ou "url".' });
+        }
+
+        console.log(`\n[IRIS] ════════════════════════════════════════════════`);
+        console.log(`[IRIS] PROCESSAMENTO UNIFICADO: ${pdfsParaProcessar.length} PDF(s)`);
+        console.log(`[IRIS] ════════════════════════════════════════════════`);
+
+        // Adiciona na fila de processamento
+        const { jobId } = filaProcessamento.adicionarNaFila(pdfsParaProcessar, {
+            agencia: agencia || null,
+            forcarReprocessamento: forcarReprocessamento || false
+        });
+
+        // Processa a fila de forma assíncrona
+        const processamentoPromise = filaProcessamento.processarFila({
+            pdfParse,
+            geminiAnalyzer,
+            irisCore: { extrairDeliberacoesEstruturadas: irisCore.extrairDeliberacoesEstruturadas, analisarTexto: irisCore.analisarTexto },
+            persistencia,
+            detectarEmpresas
+        });
+
+        // Para poucos PDFs (<=3), espera concluir e retorna resultado imediato
+        if (pdfsParaProcessar.length <= 3) {
+            await processamentoPromise;
+            const resultado = filaProcessamento.consultarJob(jobId);
+
+            // Também adiciona PDFs à memória para compatibilidade com endpoints antigos
+            for (const r of (resultado?.resultadosPorPdf || [])) {
+                if (r.status === 'concluido') {
+                    // Busca o item com deliberações completas do resultado
+                    const item = filaProcessamento.consultarJob(jobId);
+                    // Os PDFs já foram persistidos pelo processamento da fila
+                }
+            }
+
+            // Calcula métricas com todas as deliberações disponíveis
+            const todasDelibs = coletarTodasDeliberacoes();
+            const delibsPersistidas = await persistencia.buscarTodasDeliberacoesParaMetricas();
+            const delibsParaMetricas = delibsPersistidas.length > todasDelibs.length ? delibsPersistidas : todasDelibs;
+            const metricas = metricasEngine.calcularTodasMetricas(delibsParaMetricas);
+
+            // Salva métricas no cache persistente
+            persistencia.salvarMetricasCache('completo', metricas).catch(() => {});
+
+            console.log(`[IRIS] ════════════════════════════════════════════════`);
+            console.log(`[IRIS] PROCESSAMENTO CONCLUÍDO: ${resultado?.processados || 0} PDFs, ${resultado?.deliberacoesExtraidas || 0} deliberações`);
+            console.log(`[IRIS] ════════════════════════════════════════════════\n`);
+
+            return res.json({
+                sucesso: true,
+                jobId,
+                status: 'concluido',
+                resultado: {
+                    totalPdfs: resultado?.totalPdfs || 0,
+                    processados: resultado?.processados || 0,
+                    erros: resultado?.erros || 0,
+                    deliberacoesExtraidas: resultado?.deliberacoesExtraidas || 0,
+                    resultadosPorPdf: resultado?.resultadosPorPdf || []
+                },
+                metricas
+            });
+        }
+
+        // Para muitos PDFs (>3), retorna jobId e processa em background
+        processamentoPromise.then(async () => {
+            // Recalcula métricas após processamento
+            try {
+                const delibsPersistidas = await persistencia.buscarTodasDeliberacoesParaMetricas();
+                const metricas = metricasEngine.calcularTodasMetricas(delibsPersistidas);
+                await persistencia.salvarMetricasCache('completo', metricas);
+                console.log(`[IRIS] Métricas recalculadas após processamento do job ${jobId}`);
+            } catch (err) {
+                console.warn(`[IRIS] Erro ao recalcular métricas: ${err.message}`);
+            }
+        }).catch(err => {
+            console.error(`[IRIS] Erro no processamento do job ${jobId}: ${err.message}`);
+        });
+
+        res.json({
+            sucesso: true,
+            jobId,
+            status: 'processando',
+            mensagem: `${pdfsParaProcessar.length} PDFs enviados para processamento. Use GET /api/processar-deliberacoes/status/${jobId} para acompanhar.`,
+            totalNaFila: pdfsParaProcessar.length
+        });
+
+    } catch (error) {
+        console.error('[IRIS] Erro no processamento unificado:', error.message);
+        res.status(500).json({ erro: 'Erro ao processar: ' + error.message });
+    }
+});
+
+// Status de um job específico
+app.get('/api/processar-deliberacoes/status/:jobId', (req, res) => {
+    const job = filaProcessamento.consultarJob(req.params.jobId);
+    if (!job) {
+        return res.status(404).json({ erro: 'Job não encontrado' });
+    }
+    res.json(job);
+});
+
+// Status geral da fila de processamento
+app.get('/api/fila/status', (req, res) => {
+    res.json(filaProcessamento.statusFila());
+});
+
+// ============================================================================
 // API - MONITORAMENTO DE NOVOS DOCUMENTOS
 // ============================================================================
 
@@ -2107,6 +2266,140 @@ app.get('/api/metricas/exportar', (req, res) => {
         total: deliberacoes.length,
         deliberations: deliberacoes
     });
+});
+
+// ============================================================================
+// API - MÉTRICAS UNIFICADAS (Motor de Métricas v3)
+// ============================================================================
+
+// Todas as métricas calculadas de uma vez (5 grupos)
+app.get('/api/metricas/completo', async (req, res) => {
+    try {
+        // Tenta buscar do Supabase primeiro, senão usa memória
+        const delibsPersistidas = await persistencia.buscarTodasDeliberacoesParaMetricas();
+        const delibsMemoria = coletarTodasDeliberacoes();
+
+        // Usa a fonte com mais dados
+        const deliberacoes = delibsPersistidas.length > delibsMemoria.length
+            ? delibsPersistidas
+            : delibsMemoria;
+
+        if (deliberacoes.length === 0) {
+            return res.json({
+                sucesso: true,
+                mensagem: 'Nenhuma deliberação encontrada. Faça upload de PDFs via /api/processar-deliberacoes.',
+                metricas: null
+            });
+        }
+
+        const metricas = metricasEngine.calcularTodasMetricas(deliberacoes);
+
+        // Persiste no cache
+        persistencia.salvarMetricasCache('completo', metricas).catch(() => {});
+
+        res.json({
+            sucesso: true,
+            totalDeliberacoes: deliberacoes.length,
+            fonte: delibsPersistidas.length > delibsMemoria.length ? 'supabase' : 'memoria',
+            metricas
+        });
+    } catch (error) {
+        res.status(500).json({ erro: error.message });
+    }
+});
+
+// Grupo 1: Métricas de Valor Regulatório
+app.get('/api/metricas/valor-regulatorio', async (req, res) => {
+    try {
+        const delibsPersistidas = await persistencia.buscarTodasDeliberacoesParaMetricas();
+        const delibsMemoria = coletarTodasDeliberacoes();
+        const deliberacoes = delibsPersistidas.length > delibsMemoria.length ? delibsPersistidas : delibsMemoria;
+
+        const metricas = metricasEngine.calcularMetricasValorRegulatorio(deliberacoes);
+        res.json({ sucesso: true, metricas });
+    } catch (error) {
+        res.status(500).json({ erro: error.message });
+    }
+});
+
+// Grupo 2: Métricas por Diretor (com tendência e divergências)
+app.get('/api/metricas/diretor-completo', async (req, res) => {
+    try {
+        const delibsPersistidas = await persistencia.buscarTodasDeliberacoesParaMetricas();
+        const delibsMemoria = coletarTodasDeliberacoes();
+        const deliberacoes = delibsPersistidas.length > delibsMemoria.length ? delibsPersistidas : delibsMemoria;
+
+        const metricas = metricasEngine.calcularMetricasPorDiretor(deliberacoes);
+        res.json({ sucesso: true, metricas });
+    } catch (error) {
+        res.status(500).json({ erro: error.message });
+    }
+});
+
+// Grupo 3: Métricas por Tema (com evolução temporal)
+app.get('/api/metricas/tema-completo', async (req, res) => {
+    try {
+        const delibsPersistidas = await persistencia.buscarTodasDeliberacoesParaMetricas();
+        const delibsMemoria = coletarTodasDeliberacoes();
+        const deliberacoes = delibsPersistidas.length > delibsMemoria.length ? delibsPersistidas : delibsMemoria;
+
+        const metricas = metricasEngine.calcularMetricasPorTema(deliberacoes);
+        res.json({ sucesso: true, metricas });
+    } catch (error) {
+        res.status(500).json({ erro: error.message });
+    }
+});
+
+// Grupo 4: Métricas Institucionais
+app.get('/api/metricas/institucional-completo', async (req, res) => {
+    try {
+        const delibsPersistidas = await persistencia.buscarTodasDeliberacoesParaMetricas();
+        const delibsMemoria = coletarTodasDeliberacoes();
+        const deliberacoes = delibsPersistidas.length > delibsMemoria.length ? delibsPersistidas : delibsMemoria;
+
+        const metricas = metricasEngine.calcularMetricasInstitucionais(deliberacoes);
+        res.json({ sucesso: true, metricas });
+    } catch (error) {
+        res.status(500).json({ erro: error.message });
+    }
+});
+
+// Grupo 5: Métricas Competitivas (matriz tema x diretor, padrões)
+app.get('/api/metricas/competitivo-completo', async (req, res) => {
+    try {
+        const delibsPersistidas = await persistencia.buscarTodasDeliberacoesParaMetricas();
+        const delibsMemoria = coletarTodasDeliberacoes();
+        const deliberacoes = delibsPersistidas.length > delibsMemoria.length ? delibsPersistidas : delibsMemoria;
+
+        const metricas = metricasEngine.calcularMetricasCompetitivas(deliberacoes);
+        res.json({ sucesso: true, metricas });
+    } catch (error) {
+        res.status(500).json({ erro: error.message });
+    }
+});
+
+// Recalcular métricas manualmente (força recálculo do cache)
+app.post('/api/metricas/recalcular', authenticate, async (req, res) => {
+    try {
+        metricasEngine.invalidarCache();
+
+        const delibsPersistidas = await persistencia.buscarTodasDeliberacoesParaMetricas();
+        const delibsMemoria = coletarTodasDeliberacoes();
+        const deliberacoes = delibsPersistidas.length > delibsMemoria.length ? delibsPersistidas : delibsMemoria;
+
+        const metricas = metricasEngine.calcularTodasMetricas(deliberacoes);
+
+        await persistencia.salvarMetricasCache('completo', metricas);
+
+        res.json({
+            sucesso: true,
+            mensagem: `Métricas recalculadas: ${deliberacoes.length} deliberações processadas`,
+            totalDeliberacoes: deliberacoes.length,
+            metricas
+        });
+    } catch (error) {
+        res.status(500).json({ erro: error.message });
+    }
 });
 
 
