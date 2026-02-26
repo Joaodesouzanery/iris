@@ -20,8 +20,8 @@ const http = require('http');
 // ============================================
 const FONTES_RSS = {
     // ─── Agências Reguladoras Federais ───
-    // gov.br uses Plone CMS - RSS feeds at /@@RSS or /RSS paths
-    // Multiple fallback URLs tried in order
+    // gov.br uses Plone CMS — confirmed working pattern: /RSS at agency root
+    // Verified Feb 2026: https://www.gov.br/{agencia}/RSS returns RSS 1.0 (RDF)
     'DOU': {
         nome: 'Diário Oficial da União',
         url: 'https://www.in.gov.br/web/dou/-/rss',
@@ -30,111 +30,112 @@ const FONTES_RSS = {
         esfera: 'federal',
         setor: 'geral',
         cor: '#A78BFA'
+        // Nota: DOU não tem RSS público confiável — pode falhar silenciosamente
     },
     'ANEEL': {
         nome: 'ANEEL - Energia Elétrica',
-        url: 'https://www.gov.br/aneel/pt-br/RSS',
-        fallbackUrls: ['https://www.gov.br/aneel/pt-br/assuntos/noticias/RSS', 'https://www.gov.br/aneel/pt-br/@@RSS'],
-        tipo: 'atom',
+        url: 'https://www.gov.br/aneel/RSS',
+        fallbackUrls: ['https://www.gov.br/aneel/pt-br/RSS'],
+        tipo: 'rss',
         esfera: 'federal',
         setor: 'energia',
         cor: '#FFEF4D'
     },
     'ANATEL': {
         nome: 'ANATEL - Telecomunicações',
-        url: 'https://www.gov.br/anatel/pt-br/RSS',
-        fallbackUrls: ['https://www.gov.br/anatel/pt-br/assuntos/noticias/RSS', 'https://www.gov.br/anatel/pt-br/@@RSS'],
-        tipo: 'atom',
+        url: 'https://www.gov.br/anatel/RSS',
+        fallbackUrls: ['https://www.gov.br/anatel/pt-br/RSS'],
+        tipo: 'rss',
         esfera: 'federal',
         setor: 'telecom',
         cor: '#4ADE80'
     },
     'ANP': {
         nome: 'ANP - Petróleo e Gás',
-        url: 'https://www.gov.br/anp/pt-br/RSS',
-        fallbackUrls: ['https://www.gov.br/anp/pt-br/assuntos/noticias/RSS', 'https://www.gov.br/anp/pt-br/@@RSS'],
-        tipo: 'atom',
+        url: 'https://www.gov.br/anp/RSS',
+        fallbackUrls: ['https://www.gov.br/anp/pt-br/RSS'],
+        tipo: 'rss',
         esfera: 'federal',
         setor: 'petroleo',
         cor: '#F472B6'
     },
     'ANVISA': {
         nome: 'ANVISA - Vigilância Sanitária',
-        url: 'https://www.gov.br/anvisa/pt-br/RSS',
-        fallbackUrls: ['https://www.gov.br/anvisa/pt-br/assuntos/noticias/RSS', 'https://www.gov.br/anvisa/pt-br/@@RSS'],
-        tipo: 'atom',
+        url: 'https://www.gov.br/anvisa/RSS',
+        fallbackUrls: ['https://www.gov.br/anvisa/pt-br/RSS'],
+        tipo: 'rss',
         esfera: 'federal',
         setor: 'saude',
         cor: '#A78BFA'
     },
     'ANS': {
         nome: 'ANS - Saúde Suplementar',
-        url: 'https://www.gov.br/ans/pt-br/RSS',
-        fallbackUrls: ['https://www.gov.br/ans/pt-br/assuntos/noticias/RSS', 'https://www.gov.br/ans/pt-br/@@RSS'],
-        tipo: 'atom',
+        url: 'https://www.gov.br/ans/RSS',
+        fallbackUrls: ['https://www.gov.br/ans/pt-br/RSS'],
+        tipo: 'rss',
         esfera: 'federal',
         setor: 'saude',
         cor: '#F97316'
     },
     'ANTT': {
         nome: 'ANTT - Transportes Terrestres',
-        url: 'https://www.gov.br/antt/pt-br/RSS',
-        fallbackUrls: ['https://www.gov.br/antt/pt-br/assuntos/noticias/RSS', 'https://www.gov.br/antt/pt-br/@@RSS'],
-        tipo: 'atom',
+        url: 'https://www.gov.br/antt/RSS',
+        fallbackUrls: ['https://www.gov.br/antt/pt-br/RSS'],
+        tipo: 'rss',
         esfera: 'federal',
         setor: 'transporte',
         cor: '#14B8A6'
     },
     'ANTAQ': {
         nome: 'ANTAQ - Transportes Aquaviários',
-        url: 'https://www.gov.br/antaq/pt-br/RSS',
-        fallbackUrls: ['https://www.gov.br/antaq/pt-br/noticias/RSS', 'https://www.gov.br/antaq/pt-br/@@RSS'],
-        tipo: 'atom',
+        url: 'https://www.gov.br/antaq/RSS',
+        fallbackUrls: ['https://www.gov.br/antaq/pt-br/RSS'],
+        tipo: 'rss',
         esfera: 'federal',
         setor: 'transporte',
         cor: '#06B6D4'
     },
     'ANAC': {
         nome: 'ANAC - Aviação Civil',
-        url: 'https://www.gov.br/anac/pt-br/RSS',
-        fallbackUrls: ['https://www.gov.br/anac/pt-br/noticias/RSS', 'https://www.gov.br/anac/pt-br/@@RSS'],
-        tipo: 'atom',
+        url: 'https://www.gov.br/anac/RSS',
+        fallbackUrls: ['https://www.gov.br/anac/pt-br/RSS'],
+        tipo: 'rss',
         esfera: 'federal',
         setor: 'aviacao',
         cor: '#8B5CF6'
     },
     'ANA': {
         nome: 'ANA - Águas e Saneamento',
-        url: 'https://www.gov.br/ana/pt-br/RSS',
-        fallbackUrls: ['https://www.gov.br/ana/pt-br/assuntos/noticias/RSS', 'https://www.gov.br/ana/pt-br/@@RSS'],
-        tipo: 'atom',
+        url: 'https://www.gov.br/ana/RSS',
+        fallbackUrls: ['https://www.gov.br/ana/pt-br/RSS'],
+        tipo: 'rss',
         esfera: 'federal',
         setor: 'saneamento',
         cor: '#60A5FA'
     },
     'ANM': {
         nome: 'ANM - Mineração',
-        url: 'https://www.gov.br/anm/pt-br/RSS',
-        fallbackUrls: ['https://www.gov.br/anm/pt-br/assuntos/noticias/RSS', 'https://www.gov.br/anm/pt-br/@@RSS'],
-        tipo: 'atom',
+        url: 'https://www.gov.br/anm/RSS',
+        fallbackUrls: ['https://www.gov.br/anm/pt-br/RSS'],
+        tipo: 'rss',
         esfera: 'federal',
         setor: 'mineracao',
         cor: '#EF4444'
     },
     'ANCINE': {
         nome: 'ANCINE - Cinema',
-        url: 'https://www.gov.br/ancine/pt-br/RSS',
-        fallbackUrls: ['https://www.gov.br/ancine/pt-br/assuntos/noticias/RSS'],
-        tipo: 'atom',
+        url: 'https://www.gov.br/ancine/RSS',
+        fallbackUrls: ['https://www.gov.br/ancine/pt-br/RSS'],
+        tipo: 'rss',
         esfera: 'federal',
         setor: 'cultura',
         cor: '#EC4899'
     },
     'CVM': {
         nome: 'CVM - Valores Mobiliários',
-        url: 'https://www.gov.br/cvm/pt-br/RSS',
-        fallbackUrls: ['https://www.gov.br/cvm/pt-br/assuntos/noticias/RSS'],
-        tipo: 'atom',
+        url: 'https://www.gov.br/cvm/RSS',
+        fallbackUrls: ['https://www.gov.br/cvm/pt-br/RSS'],
+        tipo: 'rss',
         esfera: 'federal',
         setor: 'financeiro',
         cor: '#22D3EE'
@@ -142,27 +143,28 @@ const FONTES_RSS = {
     // ─── Órgãos de Controle ───
     'TCU': {
         nome: 'TCU - Tribunal de Contas',
-        url: 'https://portal.tcu.gov.br/dados/pages/MDS-MServer-RSS.htm',
-        fallbackUrls: ['https://portal.tcu.gov.br/imprensa/noticias/rss.htm'],
-        tipo: 'rss',
+        url: 'https://portal.tcu.gov.br/imprensa/noticias/',
+        fallbackUrls: [],
+        tipo: 'scrape',
         esfera: 'federal',
         setor: 'controle',
         cor: '#F59E0B'
+        // Nota: TCU migrou para Next.js e removeu RSS — requer scraping
     },
     'CGU': {
         nome: 'CGU - Controladoria Geral',
-        url: 'https://www.gov.br/cgu/pt-br/RSS',
-        fallbackUrls: ['https://www.gov.br/cgu/pt-br/assuntos/noticias/RSS'],
-        tipo: 'atom',
+        url: 'https://www.gov.br/cgu/RSS',
+        fallbackUrls: ['https://www.gov.br/cgu/pt-br/RSS'],
+        tipo: 'rss',
         esfera: 'federal',
         setor: 'controle',
         cor: '#10B981'
     },
     'CADE': {
         nome: 'CADE - Defesa da Concorrência',
-        url: 'https://www.gov.br/cade/pt-br/RSS',
-        fallbackUrls: ['https://www.gov.br/cade/pt-br/assuntos/noticias/RSS'],
-        tipo: 'atom',
+        url: 'https://www.gov.br/cade/RSS',
+        fallbackUrls: ['https://www.gov.br/cade/pt-br/RSS'],
+        tipo: 'rss',
         esfera: 'federal',
         setor: 'concorrencia',
         cor: '#3B82F6'
@@ -170,27 +172,29 @@ const FONTES_RSS = {
     // ─── Agências Estaduais (SP) ───
     'ARTESP': {
         nome: 'ARTESP - Regulação SP',
-        url: 'https://www.artesp.sp.gov.br/Style%20Library/Handlers/RSSFeed.ashx',
-        fallbackUrls: [],
-        tipo: 'rss',
+        url: 'https://www.artesp.sp.gov.br/artesp/noticias',
+        fallbackUrls: ['https://www.artesp.sp.gov.br/Style%20Library/Handlers/RSSFeed.ashx'],
+        tipo: 'scrape',
         esfera: 'estadual',
         setor: 'transporte',
         cor: '#FBBF24'
+        // Nota: ARTESP migrou do SharePoint — RSS antigo não existe mais
     },
     'ARSESP': {
         nome: 'ARSESP - Saneamento e Energia SP',
-        url: 'https://www.arsesp.sp.gov.br/SitePages/noticias.aspx',
+        url: 'https://www.arsesp.sp.gov.br/',
         fallbackUrls: [],
         tipo: 'scrape',
         esfera: 'estadual',
         setor: 'saneamento',
         cor: '#38BDF8'
+        // Nota: ARSESP não tem RSS — scraping da homepage
     },
     // ─── Portais de Notícias Regulatórias ───
     'SENADO': {
         nome: 'Senado Federal - Notícias',
-        url: 'https://www12.senado.leg.br/noticias/feed',
-        fallbackUrls: ['https://www12.senado.leg.br/noticias/rss'],
+        url: 'https://www12.senado.leg.br/noticias/rss',
+        fallbackUrls: ['https://www12.senado.leg.br/noticias/feed'],
         tipo: 'rss',
         esfera: 'federal',
         setor: 'legislativo',
@@ -198,8 +202,8 @@ const FONTES_RSS = {
     },
     'CAMARA': {
         nome: 'Câmara dos Deputados - Notícias',
-        url: 'https://www.camara.leg.br/noticias/rss/ultimas',
-        fallbackUrls: [],
+        url: 'https://www.camara.leg.br/noticias/rss/ultimas-noticias',
+        fallbackUrls: ['https://www.camara.leg.br/noticias/rss/ultimas'],
         tipo: 'rss',
         esfera: 'federal',
         setor: 'legislativo',
@@ -414,21 +418,46 @@ function autoParseXML(xml, agencia, config) {
     return parseAtom(xml, agencia, config);
 }
 
-function scrapeARSESP(html, config) {
+function scrapeGenerico(html, agencia, config) {
     const noticias = [];
-    const linkRegex = /<a[^>]+href="([^"]*noticias[^"]*)"[^>]*>([\s\S]*?)<\/a>/gi;
+    // Strategy 1: Find news-like links with meaningful text
+    const linkRegex = /<a[^>]+href="([^"]*(?:noticias?|news|imprensa|comunicado)[^"]*)"[^>]*>([\s\S]*?)<\/a>/gi;
     let match;
+    const seen = new Set();
     while ((match = linkRegex.exec(html)) !== null) {
         const link = match[1];
         const titulo = limparHTML(match[2]).trim();
-        if (!titulo || titulo.length < 10) continue;
+        if (!titulo || titulo.length < 15 || seen.has(titulo.toLowerCase())) continue;
+        seen.add(titulo.toLowerCase());
+        const baseUrl = config.url.match(/^https?:\/\/[^/]+/)?.[0] || '';
         noticias.push({
-            agencia: 'ARSESP', tipo: classificarTipo(titulo),
+            agencia, tipo: classificarTipo(titulo),
             titulo, resumo: '',
-            link: link.startsWith('http') ? link : `https://www.arsesp.sp.gov.br${link}`,
+            link: link.startsWith('http') ? link : baseUrl + (link.startsWith('/') ? '' : '/') + link,
             data: new Date().toISOString().split('T')[0],
-            esfera: config.esfera || 'estadual', fonte: config.nome, cor: config.cor || '#38BDF8'
+            esfera: config.esfera || 'federal', fonte: config.nome, cor: config.cor || '#FFEF4D'
         });
+    }
+    // Strategy 2: Find h2/h3 tags inside article/news containers
+    if (noticias.length === 0) {
+        const headingRegex = /<(?:h[23]|li)[^>]*class="[^"]*(?:titulo|title|noticia|news)[^"]*"[^>]*>([\s\S]*?)<\/(?:h[23]|li)>/gi;
+        while ((match = headingRegex.exec(html)) !== null) {
+            const inner = match[1];
+            const linkMatch = inner.match(/<a[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/i);
+            if (linkMatch) {
+                const titulo = limparHTML(linkMatch[2]).trim();
+                if (!titulo || titulo.length < 15 || seen.has(titulo.toLowerCase())) continue;
+                seen.add(titulo.toLowerCase());
+                const baseUrl = config.url.match(/^https?:\/\/[^/]+/)?.[0] || '';
+                noticias.push({
+                    agencia, tipo: classificarTipo(titulo),
+                    titulo, resumo: '',
+                    link: linkMatch[1].startsWith('http') ? linkMatch[1] : baseUrl + linkMatch[1],
+                    data: new Date().toISOString().split('T')[0],
+                    esfera: config.esfera || 'federal', fonte: config.nome, cor: config.cor || '#FFEF4D'
+                });
+            }
+        }
     }
     return noticias;
 }
@@ -453,7 +482,7 @@ async function fetchAgenciaNoticias(agencia) {
             let noticias;
             if (config.tipo === 'scrape') {
                 const html = await fetchUrl(url, FETCH_TIMEOUT, 0);
-                noticias = scrapeARSESP(html, config);
+                noticias = scrapeGenerico(html, agencia, config);
             } else {
                 const xml = await fetchUrl(url, FETCH_TIMEOUT, 0);
                 noticias = autoParseXML(xml, agencia, config);
