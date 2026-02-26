@@ -2119,12 +2119,17 @@ app.get('/', (req, res) => {
 // ============================================================================
 
 // SPA - Todas as rotas de navegação servem o mesmo arquivo
-const spaRoutes = ['/deliberacoes', '/monitor', '/diretores', '/jurimetria', '/governanca', '/metricas', '/boletim', '/auditoria', '/app', '/upload', '/analise', '/agencias', '/mapa', '/radar', '/painel-regulatorio', '/setores', '/microtemas', '/empresas', '/historico', '/grafo', '/monitoramento', '/dossie', '/cruzamento', '/hub', '/landing', '/analytics'];
+const spaRoutes = ['/deliberacoes', '/monitor', '/diretores', '/jurimetria', '/governanca', '/metricas', '/boletim', '/auditoria', '/app', '/upload', '/analise', '/agencias', '/mapa', '/radar', '/painel-regulatorio', '/setores', '/microtemas', '/empresas', '/historico', '/grafo', '/monitoramento', '/dossie', '/cruzamento', '/hub', '/landing', '/analytics', '/noticias', '/dossies'];
 
 spaRoutes.forEach(route => {
     app.get(route, (req, res) => {
         res.sendFile(path.join(__dirname, 'public', 'app.html'));
     });
+});
+
+// Plataforma IRIS Completa (standalone)
+app.get('/plataforma', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'IRIS-Plataforma-Completa.html'));
 });
 
 // ============================================================================
