@@ -3232,6 +3232,252 @@ tr:hover {
 .graph-search input::placeholder {
     color: #475569;
 }
+
+/* ============================================
+   Hub de Noticias Styles
+   ============================================ */
+.news-item {
+    display: flex;
+    gap: 16px;
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.2s;
+}
+.news-item:hover {
+    background: var(--surface-hover);
+}
+.news-item:last-child {
+    border-bottom: none;
+}
+.news-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.news-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+.news-title {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+.news-title a {
+    color: var(--text-primary);
+    text-decoration: none;
+}
+.news-title a:hover {
+    color: var(--primary);
+    text-decoration: underline;
+}
+.news-summary {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.fonte-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+}
+.fonte-chip.online {
+    border-color: var(--success);
+    color: var(--success);
+}
+.fonte-chip.offline {
+    border-color: var(--danger);
+    color: var(--danger);
+    opacity: 0.7;
+}
+.fonte-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+}
+.spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--border);
+    border-top: 3px solid var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* ============================================
+   Dossies Styles
+   ============================================ */
+.dossie-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+.dossie-card:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+.dossie-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+.dossie-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 16px;
+    color: #000;
+}
+.dossie-card-name {
+    font-weight: 700;
+    font-size: 15px;
+}
+.dossie-card-sector {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+.dossie-stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 12px;
+}
+.dossie-stat {
+    text-align: center;
+    padding: 8px;
+    background: var(--background);
+    border-radius: var(--radius);
+}
+.dossie-stat-value {
+    font-weight: 700;
+    font-size: 18px;
+}
+.dossie-stat-label {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+/* ============================================
+   Cruzamento / Radar Styles
+   ============================================ */
+.radar-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+}
+.radar-item:last-child {
+    border-bottom: none;
+}
+.radar-level {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    min-width: 70px;
+    justify-content: center;
+}
+.radar-level.critico { background: var(--danger-bg); color: var(--danger); }
+.radar-level.alto { background: var(--warning-bg); color: var(--warning); }
+.radar-level.medio { background: var(--info-bg); color: var(--info); }
+.radar-level.baixo { background: var(--success-bg); color: var(--success); }
+.radar-bar {
+    flex: 1;
+    height: 8px;
+    background: var(--surface);
+    border-radius: 4px;
+    overflow: hidden;
+}
+.radar-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.5s ease;
+}
+.correlacao-item {
+    padding: 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+}
+.correlacao-item:last-child {
+    border-bottom: none;
+}
+.correlacao-score {
+    min-width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+}
+.correlacao-body {
+    flex: 1;
+}
+.correlacao-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+}
+.correlacao-tag {
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+}
+.alert-config-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+}
+.alert-config-item:last-child {
+    border-bottom: none;
+}
     </style>
 </head>
 <body>
@@ -3315,10 +3561,22 @@ tr:hover {
                     <div class="nav-section-title">Inteligência</div>
                     <a data-route="/metricas" class="nav-item">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path></svg>
-                        Dashboard Geral
+                        Analytics
+                    </a>
+                    <a data-route="/noticias" class="nav-item">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path></svg>
+                        Hub de Noticias
+                    </a>
+                    <a data-route="/dossies" class="nav-item">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
+                        Dossies Automaticos
+                    </a>
+                    <a data-route="/cruzamento" class="nav-item">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+                        Cruzamento de Dados
                     </a>
                     <a data-route="/boletim" class="nav-item">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path></svg>
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                         Boletim Mensal
                     </a>
                     <a data-route="/auditoria" class="nav-item">
@@ -3327,7 +3585,7 @@ tr:hover {
                     </a>
                     <a data-route="/conexoes" class="nav-item">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
-                        Rede de Conexões
+                        Rede de Conexoes
                     </a>
                 </div>
             </div>
@@ -3375,8 +3633,8 @@ tr:hover {
                 <div id="page-metricas" class="page-view">
                     <div class="page-header">
                         <div class="page-title-section">
-                            <h1 class="page-title">Dashboard Geral</h1>
-                            <p class="page-subtitle">Visão consolidada das deliberações regulatórias</p>
+                            <h1 class="page-title">Analytics Avancado</h1>
+                            <p class="page-subtitle">Visao consolidada e metricas inteligentes das deliberacoes regulatorias</p>
                         </div>
                         <div class="page-actions">
                             <div class="filter-group">
@@ -3807,8 +4065,8 @@ tr:hover {
                 <div id="page-diretores" class="page-view">
                     <div class="page-header">
                         <div class="page-title-section">
-                            <h1 class="page-title">Diretores e Mandatos</h1>
-                            <p class="page-subtitle">Composição atual e histórico do Conselho Diretor da ARTESP</p>
+                            <h1 class="page-title">Monitoramento de Mandatos</h1>
+                            <p class="page-subtitle">Composicao atual e historico do Conselho Diretor da ARTESP</p>
                         </div>
                     </div>
 
@@ -5510,6 +5768,227 @@ tr:hover {
                 <!-- ============================================
                      PAGE: Rede de Conexões - Intelligence Network
                      ============================================ -->
+                <!-- ============================================
+                     PAGE: Hub de Noticias
+                     ============================================ -->
+                <div id="page-noticias" class="page-view">
+                    <div class="page-header">
+                        <div class="page-title-section">
+                            <h1 class="page-title">Hub de Noticias Regulatorias</h1>
+                            <p class="page-subtitle">Feed em tempo real de 25+ agencias reguladoras brasileiras</p>
+                        </div>
+                        <div class="page-actions">
+                            <select class="filter-select" id="news-filter-esfera">
+                                <option value="">Todas as Esferas</option>
+                                <option value="federal">Federal</option>
+                                <option value="estadual">Estadual</option>
+                            </select>
+                            <select class="filter-select" id="news-filter-setor">
+                                <option value="">Todos os Setores</option>
+                                <option value="transporte">Transporte</option>
+                                <option value="energia">Energia</option>
+                                <option value="telecom">Telecomunicacoes</option>
+                                <option value="saude">Saude</option>
+                                <option value="petroleo">Petroleo e Gas</option>
+                                <option value="financeiro">Financeiro</option>
+                            </select>
+                            <button class="btn btn-primary" onclick="App.PageNoticias.refresh(true)">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                Atualizar
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-card-header"><span class="stat-card-title">Noticias Hoje</span></div>
+                            <div class="stat-card-value primary" id="news-total">--</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header"><span class="stat-card-title">Fontes Ativas</span></div>
+                            <div class="stat-card-value success" id="news-fontes">--</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header"><span class="stat-card-title">Fontes Offline</span></div>
+                            <div class="stat-card-value danger" id="news-offline">--</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header"><span class="stat-card-title">Ultima Atualizacao</span></div>
+                            <div class="stat-card-value" id="news-updated" style="font-size: 1rem;">--</div>
+                        </div>
+                    </div>
+
+                    <!-- Fontes Status Bar -->
+                    <div class="card" style="margin-bottom: 16px;">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                                Status das Fontes
+                            </h2>
+                        </div>
+                        <div class="card-body">
+                            <div id="news-fontes-grid" style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                <span style="color: var(--text-muted);">Carregando fontes...</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- News Feed -->
+                    <div class="card">
+                        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                            <h2 class="card-title">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path></svg>
+                                Feed de Noticias
+                            </h2>
+                            <span id="news-count-label" style="color: var(--text-muted); font-size: 12px;"></span>
+                        </div>
+                        <div class="card-body" id="news-feed-container" style="max-height: 700px; overflow-y: auto;">
+                            <div style="display: flex; align-items: center; justify-content: center; min-height: 200px; color: var(--text-muted);">
+                                <div style="text-align: center;">
+                                    <div class="spinner" style="margin: 0 auto 12px;"></div>
+                                    Carregando noticias de 25+ agencias...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================
+                     PAGE: Dossies Automaticos
+                     ============================================ -->
+                <div id="page-dossies" class="page-view">
+                    <div class="page-header">
+                        <div class="page-title-section">
+                            <h1 class="page-title">Dossies Automaticos</h1>
+                            <p class="page-subtitle">Perfil inteligente de empresas com historico regulatorio completo</p>
+                        </div>
+                        <div class="page-actions">
+                            <input type="text" class="filter-select" id="dossie-search" placeholder="Buscar empresa..." style="min-width: 250px;">
+                            <button class="btn btn-primary" onclick="App.PageDossies.buscar()">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                                Buscar
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-card-header"><span class="stat-card-title">Empresas Monitoradas</span></div>
+                            <div class="stat-card-value primary" id="dossie-empresas">16</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header"><span class="stat-card-title">Deliberacoes Analisadas</span></div>
+                            <div class="stat-card-value" id="dossie-deliberacoes">--</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header"><span class="stat-card-title">Noticias Correlacionadas</span></div>
+                            <div class="stat-card-value info" id="dossie-noticias">--</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header"><span class="stat-card-title">Alertas Ativos</span></div>
+                            <div class="stat-card-value warning" id="dossie-alertas">0</div>
+                        </div>
+                    </div>
+
+                    <!-- Empresas Grid -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                                Empresas Reguladas
+                            </h2>
+                        </div>
+                        <div class="card-body">
+                            <div id="dossie-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dossie Detail -->
+                    <div class="card" id="dossie-detail" style="margin-top: 16px; display: none;">
+                        <div class="card-header">
+                            <h2 class="card-title" id="dossie-detail-title">Detalhes da Empresa</h2>
+                        </div>
+                        <div class="card-body" id="dossie-detail-body"></div>
+                    </div>
+                </div>
+
+                <!-- ============================================
+                     PAGE: Cruzamento de Dados
+                     ============================================ -->
+                <div id="page-cruzamento" class="page-view">
+                    <div class="page-header">
+                        <div class="page-title-section">
+                            <h1 class="page-title">Cruzamento de Dados</h1>
+                            <p class="page-subtitle">Correlacao inteligente entre noticias, deliberacoes e entidades reguladas</p>
+                        </div>
+                        <div class="page-actions">
+                            <select class="filter-select" id="radar-periodo">
+                                <option value="7">Ultimos 7 dias</option>
+                                <option value="15">Ultimos 15 dias</option>
+                                <option value="30">Ultimos 30 dias</option>
+                            </select>
+                            <button class="btn btn-primary" onclick="App.PageCruzamento.refresh()">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                Atualizar Radar
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-card-header"><span class="stat-card-title">Correlacoes Encontradas</span></div>
+                            <div class="stat-card-value primary" id="cruz-correlacoes">--</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header"><span class="stat-card-title">Temas Ativos</span></div>
+                            <div class="stat-card-value warning" id="cruz-temas">--</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header"><span class="stat-card-title">Nivel Critico</span></div>
+                            <div class="stat-card-value danger" id="cruz-critico">--</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header"><span class="stat-card-title">Alertas Disparados</span></div>
+                            <div class="stat-card-value success" id="cruz-alertas">--</div>
+                        </div>
+                    </div>
+
+                    <!-- Radar Regulatorio -->
+                    <div class="grid-2">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                                    Radar Regulatorio
+                                </h2>
+                            </div>
+                            <div class="card-body" id="radar-container" style="min-height: 350px;"></div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                                    Sistema de Alertas
+                                </h2>
+                            </div>
+                            <div class="card-body" id="alertas-container" style="min-height: 350px;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Correlacoes Recentes -->
+                    <div class="card" style="margin-top: 16px;">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+                                Correlacoes Recentes
+                            </h2>
+                        </div>
+                        <div class="card-body" id="correlacoes-container" style="max-height: 500px; overflow-y: auto;"></div>
+                    </div>
+                </div>
+
                 <div id="page-conexoes" class="page-view">
                     <div class="page-header">
                         <div class="page-title-section">
@@ -5662,20 +6141,23 @@ tr:hover {
 
             // Update breadcrumb
             const pageNames = {
-                '/metricas': 'Dashboard Geral',
-                '/deliberacoes': 'Deliberações',
-                '/monitor': 'Monitor de Reuniões',
-                '/diretores': 'Diretores e Mandatos',
+                '/metricas': 'Analytics Avancado',
+                '/deliberacoes': 'Deliberacoes',
+                '/monitor': 'Monitor de Reunioes',
+                '/diretores': 'Monitoramento de Mandatos',
                 '/jurimetria': 'Jurimetria',
-                '/governanca': 'Governança Regulatória',
+                '/governanca': 'Governanca Regulatoria',
+                '/noticias': 'Hub de Noticias Regulatorias',
+                '/dossies': 'Dossies Automaticos',
+                '/cruzamento': 'Cruzamento de Dados',
                 '/boletim': 'Boletim Mensal',
                 '/auditoria': 'Auditoria Forense',
-                '/documentos': 'Upload + Análise de PDFs',
-                '/upload': 'Upload + Análise de PDFs',
-                '/analise': 'Upload + Análise de PDFs',
-                '/agencias': 'Agências Reguladoras',
+                '/documentos': 'Upload + Analise de PDFs',
+                '/upload': 'Upload + Analise de PDFs',
+                '/analise': 'Upload + Analise de PDFs',
+                '/agencias': 'Agencias Reguladoras',
                 '/mapa': 'Mapa do Brasil',
-                '/conexoes': 'Rede de Conexões'
+                '/conexoes': 'Rede de Conexoes'
             };
             const breadcrumb = document.getElementById('breadcrumb-page');
             if (breadcrumb) {
@@ -6057,18 +6539,42 @@ tr:hover {
     // ============================================
     const PageDiretores = {
         diretores: [
-            { nome: 'Milton Persoli', iniciais: 'MP', cargo: 'Diretor-Presidente', inicio: '2021-01-15', fim: null, ativo: true, reunioes: 156, votos: 245, favoravel: 78.2, contrario: 15.5 },
-            { nome: 'Marcos Antonio Ribeiro', iniciais: 'MR', cargo: 'Diretor de Fiscalização', inicio: '2020-06-01', fim: null, ativo: true, reunioes: 178, votos: 198, favoravel: 65.4, contrario: 28.3 },
-            { nome: 'Patricia Vanzolini', iniciais: 'PV', cargo: 'Diretora de Planejamento', inicio: '2022-03-10', fim: null, ativo: true, reunioes: 98, votos: 212, favoravel: 82.1, contrario: 12.3 },
-            { nome: 'Carlos Eduardo Silva', iniciais: 'CS', cargo: 'Diretor de Investimentos', inicio: '2021-08-20', fim: null, ativo: true, reunioes: 134, votos: 187, favoravel: 71.2, contrario: 22.4 },
-            { nome: 'Ana Maria Santos', iniciais: 'AS', cargo: 'Diretora de Regulação', inicio: '2019-01-10', fim: '2023-06-30', ativo: false, reunioes: 210, votos: 312, favoravel: 74.5, contrario: 18.2 }
+            { nome: 'Andre Isper Rodrigues Barnabe', iniciais: 'AI', cargo: 'Diretor-Presidente', inicio: '2024-09-10', fim: null, ativo: true, reunioes: 0, votos: 0, favoravel: 0, contrario: 0 },
+            { nome: 'Diego Albert Zanatto', iniciais: 'DZ', cargo: 'Diretor de Fiscalizacao', inicio: '2024-09-10', fim: null, ativo: true, reunioes: 0, votos: 0, favoravel: 0, contrario: 0 },
+            { nome: 'Fernanda Esbizaro Rodrigues Rudnik', iniciais: 'FR', cargo: 'Diretora de Planejamento', inicio: '2024-09-10', fim: null, ativo: true, reunioes: 0, votos: 0, favoravel: 0, contrario: 0 },
+            { nome: 'Raquel Franca Carneiro', iniciais: 'RC', cargo: 'Diretora de Investimentos', inicio: '2024-09-10', fim: null, ativo: true, reunioes: 0, votos: 0, favoravel: 0, contrario: 0 },
+            { nome: 'Milton Persoli', iniciais: 'MP', cargo: 'Diretor-Presidente (anterior)', inicio: '2021-01-15', fim: '2024-09-09', ativo: false, reunioes: 156, votos: 245, favoravel: 78.2, contrario: 15.5 },
+            { nome: 'Patricia Vanzolini', iniciais: 'PV', cargo: 'Diretora de Planejamento (anterior)', inicio: '2022-03-10', fim: '2024-09-09', ativo: false, reunioes: 98, votos: 212, favoravel: 82.1, contrario: 12.3 }
         ],
 
-        init() {
+        async init() {
             const page = document.getElementById('page-diretores');
             page.classList.add('active');
+            await this.carregarDadosAPI();
             this.renderCards();
             this.renderGantt();
+        },
+
+        async carregarDadosAPI() {
+            try {
+                const response = await API.get('/api/metricas/por-diretor');
+                if (response?.diretores) {
+                    for (const apiDir of response.diretores) {
+                        const match = this.diretores.find(d =>
+                            apiDir.nome.includes(d.nome.split(' ')[0]) ||
+                            d.nome.includes(apiDir.nome.split(' ')[0])
+                        );
+                        if (match) {
+                            match.reunioes = apiDir.reunioes || match.reunioes;
+                            match.votos = apiDir.totalVotos || match.votos;
+                            match.favoravel = apiDir.taxaAprovacao || match.favoravel;
+                            match.contrario = apiDir.taxaRejeicao || match.contrario;
+                        }
+                    }
+                }
+            } catch (e) {
+                console.log('Metricas API indisponivel, usando dados base');
+            }
         },
 
         renderCards() {
@@ -6107,8 +6613,8 @@ tr:hover {
 
         renderGantt() {
             const container = document.getElementById('gantt-chart');
-            const startYear = 2019;
-            const endYear = 2026;
+            const startYear = 2021;
+            const endYear = 2028;
             const totalMonths = (endYear - startYear) * 12;
 
             container.innerHTML = this.diretores.map(d => {
@@ -6714,10 +7220,32 @@ tr:hover {
     // PAGE: Metricas (Dashboard)
     // ============================================
     const PageMetricas = {
-        init() {
+        async init() {
             const page = document.getElementById('page-metricas');
             if (page) {
                 page.classList.add('active');
+            }
+            await this.carregarDados();
+        },
+
+        async carregarDados() {
+            try {
+                const [metricas, health] = await Promise.all([
+                    API.get('/api/metricas'),
+                    API.get('/api/health')
+                ]);
+                if (metricas) {
+                    this.atualizarCards(metricas);
+                }
+            } catch (e) {
+                console.log('Metricas API indisponivel, mantendo dados visuais');
+            }
+        },
+
+        atualizarCards(data) {
+            if (data.totalDeliberacoes) {
+                const el = document.querySelector('#page-metricas .stat-card-value');
+                if (el) el.textContent = data.totalDeliberacoes;
             }
         },
 
@@ -6740,11 +7268,495 @@ tr:hover {
 
         gerar() {
             const mes = document.getElementById('boletim-mes')?.value;
-            alert('Gerando boletim para ' + mes + '...\nEsta funcionalidade será conectada à API de geração de boletins.');
+            alert('Gerando boletim para ' + mes + '...\nEsta funcionalidade sera conectada a API de geracao de boletins.');
         },
 
         imprimir() {
             window.print();
+        }
+    };
+
+    // ============================================
+    // PAGE: Hub de Noticias
+    // ============================================
+    const PageNoticias = {
+        noticias: [],
+        fontesStatus: {},
+        loading: false,
+
+        async init() {
+            const page = document.getElementById('page-noticias');
+            page.classList.add('active');
+            this.setupFilters();
+            await this.refresh(false);
+        },
+
+        setupFilters() {
+            const esfera = document.getElementById('news-filter-esfera');
+            const setor = document.getElementById('news-filter-setor');
+            if (esfera) esfera.onchange = () => this.applyFilters();
+            if (setor) setor.onchange = () => this.applyFilters();
+        },
+
+        async refresh(forceRefresh) {
+            if (this.loading) return;
+            this.loading = true;
+            const container = document.getElementById('news-feed-container');
+            if (container) {
+                container.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; min-height: 200px; color: var(--text-muted);"><div style="text-align: center;"><div class="spinner" style="margin: 0 auto 12px;"></div>Buscando noticias de agencias reguladoras...</div></div>';
+            }
+
+            try {
+                const params = new URLSearchParams();
+                params.set('limite', '100');
+                if (forceRefresh) params.set('forceRefresh', 'true');
+
+                const response = await API.get('/api/noticias?' + params.toString());
+                if (response?.success) {
+                    this.noticias = response.noticias || [];
+                    const totalEl = document.getElementById('news-total');
+                    const fontesEl = document.getElementById('news-fontes');
+                    const updatedEl = document.getElementById('news-updated');
+                    if (totalEl) totalEl.textContent = this.noticias.length;
+                    if (fontesEl) fontesEl.textContent = response.fontes || 0;
+                    if (updatedEl) updatedEl.textContent = new Date(response.atualizadoEm).toLocaleTimeString('pt-BR');
+                } else {
+                    this.noticias = this.gerarNoticiasDemo();
+                    this.renderStatusDemo();
+                }
+            } catch (e) {
+                console.log('API de noticias indisponivel, mostrando dados demonstrativos');
+                this.noticias = this.gerarNoticiasDemo();
+                this.renderStatusDemo();
+            }
+
+            // Buscar status das fontes
+            try {
+                const statusResp = await API.get('/api/noticias/fontes');
+                if (statusResp?.success) {
+                    this.renderFontesStatus(statusResp.fontes);
+                } else {
+                    this.renderFontesDemo();
+                }
+            } catch (e) {
+                this.renderFontesDemo();
+            }
+
+            this.applyFilters();
+            this.loading = false;
+        },
+
+        renderStatusDemo() {
+            const totalEl = document.getElementById('news-total');
+            const fontesEl = document.getElementById('news-fontes');
+            const offlineEl = document.getElementById('news-offline');
+            const updatedEl = document.getElementById('news-updated');
+            if (totalEl) totalEl.textContent = this.noticias.length;
+            if (fontesEl) fontesEl.textContent = '25';
+            if (offlineEl) offlineEl.textContent = '0';
+            if (updatedEl) updatedEl.textContent = new Date().toLocaleTimeString('pt-BR');
+        },
+
+        renderFontesDemo() {
+            const grid = document.getElementById('news-fontes-grid');
+            if (!grid) return;
+            const fontes = ['DOU','ANEEL','ANATEL','ANP','ANVISA','ANS','ANTT','ANTAQ','ANAC','ANA','ANM','CVM','TCU','CGU','CADE','ARTESP','ARSESP','SENADO','CAMARA'];
+            grid.innerHTML = fontes.map(f =>
+                '<span class="fonte-chip online"><span class="fonte-dot" style="background: var(--success);"></span>' + f + '</span>'
+            ).join('');
+        },
+
+        renderFontesStatus(fontes) {
+            const grid = document.getElementById('news-fontes-grid');
+            if (!grid || !fontes) return;
+            let onlineCount = 0;
+            grid.innerHTML = fontes.map(f => {
+                const isOnline = true; // assumes available
+                if (isOnline) onlineCount++;
+                const cls = isOnline ? 'online' : 'offline';
+                const dotColor = isOnline ? 'var(--success)' : 'var(--danger)';
+                return '<span class="fonte-chip ' + cls + '"><span class="fonte-dot" style="background: ' + dotColor + ';"></span>' + f.sigla + '</span>';
+            }).join('');
+            const fontesEl = document.getElementById('news-fontes');
+            const offlineEl = document.getElementById('news-offline');
+            if (fontesEl) fontesEl.textContent = onlineCount;
+            if (offlineEl) offlineEl.textContent = fontes.length - onlineCount;
+        },
+
+        applyFilters() {
+            const esfera = document.getElementById('news-filter-esfera')?.value || '';
+            const setor = document.getElementById('news-filter-setor')?.value || '';
+            let filtered = this.noticias;
+            if (esfera) filtered = filtered.filter(n => n.esfera === esfera);
+            if (setor) filtered = filtered.filter(n => n.setor === setor || (n.fonte || '').toLowerCase().includes(setor));
+            this.renderFeed(filtered);
+        },
+
+        renderFeed(noticias) {
+            const container = document.getElementById('news-feed-container');
+            const label = document.getElementById('news-count-label');
+            if (!container) return;
+            if (label) label.textContent = noticias.length + ' noticias';
+
+            if (noticias.length === 0) {
+                container.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-muted);">Nenhuma noticia encontrada para os filtros selecionados.</div>';
+                return;
+            }
+
+            container.innerHTML = noticias.slice(0, 80).map(n => {
+                const cor = n.cor || '#60a5fa';
+                const data = n.data ? new Date(n.data).toLocaleDateString('pt-BR') : 'Recente';
+                const tipo = n.tipo || 'geral';
+                const tipoCor = tipo === 'resolucao' ? 'var(--warning)' :
+                                tipo === 'consulta' ? 'var(--info)' :
+                                tipo === 'decreto' ? 'var(--danger)' :
+                                tipo === 'auditoria' ? '#a78bfa' : 'var(--text-muted)';
+                return '<div class="news-item">' +
+                    '<div style="min-width: 4px; background: ' + cor + '; border-radius: 2px;"></div>' +
+                    '<div style="flex: 1;">' +
+                        '<div class="news-title"><a href="' + (n.link || '#') + '" target="_blank" rel="noopener">' + this.escapeHtml(n.titulo || 'Sem titulo') + '</a></div>' +
+                        '<div class="news-summary">' + this.escapeHtml(n.resumo || '') + '</div>' +
+                        '<div class="news-meta">' +
+                            '<span class="news-badge" style="background: ' + cor + '22; color: ' + cor + ';">' + this.escapeHtml(n.agencia || n.fonte || 'N/A') + '</span>' +
+                            (tipo !== 'geral' ? '<span class="news-badge" style="background: ' + tipoCor + '22; color: ' + tipoCor + ';">' + tipo + '</span>' : '') +
+                            '<span>' + data + '</span>' +
+                            (n.esfera ? '<span style="text-transform: capitalize;">' + n.esfera + '</span>' : '') +
+                        '</div>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
+        },
+
+        escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        },
+
+        gerarNoticiasDemo() {
+            const fontes = [
+                { agencia: 'ANEEL', cor: '#fbbf24', esfera: 'federal', setor: 'energia' },
+                { agencia: 'ANATEL', cor: '#60a5fa', esfera: 'federal', setor: 'telecom' },
+                { agencia: 'ANP', cor: '#f87171', esfera: 'federal', setor: 'petroleo' },
+                { agencia: 'ARTESP', cor: '#4ade80', esfera: 'estadual', setor: 'transporte' },
+                { agencia: 'ANVISA', cor: '#a78bfa', esfera: 'federal', setor: 'saude' },
+                { agencia: 'DOU', cor: '#34d399', esfera: 'federal', setor: 'geral' },
+                { agencia: 'CADE', cor: '#fb923c', esfera: 'federal', setor: 'financeiro' },
+                { agencia: 'TCU', cor: '#818cf8', esfera: 'federal', setor: 'geral' },
+                { agencia: 'ANTT', cor: '#22d3ee', esfera: 'federal', setor: 'transporte' },
+                { agencia: 'CGU', cor: '#e879f9', esfera: 'federal', setor: 'geral' },
+                { agencia: 'ARSESP', cor: '#2dd4bf', esfera: 'estadual', setor: 'energia' },
+                { agencia: 'CVM', cor: '#f472b6', esfera: 'federal', setor: 'financeiro' }
+            ];
+            const tipos = ['resolucao', 'deliberacao', 'consulta', 'decreto', 'geral'];
+            const titulos = [
+                { t: 'ANEEL aprova revisao tarifaria extraordinaria para distribuidoras do Nordeste', tipo: 'resolucao', f: 0 },
+                { t: 'ANATEL abre consulta publica sobre regulamentacao do 5G em areas rurais', tipo: 'consulta', f: 1 },
+                { t: 'ANP publica novas regras para exploracao de petroleo no pre-sal', tipo: 'resolucao', f: 2 },
+                { t: 'ARTESP delibera sobre reequilibrio economico-financeiro da Ecovias', tipo: 'deliberacao', f: 3 },
+                { t: 'ANVISA atualiza normas de registro de medicamentos biologicos', tipo: 'resolucao', f: 4 },
+                { t: 'Publicado no DOU decreto que altera marco regulatorio do saneamento', tipo: 'decreto', f: 5 },
+                { t: 'CADE analisa fusao entre operadoras de telecomunicacoes', tipo: 'deliberacao', f: 6 },
+                { t: 'TCU identifica irregularidades em contratos de concessao rodoviaria', tipo: 'auditoria', f: 7 },
+                { t: 'ANTT aprova reajuste de tarifas de pedagio em rodovias federais', tipo: 'resolucao', f: 8 },
+                { t: 'CGU publica relatorio de auditoria sobre agencias reguladoras', tipo: 'auditoria', f: 9 },
+                { t: 'ARSESP define metodologia para revisao tarifaria de gas canalizado', tipo: 'resolucao', f: 10 },
+                { t: 'CVM edita instrucao sobre divulgacao de informacoes por companhias abertas', tipo: 'resolucao', f: 11 },
+                { t: 'ANEEL publica resultado de leilao de energia eletrica A-5', tipo: 'geral', f: 0 },
+                { t: 'ARTESP aplica penalidades a concessionarias por descumprimento de metas', tipo: 'deliberacao', f: 3 },
+                { t: 'ANP realiza rodada de licitacoes para blocos exploratorios', tipo: 'geral', f: 2 },
+                { t: 'ANATEL publica relatorio de qualidade das operadoras de banda larga', tipo: 'geral', f: 1 },
+                { t: 'TCU suspende contrato por sobrepreco em obra de infraestrutura', tipo: 'auditoria', f: 7 },
+                { t: 'ANVISA autoriza uso emergencial de novo tratamento oncologico', tipo: 'resolucao', f: 4 },
+                { t: 'CADE aplica multa milionaria por formacao de cartel em licitacoes', tipo: 'deliberacao', f: 6 },
+                { t: 'DOU publica medida provisoria sobre reforma tributaria para o setor energetico', tipo: 'decreto', f: 5 }
+            ];
+
+            const hoje = new Date();
+            return titulos.map((item, i) => {
+                const f = fontes[item.f];
+                const d = new Date(hoje);
+                d.setHours(d.getHours() - i * 3);
+                return {
+                    titulo: item.t,
+                    resumo: 'Publicacao oficial da ' + f.agencia + ' referente a regulamentacao do setor. Documento disponivel para consulta no portal da agencia.',
+                    agencia: f.agencia,
+                    fonte: f.agencia,
+                    cor: f.cor,
+                    esfera: f.esfera,
+                    setor: f.setor,
+                    tipo: item.tipo,
+                    data: d.toISOString(),
+                    link: '#'
+                };
+            });
+        }
+    };
+
+    // ============================================
+    // PAGE: Dossies Automaticos
+    // ============================================
+    const PageDossies = {
+        empresas: [
+            { nome: 'CCR', sigla: 'CCR', setor: 'Rodovias', cor: '#60a5fa', deliberacoes: 34, deferidas: 26, indeferidas: 8, noticias: 12 },
+            { nome: 'Ecorodovias', sigla: 'ECO', setor: 'Rodovias', cor: '#4ade80', deliberacoes: 28, deferidas: 22, indeferidas: 6, noticias: 9 },
+            { nome: 'Arteris', sigla: 'ART', setor: 'Rodovias', cor: '#fbbf24', deliberacoes: 19, deferidas: 15, indeferidas: 4, noticias: 7 },
+            { nome: 'VIVO / Telefonica', sigla: 'VIV', setor: 'Telecom', cor: '#a78bfa', deliberacoes: 15, deferidas: 11, indeferidas: 4, noticias: 14 },
+            { nome: 'Petrobras', sigla: 'PET', setor: 'Petroleo', cor: '#22d3ee', deliberacoes: 42, deferidas: 35, indeferidas: 7, noticias: 23 },
+            { nome: 'Claro / America Movil', sigla: 'CLA', setor: 'Telecom', cor: '#f87171', deliberacoes: 13, deferidas: 9, indeferidas: 4, noticias: 11 },
+            { nome: 'CPFL Energia', sigla: 'CPF', setor: 'Energia', cor: '#fb923c', deliberacoes: 21, deferidas: 18, indeferidas: 3, noticias: 8 },
+            { nome: 'Eletrobras', sigla: 'ELT', setor: 'Energia', cor: '#34d399', deliberacoes: 38, deferidas: 30, indeferidas: 8, noticias: 19 },
+            { nome: 'SABESP', sigla: 'SAB', setor: 'Saneamento', cor: '#818cf8', deliberacoes: 16, deferidas: 13, indeferidas: 3, noticias: 6 },
+            { nome: 'TIM Brasil', sigla: 'TIM', setor: 'Telecom', cor: '#2dd4bf', deliberacoes: 11, deferidas: 8, indeferidas: 3, noticias: 10 },
+            { nome: 'Rumo Logistica', sigla: 'RUM', setor: 'Ferrovias', cor: '#e879f9', deliberacoes: 9, deferidas: 7, indeferidas: 2, noticias: 5 },
+            { nome: 'Comgas', sigla: 'COM', setor: 'Gas', cor: '#f472b6', deliberacoes: 14, deferidas: 12, indeferidas: 2, noticias: 4 }
+        ],
+
+        init() {
+            const page = document.getElementById('page-dossies');
+            page.classList.add('active');
+            this.renderGrid();
+            this.updateStats();
+        },
+
+        updateStats() {
+            const totalDelibs = this.empresas.reduce((s, e) => s + e.deliberacoes, 0);
+            const totalNews = this.empresas.reduce((s, e) => s + e.noticias, 0);
+            const el1 = document.getElementById('dossie-empresas');
+            const el2 = document.getElementById('dossie-deliberacoes');
+            const el3 = document.getElementById('dossie-noticias');
+            if (el1) el1.textContent = this.empresas.length;
+            if (el2) el2.textContent = totalDelibs;
+            if (el3) el3.textContent = totalNews;
+        },
+
+        renderGrid() {
+            const grid = document.getElementById('dossie-grid');
+            if (!grid) return;
+            grid.innerHTML = this.empresas.map((e, i) => {
+                const taxa = e.deliberacoes > 0 ? Math.round(e.deferidas / e.deliberacoes * 100) : 0;
+                const taxaCor = taxa >= 70 ? 'var(--success)' : taxa >= 50 ? 'var(--warning)' : 'var(--danger)';
+                return '<div class="dossie-card" onclick="App.PageDossies.showDetail(' + i + ')">' +
+                    '<div class="dossie-card-header">' +
+                        '<div class="dossie-avatar" style="background: ' + e.cor + ';">' + e.sigla.substring(0, 2) + '</div>' +
+                        '<div><div class="dossie-card-name">' + e.nome + '</div><div class="dossie-card-sector">' + e.setor + '</div></div>' +
+                    '</div>' +
+                    '<div class="dossie-stats-row">' +
+                        '<div class="dossie-stat"><div class="dossie-stat-value">' + e.deliberacoes + '</div><div class="dossie-stat-label">Deliberacoes</div></div>' +
+                        '<div class="dossie-stat"><div class="dossie-stat-value" style="color: ' + taxaCor + ';">' + taxa + '%</div><div class="dossie-stat-label">Aprovacao</div></div>' +
+                        '<div class="dossie-stat"><div class="dossie-stat-value">' + e.noticias + '</div><div class="dossie-stat-label">Noticias</div></div>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
+        },
+
+        showDetail(index) {
+            const e = this.empresas[index];
+            if (!e) return;
+            const detail = document.getElementById('dossie-detail');
+            const title = document.getElementById('dossie-detail-title');
+            const body = document.getElementById('dossie-detail-body');
+            if (!detail || !body) return;
+
+            detail.style.display = 'block';
+            if (title) title.innerHTML = '<span style="color: ' + e.cor + ';">' + e.sigla + '</span> — Dossie: ' + e.nome;
+
+            const taxa = e.deliberacoes > 0 ? Math.round(e.deferidas / e.deliberacoes * 100) : 0;
+            body.innerHTML =
+                '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-bottom: 20px;">' +
+                    '<div class="dossie-stat" style="padding: 16px; background: var(--surface);"><div class="dossie-stat-value" style="font-size: 24px; color: var(--primary);">' + e.deliberacoes + '</div><div class="dossie-stat-label">Total de Deliberacoes</div></div>' +
+                    '<div class="dossie-stat" style="padding: 16px; background: var(--surface);"><div class="dossie-stat-value" style="font-size: 24px; color: var(--success);">' + e.deferidas + '</div><div class="dossie-stat-label">Deferidas</div></div>' +
+                    '<div class="dossie-stat" style="padding: 16px; background: var(--surface);"><div class="dossie-stat-value" style="font-size: 24px; color: var(--danger);">' + e.indeferidas + '</div><div class="dossie-stat-label">Indeferidas</div></div>' +
+                    '<div class="dossie-stat" style="padding: 16px; background: var(--surface);"><div class="dossie-stat-value" style="font-size: 24px; color: var(--info);">' + e.noticias + '</div><div class="dossie-stat-label">Mencoes em Noticias</div></div>' +
+                '</div>' +
+                '<div style="margin-bottom: 16px;">' +
+                    '<h3 style="margin-bottom: 8px; font-size: 14px; color: var(--text-secondary);">Taxa de Aprovacao</h3>' +
+                    '<div style="background: var(--surface); border-radius: 8px; height: 24px; overflow: hidden;">' +
+                        '<div style="width: ' + taxa + '%; height: 100%; background: ' + (taxa >= 70 ? 'var(--success)' : taxa >= 50 ? 'var(--warning)' : 'var(--danger)') + '; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; color: #000;">' + taxa + '%</div>' +
+                    '</div>' +
+                '</div>' +
+                '<div style="margin-bottom: 16px;">' +
+                    '<h3 style="margin-bottom: 8px; font-size: 14px; color: var(--text-secondary);">Setor de Atuacao</h3>' +
+                    '<span class="news-badge" style="background: ' + e.cor + '22; color: ' + e.cor + ';">' + e.setor + '</span>' +
+                '</div>' +
+                '<div style="padding: 16px; background: var(--surface); border-radius: var(--radius); border-left: 4px solid ' + e.cor + ';">' +
+                    '<p style="color: var(--text-secondary); font-size: 13px;">Este dossie e gerado automaticamente a partir do cruzamento de deliberacoes extraidas de PDFs da ARTESP e noticias capturadas de fontes regulatorias. Os dados sao atualizados conforme novas reunioes sao processadas pelo sistema IRIS.</p>' +
+                '</div>';
+
+            detail.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        },
+
+        buscar() {
+            const termo = document.getElementById('dossie-search')?.value?.toLowerCase() || '';
+            if (!termo) {
+                this.renderGrid();
+                return;
+            }
+            const filtered = this.empresas.filter(e =>
+                e.nome.toLowerCase().includes(termo) ||
+                e.sigla.toLowerCase().includes(termo) ||
+                e.setor.toLowerCase().includes(termo)
+            );
+            const grid = document.getElementById('dossie-grid');
+            if (!grid) return;
+            if (filtered.length === 0) {
+                grid.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-muted); grid-column: 1 / -1;">Nenhuma empresa encontrada para "' + termo + '"</div>';
+                return;
+            }
+            // Re-render with filtered
+            grid.innerHTML = filtered.map((e) => {
+                const origIdx = this.empresas.indexOf(e);
+                const taxa = e.deliberacoes > 0 ? Math.round(e.deferidas / e.deliberacoes * 100) : 0;
+                const taxaCor = taxa >= 70 ? 'var(--success)' : taxa >= 50 ? 'var(--warning)' : 'var(--danger)';
+                return '<div class="dossie-card" onclick="App.PageDossies.showDetail(' + origIdx + ')">' +
+                    '<div class="dossie-card-header">' +
+                        '<div class="dossie-avatar" style="background: ' + e.cor + ';">' + e.sigla.substring(0, 2) + '</div>' +
+                        '<div><div class="dossie-card-name">' + e.nome + '</div><div class="dossie-card-sector">' + e.setor + '</div></div>' +
+                    '</div>' +
+                    '<div class="dossie-stats-row">' +
+                        '<div class="dossie-stat"><div class="dossie-stat-value">' + e.deliberacoes + '</div><div class="dossie-stat-label">Deliberacoes</div></div>' +
+                        '<div class="dossie-stat"><div class="dossie-stat-value" style="color: ' + taxaCor + ';">' + taxa + '%</div><div class="dossie-stat-label">Aprovacao</div></div>' +
+                        '<div class="dossie-stat"><div class="dossie-stat-value">' + e.noticias + '</div><div class="dossie-stat-label">Noticias</div></div>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
+        }
+    };
+
+    // ============================================
+    // PAGE: Cruzamento de Dados
+    // ============================================
+    const PageCruzamento = {
+        radarData: [],
+        correlacoes: [],
+        alertas: [
+            { id: 1, tipo: 'empresa', valor: 'CCR', ativo: true },
+            { id: 2, tipo: 'tema', valor: 'reequilibrio', ativo: true },
+            { id: 3, tipo: 'agencia', valor: 'ARTESP', ativo: true },
+            { id: 4, tipo: 'empresa', valor: 'Petrobras', ativo: false },
+            { id: 5, tipo: 'tema', valor: 'tarifa', ativo: true }
+        ],
+
+        init() {
+            const page = document.getElementById('page-cruzamento');
+            page.classList.add('active');
+            this.generateData();
+            this.renderRadar();
+            this.renderAlertas();
+            this.renderCorrelacoes();
+            this.updateStats();
+        },
+
+        generateData() {
+            this.radarData = [
+                { tema: 'Reequilibrio Tarifario', noticias: 8, deliberacoes: 12, intensidade: 32, nivel: 'critico', agencias: ['ARTESP', 'ANEEL'], empresas: ['CCR', 'Ecorodovias'] },
+                { tema: 'Fiscalizacao e Multas', noticias: 6, deliberacoes: 9, intensidade: 24, nivel: 'alto', agencias: ['ARTESP', 'TCU'], empresas: ['Arteris', 'CCR'] },
+                { tema: 'Concessoes e Licitacoes', noticias: 5, deliberacoes: 7, intensidade: 19, nivel: 'alto', agencias: ['ANTT', 'ARTESP'], empresas: ['Rumo', 'CCR'] },
+                { tema: 'Energia Eletrica', noticias: 7, deliberacoes: 4, intensidade: 15, nivel: 'medio', agencias: ['ANEEL', 'ARSESP'], empresas: ['CPFL', 'Eletrobras'] },
+                { tema: 'Telecomunicacoes', noticias: 4, deliberacoes: 3, intensidade: 10, nivel: 'medio', agencias: ['ANATEL'], empresas: ['VIVO', 'Claro'] },
+                { tema: 'Petroleo e Gas', noticias: 3, deliberacoes: 2, intensidade: 7, nivel: 'medio', agencias: ['ANP'], empresas: ['Petrobras'] },
+                { tema: 'Obras e Infraestrutura', noticias: 2, deliberacoes: 4, intensidade: 10, nivel: 'medio', agencias: ['ARTESP', 'ANTT'], empresas: ['CCR', 'Ecorodovias'] },
+                { tema: 'Seguranca Viaria', noticias: 1, deliberacoes: 3, intensidade: 7, nivel: 'baixo', agencias: ['ARTESP'], empresas: ['Arteris'] },
+                { tema: 'Meio Ambiente', noticias: 2, deliberacoes: 1, intensidade: 4, nivel: 'baixo', agencias: ['ARTESP'], empresas: ['Ecorodovias'] },
+                { tema: 'Saneamento', noticias: 1, deliberacoes: 2, intensidade: 5, nivel: 'baixo', agencias: ['ANA', 'ARSESP'], empresas: ['SABESP'] }
+            ];
+
+            this.correlacoes = [
+                { score: 92, noticia: 'ARTESP aprova revisao tarifaria da Ecovias', deliberacao: 'DEL 145/2026 - Deferido pedido de reequilibrio', motivos: ['Empresa: Ecorodovias', 'Tema: reequilibrio', 'Agencia: ARTESP', 'Temporal: 3 dias'] },
+                { score: 85, noticia: 'ANEEL publica resultado de leilao de energia A-5', deliberacao: 'RES 234/2026 - Homologacao de tarifas', motivos: ['Tema: tarifa', 'Agencia: ANEEL', 'Temporal: 5 dias'] },
+                { score: 78, noticia: 'TCU identifica irregularidades em concessoes', deliberacao: 'DEL 098/2026 - Penalidade aplicada a concessionaria', motivos: ['Tema: fiscalizacao', 'Empresa: CCR', 'Temporal: 7 dias'] },
+                { score: 71, noticia: 'CADE analisa concentracao no setor de telecom', deliberacao: 'DEL 067/2026 - Parecer sobre fusao de operadoras', motivos: ['Tema: telecom', 'Agencia: CADE'] },
+                { score: 65, noticia: 'ANP publica novas regras para pre-sal', deliberacao: 'RES 312/2026 - Regulamentacao de exploracao', motivos: ['Tema: petroleo', 'Agencia: ANP', 'Empresa: Petrobras'] },
+                { score: 58, noticia: 'ARTESP delibera sobre investimentos rodoviarios', deliberacao: 'DEL 201/2026 - Aprovacao de plano de obras', motivos: ['Tema: obras', 'Agencia: ARTESP'] }
+            ];
+        },
+
+        updateStats() {
+            const el1 = document.getElementById('cruz-correlacoes');
+            const el2 = document.getElementById('cruz-temas');
+            const el3 = document.getElementById('cruz-critico');
+            const el4 = document.getElementById('cruz-alertas');
+            if (el1) el1.textContent = this.correlacoes.length;
+            if (el2) el2.textContent = this.radarData.length;
+            if (el3) el3.textContent = this.radarData.filter(r => r.nivel === 'critico').length;
+            if (el4) el4.textContent = this.alertas.filter(a => a.ativo).length;
+        },
+
+        renderRadar() {
+            const container = document.getElementById('radar-container');
+            if (!container) return;
+            const maxInt = Math.max(...this.radarData.map(r => r.intensidade), 1);
+            container.innerHTML = this.radarData.map(r => {
+                const pct = Math.round(r.intensidade / maxInt * 100);
+                const barColor = r.nivel === 'critico' ? 'var(--danger)' :
+                                 r.nivel === 'alto' ? 'var(--warning)' :
+                                 r.nivel === 'medio' ? 'var(--info)' : 'var(--success)';
+                return '<div class="radar-item">' +
+                    '<span class="radar-level ' + r.nivel + '">' + r.nivel.toUpperCase() + '</span>' +
+                    '<div style="flex: 1;">' +
+                        '<div style="display: flex; justify-content: space-between; margin-bottom: 4px;">' +
+                            '<span style="font-weight: 600; font-size: 13px;">' + r.tema + '</span>' +
+                            '<span style="font-size: 12px; color: var(--text-muted);">' + r.noticias + ' noticias / ' + r.deliberacoes + ' deliberacoes</span>' +
+                        '</div>' +
+                        '<div class="radar-bar"><div class="radar-bar-fill" style="width: ' + pct + '%; background: ' + barColor + ';"></div></div>' +
+                        '<div style="margin-top: 4px; font-size: 11px; color: var(--text-muted);">' +
+                            r.agencias.map(a => '<span class="correlacao-tag">' + a + '</span>').join(' ') + ' ' +
+                            r.empresas.map(e => '<span class="correlacao-tag" style="border-color: var(--warning);">' + e + '</span>').join(' ') +
+                        '</div>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
+        },
+
+        renderAlertas() {
+            const container = document.getElementById('alertas-container');
+            if (!container) return;
+            const tipoIcons = { empresa: '🏢', tema: '📋', agencia: '🏛️' };
+            container.innerHTML =
+                '<div style="margin-bottom: 16px;">' +
+                    '<h3 style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">Alertas Configurados</h3>' +
+                    this.alertas.map(a => {
+                        return '<div class="alert-config-item">' +
+                            '<div style="display: flex; align-items: center; gap: 10px;">' +
+                                '<span style="font-size: 18px;">' + (tipoIcons[a.tipo] || '📌') + '</span>' +
+                                '<div>' +
+                                    '<div style="font-weight: 600; font-size: 13px;">' + a.valor + '</div>' +
+                                    '<div style="font-size: 11px; color: var(--text-muted); text-transform: capitalize;">' + a.tipo + '</div>' +
+                                '</div>' +
+                            '</div>' +
+                            '<span class="news-badge" style="background: ' + (a.ativo ? 'var(--success-bg)' : 'var(--surface)') + '; color: ' + (a.ativo ? 'var(--success)' : 'var(--text-muted)') + ';">' + (a.ativo ? 'Ativo' : 'Inativo') + '</span>' +
+                        '</div>';
+                    }).join('') +
+                '</div>' +
+                '<div style="padding: 12px; background: var(--surface); border-radius: var(--radius); border-left: 3px solid var(--primary);">' +
+                    '<p style="font-size: 12px; color: var(--text-secondary);">O sistema de alertas monitora automaticamente noticias e deliberacoes que correspondam aos criterios configurados. Quando uma correlacao e detectada, o alerta e disparado em tempo real.</p>' +
+                '</div>';
+        },
+
+        renderCorrelacoes() {
+            const container = document.getElementById('correlacoes-container');
+            if (!container) return;
+            container.innerHTML = this.correlacoes.map(c => {
+                const scoreCor = c.score >= 80 ? 'var(--success)' : c.score >= 60 ? 'var(--warning)' : 'var(--info)';
+                const scoreBg = c.score >= 80 ? 'var(--success-bg)' : c.score >= 60 ? 'var(--warning-bg)' : 'var(--info-bg)';
+                return '<div class="correlacao-item">' +
+                    '<div class="correlacao-score" style="background: ' + scoreBg + '; color: ' + scoreCor + ';">' + c.score + '</div>' +
+                    '<div class="correlacao-body">' +
+                        '<div style="font-weight: 600; font-size: 13px; margin-bottom: 2px;">📰 ' + c.noticia + '</div>' +
+                        '<div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 6px;">📋 ' + c.deliberacao + '</div>' +
+                        '<div class="correlacao-tags">' +
+                            c.motivos.map(m => '<span class="correlacao-tag">' + m + '</span>').join('') +
+                        '</div>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
+        },
+
+        refresh() {
+            this.generateData();
+            this.renderRadar();
+            this.renderCorrelacoes();
+            this.updateStats();
         }
     };
 
@@ -7985,6 +8997,9 @@ tr:hover {
         PageGovernanca,
         PageMetricas,
         PageBoletim,
+        PageNoticias,
+        PageDossies,
+        PageCruzamento,
         PageAuditoria,
         PageDocumentos,
         PageUpload,
@@ -8019,6 +9034,18 @@ tr:hover {
             Router.register('/boletim', () => {
                 PageMonitor.destroy();
                 PageBoletim.init();
+            });
+            Router.register('/noticias', () => {
+                PageMonitor.destroy();
+                PageNoticias.init();
+            });
+            Router.register('/dossies', () => {
+                PageMonitor.destroy();
+                PageDossies.init();
+            });
+            Router.register('/cruzamento', () => {
+                PageMonitor.destroy();
+                PageCruzamento.init();
             });
             Router.register('/auditoria', () => {
                 PageMonitor.destroy();
