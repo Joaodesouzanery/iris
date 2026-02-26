@@ -65,7 +65,8 @@
     --radius-xl: 16px;
 
     /* Layout */
-    --sidebar-width: 220px;
+    --sidebar-width: 56px;
+    --sidebar-width-expanded: 200px;
     --header-height: 64px;
 }
 
@@ -107,7 +108,7 @@ svg:not([width]):not([height]) {
 }
 
 /* ============================================
-   SIDEBAR - IRIS Brand
+   SIDEBAR - Compact Icon-Only (expands on hover)
    ============================================ */
 .sidebar {
     width: var(--sidebar-width);
@@ -119,16 +120,24 @@ svg:not([width]):not([height]) {
     display: flex;
     flex-direction: column;
     z-index: 100;
-    transition: transform 0.3s ease;
+    transition: width 0.25s cubic-bezier(.4,0,.2,1);
     border-right: 1px solid var(--border);
+    overflow: hidden;
+}
+
+.sidebar:hover {
+    width: var(--sidebar-width-expanded);
 }
 
 .sidebar-header {
-    padding: 12px 14px;
+    padding: 10px 0;
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
     border-bottom: 1px solid var(--border);
+    min-height: 48px;
+    overflow: hidden;
 }
 
 .sidebar-logo {
@@ -146,6 +155,7 @@ svg:not([width]):not([height]) {
     display: flex;
     align-items: center;
     gap: 10px;
+    flex-shrink: 0;
 }
 
 .iris-logo-text {
@@ -162,99 +172,153 @@ svg:not([width]):not([height]) {
 .sidebar-brand {
     display: flex;
     flex-direction: column;
+    opacity: 0;
+    white-space: nowrap;
+    transition: opacity 0.2s ease;
+    width: 0;
+    overflow: hidden;
+}
+
+.sidebar:hover .sidebar-brand {
+    opacity: 1;
+    width: auto;
 }
 
 .sidebar-brand-name {
     color: var(--primary);
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 700;
     letter-spacing: 2px;
 }
 
 .sidebar-brand-subtitle {
     color: var(--text-secondary);
-    font-size: 9px;
+    font-size: 8px;
     letter-spacing: 0.3px;
     margin-top: 1px;
 }
 
 .sidebar-toggle {
-    margin-left: auto;
-    background: none;
-    border: none;
-    color: rgba(255, 255, 255, 0.6);
-    cursor: pointer;
-    padding: 4px;
-    border-radius: var(--radius-sm);
-    transition: all 0.2s;
-}
-
-.sidebar-toggle:hover {
-    color: white;
-    background: rgba(255, 255, 255, 0.1);
+    display: none;
 }
 
 .sidebar-nav {
     flex: 1;
-    padding: 8px 8px;
+    padding: 6px 6px;
     overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .nav-section {
-    margin-bottom: 12px;
+    margin-bottom: 6px;
 }
 
 .nav-section-title {
-    font-size: 9px;
+    font-size: 8px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    color: rgba(255, 255, 255, 0.4);
-    padding: 0 8px;
-    margin-bottom: 4px;
+    color: rgba(255, 255, 255, 0.35);
+    padding: 2px 0;
+    margin-bottom: 2px;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    opacity: 0;
+    height: 0;
+    transition: opacity 0.2s ease, height 0.2s ease;
+}
+
+.sidebar:hover .nav-section-title {
+    opacity: 1;
+    height: auto;
+    padding: 2px 8px;
+    text-align: left;
 }
 
 .nav-item {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 6px 8px;
-    color: rgba(255, 255, 255, 0.7);
+    gap: 10px;
+    padding: 7px 0;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.65);
     text-decoration: none;
     border-radius: var(--radius);
     cursor: pointer;
     transition: all 0.2s ease;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    position: relative;
+}
+
+.sidebar:hover .nav-item {
+    padding: 6px 10px;
+    justify-content: flex-start;
 }
 
 .nav-item:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.08);
     color: white;
 }
 
 .nav-item.active {
-    background: rgba(255, 255, 255, 0.15);
-    color: white;
+    background: rgba(201, 162, 39, 0.15);
+    color: var(--primary);
 }
 
 .nav-item svg {
-    width: 15px;
-    height: 15px;
+    width: 16px;
+    height: 16px;
     flex-shrink: 0;
-    opacity: 0.8;
+    opacity: 0.75;
 }
 
 .nav-item.active svg {
     opacity: 1;
 }
 
+/* Tooltip for collapsed state */
+.nav-item::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: calc(100% + 8px);
+    top: 50%;
+    transform: translateY(-50%);
+    background: #1a2742;
+    color: #fff;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+    z-index: 200;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.nav-item:hover::after {
+    opacity: 1;
+}
+
+.sidebar:hover .nav-item::after {
+    display: none;
+}
+
 .nav-item-arrow {
     margin-left: auto;
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
     opacity: 0.5;
     transition: transform 0.2s;
+    display: none;
+}
+
+.sidebar:hover .nav-item-arrow {
+    display: block;
 }
 
 .nav-item.expanded .nav-item-arrow {
@@ -262,8 +326,8 @@ svg:not([width]):not([height]) {
 }
 
 .nav-submenu {
-    margin-left: 32px;
-    margin-top: 4px;
+    margin-left: 26px;
+    margin-top: 2px;
     display: none;
 }
 
@@ -272,29 +336,59 @@ svg:not([width]):not([height]) {
 }
 
 .nav-submenu .nav-item {
-    font-size: 11px;
-    padding: 5px 8px;
+    font-size: 10px;
+    padding: 4px 8px;
 }
 
 .sidebar-footer {
-    padding: 8px 10px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 6px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .alert-badge {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 6px;
-    padding: 5px 8px;
-    background: rgba(239, 68, 68, 0.2);
+    padding: 5px 6px;
+    background: rgba(239, 68, 68, 0.15);
     border-radius: var(--radius);
     color: #fca5a5;
-    font-size: 11px;
+    font-size: 10px;
+    overflow: hidden;
+    white-space: nowrap;
 }
 
 .alert-badge svg {
-    width: 13px;
-    height: 13px;
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+}
+
+.alert-badge span {
+    opacity: 0;
+    width: 0;
+    overflow: hidden;
+    transition: opacity 0.2s ease;
+}
+
+.sidebar:hover .alert-badge span {
+    opacity: 1;
+    width: auto;
+}
+
+/* Nav labels - hidden when collapsed, visible when expanded */
+.nav-label {
+    opacity: 0;
+    width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    transition: opacity 0.2s ease;
+}
+
+.sidebar:hover .nav-label {
+    opacity: 1;
+    width: auto;
 }
 
 /* ============================================
@@ -306,6 +400,7 @@ svg:not([width]):not([height]) {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    transition: margin-left 0.25s cubic-bezier(.4,0,.2,1);
 }
 
 /* ============================================
@@ -1028,8 +1123,10 @@ tr:hover {
 
 @media (max-width: 768px) {
     .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
-    .sidebar { transform: translateX(-100%); }
+    .sidebar { transform: translateX(-100%); width: var(--sidebar-width-expanded); }
     .sidebar.open { transform: translateX(0); }
+    .sidebar.open .nav-label, .sidebar.open .sidebar-brand, .sidebar.open .nav-section-title, .sidebar.open .alert-badge span { opacity: 1; width: auto; height: auto; }
+    .sidebar.open .nav-item { justify-content: flex-start; padding: 6px 10px; }
     .main-content { margin-left: 0; }
 }
 
@@ -3511,81 +3608,81 @@ tr:hover {
             <div class="sidebar-nav">
                 <div class="nav-section">
                     <div class="nav-section-title">Decisoes</div>
-                    <a data-route="/deliberacoes" class="nav-item">
+                    <a data-route="/deliberacoes" class="nav-item" data-tooltip="Deliberações">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                        Deliberações
+                        <span class="nav-label">Deliberações</span>
                     </a>
-                    <a data-route="/monitor" class="nav-item">
+                    <a data-route="/monitor" class="nav-item" data-tooltip="Monitor 24/7">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-                        Monitor
+                        <span class="nav-label">Monitor</span>
                     </a>
                 </div>
 
                 <div class="nav-section">
                     <div class="nav-section-title">Diretores</div>
-                    <a data-route="/diretores" class="nav-item">
+                    <a data-route="/diretores" class="nav-item" data-tooltip="Mandatos">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                        Mandatos
+                        <span class="nav-label">Mandatos</span>
                     </a>
-                    <a data-route="/jurimetria" class="nav-item">
+                    <a data-route="/jurimetria" class="nav-item" data-tooltip="Jurimetria">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-                        Jurimetria
+                        <span class="nav-label">Jurimetria</span>
                     </a>
-                    <a data-route="/governanca" class="nav-item">
+                    <a data-route="/governanca" class="nav-item" data-tooltip="Governança">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-                        Governança
+                        <span class="nav-label">Governança</span>
                     </a>
                 </div>
 
                 <div class="nav-section">
                     <div class="nav-section-title">Documentos</div>
-                    <a data-route="/documentos" class="nav-item">
+                    <a data-route="/documentos" class="nav-item" data-tooltip="Upload + Análise">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                        Upload + Análise
+                        <span class="nav-label">Upload + Análise</span>
                     </a>
                 </div>
 
                 <div class="nav-section">
                     <div class="nav-section-title">Agências</div>
-                    <a data-route="/agencias" class="nav-item">
+                    <a data-route="/agencias" class="nav-item" data-tooltip="Visão Geral">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-                        Visão Geral
+                        <span class="nav-label">Visão Geral</span>
                     </a>
-                    <a data-route="/mapa" class="nav-item">
+                    <a data-route="/mapa" class="nav-item" data-tooltip="Mapa do Brasil">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg>
-                        Mapa do Brasil
+                        <span class="nav-label">Mapa do Brasil</span>
                     </a>
                 </div>
 
                 <div class="nav-section">
                     <div class="nav-section-title">Inteligência</div>
-                    <a data-route="/metricas" class="nav-item">
+                    <a data-route="/metricas" class="nav-item" data-tooltip="Analytics">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path></svg>
-                        Analytics
+                        <span class="nav-label">Analytics</span>
                     </a>
-                    <a data-route="/noticias" class="nav-item">
+                    <a data-route="/noticias" class="nav-item" data-tooltip="Hub de Notícias">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path></svg>
-                        Hub de Noticias
+                        <span class="nav-label">Hub de Notícias</span>
                     </a>
-                    <a data-route="/dossies" class="nav-item">
+                    <a data-route="/dossies" class="nav-item" data-tooltip="Dossiês">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
-                        Dossies Automaticos
+                        <span class="nav-label">Dossiês</span>
                     </a>
-                    <a data-route="/cruzamento" class="nav-item">
+                    <a data-route="/cruzamento" class="nav-item" data-tooltip="Cruzamento">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
-                        Cruzamento de Dados
+                        <span class="nav-label">Cruzamento</span>
                     </a>
-                    <a data-route="/boletim" class="nav-item">
+                    <a data-route="/boletim" class="nav-item" data-tooltip="Boletim Mensal">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                        Boletim Mensal
+                        <span class="nav-label">Boletim</span>
                     </a>
-                    <a data-route="/auditoria" class="nav-item">
+                    <a data-route="/auditoria" class="nav-item" data-tooltip="Auditoria Forense">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
-                        Auditoria Forense
+                        <span class="nav-label">Auditoria</span>
                     </a>
-                    <a data-route="/conexoes" class="nav-item">
+                    <a data-route="/conexoes" class="nav-item" data-tooltip="Rede de Conexões">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
-                        Rede de Conexoes
+                        <span class="nav-label">Conexões</span>
                     </a>
                 </div>
             </div>
@@ -3593,7 +3690,7 @@ tr:hover {
             <div class="sidebar-footer">
                 <div class="alert-badge">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
-                    3 alertas
+                    <span>3 alertas</span>
                 </div>
             </div>
         </nav>
