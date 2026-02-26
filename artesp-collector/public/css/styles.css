@@ -13920,3 +13920,74 @@ h1, h2, h3 {
 .hub-alerta-btn:hover {
     background: #9333EA;
 }
+
+/* ============================================
+   ANALYTICS DASHBOARD
+   ============================================ */
+#page-analytics canvas {
+    display: block;
+    width: 100%;
+}
+
+/* ============================================
+   DOSSIE TIMELINE ENHANCEMENTS
+   ============================================ */
+.dossie-timeline-filter {
+    font-size: 11px !important;
+    padding: 4px 10px !important;
+    border-radius: 6px !important;
+    transition: all var(--transition-fast);
+}
+
+.dossie-timeline-filter.active {
+    background: var(--primary-bg);
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.dossie-timeline-group {
+    transition: opacity var(--transition-base);
+}
+
+.dossie-timeline-item {
+    transition: all var(--transition-fast);
+}
+
+.dossie-timeline-item:hover {
+    background: var(--surface-hover) !important;
+}
+
+/* Profile avatars */
+.profile-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-weight: 700;
+    flex-shrink: 0;
+    text-transform: uppercase;
+}
+
+.profile-avatar-sm {
+    width: 28px;
+    height: 28px;
+    font-size: 10px;
+}
+
+.profile-avatar-md {
+    width: 40px;
+    height: 40px;
+    font-size: 14px;
+}
+
+.profile-avatar-lg {
+    width: 56px;
+    height: 56px;
+    font-size: 18px;
+}
+
+/* Clickable row hover in dossiê */
+.clickable-row:hover {
+    background: var(--surface-hover);
+    border-radius: 4px;
+}

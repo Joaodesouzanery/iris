@@ -43,6 +43,78 @@ const persistencia = require('../iris-core/services/persistencia');
 const intelligence = require('../iris-core/services/intelligence-correlator');
 const geminiAnalyzer = require('../iris-core/services/gemini-analyzer');
 
+// ── ReceitaWS CNPJ Lookup Cache ──
+const cnpjCache = new Map();
+const CNPJ_CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days
+const CNPJ_CACHE_MAX = 500;
+
+async function consultarCNPJ(cnpj) {
+    const cleaned = cnpj.replace(/\D/g, '');
+    if (cleaned.length !== 14) return null;
+
+    // Check cache
+    const cached = cnpjCache.get(cleaned);
+    if (cached && (Date.now() - cached.ts) < CNPJ_CACHE_TTL) return cached.data;
+
+    try {
+        const https = require('https');
+        const data = await new Promise((resolve, reject) => {
+            const req = https.get(`https://receitaws.com.br/v1/cnpj/${cleaned}`, {
+                headers: { 'Accept': 'application/json' },
+                timeout: 10000
+            }, (res) => {
+                let body = '';
+                res.on('data', chunk => body += chunk);
+                res.on('end', () => {
+                    try { resolve(JSON.parse(body)); }
+                    catch { reject(new Error('Invalid JSON')); }
+                });
+            });
+            req.on('error', reject);
+            req.on('timeout', () => { req.destroy(); reject(new Error('Timeout')); });
+        });
+
+        if (data.status === 'ERROR') return null;
+
+        const result = {
+            cnpj: data.cnpj,
+            razao_social: data.nome,
+            nome_fantasia: data.fantasia,
+            situacao: data.situacao,
+            data_situacao: data.data_situacao,
+            tipo: data.tipo,
+            porte: data.porte,
+            capital_social: data.capital_social,
+            natureza_juridica: data.natureza_juridica,
+            atividade_principal: data.atividade_principal?.[0]?.text || '',
+            cnae_principal: data.atividade_principal?.[0]?.code || '',
+            atividades_secundarias: (data.atividades_secundarias || []).slice(0, 5).map(a => ({ code: a.code, text: a.text })),
+            logradouro: data.logradouro,
+            numero: data.numero,
+            complemento: data.complemento,
+            bairro: data.bairro,
+            municipio: data.municipio,
+            uf: data.uf,
+            cep: data.cep,
+            email: data.email,
+            telefone: data.telefone,
+            data_abertura: data.abertura,
+            qsa: (data.qsa || []).map(s => ({ nome: s.nome, qual: s.qual }))
+        };
+
+        // Evict oldest if cache full
+        if (cnpjCache.size >= CNPJ_CACHE_MAX) {
+            const oldest = [...cnpjCache.entries()].sort((a, b) => a[1].ts - b[1].ts)[0];
+            if (oldest) cnpjCache.delete(oldest[0]);
+        }
+        cnpjCache.set(cleaned, { data: result, ts: Date.now() });
+        return result;
+    } catch (err) {
+        console.warn('[ReceitaWS] Erro ao consultar CNPJ:', cleaned, err.message);
+        return null;
+    }
+}
+
 // ── Backup Service ──
 const backupService = require('./src/services/backup');
 
@@ -2047,7 +2119,7 @@ app.get('/', (req, res) => {
 // ============================================================================
 
 // SPA - Todas as rotas de navegação servem o mesmo arquivo
-const spaRoutes = ['/deliberacoes', '/monitor', '/diretores', '/jurimetria', '/governanca', '/metricas', '/boletim', '/auditoria', '/app', '/upload', '/analise', '/agencias', '/mapa', '/radar', '/painel-regulatorio', '/setores', '/microtemas', '/empresas', '/historico', '/grafo', '/monitoramento', '/dossie', '/cruzamento', '/hub', '/landing'];
+const spaRoutes = ['/deliberacoes', '/monitor', '/diretores', '/jurimetria', '/governanca', '/metricas', '/boletim', '/auditoria', '/app', '/upload', '/analise', '/agencias', '/mapa', '/radar', '/painel-regulatorio', '/setores', '/microtemas', '/empresas', '/historico', '/grafo', '/monitoramento', '/dossie', '/cruzamento', '/hub', '/landing', '/analytics'];
 
 spaRoutes.forEach(route => {
     app.get(route, (req, res) => {
@@ -2303,6 +2375,268 @@ app.get('/api/dossie-entidades', (req, res) => {
         success: true,
         entidades: entidades.sort((a, b) => b.deliberacoes - a.deliberacoes)
     });
+});
+
+// ============================================================================
+// API: CONSULTA CNPJ VIA RECEITAWS
+// ============================================================================
+app.get('/api/cnpj/:cnpj', async (req, res) => {
+    const cnpj = req.params.cnpj.replace(/\D/g, '');
+    if (cnpj.length !== 14) {
+        return apiError(res, 'CNPJ inválido. Deve conter 14 dígitos.', 400);
+    }
+    const data = await consultarCNPJ(cnpj);
+    if (!data) {
+        return apiError(res, 'CNPJ não encontrado ou serviço indisponível.', 404);
+    }
+    res.json({ success: true, data });
+});
+
+// Busca CNPJ por nome da empresa (tenta encontrar na lista de empresas conhecidas)
+app.get('/api/cnpj-busca', async (req, res) => {
+    const nome = (req.query.nome || '').trim();
+    if (nome.length < 3) {
+        return apiError(res, 'Nome deve ter pelo menos 3 caracteres.', 400);
+    }
+    // Busca na lista de empresas conhecidas com CNPJ pré-cadastrado
+    const empresa = empresasConhecidas.find(e =>
+        e.nome.toLowerCase().includes(nome.toLowerCase()) ||
+        (e.aliases || []).some(a => a.toLowerCase().includes(nome.toLowerCase()))
+    );
+    res.json({
+        success: true,
+        empresa: empresa ? { nome: empresa.nome, setor: empresa.setor, tipo: empresa.tipo } : null,
+        message: empresa ? 'Empresa encontrada na base local.' : 'Empresa não encontrada. Use /api/cnpj/:cnpj para consultar diretamente.'
+    });
+});
+
+// ============================================================================
+// API: ANALYTICS DASHBOARD
+// ============================================================================
+
+// Tendências temporais — deliberações por mês/semana
+app.get('/api/analytics/tendencias', (req, res) => {
+    const deliberacoes = coletarTodasDeliberacoes();
+
+    // Agrupa por mês
+    const porMes = {};
+    const porSemana = {};
+    deliberacoes.forEach(d => {
+        const data = d.data_reuniao || d.dataArquivo || '';
+        if (!data) return;
+        // Mês: YYYY-MM
+        const partes = data.split(/[/-]/);
+        let mes;
+        if (partes[0] && partes[0].length === 4) {
+            mes = `${partes[0]}-${(partes[1] || '01').padStart(2, '0')}`;
+        } else if (partes[2] && partes[2].length === 4) {
+            mes = `${partes[2]}-${(partes[1] || '01').padStart(2, '0')}`;
+        } else {
+            mes = data.substring(0, 7);
+        }
+        if (!porMes[mes]) porMes[mes] = { total: 0, deferidos: 0, indeferidos: 0 };
+        porMes[mes].total++;
+        if (d.resultado === 'Deferido') porMes[mes].deferidos++;
+        if (d.resultado === 'Indeferido') porMes[mes].indeferidos++;
+    });
+
+    // Ranking de empresas por volume
+    const empresaRank = {};
+    deliberacoes.forEach(d => {
+        if (d.interessado && d.interessado !== 'ARTESP' && d.interessado.length > 2) {
+            if (!empresaRank[d.interessado]) empresaRank[d.interessado] = { total: 0, deferidos: 0, indeferidos: 0 };
+            empresaRank[d.interessado].total++;
+            if (d.resultado === 'Deferido') empresaRank[d.interessado].deferidos++;
+            if (d.resultado === 'Indeferido') empresaRank[d.interessado].indeferidos++;
+        }
+    });
+
+    // Heatmap: diretor × tema
+    const heatmap = {};
+    deliberacoes.forEach(d => {
+        const tema = d.microtema || 'Outros';
+        const voters = [...(d.votos_a_favor || []), ...(d.votos_contra || [])];
+        voters.forEach(dir => {
+            const key = `${dir}||${tema}`;
+            if (!heatmap[key]) heatmap[key] = { diretor: dir, tema, count: 0, deferidos: 0 };
+            heatmap[key].count++;
+            if (d.resultado === 'Deferido') heatmap[key].deferidos++;
+        });
+    });
+
+    // Diversidade temática por diretor
+    const diretorTemas = {};
+    deliberacoes.forEach(d => {
+        const tema = d.microtema || 'Outros';
+        [...(d.votos_a_favor || []), ...(d.votos_contra || [])].forEach(dir => {
+            if (!diretorTemas[dir]) diretorTemas[dir] = new Set();
+            diretorTemas[dir].add(tema);
+        });
+    });
+
+    res.json({
+        success: true,
+        tendencias: Object.entries(porMes)
+            .sort(([a], [b]) => a.localeCompare(b))
+            .map(([mes, dados]) => ({ mes, ...dados })),
+        ranking_empresas: Object.entries(empresaRank)
+            .map(([nome, dados]) => ({ nome, ...dados, taxa: dados.total > 0 ? Math.round((dados.deferidos / dados.total) * 100) : 0 }))
+            .sort((a, b) => b.total - a.total)
+            .slice(0, 20),
+        heatmap: Object.values(heatmap).sort((a, b) => b.count - a.count).slice(0, 100),
+        diversidade_tematica: Object.entries(diretorTemas)
+            .map(([dir, temas]) => ({ diretor: dir, temas_distintos: temas.size, temas: [...temas] }))
+            .sort((a, b) => b.temas_distintos - a.temas_distintos),
+        total_deliberacoes: deliberacoes.length
+    });
+});
+
+// Correlações entre diretores — quem vota junto
+app.get('/api/analytics/correlacoes', (req, res) => {
+    const deliberacoes = coletarTodasDeliberacoes();
+    const pares = {};
+
+    deliberacoes.forEach(d => {
+        const favor = d.votos_a_favor || [];
+        const contra = d.votos_contra || [];
+        // Pares que votaram na mesma direção
+        [favor, contra].forEach(grupo => {
+            for (let i = 0; i < grupo.length; i++) {
+                for (let j = i + 1; j < grupo.length; j++) {
+                    const key = [grupo[i], grupo[j]].sort().join('||');
+                    if (!pares[key]) pares[key] = { d1: grupo[i] < grupo[j] ? grupo[i] : grupo[j], d2: grupo[i] < grupo[j] ? grupo[j] : grupo[i], concordam: 0, discordam: 0 };
+                    pares[key].concordam++;
+                }
+            }
+        });
+        // Pares que votaram em direções opostas
+        favor.forEach(f => {
+            contra.forEach(c => {
+                const key = [f, c].sort().join('||');
+                if (!pares[key]) pares[key] = { d1: f < c ? f : c, d2: f < c ? c : f, concordam: 0, discordam: 0 };
+                pares[key].discordam++;
+            });
+        });
+    });
+
+    const result = Object.values(pares).map(p => ({
+        ...p,
+        total: p.concordam + p.discordam,
+        taxa_concordancia: (p.concordam + p.discordam) > 0 ? Math.round((p.concordam / (p.concordam + p.discordam)) * 100) : 0
+    })).sort((a, b) => b.total - a.total);
+
+    res.json({ success: true, correlacoes: result });
+});
+
+// ============================================================================
+// API: EXPORTAÇÃO PDF (HTML renderizável para impressão)
+// ============================================================================
+app.get('/api/dossie-pdf/:entidade', (req, res) => {
+    const entidadeNome = decodeURIComponent(req.params.entidade);
+    const deliberacoes = coletarTodasDeliberacoes();
+
+    // Re-use dossiê logic inline
+    const DIRETORES = ['André Isper', 'Diego Albert', 'Fernanda Esbizaro', 'Raquel França', 'Milton Persoli', 'Sergio Massaru', 'Carlos Eduardo', 'Antonio Carlos', 'Flavio Augusto'];
+    const isDiretor = DIRETORES.some(d => entidadeNome.includes(d)) ||
+                      deliberacoes.some(dl => [...(dl.votos_a_favor || []), ...(dl.votos_contra || [])].includes(entidadeNome));
+    const tipo = entidadeNome === 'ARTESP' ? 'agencia' : isDiretor ? 'diretor' : 'empresa';
+
+    let delibsRelevantes;
+    if (tipo === 'diretor') {
+        delibsRelevantes = deliberacoes.filter(d => [...(d.votos_a_favor || []), ...(d.votos_contra || [])].includes(entidadeNome));
+    } else if (tipo === 'empresa') {
+        delibsRelevantes = deliberacoes.filter(d => d.interessado && d.interessado.toLowerCase().includes(entidadeNome.toLowerCase()));
+    } else {
+        delibsRelevantes = deliberacoes;
+    }
+
+    const stats = delibsRelevantes.reduce((acc, d) => {
+        if (d.resultado === 'Deferido') acc.deferidos++;
+        if (d.resultado === 'Indeferido') acc.indeferidos++;
+        return acc;
+    }, { deferidos: 0, indeferidos: 0 });
+
+    // Build print-optimized HTML
+    const tipoLabel = { diretor: 'Diretor(a)', empresa: 'Empresa', agencia: 'Agência' };
+    const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Dossiê IRIS — ${entidadeNome}</title>
+<style>
+    @page { margin: 20mm; size: A4; }
+    body { font-family: 'Segoe UI', -apple-system, sans-serif; color: #1e293b; max-width: 800px; margin: 0 auto; padding: 40px 20px; }
+    .header { border-bottom: 3px solid #3b82f6; padding-bottom: 16px; margin-bottom: 24px; }
+    .header h1 { font-size: 24px; margin: 0; }
+    .header .subtitle { color: #64748b; font-size: 13px; margin-top: 4px; }
+    .badge { display: inline-block; padding: 2px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+    .badge-blue { background: #dbeafe; color: #1d4ed8; }
+    .badge-green { background: #dcfce7; color: #166534; }
+    .badge-red { background: #fee2e2; color: #991b1b; }
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+    .stat-box { text-align: center; padding: 16px; border: 1px solid #e2e8f0; border-radius: 8px; }
+    .stat-box .value { font-size: 28px; font-weight: 700; }
+    .stat-box .label { font-size: 11px; color: #64748b; margin-top: 4px; }
+    .section { margin: 24px 0; padding: 16px; border: 1px solid #e2e8f0; border-radius: 8px; }
+    .section h2 { font-size: 16px; margin: 0 0 12px; padding-bottom: 8px; border-bottom: 1px solid #f1f5f9; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 8px 12px; border-bottom: 1px solid #f1f5f9; text-align: left; font-size: 13px; }
+    th { font-weight: 600; color: #64748b; font-size: 11px; text-transform: uppercase; }
+    .timeline-item { border-left: 3px solid #3b82f6; padding: 8px 16px; margin-bottom: 12px; }
+    .timeline-date { font-weight: 600; color: #3b82f6; font-size: 13px; }
+    .footer { margin-top: 40px; text-align: center; color: #94a3b8; font-size: 11px; border-top: 1px solid #e2e8f0; padding-top: 16px; }
+    @media print { .no-print { display: none; } }
+</style>
+</head>
+<body>
+<div class="no-print" style="margin-bottom:20px;">
+    <button onclick="window.print()" style="padding:10px 24px;background:#3b82f6;color:white;border:none;border-radius:6px;cursor:pointer;font-size:14px;">Imprimir / Salvar PDF</button>
+    <button onclick="window.close()" style="padding:10px 24px;background:#e2e8f0;color:#1e293b;border:none;border-radius:6px;cursor:pointer;font-size:14px;margin-left:8px;">Fechar</button>
+</div>
+<div class="header">
+    <h1>DOSSIÊ IRIS</h1>
+    <div style="display:flex;align-items:center;gap:12px;margin-top:8px;">
+        <span style="font-size:20px;font-weight:700;">${entidadeNome}</span>
+        <span class="badge badge-blue">${tipoLabel[tipo] || tipo}</span>
+    </div>
+    <div class="subtitle">Gerado em ${new Date().toLocaleString('pt-BR')} | IRIS — Inteligência Regulatória</div>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-box"><div class="value">${delibsRelevantes.length}</div><div class="label">Deliberações</div></div>
+    <div class="stat-box"><div class="value" style="color:#166534;">${stats.deferidos}</div><div class="label">Deferidos</div></div>
+    <div class="stat-box"><div class="value" style="color:#991b1b;">${stats.indeferidos}</div><div class="label">Indeferidos</div></div>
+    <div class="stat-box"><div class="value" style="color:#3b82f6;">${delibsRelevantes.length > 0 ? Math.round((stats.deferidos / delibsRelevantes.length) * 100) : 0}%</div><div class="label">Taxa Deferimento</div></div>
+</div>
+
+<div class="section">
+    <h2>Deliberações Detalhadas</h2>
+    <table>
+        <thead><tr><th>Data</th><th>Deliberação</th><th>Interessado</th><th>Tema</th><th>Resultado</th></tr></thead>
+        <tbody>
+        ${delibsRelevantes.slice(0, 100).map(d => `
+            <tr>
+                <td>${d.data_reuniao || d.dataArquivo || '--'}</td>
+                <td>${d.numero_deliberacao || '--'}</td>
+                <td>${d.interessado || '--'}</td>
+                <td>${d.microtema || '--'}</td>
+                <td><span class="badge ${d.resultado === 'Deferido' ? 'badge-green' : d.resultado === 'Indeferido' ? 'badge-red' : 'badge-blue'}">${d.resultado || '--'}</span></td>
+            </tr>
+        `).join('')}
+        </tbody>
+    </table>
+    ${delibsRelevantes.length > 100 ? `<p style="color:#64748b;font-size:12px;margin-top:8px;">Mostrando 100 de ${delibsRelevantes.length} deliberações.</p>` : ''}
+</div>
+
+<div class="footer">
+    <p>IRIS — Instituto de Regulação, Inovação e Sustentabilidade</p>
+    <p>Documento gerado automaticamente. Dados extraídos de deliberações oficiais.</p>
+</div>
+</body>
+</html>`;
+
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(html);
 });
 
 // ============================================================================

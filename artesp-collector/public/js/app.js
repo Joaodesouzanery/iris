@@ -74,6 +74,7 @@
                 '/monitoramento': 'Monitoramento 24/7',
                 '/dossie': 'Dossiês Automáticos',
                 '/cruzamento': 'Cruzamento de Dados',
+                '/analytics': 'Analytics Avançado',
                 '/landing': 'Conheça a IRIS'
             };
             const breadcrumb = document.getElementById('breadcrumb-page');
@@ -3869,6 +3870,11 @@
             html += `<button onclick="App.PageGrafo.openDossie('${node.id.replace(/'/g,"\\'")}')" class="btn btn-secondary btn-sm" style="font-size:10px;padding:5px 10px;border-radius:6px;">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="12" height="12" style="margin-right:3px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>Dossiê
             </button>`;
+            if (node.type === 'company' && node.cnpj) {
+                html += `<button onclick="App.PageGrafo.consultarCNPJ('${node.cnpj}')" class="btn btn-outline btn-sm" style="font-size:10px;padding:5px 10px;border-radius:6px;">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="12" height="12" style="margin-right:3px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>CNPJ
+                </button>`;
+            }
             html += '</div>';
 
             // ── Connected entities ──
@@ -3900,6 +3906,31 @@
         openDossie(entityId) {
             window.location.hash = '#/dossie';
             setTimeout(() => { if(App.PageDossie) App.PageDossie.loadEntityDossie(entityId); }, 200);
+        },
+        // CNPJ lookup from graph info panel
+        async consultarCNPJ(cnpj) {
+            try {
+                const resp = await fetch('/api/cnpj/' + cnpj.replace(/\D/g, ''));
+                const result = await resp.json();
+                if (result.success && result.data) {
+                    const d = result.data;
+                    const body = document.getElementById('intel-info-body');
+                    // Prepend CNPJ data to info panel
+                    const cnpjHtml = `<div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:8px;padding:10px;margin-bottom:12px;">
+                        <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#3b82f6;margin-bottom:6px;">Dados ReceitaWS</div>
+                        ${d.razao_social ? '<div style="font-size:11px;color:#cbd5e1;margin-bottom:2px;"><strong>Razão Social:</strong> ' + d.razao_social + '</div>' : ''}
+                        ${d.nome_fantasia ? '<div style="font-size:11px;color:#cbd5e1;margin-bottom:2px;"><strong>Fantasia:</strong> ' + d.nome_fantasia + '</div>' : ''}
+                        ${d.situacao ? '<div style="font-size:11px;color:#cbd5e1;margin-bottom:2px;"><strong>Situação:</strong> <span style="color:' + (d.situacao === 'ATIVA' ? '#4ade80' : '#f87171') + '">' + d.situacao + '</span></div>' : ''}
+                        ${d.capital_social ? '<div style="font-size:11px;color:#cbd5e1;margin-bottom:2px;"><strong>Capital Social:</strong> R$ ' + Number(d.capital_social).toLocaleString('pt-BR') + '</div>' : ''}
+                        ${d.atividade_principal ? '<div style="font-size:11px;color:#cbd5e1;margin-bottom:2px;"><strong>CNAE:</strong> ' + d.cnae_principal + ' — ' + d.atividade_principal + '</div>' : ''}
+                        ${d.municipio ? '<div style="font-size:11px;color:#cbd5e1;margin-bottom:2px;"><strong>Sede:</strong> ' + d.municipio + '/' + d.uf + '</div>' : ''}
+                        ${d.qsa && d.qsa.length ? '<div style="font-size:10px;color:#94a3b8;margin-top:6px;"><strong>QSA:</strong> ' + d.qsa.slice(0,3).map(s => s.nome + ' (' + s.qual + ')').join(', ') + '</div>' : ''}
+                    </div>`;
+                    body.insertAdjacentHTML('afterbegin', cnpjHtml);
+                }
+            } catch (err) {
+                console.warn('[CNPJ] Erro:', err.message);
+            }
         },
         search(q) {
             q=q.toLowerCase().trim();
@@ -4427,26 +4458,35 @@
             const container = document.getElementById('dossie-table-body');
             const tipoLabel = { diretor: 'Diretor(a)', empresa: 'Empresa', agencia: 'Agência' };
             const tipoColor = { diretor: '#60a5fa', empresa: '#fbbf24', agencia: '#a78bfa' };
+            const initials = data.entidade.split(' ').filter(w => w.length > 1).map(w => w[0]).join('').substring(0, 2).toUpperCase();
 
             // Replace entire card body with the dossie view
             const cardBody = container.closest('.card-body');
             let html = `
-                <div style="margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;">
+                <div style="margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
                     <button class="btn btn-secondary btn-sm" onclick="App.PageDossie.voltarLista()">← Voltar à lista</button>
-                    <button class="btn btn-primary btn-sm" onclick="App.PageDossie.exportar('${data.entidade.replace(/'/g,"\\'")}')">Exportar PDF</button>
+                    <div style="display:flex;gap:8px;">
+                        <button class="btn btn-outline btn-sm" onclick="App.PageDossie.verNoGrafo('${data.entidade.replace(/'/g,"\\'")}')">Ver no Grafo</button>
+                        <button class="btn btn-primary btn-sm" onclick="App.PageDossie.exportarPDF('${data.entidade.replace(/'/g,"\\'")}')">Exportar PDF</button>
+                    </div>
                 </div>
 
                 <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;">
-                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
-                        <div style="width:48px;height:48px;border-radius:50%;background:${tipoColor[data.tipo]}20;border:2px solid ${tipoColor[data.tipo]};display:flex;align-items:center;justify-content:center;font-weight:700;color:${tipoColor[data.tipo]};font-size:16px;">
-                            ${data.entidade.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase()}
+                    <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;">
+                        <div style="width:56px;height:56px;border-radius:50%;background:${tipoColor[data.tipo]}20;border:2px solid ${tipoColor[data.tipo]};display:flex;align-items:center;justify-content:center;font-weight:700;color:${tipoColor[data.tipo]};font-size:18px;flex-shrink:0;">
+                            ${initials}
                         </div>
-                        <div>
+                        <div style="flex:1;">
                             <h3 style="margin:0;font-size:18px;">${data.entidade}</h3>
-                            <span style="color:${tipoColor[data.tipo]};font-size:13px;font-weight:500;">${tipoLabel[data.tipo]}</span>
-                            <span style="color:var(--text-muted);font-size:12px;margin-left:8px;">Gerado em ${new Date(data.geradoEm).toLocaleString('pt-BR')}</span>
+                            <div style="display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap;">
+                                <span style="padding:2px 10px;border-radius:9999px;background:${tipoColor[data.tipo]}15;color:${tipoColor[data.tipo]};font-size:12px;font-weight:600;">${tipoLabel[data.tipo]}</span>
+                                <span style="color:var(--text-muted);font-size:12px;">Gerado em ${new Date(data.geradoEm).toLocaleString('pt-BR')}</span>
+                                ${data.resumo.primeiraData ? '<span style="color:var(--text-muted);font-size:12px;">Período: ' + data.resumo.primeiraData + ' — ' + (data.resumo.ultimaData || 'atual') + '</span>' : ''}
+                            </div>
                         </div>
                     </div>
+
+                    <div id="dossie-cnpj-data"></div>
 
                     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
                         <div style="background:var(--bg-main);padding:12px;border-radius:8px;text-align:center;">
@@ -4551,24 +4591,49 @@
             </div>`;
             html += `</div>`;
 
-            // Timeline
+            // Enhanced Timeline
             if (data.timeline && data.timeline.length > 0) {
+                const totalItems = data.timeline.reduce((s, t) => s + t.itens.length, 0);
+                const deferidos = data.timeline.reduce((s, t) => s + t.itens.filter(i => i.resultado === 'Deferido').length, 0);
+                const indeferidos = data.timeline.reduce((s, t) => s + t.itens.filter(i => i.resultado === 'Indeferido').length, 0);
+
                 html += `<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;">
-                    <h4 style="margin:0 0 12px;font-size:14px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;">Timeline de Deliberações</h4>
-                    <div style="max-height:400px;overflow-y:auto;">
-                    ${data.timeline.slice(0,20).map(t => `
-                        <div style="border-left:2px solid var(--primary);padding-left:16px;margin-bottom:16px;position:relative;">
-                            <div style="position:absolute;left:-5px;top:2px;width:8px;height:8px;border-radius:50%;background:var(--primary);"></div>
-                            <div style="font-weight:600;font-size:13px;color:var(--primary);margin-bottom:4px;">${t.data}</div>
-                            ${t.itens.map(item => `
-                                <div style="background:var(--bg-main);padding:8px 12px;border-radius:6px;margin-bottom:4px;font-size:12px;">
-                                    <div style="display:flex;justify-content:space-between;">
-                                        <span>${item.numero || item.interessado || 'Deliberação'}</span>
-                                        <span class="badge ${item.resultado==='Deferido'?'badge-success':item.resultado==='Indeferido'?'badge-danger':'badge-secondary'}" style="font-size:10px;">${item.resultado || '--'}</span>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                        <h4 style="margin:0;font-size:14px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;">Timeline Cronológica</h4>
+                        <div style="display:flex;gap:6px;">
+                            <button class="btn btn-outline btn-sm dossie-timeline-filter active" data-filter="all" onclick="App.PageDossie.filterTimeline('all')">Todos (${totalItems})</button>
+                            <button class="btn btn-outline btn-sm dossie-timeline-filter" data-filter="Deferido" onclick="App.PageDossie.filterTimeline('Deferido')" style="color:#4ade80;">Deferidos (${deferidos})</button>
+                            <button class="btn btn-outline btn-sm dossie-timeline-filter" data-filter="Indeferido" onclick="App.PageDossie.filterTimeline('Indeferido')" style="color:#f87171;">Indeferidos (${indeferidos})</button>
+                        </div>
+                    </div>
+
+                    <!-- Mini trend chart -->
+                    <div style="margin-bottom:16px;background:var(--bg-main);border-radius:8px;padding:12px;">
+                        <canvas id="dossie-timeline-chart" width="600" height="80"></canvas>
+                    </div>
+
+                    <div id="dossie-timeline-list" style="max-height:500px;overflow-y:auto;">
+                    ${data.timeline.slice(0,30).map(t => `
+                        <div class="dossie-timeline-group" style="border-left:3px solid var(--primary);padding-left:16px;margin-bottom:20px;position:relative;">
+                            <div style="position:absolute;left:-7px;top:0;width:11px;height:11px;border-radius:50%;background:var(--primary);border:2px solid var(--bg-card);"></div>
+                            <div style="font-weight:700;font-size:14px;color:var(--primary);margin-bottom:6px;">${t.data}
+                                <span style="font-weight:400;font-size:12px;color:var(--text-muted);margin-left:8px;">${t.itens.length} deliberaç${t.itens.length === 1 ? 'ão' : 'ões'}</span>
+                            </div>
+                            ${t.itens.map(item => {
+                                const resultColor = item.resultado === 'Deferido' ? '#4ade80' : item.resultado === 'Indeferido' ? '#f87171' : '#94a3b8';
+                                return `
+                                <div class="dossie-timeline-item" data-resultado="${item.resultado || ''}" style="background:var(--bg-main);padding:10px 14px;border-radius:8px;margin-bottom:6px;font-size:12px;border-left:3px solid ${resultColor};transition:opacity 0.2s;">
+                                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                                        <div>
+                                            <span style="font-weight:600;color:var(--text-primary);">${item.numero || 'Deliberação'}</span>
+                                            ${item.interessado ? '<span style="color:var(--text-muted);margin-left:8px;">' + item.interessado + '</span>' : ''}
+                                        </div>
+                                        <span style="padding:2px 8px;border-radius:9999px;background:${resultColor}15;color:${resultColor};font-size:10px;font-weight:600;">${item.resultado || 'Pendente'}</span>
                                     </div>
-                                    ${item.microtema ? `<div style="color:var(--text-muted);margin-top:2px;">${item.microtema}</div>` : ''}
-                                </div>
-                            `).join('')}
+                                    ${item.microtema ? '<div style="color:var(--text-muted);margin-top:4px;display:flex;align-items:center;gap:4px;"><span style="width:6px;height:6px;border-radius:50%;background:#8b5cf6;flex-shrink:0;"></span>' + item.microtema + '</div>' : ''}
+                                    ${item.confianca ? '<div style="margin-top:4px;display:flex;align-items:center;gap:6px;"><div style="flex:1;background:var(--surface);border-radius:3px;height:3px;overflow:hidden;max-width:80px;"><div style="background:' + (item.confianca > 70 ? '#4ade80' : '#fbbf24') + ';width:' + item.confianca + '%;height:100%;"></div></div><span style="font-size:10px;color:var(--text-muted);">' + item.confianca + '% conf.</span></div>' : ''}
+                                </div>`;
+                            }).join('')}
                         </div>
                     `).join('')}
                     </div>
@@ -4576,6 +4641,103 @@
             }
 
             cardBody.innerHTML = html;
+
+            // Render mini trend chart for timeline
+            this._renderTimelineChart(data.timeline || []);
+
+            // If company, try CNPJ enrichment
+            if (data.tipo === 'empresa') {
+                this._enrichWithCNPJ(data.entidade);
+            }
+        },
+
+        _renderTimelineChart(timeline) {
+            const canvas = document.getElementById('dossie-timeline-chart');
+            if (!canvas || !timeline.length) return;
+            const ctx = canvas.getContext('2d');
+            const W = canvas.width = canvas.parentElement.clientWidth - 24;
+            const H = 80;
+            canvas.height = H;
+            ctx.clearRect(0, 0, W, H);
+
+            const data = timeline.map(t => ({
+                label: t.data,
+                total: t.itens.length,
+                deferidos: t.itens.filter(i => i.resultado === 'Deferido').length,
+                indeferidos: t.itens.filter(i => i.resultado === 'Indeferido').length
+            })).reverse(); // chronological order
+
+            const maxVal = Math.max(1, ...data.map(d => d.total));
+            const barW = Math.min(30, (W - 20) / data.length - 4);
+
+            data.forEach((d, i) => {
+                const x = 10 + i * (barW + 4);
+                const totalH = (d.total / maxVal) * (H - 20);
+                const defH = (d.deferidos / maxVal) * (H - 20);
+                const indH = (d.indeferidos / maxVal) * (H - 20);
+
+                // Deferidos (green)
+                ctx.fillStyle = 'rgba(74,222,128,0.7)';
+                ctx.fillRect(x, H - 10 - defH, barW, defH);
+
+                // Indeferidos (red) stacked on top
+                ctx.fillStyle = 'rgba(248,113,113,0.7)';
+                ctx.fillRect(x, H - 10 - defH - indH, barW, indH);
+
+                // Remaining (gray)
+                const otherH = totalH - defH - indH;
+                if (otherH > 0) {
+                    ctx.fillStyle = 'rgba(148,163,184,0.3)';
+                    ctx.fillRect(x, H - 10 - totalH, barW, otherH);
+                }
+            });
+        },
+
+        filterTimeline(filter) {
+            // Update active button
+            document.querySelectorAll('.dossie-timeline-filter').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.filter === filter);
+            });
+            // Filter items
+            document.querySelectorAll('.dossie-timeline-item').forEach(item => {
+                if (filter === 'all') {
+                    item.style.display = '';
+                    item.style.opacity = '1';
+                } else {
+                    const match = item.dataset.resultado === filter;
+                    item.style.display = match ? '' : 'none';
+                }
+            });
+            // Hide empty groups
+            document.querySelectorAll('.dossie-timeline-group').forEach(group => {
+                const visible = group.querySelectorAll('.dossie-timeline-item[style*="display: none"]').length;
+                const total = group.querySelectorAll('.dossie-timeline-item').length;
+                group.style.display = (filter !== 'all' && visible === total) ? 'none' : '';
+            });
+        },
+
+        async _enrichWithCNPJ(empresaNome) {
+            const cnpjContainer = document.getElementById('dossie-cnpj-data');
+            if (!cnpjContainer) return;
+
+            // Try to find empresa in the known list first
+            try {
+                const resp = await fetch('/api/cnpj-busca?nome=' + encodeURIComponent(empresaNome));
+                const data = await resp.json();
+                if (data.success && data.empresa) {
+                    cnpjContainer.innerHTML = `
+                        <div style="background:var(--bg-main);border-radius:8px;padding:12px;margin-bottom:16px;display:flex;align-items:center;gap:12px;border:1px solid var(--border);">
+                            <div style="width:36px;height:36px;border-radius:8px;background:#fbbf2420;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                <svg fill="none" stroke="#fbbf24" viewBox="0 0 24 24" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                            </div>
+                            <div>
+                                <div style="font-weight:600;font-size:13px;color:var(--text-primary);">${data.empresa.nome}</div>
+                                <div style="font-size:11px;color:var(--text-muted);">Setor: ${data.empresa.setor} · Tipo: ${data.empresa.tipo}</div>
+                            </div>
+                            <div style="margin-left:auto;font-size:11px;color:var(--text-muted);">Base IRIS</div>
+                        </div>`;
+                }
+            } catch (_) { /* silently fail */ }
         },
 
         voltarLista() {
@@ -4598,44 +4760,12 @@
         },
 
         exportar(nome) {
-            // Generate printable HTML version
-            const w = window.open('', '_blank');
-            if (!w) { alert('Permita pop-ups para exportar o dossiê.'); return; }
-            w.document.write(`<!DOCTYPE html><html><head><title>Dossiê: ${nome}</title>
-                <style>body{font-family:-apple-system,sans-serif;max-width:800px;margin:40px auto;color:#1e293b;}
-                h1{border-bottom:2px solid #3b82f6;padding-bottom:8px;}
-                .section{margin:24px 0;padding:16px;border:1px solid #e2e8f0;border-radius:8px;}
-                .badge{padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;}
-                .success{background:#dcfce7;color:#166534;}.danger{background:#fee2e2;color:#991b1b;}
-                table{width:100%;border-collapse:collapse;}td,th{padding:6px 12px;border-bottom:1px solid #e2e8f0;text-align:left;font-size:13px;}
-                @media print{body{margin:20px;}}</style></head>
-                <body><h1>DOSSIÊ IRIS — ${nome}</h1>
-                <p style="color:#64748b;">Gerado em ${new Date().toLocaleString('pt-BR')} | Sistema IRIS — Inteligência Regulatória</p>
-                <p>Carregando dados...</p>
-                <script>
-                    fetch('/api/dossie/${encodeURIComponent(nome)}').then(r=>r.json()).then(d=>{
-                        if(!d.success)return;
-                        let h='<div class="section"><h2>Resumo</h2><table>';
-                        h+='<tr><td>Total de Deliberações</td><td><strong>'+d.resumo.totalDeliberacoes+'</strong></td></tr>';
-                        h+='<tr><td>Deferidos</td><td><strong style="color:#166534;">'+d.resumo.deferidos+'</strong></td></tr>';
-                        h+='<tr><td>Indeferidos</td><td><strong style="color:#991b1b;">'+d.resumo.indeferidos+'</strong></td></tr>';
-                        h+='<tr><td>Confiança Média</td><td>'+d.resumo.confiancaMedia+'%</td></tr>';
-                        h+='<tr><td>Período</td><td>'+(d.resumo.primeiraData||'--')+' a '+(d.resumo.ultimaData||'--')+'</td></tr>';
-                        h+='</table></div>';
-                        if(d.alertas.length){h+='<div class="section"><h2>Alertas</h2>';d.alertas.forEach(a=>{h+='<p><strong>'+a.mensagem+'</strong> — '+a.detalhe+'</p>';});h+='</div>';}
-                        h+='<div class="section"><h2>Conexões</h2><h3>Diretores</h3><table>';
-                        d.conexoes.diretores.forEach(x=>{h+='<tr><td>'+x.nome+'</td><td>'+x.deliberacoes+' deliberações</td></tr>';});
-                        h+='</table><h3>Empresas</h3><table>';
-                        d.conexoes.empresas.forEach(x=>{h+='<tr><td>'+x.nome+'</td><td>'+x.deliberacoes+' deliberações</td></tr>';});
-                        h+='</table></div>';
-                        if(d.timeline.length){h+='<div class="section"><h2>Timeline</h2><table><tr><th>Data</th><th>Deliberação</th><th>Resultado</th></tr>';
-                        d.timeline.forEach(t=>{t.itens.forEach(i=>{h+='<tr><td>'+t.data+'</td><td>'+(i.numero||i.interessado||'--')+'</td><td><span class="badge '+(i.resultado==="Deferido"?"success":"danger")+'">'+(i.resultado||'--')+'</span></td></tr>';});});
-                        h+='</table></div>';}
-                        document.body.innerHTML='<h1>DOSSIÊ IRIS — ${nome}</h1><p style="color:#64748b;">Gerado em '+new Date().toLocaleString('pt-BR')+' | Sistema IRIS</p>'+h+'<p style="margin-top:40px;color:#94a3b8;text-align:center;font-size:11px;">IRIS — Inteligência Regulatória Integrada e Sistêmica</p>';
-                        setTimeout(()=>window.print(),500);
-                    });
-                <\/script></body></html>`);
-            w.document.close();
+            this.exportarPDF(nome);
+        },
+
+        exportarPDF(nome) {
+            // Open server-rendered PDF-ready page
+            window.open('/api/dossie-pdf/' + encodeURIComponent(nome), '_blank');
         }
     };
 
@@ -6706,6 +6836,285 @@
     };
 
     // ============================================
+    // PAGE: Analytics Avançado
+    // ============================================
+    const PageAnalytics = {
+        _trendData: null,
+        _corrData: null,
+
+        async init() {
+            const page = document.getElementById('page-analytics');
+            if (page) page.classList.add('active');
+            await Promise.all([this.loadTendencias(), this.loadCorrelacoes()]);
+        },
+
+        async loadTendencias() {
+            try {
+                const resp = await fetch('/api/analytics/tendencias');
+                const data = await resp.json();
+                if (!data.success) return;
+                this._trendData = data;
+
+                // Update stats
+                const el = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val; };
+                el('analytics-total', data.total_deliberacoes);
+                el('analytics-empresas', data.ranking_empresas.length);
+                el('analytics-diretores', data.diversidade_tematica.length);
+                el('analytics-temas', [...new Set(data.heatmap.map(h => h.tema))].length);
+
+                this.renderTrendChart(data.tendencias);
+                this.renderRanking(data.ranking_empresas);
+                this.renderHeatmap(data.heatmap, data.diversidade_tematica);
+                this.renderDiversidade(data.diversidade_tematica);
+            } catch (err) {
+                console.warn('[Analytics] Erro:', err.message);
+            }
+        },
+
+        async loadCorrelacoes() {
+            try {
+                const resp = await fetch('/api/analytics/correlacoes');
+                const data = await resp.json();
+                if (!data.success) return;
+                this._corrData = data;
+                this.renderCorrelacoes(data.correlacoes);
+            } catch (err) {
+                console.warn('[Analytics] Correlações erro:', err.message);
+            }
+        },
+
+        renderTrendChart(tendencias) {
+            const canvas = document.getElementById('analytics-trend-chart');
+            if (!canvas || !tendencias.length) return;
+            const ctx = canvas.getContext('2d');
+            const W = canvas.width = canvas.parentElement.clientWidth - 32;
+            const H = canvas.height = 260;
+            const pad = { top: 20, right: 20, bottom: 40, left: 50 };
+            const chartW = W - pad.left - pad.right;
+            const chartH = H - pad.top - pad.bottom;
+
+            ctx.clearRect(0, 0, W, H);
+            ctx.font = '11px Inter, sans-serif';
+
+            const maxVal = Math.max(1, ...tendencias.map(t => t.total));
+
+            // Grid lines
+            const gridSteps = 5;
+            ctx.strokeStyle = 'rgba(148,163,184,0.1)';
+            ctx.fillStyle = '#94a3b8';
+            ctx.textAlign = 'right';
+            for (let i = 0; i <= gridSteps; i++) {
+                const y = pad.top + chartH - (i / gridSteps) * chartH;
+                ctx.beginPath();
+                ctx.moveTo(pad.left, y);
+                ctx.lineTo(W - pad.right, y);
+                ctx.stroke();
+                ctx.fillText(Math.round((maxVal / gridSteps) * i), pad.left - 8, y + 4);
+            }
+
+            // X labels
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#94a3b8';
+            const step = Math.max(1, Math.floor(tendencias.length / 8));
+            tendencias.forEach((t, i) => {
+                if (i % step === 0) {
+                    const x = pad.left + (i / (tendencias.length - 1 || 1)) * chartW;
+                    ctx.fillText(t.mes.substring(5), x, H - pad.bottom + 16);
+                }
+            });
+
+            // Draw lines
+            const drawLine = (getData, color, alpha) => {
+                ctx.beginPath();
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2.5;
+                ctx.lineJoin = 'round';
+                tendencias.forEach((t, i) => {
+                    const x = pad.left + (i / (tendencias.length - 1 || 1)) * chartW;
+                    const y = pad.top + chartH - (getData(t) / maxVal) * chartH;
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                });
+                ctx.stroke();
+
+                // Fill area
+                const lastX = pad.left + chartW;
+                ctx.lineTo(lastX, pad.top + chartH);
+                ctx.lineTo(pad.left, pad.top + chartH);
+                ctx.closePath();
+                ctx.fillStyle = color.replace('1)', alpha + ')');
+                ctx.fill();
+            };
+
+            drawLine(t => t.total, 'rgba(139,92,246,1)', '0.08');
+            drawLine(t => t.deferidos, 'rgba(74,222,128,1)', '0.05');
+            drawLine(t => t.indeferidos, 'rgba(248,113,113,1)', '0.05');
+
+            // Legend
+            const legends = [
+                { label: 'Total', color: '#8b5cf6' },
+                { label: 'Deferidos', color: '#4ade80' },
+                { label: 'Indeferidos', color: '#f87171' }
+            ];
+            let lx = pad.left;
+            ctx.font = '11px Inter, sans-serif';
+            legends.forEach(l => {
+                ctx.fillStyle = l.color;
+                ctx.fillRect(lx, H - 12, 12, 3);
+                ctx.fillStyle = '#94a3b8';
+                ctx.textAlign = 'left';
+                ctx.fillText(l.label, lx + 16, H - 7);
+                lx += ctx.measureText(l.label).width + 32;
+            });
+        },
+
+        renderRanking(empresas) {
+            const container = document.getElementById('analytics-ranking-body');
+            if (!container) return;
+            if (!empresas.length) { container.innerHTML = '<p style="color:var(--text-muted);">Nenhuma empresa encontrada.</p>'; return; }
+
+            const max = empresas[0].total;
+            container.innerHTML = empresas.slice(0, 10).map((e, i) => {
+                const pct = Math.round((e.total / max) * 100);
+                const taxaColor = e.taxa > 70 ? '#4ade80' : e.taxa > 40 ? '#fbbf24' : '#f87171';
+                return '<div style="margin-bottom:10px;">' +
+                    '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;">' +
+                        '<span style="color:var(--text-primary);font-weight:500;">' + (i+1) + '. ' + e.nome + '</span>' +
+                        '<span style="color:var(--text-muted);">' + e.total + ' delib. · <span style="color:' + taxaColor + ';">' + e.taxa + '% def.</span></span>' +
+                    '</div>' +
+                    '<div style="background:var(--surface);border-radius:4px;overflow:hidden;height:6px;display:flex;">' +
+                        '<div style="background:#4ade80;width:' + Math.round((e.deferidos/Math.max(1,e.total))*100) + '%;"></div>' +
+                        '<div style="background:#f87171;width:' + Math.round((e.indeferidos/Math.max(1,e.total))*100) + '%;"></div>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
+        },
+
+        renderHeatmap(heatmap, diversidade) {
+            const canvas = document.getElementById('analytics-heatmap-chart');
+            if (!canvas || !heatmap.length) return;
+            const ctx = canvas.getContext('2d');
+            const W = canvas.width = canvas.parentElement.clientWidth - 32;
+            const H = canvas.height = 260;
+
+            ctx.clearRect(0, 0, W, H);
+
+            // Get unique directors and themes (top 6 each)
+            const diretores = [...new Set(heatmap.map(h => h.diretor))].slice(0, 6);
+            const temas = [...new Set(heatmap.map(h => h.tema))].slice(0, 8);
+
+            if (!diretores.length || !temas.length) return;
+
+            const padLeft = 120;
+            const padTop = 30;
+            const cellW = Math.min(60, (W - padLeft - 20) / temas.length);
+            const cellH = Math.min(35, (H - padTop - 20) / diretores.length);
+            const maxCount = Math.max(1, ...heatmap.map(h => h.count));
+
+            // Draw column headers (themes)
+            ctx.font = '10px Inter, sans-serif';
+            ctx.fillStyle = '#94a3b8';
+            ctx.textAlign = 'center';
+            temas.forEach((tema, j) => {
+                const x = padLeft + j * cellW + cellW / 2;
+                const label = tema.length > 8 ? tema.substring(0, 7) + '…' : tema;
+                ctx.fillText(label, x, padTop - 8);
+            });
+
+            // Draw rows
+            diretores.forEach((dir, i) => {
+                const y = padTop + i * cellH;
+                // Row label
+                ctx.fillStyle = '#cbd5e1';
+                ctx.textAlign = 'right';
+                ctx.font = '11px Inter, sans-serif';
+                const dirLabel = dir.length > 16 ? dir.substring(0, 15) + '…' : dir;
+                ctx.fillText(dirLabel, padLeft - 8, y + cellH / 2 + 4);
+
+                // Cells
+                temas.forEach((tema, j) => {
+                    const x = padLeft + j * cellW;
+                    const entry = heatmap.find(h => h.diretor === dir && h.tema === tema);
+                    const count = entry ? entry.count : 0;
+                    const intensity = count / maxCount;
+
+                    // Color: purple gradient
+                    const r = Math.round(139 * intensity);
+                    const g = Math.round(92 * intensity);
+                    const b = Math.round(246 * intensity);
+                    ctx.fillStyle = count > 0 ? 'rgba(' + r + ',' + g + ',' + b + ',' + (0.2 + intensity * 0.8) + ')' : 'rgba(148,163,184,0.05)';
+                    ctx.fillRect(x + 1, y + 1, cellW - 2, cellH - 2);
+
+                    // Count text
+                    if (count > 0) {
+                        ctx.fillStyle = intensity > 0.5 ? '#fff' : '#94a3b8';
+                        ctx.textAlign = 'center';
+                        ctx.font = '10px Inter, sans-serif';
+                        ctx.fillText(count, x + cellW / 2, y + cellH / 2 + 3);
+                    }
+                });
+            });
+        },
+
+        renderCorrelacoes(correlacoes) {
+            const container = document.getElementById('analytics-correlacoes-body');
+            if (!container) return;
+            if (!correlacoes.length) { container.innerHTML = '<p style="color:var(--text-muted);">Sem dados de correlação.</p>'; return; }
+
+            container.innerHTML = '<div style="max-height:260px;overflow-y:auto;">' +
+                correlacoes.slice(0, 15).map(c => {
+                    const barColor = c.taxa_concordancia > 80 ? '#4ade80' : c.taxa_concordancia > 50 ? '#fbbf24' : '#f87171';
+                    return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;">' +
+                        '<div style="flex:1;min-width:0;">' +
+                            '<div style="display:flex;gap:4px;flex-wrap:wrap;">' +
+                                '<span style="color:var(--text-primary);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px;">' + c.d1 + '</span>' +
+                                '<span style="color:var(--text-muted);">×</span>' +
+                                '<span style="color:var(--text-primary);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px;">' + c.d2 + '</span>' +
+                            '</div>' +
+                        '</div>' +
+                        '<div style="width:80px;background:var(--surface);border-radius:3px;height:6px;overflow:hidden;flex-shrink:0;">' +
+                            '<div style="background:' + barColor + ';width:' + c.taxa_concordancia + '%;height:100%;"></div>' +
+                        '</div>' +
+                        '<span style="color:' + barColor + ';font-weight:600;width:40px;text-align:right;flex-shrink:0;">' + c.taxa_concordancia + '%</span>' +
+                    '</div>';
+                }).join('') +
+            '</div>';
+        },
+
+        renderDiversidade(diversidade) {
+            const container = document.getElementById('analytics-diversidade-body');
+            if (!container) return;
+            if (!diversidade.length) { container.innerHTML = '<p style="color:var(--text-muted);">Sem dados.</p>'; return; }
+
+            const maxTemas = Math.max(1, diversidade[0].temas_distintos);
+            const colors = ['#8b5cf6', '#60a5fa', '#4ade80', '#fbbf24', '#f87171', '#a78bfa', '#38bdf8', '#34d399'];
+
+            container.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;">' +
+                diversidade.slice(0, 8).map((d, idx) => {
+                    const pct = Math.round((d.temas_distintos / maxTemas) * 100);
+                    return '<div style="background:var(--surface);border-radius:10px;padding:14px;">' +
+                        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">' +
+                            '<div style="width:36px;height:36px;border-radius:50%;background:' + colors[idx % colors.length] + '20;border:2px solid ' + colors[idx % colors.length] + ';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:' + colors[idx % colors.length] + ';">' +
+                                d.diretor.split(' ').map(function(w){return w[0]||'';}).join('').substring(0,2).toUpperCase() +
+                            '</div>' +
+                            '<div>' +
+                                '<div style="font-weight:600;font-size:13px;color:var(--text-primary);">' + d.diretor + '</div>' +
+                                '<div style="font-size:11px;color:var(--text-muted);">' + d.temas_distintos + ' temas distintos</div>' +
+                            '</div>' +
+                        '</div>' +
+                        '<div style="display:flex;flex-wrap:wrap;gap:4px;">' +
+                            d.temas.slice(0, 5).map(function(t) {
+                                return '<span style="font-size:10px;padding:2px 8px;border-radius:9999px;background:var(--surface-hover);color:var(--text-secondary);">' + t + '</span>';
+                            }).join('') +
+                            (d.temas.length > 5 ? '<span style="font-size:10px;padding:2px 8px;border-radius:9999px;background:var(--surface-hover);color:var(--text-muted);">+' + (d.temas.length - 5) + '</span>' : '') +
+                        '</div>' +
+                    '</div>';
+                }).join('') +
+            '</div>';
+        }
+    };
+
+    // ============================================
     // PAGE: Landing Page — Conheça a IRIS
     // ============================================
     const PageLanding = {
@@ -7036,6 +7445,7 @@
         PageMonitoramento,
         PageDossie,
         PageCruzamento,
+        PageAnalytics,
         PageLanding,
 
         init() {
@@ -7129,6 +7539,10 @@
             Router.register('/cruzamento', () => {
                 PageMonitor.destroy();
                 PageCruzamento.init();
+            });
+            Router.register('/analytics', () => {
+                PageMonitor.destroy();
+                PageAnalytics.init();
             });
             Router.register('/landing', () => {
                 PageMonitor.destroy();
