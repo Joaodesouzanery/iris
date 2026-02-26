@@ -10028,28 +10028,32 @@ tr:hover {
     position: absolute;
     top: 12px;
     right: 12px;
-    width: 280px;
-    background: #161b22;
-    border: 1px solid #30363d;
-    border-radius: 12px;
+    width: 300px;
+    background: rgba(16, 20, 30, 0.97);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
     z-index: 15;
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.03);
     overflow: hidden;
 }
 
 .intel-info-header {
-    padding: 14px 16px;
-    border-bottom: 1px solid #21262d;
+    padding: 14px 16px 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     display: flex;
     flex-direction: column;
     gap: 4px;
 }
 
 .intel-info-header h3 {
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 600;
-    color: #e6edf3;
+    color: #94a3b8;
     margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .intel-info-body {
@@ -10057,21 +10061,25 @@ tr:hover {
     color: #c9d1d9;
     font-size: 12px;
     line-height: 1.6;
-    max-height: 450px;
+    max-height: 520px;
     overflow-y: auto;
 }
+
+.intel-info-body::-webkit-scrollbar { width: 4px; }
+.intel-info-body::-webkit-scrollbar-track { background: transparent; }
+.intel-info-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
 
 .intel-info-body .info-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 6px 0;
-    border-bottom: 1px solid #21262d;
+    padding: 7px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
 }
 
 .intel-info-body .info-row:last-child { border-bottom: none; }
-.intel-info-body .info-label { color: #8b949e; font-size: 11px; }
-.intel-info-body .info-value { color: #e6edf3; font-weight: 600; font-size: 12px; }
+.intel-info-body .info-label { color: #64748b; font-size: 11px; }
+.intel-info-body .info-value { color: #e2e8f0; font-weight: 600; font-size: 12px; max-width: 160px; text-align: right; word-break: break-word; }
 
 /* Search bar at top of canvas */
 .sherlocker-search-bar {

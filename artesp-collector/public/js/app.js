@@ -3527,12 +3527,18 @@
             this.renderEntityGrid(document.getElementById('grafo-entity-search').value);
         },
 
-        // ========== TYPE/COLOR/RADIUS HELPERS ==========
+        // ========== TYPE/COLOR/SIZE HELPERS (card dimensions for Sherlocker style) ==========
         _typeConfig: {
-            agency:   { color: '#a78bfa', radius: 34 },
-            director: { color: '#60a5fa', radius: 28 },
-            company:  { color: '#fbbf24', radius: 22 },
-            theme:    { color: '#4ade80', radius: 18 }
+            agency:   { color: '#a78bfa', radius: 34, cardW: 190, cardH: 64 },
+            director: { color: '#60a5fa', radius: 28, cardW: 180, cardH: 60 },
+            company:  { color: '#fbbf24', radius: 22, cardW: 180, cardH: 60 },
+            theme:    { color: '#4ade80', radius: 18, cardW: 160, cardH: 52 }
+        },
+        _typeIcons: {
+            agency: '\u{1F3DB}',
+            director: '\u{1F464}',
+            company: '\u{1F3E2}',
+            theme: '\u{1F3F7}'
         },
         _getItemType(item) {
             // Use catalog membership to determine type (IDs are names, not prefixed)
@@ -3661,7 +3667,7 @@
             const others = this.nodes.filter(n => n.id !== rootId);
             others.forEach((n, i) => {
                 const angle = (i / others.length) * Math.PI * 2 - Math.PI / 2;
-                const ring = 240 + (Math.random() - 0.5) * 80;
+                const ring = 340 + (Math.random() - 0.5) * 100;
                 n.x = cx + Math.cos(angle) * ring;
                 n.y = cy + Math.sin(angle) * ring;
             });
@@ -3718,27 +3724,27 @@
         simulateForces(alpha) {
             const cx=this.width/2,cy=this.height/2;
             const nodes=this.nodes,len=nodes.length;
-            // Stronger repulsion for better spacing with circular nodes
+            // Stronger repulsion for card-style nodes (need more spacing)
             for(let i=0;i<len;i++) {
                 const a=nodes[i];
                 for(let j=i+1;j<len;j++){
                     const b=nodes[j];
                     const dx=b.x-a.x,dy=b.y-a.y;
                     const distSq=dx*dx+dy*dy;
-                    if(distSq>1000000) continue;
+                    if(distSq>1200000) continue;
                     const dist=Math.sqrt(distSq)||1;
-                    const force=8000/distSq*alpha;
+                    const force=18000/distSq*alpha;
                     const fx=(dx/dist)*force,fy=(dy/dist)*force;
                     a.vx-=fx;a.vy-=fy;b.vx+=fx;b.vy+=fy;
                 }
             }
-            // Spring forces along edges — longer resting distance
+            // Spring forces along edges — longer resting distance for card layout
             const edges=this.edges,elen=edges.length;
             for(let i=0;i<elen;i++){
                 const e=edges[i];
                 const dx=e.target.x-e.source.x,dy=e.target.y-e.source.y;
                 const dist=Math.sqrt(dx*dx+dy*dy)||1;
-                const force=(dist-280)*0.003*e.strength*alpha;
+                const force=(dist-360)*0.003*e.strength*alpha;
                 const fx=(dx/dist)*force,fy=(dy/dist)*force;
                 e.source.vx+=fx;e.source.vy+=fy;e.target.vx-=fx;e.target.vy-=fy;
             }
@@ -3769,7 +3775,7 @@
                 this.mouse.y=(e.clientY-rect.top-this.camera.y+this.height/2)/this.camera.zoom;
                 if(this.dragging){this.dragging.x=this.mouse.x;this.dragging.y=this.mouse.y;this._settled=false;this._settledFrames=0;return;}
                 let found=null;
-                for(let i=this.nodes.length-1;i>=0;i--){const n=this.nodes[i];if(n._hidden)continue;const r=n._isRoot?35:n.type==='agency'?31:n.type==='director'?27:n.type==='company'?25:21;const dx=this.mouse.x-n.x,dy=this.mouse.y-n.y;if(dx*dx+dy*dy<r*r){found=n;break;}}
+                for(let i=this.nodes.length-1;i>=0;i--){const n=this.nodes[i];if(n._hidden)continue;const cfg=this._typeConfig[n.type]||this._typeConfig.theme;const hw=cfg.cardW/2+4,hh=cfg.cardH/2+4;const dx=this.mouse.x-n.x,dy=this.mouse.y-n.y;if(Math.abs(dx)<hw&&Math.abs(dy)<hh){found=n;break;}}
                 if(found!==this.hovering){
                     this.hovering=found;clone.style.cursor=found?'pointer':'grab';
                     if(found){
@@ -3798,52 +3804,97 @@
         showNodeInfo(node) {
             document.getElementById('intel-info-title').textContent=node.label;
             const connEdges=this.edges.filter(e=>e.source===node||e.target===node);
-            let html='';const tc={director:'#60a5fa',company:'#fbbf24',theme:'#4ade80',agency:'#a78bfa'};
+            const tc={director:'#60a5fa',company:'#fbbf24',theme:'#4ade80',agency:'#a78bfa'};
             const tl={director:'Diretor(a)',company:'Empresa',theme:'Tema',agency:'Agência'};
-            // Entity info
-            html+=`<div class="info-row"><span class="info-label">Tipo</span><span class="info-value" style="color:${tc[node.type]}">${tl[node.type]}</span></div>`;
-            if(node.type==='director'){
-                html+=`<div class="info-row"><span class="info-label">Cargo</span><span class="info-value">${node.role||'Diretor(a)'}</span></div>`;
-                if(node.mandato) html+=`<div class="info-row"><span class="info-label">Mandato</span><span class="info-value">${node.mandato}</span></div>`;
-                html+=`<div class="info-row"><span class="info-label">Conexões</span><span class="info-value">${node.connections}</span></div>`;
-            } else if(node.type==='company'){
-                html+=`<div class="info-row"><span class="info-label">Nome completo</span><span class="info-value" style="font-size:10px">${node.full||node.label}</span></div>`;
-                html+=`<div class="info-row"><span class="info-label">Setor</span><span class="info-value">${node.sector||'--'}</span></div>`;
-                html+=`<div class="info-row"><span class="info-label">Menções</span><span class="info-value">${node.mentions||node.contracts||0}</span></div>`;
-            } else if(node.type==='theme'){
-                html+=`<div class="info-row"><span class="info-label">Categoria</span><span class="info-value">${node.category||'--'}</span></div>`;
-                html+=`<div class="info-row"><span class="info-label">Ocorrências</span><span class="info-value">${node.count||0}</span></div>`;
-            } else if(node.type==='agency'){
-                html+=`<div class="info-row"><span class="info-label">Nome</span><span class="info-value" style="font-size:10px">${node.full||node.label}</span></div>`;
-                if(node.setor) html+=`<div class="info-row"><span class="info-label">Setor</span><span class="info-value">${node.setor}</span></div>`;
-                if(node.esfera) html+=`<div class="info-row"><span class="info-label">Esfera</span><span class="info-value" style="text-transform:capitalize">${node.esfera}</span></div>`;
-                if(node.vinculacao) html+=`<div class="info-row"><span class="info-label">Vinculação</span><span class="info-value" style="font-size:10px">${node.vinculacao}</span></div>`;
-                if(node.lei_criacao) html+=`<div class="info-row"><span class="info-label">Lei de Criação</span><span class="info-value" style="font-size:10px">${node.lei_criacao}</span></div>`;
-                if(node.site) html+=`<div class="info-row"><span class="info-label">Site</span><span class="info-value" style="font-size:10px"><a href="${node.site}" target="_blank" rel="noopener noreferrer" style="color:#58a6ff">${node.site.replace('https://','')}</a></span></div>`;
-                html+=`<div class="info-row"><span class="info-label">Deliberações</span><span class="info-value">${node.deliberations||0}</span></div>`;
+            const initials = (node.initials || node.label.split(' ').filter(w=>w.length>1).map(w=>w[0]).join('').substring(0,2)).toUpperCase();
+            const color = tc[node.type] || '#94a3b8';
+
+            // Sherlocker PRO-style info panel with avatar header
+            let html = '';
+
+            // ── Avatar header section ──
+            html += `<div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,0.06)">
+                <div style="width:52px;height:52px;border-radius:12px;background:${color}15;border:2px solid ${color}40;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                    <span style="font-size:18px;font-weight:700;color:${color}">${initials}</span>
+                </div>
+                <div style="flex:1;min-width:0">
+                    <div style="font-size:14px;font-weight:700;color:#e2e8f0;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${node.full || node.label}</div>
+                    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                        <span style="font-size:10px;padding:2px 8px;border-radius:4px;background:${color}15;color:${color};font-weight:600">${tl[node.type]}</span>
+                        ${node.situacao ? `<span style="font-size:10px;padding:2px 8px;border-radius:4px;background:${node.situacao==='Ativo'?'rgba(74,222,128,0.12)':'rgba(239,68,68,0.12)'};color:${node.situacao==='Ativo'?'#4ade80':'#ef4444'};font-weight:500">${node.situacao}</span>` : ''}
+                    </div>
+                </div>
+            </div>`;
+
+            // ── Data rows (Sherlocker PRO style) ──
+            html += '<div style="display:flex;flex-direction:column;gap:1px;margin-bottom:12px">';
+
+            if (node.type === 'director') {
+                html += this._infoRow('Cargo', node.role || 'Diretor(a)');
+                if (node.mandato) html += this._infoRow('Mandato', node.mandato);
+                if (node.agency) html += this._infoRow('Agência', node.agency);
+                html += this._infoRow('Conexões', node.connections);
+            } else if (node.type === 'company') {
+                html += this._infoRow('Razão Social', node.full || node.label, true);
+                if (node.cnpj) html += this._infoRow('CNPJ', node.cnpj);
+                html += this._infoRow('Setor', node.sector || node.setor || 'Regulado');
+                if (node.cidade) html += this._infoRow('Cidade/UF', `${node.cidade}/${node.uf || 'SP'}`);
+                html += this._infoRow('Menções em Deliberações', node.mentions || 0);
+                html += this._infoRow('Contratos', node.contracts || 0);
+            } else if (node.type === 'theme') {
+                html += this._infoRow('Categoria', node.category || 'Regulação');
+                html += this._infoRow('Ocorrências', node.count || 0);
+                html += this._infoRow('Conexões', node.connections);
+            } else if (node.type === 'agency') {
+                html += this._infoRow('Nome Completo', node.full || node.label, true);
+                if (node.setor) html += this._infoRow('Setor', node.setor);
+                if (node.esfera) html += this._infoRow('Esfera', node.esfera.charAt(0).toUpperCase() + node.esfera.slice(1));
+                if (node.vinculacao) html += this._infoRow('Vinculação', node.vinculacao, true);
+                if (node.lei_criacao) html += this._infoRow('Lei de Criação', node.lei_criacao, true);
+                if (node.cidade) html += this._infoRow('Cidade/UF', `${node.cidade}/${node.uf || 'DF'}`);
+                if (node.site) html += `<div class="info-row"><span class="info-label">Site</span><span class="info-value" style="font-size:10px"><a href="${node.site}" target="_blank" rel="noopener noreferrer" style="color:#58a6ff;text-decoration:none">${node.site.replace('https://','')}</a></span></div>`;
+                html += this._infoRow('Deliberações', node.deliberations || 0);
             }
+            html += '</div>';
 
-            // Action buttons — Sherlocker-style
-            html+='<div style="display:flex;gap:6px;margin:10px 0 8px">';
-            if(!this.expandedIds.has(node.id)) html+=`<button onclick="App.PageGrafo.expandNode(App.PageGrafo.nodes.find(n=>n.id==='${node.id.replace(/'/g,"\\'")}'))" class="btn btn-primary btn-sm" style="font-size:10px;padding:4px 8px;">Expandir</button>`;
-            else html+='<span style="font-size:10px;color:#4ade80;display:flex;align-items:center;gap:3px"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="12" height="12"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Expandido</span>';
-            html+=`<button onclick="App.PageGrafo.openDossie('${node.id.replace(/'/g,"\\'")}')" class="btn btn-secondary btn-sm" style="font-size:10px;padding:4px 8px;">Dossiê</button>`;
-            html+='</div>';
+            // ── Action buttons ──
+            html += '<div style="display:flex;gap:6px;margin-bottom:12px">';
+            if (!this.expandedIds.has(node.id)) {
+                html += `<button onclick="App.PageGrafo.expandNode(App.PageGrafo.nodes.find(n=>n.id==='${node.id.replace(/'/g,"\\'")}'))" class="btn btn-primary btn-sm" style="font-size:10px;padding:5px 10px;border-radius:6px;">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="12" height="12" style="margin-right:3px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>Expandir
+                </button>`;
+            } else {
+                html += '<span style="font-size:10px;color:#4ade80;display:flex;align-items:center;gap:3px;padding:5px 0"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="12" height="12"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Expandido</span>';
+            }
+            html += `<button onclick="App.PageGrafo.openDossie('${node.id.replace(/'/g,"\\'")}')" class="btn btn-secondary btn-sm" style="font-size:10px;padding:5px 10px;border-radius:6px;">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="12" height="12" style="margin-right:3px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>Dossiê
+            </button>`;
+            html += '</div>';
 
-            // Connected entities
-            html+='<hr style="border-color:rgba(96,165,250,0.1);margin:8px 0"><div style="font-size:11px;color:#64748b;margin-bottom:6px">ENTIDADES CONECTADAS ('+connEdges.length+')</div>';
-            connEdges.sort((a,b)=>(b.strength||0)-(a.strength||0)).forEach(edge=>{
-                const other=edge.source===node?edge.target:edge.source;
+            // ── Connected entities ──
+            html += `<div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:10px">
+                <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#475569;margin-bottom:8px">Entidades Conectadas (${connEdges.length})</div>`;
+            connEdges.sort((a,b) => (b.strength||0) - (a.strength||0)).forEach(edge => {
+                const other = edge.source === node ? edge.target : edge.source;
+                const otherColor = tc[other.type] || '#94a3b8';
                 const expanded = this.expandedIds.has(other.id);
-                html+=`<div class="info-row" style="cursor:pointer" onclick="App.PageGrafo.expandNode(App.PageGrafo.nodes.find(n=>n.id==='${other.id.replace(/'/g,"\\'")}'))">
-                    <span class="info-label" style="display:flex;align-items:center;gap:4px">
-                        <span style="width:6px;height:6px;border-radius:50%;background:${tc[other.type]};display:inline-block"></span>${other.label}
-                        ${expanded?'<span style="color:#4ade80;font-size:8px">&#10003;</span>':''}
+                const otherInitials = (other.initials || other.label.split(' ').filter(w=>w.length>1).map(w=>w[0]).join('').substring(0,2)).toUpperCase();
+                html += `<div class="info-row" style="cursor:pointer;padding:4px 2px;border-radius:4px;margin:0 -2px" onmouseenter="this.style.background='rgba(255,255,255,0.04)'" onmouseleave="this.style.background='transparent'" onclick="App.PageGrafo.expandNode(App.PageGrafo.nodes.find(n=>n.id==='${other.id.replace(/'/g,"\\'")}'))">
+                    <span class="info-label" style="display:flex;align-items:center;gap:6px">
+                        <span style="width:22px;height:22px;border-radius:5px;background:${otherColor}15;border:1px solid ${otherColor}30;display:inline-flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:${otherColor};flex-shrink:0">${otherInitials}</span>
+                        <span style="font-size:11px">${other.label}</span>
+                        ${expanded ? '<span style="color:#4ade80;font-size:8px">&#10003;</span>' : ''}
                     </span>
-                    <span class="info-value" style="font-size:10px">${edge.label}</span>
+                    <span style="font-size:9px;padding:2px 6px;border-radius:3px;background:rgba(148,163,184,0.1);color:#94a3b8">${edge.label}</span>
                 </div>`;
             });
-            document.getElementById('intel-info-body').innerHTML=html;
+            html += '</div>';
+
+            document.getElementById('intel-info-body').innerHTML = html;
+        },
+        // Helper for info panel rows
+        _infoRow(label, value, small) {
+            return `<div class="info-row"><span class="info-label">${label}</span><span class="info-value"${small ? ' style="font-size:10px"' : ''}>${value}</span></div>`;
         },
         // Open dossie for entity
         openDossie(entityId) {
@@ -3985,8 +4036,8 @@
                     }
                 }
 
-                // Edge label — only on active edges to reduce clutter
-                if (this.showLabels && edge.label && active && !dimmed) {
+                // Edge label — always visible when labels are on (Sherlocker style)
+                if (this.showLabels && edge.label && !dimmed) {
                     const shortLabel = edge.label.length > 22 ? edge.label.substring(0, 20) + '…' : edge.label;
                     ctx.font = '500 9px Inter,-apple-system,BlinkMacSystemFont,sans-serif';
                     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -4001,110 +4052,145 @@
                 }
             });
 
-            // ── NODES — modern circular design with glow ──
+            // ── NODES — Sherlocker PRO card-style design ──
             this.nodes.forEach(node => {
                 if (node._hidden) return;
                 const dimmed = node._dimmed, isSel = node === this.selected, isHov = node === this.hovering;
                 const isHl = node._highlighted, isRoot = node._isRoot;
-                const alpha = dimmed ? 0.12 : 1;
+                const alpha = dimmed ? 0.15 : 1;
                 const cr = node._cr, cg = node._cg, cb = node._cb;
+                const cfg = this._typeConfig[node.type] || this._typeConfig.theme;
 
-                // Node radius based on type and state
-                const baseR = isRoot ? 32 : node.type === 'agency' ? 28 : node.type === 'director' ? 24 : node.type === 'company' ? 22 : 18;
-                const r = (isSel || isHov) ? baseR + 3 : baseR;
+                // Card dimensions
+                const cw = cfg.cardW, ch = cfg.cardH;
+                const x = node.x - cw / 2, y = node.y - ch / 2;
+                const cornerR = 10;
 
-                // Outer glow for active/selected nodes
+                // ── Outer glow for selected/hovered/root ──
                 if (!dimmed && (isSel || isHov || isRoot || isHl)) {
-                    const glowR = r + (isRoot ? 16 : 10);
-                    const glow = ctx.createRadialGradient(node.x, node.y, r * 0.8, node.x, node.y, glowR);
-                    glow.addColorStop(0, `rgba(${cr},${cg},${cb},${(isSel || isRoot) ? 0.25 : 0.15})`);
-                    glow.addColorStop(1, 'rgba(0,0,0,0)');
-                    ctx.beginPath(); ctx.arc(node.x, node.y, glowR, 0, Math.PI * 2);
-                    ctx.fillStyle = glow; ctx.fill();
+                    ctx.shadowColor = `rgba(${cr},${cg},${cb},${(isSel || isRoot) ? 0.5 : 0.3})`;
+                    ctx.shadowBlur = (isSel || isRoot) ? 24 : 14;
+                    ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0;
                 }
 
-                // Main circle — gradient fill
-                const grad = ctx.createRadialGradient(node.x - r * 0.3, node.y - r * 0.3, r * 0.1, node.x, node.y, r);
-                grad.addColorStop(0, dimmed ? 'rgba(30,35,50,0.4)' : `rgba(${Math.min(cr+40,255)},${Math.min(cg+40,255)},${Math.min(cb+40,255)},${alpha * 0.35})`);
-                grad.addColorStop(1, dimmed ? 'rgba(15,18,28,0.3)' : `rgba(${cr},${cg},${cb},${alpha * 0.15})`);
-                ctx.beginPath(); ctx.arc(node.x, node.y, r, 0, Math.PI * 2);
-                ctx.fillStyle = grad; ctx.fill();
+                // ── Card background ──
+                this._roundRect(ctx, x, y, cw, ch, cornerR);
+                ctx.fillStyle = dimmed ? 'rgba(12,16,28,0.4)' : (isSel || isRoot) ? 'rgba(15,22,42,0.97)' : 'rgba(12,18,35,0.93)';
+                ctx.fill();
 
-                // Circle border
-                ctx.strokeStyle = `rgba(${cr},${cg},${cb},${dimmed ? 0.08 : (isSel || isRoot) ? 0.9 : isHov ? 0.7 : isHl ? 0.6 : 0.3})`;
-                ctx.lineWidth = (isSel || isRoot) ? 2.5 : isHov ? 2 : 1.5;
+                // ── Card border ──
+                ctx.strokeStyle = `rgba(${cr},${cg},${cb},${dimmed ? 0.06 : (isSel || isRoot) ? 0.8 : isHov ? 0.6 : 0.2})`;
+                ctx.lineWidth = (isSel || isRoot) ? 2 : isHov ? 1.5 : 1;
                 ctx.stroke();
 
-                // Inner ring for root
-                if (isRoot && !dimmed) {
-                    const pulse = Math.sin(this.time * 2.5) * 3 + r + 6;
-                    ctx.beginPath(); ctx.arc(node.x, node.y, pulse, 0, Math.PI * 2);
-                    ctx.strokeStyle = `rgba(${cr},${cg},${cb},0.12)`;
-                    ctx.lineWidth = 1; ctx.setLineDash([3, 6]); ctx.stroke(); ctx.setLineDash([]);
-                }
+                // Reset shadow
+                ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0;
 
-                // Initials inside the circle
-                const initials = (node.initials || node.label.split(' ').map(w => w[0]).join('').substring(0, 2)).toUpperCase();
-                ctx.font = `700 ${r * 0.55}px Inter,-apple-system,BlinkMacSystemFont,sans-serif`;
+                // ── Colored left accent bar (like Sherlocker) ──
+                ctx.save();
+                ctx.beginPath();
+                ctx.moveTo(x + cornerR, y);
+                ctx.lineTo(x + 4, y);
+                ctx.quadraticCurveTo(x, y, x, y + cornerR);
+                ctx.lineTo(x, y + ch - cornerR);
+                ctx.quadraticCurveTo(x, y + ch, x + 4, y + ch);
+                ctx.lineTo(x + cornerR, y + ch);
+                ctx.closePath();
+                ctx.fillStyle = `rgba(${cr},${cg},${cb},${dimmed ? 0.1 : 0.85})`;
+                ctx.fill();
+                ctx.restore();
+
+                // ── Avatar circle ──
+                const avatarX = x + 24, avatarY = node.y;
+                const avatarR = 16;
+                ctx.beginPath(); ctx.arc(avatarX, avatarY, avatarR, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(${cr},${cg},${cb},${dimmed ? 0.08 : 0.15})`;
+                ctx.fill();
+                ctx.strokeStyle = `rgba(${cr},${cg},${cb},${dimmed ? 0.1 : 0.5})`;
+                ctx.lineWidth = 1.5; ctx.stroke();
+
+                // Avatar initials
+                const initials = (node.initials || node.label.split(' ').filter(w=>w.length>1).map(w => w[0]).join('').substring(0, 2)).toUpperCase();
+                ctx.font = `700 ${avatarR * 0.75}px Inter,-apple-system,BlinkMacSystemFont,sans-serif`;
                 ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                ctx.fillStyle = `rgba(${cr},${cg},${cb},${alpha * (dimmed ? 0.3 : 0.95)})`;
-                ctx.fillText(initials, node.x, node.y);
+                ctx.fillStyle = `rgba(${cr},${cg},${cb},${alpha * (dimmed ? 0.3 : 0.9)})`;
+                ctx.fillText(initials, avatarX, avatarY);
 
-                // Label below node (pre-computed truncation)
-                if (!dimmed || isHl) {
-                    const name = node._shortLabel || (node._shortLabel = node.label.length > 18 ? node.label.substring(0, 16) + '…' : node.label);
-                    ctx.font = `600 10px Inter,-apple-system,BlinkMacSystemFont,sans-serif`;
-                    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-                    // Text shadow for readability
-                    ctx.fillStyle = 'rgba(0,0,0,0.6)';
-                    ctx.fillText(name, node.x + 1, node.y + r + 7);
-                    ctx.fillStyle = `rgba(230,237,243,${alpha * 0.9})`;
-                    ctx.fillText(name, node.x, node.y + r + 6);
-                    // Type badge below label
-                    if (isSel || isHov || isRoot) {
-                        ctx.font = '400 8px Inter,-apple-system,BlinkMacSystemFont,sans-serif';
-                        ctx.fillStyle = `rgba(${cr},${cg},${cb},${alpha * 0.6})`;
-                        ctx.fillText(typeLabels[node.type] || node.type, node.x, node.y + r + 20);
-                    }
+                // ── Name text ──
+                const textX = x + 48;
+                const name = node._shortLabel || (node._shortLabel = node.label.length > 16 ? node.label.substring(0, 14) + '…' : node.label);
+                ctx.font = `600 11px Inter,-apple-system,BlinkMacSystemFont,sans-serif`;
+                ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+                ctx.fillStyle = `rgba(230,237,243,${alpha * 0.95})`;
+                ctx.fillText(name, textX, y + 10);
+
+                // ── Type / subtitle line ──
+                const subtitle = node.type === 'director' ? (node.role || 'Diretor(a)') : node.type === 'agency' ? node.setor || 'Agência' : node.type === 'company' ? 'Empresa' : 'Tema';
+                ctx.font = `400 9px Inter,-apple-system,BlinkMacSystemFont,sans-serif`;
+                ctx.fillStyle = `rgba(${cr},${cg},${cb},${alpha * 0.7})`;
+                ctx.fillText(subtitle, textX, y + 24);
+
+                // ── Status / meta line ──
+                const situacao = node.situacao || (node.type === 'theme' ? `${node.count || 0} ocorrências` : '');
+                if (situacao && !dimmed) {
+                    ctx.font = `500 8px Inter,-apple-system,BlinkMacSystemFont,sans-serif`;
+                    const isAtivo = situacao === 'Ativo';
+                    const isInativo = situacao === 'Inativo';
+                    // Status badge
+                    const tw = ctx.measureText(situacao).width;
+                    const bx = textX, by = y + ch - 18;
+                    this._roundRect(ctx, bx - 2, by - 2, tw + 12, 14, 3);
+                    ctx.fillStyle = isAtivo ? 'rgba(74,222,128,0.12)' : isInativo ? 'rgba(239,68,68,0.12)' : 'rgba(148,163,184,0.1)';
+                    ctx.fill();
+                    ctx.fillStyle = isAtivo ? '#4ade80' : isInativo ? '#ef4444' : 'rgba(148,163,184,0.7)';
+                    ctx.fillText(situacao, bx + 4, by + 1);
                 }
 
-                // Connection count badge
+                // ── Connection count badge (top-right) ──
                 if (!dimmed && node.connections > 0) {
-                    const bx = node.x + r * 0.65, by = node.y - r * 0.65;
-                    ctx.beginPath(); ctx.arc(bx, by, 8, 0, Math.PI * 2);
-                    ctx.fillStyle = `rgba(${cr},${cg},${cb},0.2)`;
+                    const bx2 = x + cw - 16, by2 = y + 8;
+                    ctx.beginPath(); ctx.arc(bx2, by2, 9, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(${cr},${cg},${cb},0.15)`;
                     ctx.fill();
-                    ctx.strokeStyle = `rgba(${cr},${cg},${cb},0.5)`;
+                    ctx.strokeStyle = `rgba(${cr},${cg},${cb},0.4)`;
                     ctx.lineWidth = 1; ctx.stroke();
-                    ctx.font = 'bold 7px Inter,-apple-system,sans-serif';
+                    ctx.font = 'bold 8px Inter,-apple-system,sans-serif';
                     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
                     ctx.fillStyle = `rgba(${cr},${cg},${cb},0.9)`;
-                    ctx.fillText(node.connections, bx, by);
+                    ctx.fillText(node.connections, bx2, by2);
                 }
 
-                // Expansion indicator
+                // ── Expansion indicator ──
                 if (!dimmed && node._isExpanded && !isRoot) {
-                    const ix = node.x + r * 0.65, iy = node.y + r * 0.65;
+                    const ix = x + cw - 16, iy = y + ch - 10;
                     ctx.beginPath(); ctx.arc(ix, iy, 6, 0, Math.PI * 2);
                     ctx.fillStyle = 'rgba(74,222,128,0.85)'; ctx.fill();
                     ctx.font = 'bold 8px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
                     ctx.fillStyle = '#080c14'; ctx.fillText('✓', ix, iy);
                 }
                 if (!dimmed && !node._isExpanded && !isRoot && node.connections > 0 && isHov) {
-                    const ix = node.x + r * 0.65, iy = node.y + r * 0.65;
+                    const ix = x + cw - 16, iy = y + ch - 10;
                     ctx.beginPath(); ctx.arc(ix, iy, 7, 0, Math.PI * 2);
                     ctx.fillStyle = 'rgba(88,166,255,0.85)'; ctx.fill();
                     ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
                     ctx.fillStyle = '#fff'; ctx.fillText('+', ix, iy + 0.5);
                 }
 
-                // Expansion flash (ripple effect)
+                // ── Root node pulse ring ──
+                if (isRoot && !dimmed) {
+                    const pulse = Math.sin(this.time * 2.5) * 4;
+                    this._roundRect(ctx, x - 4 - pulse/2, y - 4 - pulse/2, cw + 8 + pulse, ch + 8 + pulse, cornerR + 3);
+                    ctx.strokeStyle = `rgba(${cr},${cg},${cb},0.12)`;
+                    ctx.lineWidth = 1; ctx.setLineDash([4, 8]); ctx.stroke(); ctx.setLineDash([]);
+                }
+
+                // ── Expansion flash ──
                 if (node._expandFlash && !dimmed) {
                     const elapsed = this.time - node._expandFlash;
                     if (elapsed < 1.5) {
-                        const flashR = r + elapsed * 30;
+                        const flashGrow = elapsed * 20;
                         const flashAlpha = Math.max(0, 0.35 - elapsed * 0.23);
-                        ctx.beginPath(); ctx.arc(node.x, node.y, flashR, 0, Math.PI * 2);
+                        this._roundRect(ctx, x - flashGrow/2, y - flashGrow/2, cw + flashGrow, ch + flashGrow, cornerR + 4);
                         ctx.strokeStyle = `rgba(${cr},${cg},${cb},${flashAlpha})`;
                         ctx.lineWidth = 2; ctx.stroke();
                     }

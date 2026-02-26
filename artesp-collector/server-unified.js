@@ -3438,7 +3438,10 @@ app.get('/api/grafo-data-completo', (req, res) => {
             esfera: ag.esfera,
             site: ag.site,
             lei_criacao: ag.lei_criacao || '',
-            vinculacao: ag.vinculacao || ''
+            vinculacao: ag.vinculacao || '',
+            situacao: 'Ativo',
+            cidade: 'Brasília',
+            uf: 'DF'
         };
 
         // Adiciona diretores como nós (dados públicos DOU/gov.br)
@@ -3451,16 +3454,19 @@ app.get('/api/grafo-data-completo', (req, res) => {
                     type: 'director',
                     role: dir.cargo,
                     mandato: dir.mandato,
-                    agency: sigla
+                    agency: sigla,
+                    situacao: 'Ativo',
+                    initials: dir.nome.split(' ').filter(w => w.length > 1).map(w => w[0]).join('').substring(0, 2).toUpperCase()
                 };
             }
 
-            // Edge: Diretor → Agência (presidente/DG tem strength 1.0)
+            // Edge: Diretor → Agência
             const ek = `${sigla}||${dirId}`;
+            const relLabel = dir.cargo.includes('Geral') || dir.cargo.includes('Presidente') ? 'Diretor-Geral' : 'Membro';
             edgesMap[ek] = {
                 source: sigla,
                 target: dirId,
-                label: dir.cargo,
+                label: relLabel,
                 type: 'membro',
                 strength: dir.cargo.includes('Geral') || dir.cargo.includes('Presidente') ? 1 : 0.7
             };
@@ -3503,7 +3509,17 @@ app.get('/api/grafo-data-completo', (req, res) => {
 
         if (d.interessado && d.interessado !== 'ARTESP' && d.interessado.length > 2) {
             const comp = d.interessado;
-            if (!nodesMap[comp]) nodesMap[comp] = { id: comp, label: comp, type: 'company', mentions: 0 };
+            if (!nodesMap[comp]) {
+                nodesMap[comp] = {
+                    id: comp, label: comp, type: 'company', mentions: 0,
+                    situacao: 'Ativo',
+                    setor: 'Infraestrutura',
+                    cnpj: '',
+                    cidade: 'São Paulo',
+                    uf: 'SP',
+                    initials: comp.split(' ').filter(w => w.length > 1).map(w => w[0]).join('').substring(0, 2).toUpperCase()
+                };
+            }
             nodesMap[comp].mentions = (nodesMap[comp].mentions || 0) + 1;
 
             allVoters.forEach(dir => {
