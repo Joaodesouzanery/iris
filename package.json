@@ -4,8 +4,9 @@
   "description": "IRIS Platform - Inteligencia Regulatoria para ARTESP",
   "main": "artesp-collector/server-unified.js",
   "scripts": {
+    "postinstall": "cd artesp-collector && npm install",
     "start": "node artesp-collector/server-unified.js",
-    "dev": "node artesp-collector/server-unified.js"
+    "dev": "node --watch artesp-collector/server-unified.js"
   },
   "keywords": ["iris", "artesp", "regulatorio", "jurimetria"],
   "author": "IRIS",
