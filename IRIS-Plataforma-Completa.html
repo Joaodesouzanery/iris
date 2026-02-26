@@ -65,7 +65,7 @@
     --radius-xl: 16px;
 
     /* Layout */
-    --sidebar-width: 260px;
+    --sidebar-width: 220px;
     --header-height: 64px;
 }
 
@@ -124,10 +124,10 @@ svg:not([width]):not([height]) {
 }
 
 .sidebar-header {
-    padding: 20px;
+    padding: 12px 14px;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
     border-bottom: 1px solid var(--border);
 }
 
@@ -166,16 +166,16 @@ svg:not([width]):not([height]) {
 
 .sidebar-brand-name {
     color: var(--primary);
-    font-size: 22px;
+    font-size: 16px;
     font-weight: 700;
-    letter-spacing: 3px;
+    letter-spacing: 2px;
 }
 
 .sidebar-brand-subtitle {
     color: var(--text-secondary);
-    font-size: 10px;
-    letter-spacing: 0.5px;
-    margin-top: 2px;
+    font-size: 9px;
+    letter-spacing: 0.3px;
+    margin-top: 1px;
 }
 
 .sidebar-toggle {
@@ -196,35 +196,35 @@ svg:not([width]):not([height]) {
 
 .sidebar-nav {
     flex: 1;
-    padding: 16px 12px;
+    padding: 8px 8px;
     overflow-y: auto;
 }
 
 .nav-section {
-    margin-bottom: 24px;
+    margin-bottom: 12px;
 }
 
 .nav-section-title {
-    font-size: 11px;
+    font-size: 9px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     color: rgba(255, 255, 255, 0.4);
-    padding: 0 12px;
-    margin-bottom: 8px;
+    padding: 0 8px;
+    margin-bottom: 4px;
 }
 
 .nav-item {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 10px 12px;
+    gap: 8px;
+    padding: 6px 8px;
     color: rgba(255, 255, 255, 0.7);
     text-decoration: none;
     border-radius: var(--radius);
     cursor: pointer;
     transition: all 0.2s ease;
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 500;
 }
 
@@ -239,8 +239,8 @@ svg:not([width]):not([height]) {
 }
 
 .nav-item svg {
-    width: 20px;
-    height: 20px;
+    width: 15px;
+    height: 15px;
     flex-shrink: 0;
     opacity: 0.8;
 }
@@ -272,29 +272,29 @@ svg:not([width]):not([height]) {
 }
 
 .nav-submenu .nav-item {
-    font-size: 13px;
-    padding: 8px 12px;
+    font-size: 11px;
+    padding: 5px 8px;
 }
 
 .sidebar-footer {
-    padding: 16px;
+    padding: 8px 10px;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .alert-badge {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
+    gap: 6px;
+    padding: 5px 8px;
     background: rgba(239, 68, 68, 0.2);
     border-radius: var(--radius);
     color: #fca5a5;
-    font-size: 13px;
+    font-size: 11px;
 }
 
 .alert-badge svg {
-    width: 16px;
-    height: 16px;
+    width: 13px;
+    height: 13px;
 }
 
 /* ============================================
@@ -3241,7 +3241,7 @@ tr:hover {
             <div class="sidebar-header">
                 <!-- Logo IRIS com linhas douradas -->
                 <div class="iris-logo">
-                    <svg width="60" height="32" viewBox="0 0 120 50" fill="none">
+                    <svg width="42" height="22" viewBox="0 0 120 50" fill="none">
                         <!-- I -->
                         <rect x="0" y="5" width="3" height="40" fill="#c9a227"/>
                         <rect x="6" y="5" width="3" height="40" fill="#c9a227"/>
@@ -3293,13 +3293,9 @@ tr:hover {
 
                 <div class="nav-section">
                     <div class="nav-section-title">Documentos</div>
-                    <a data-route="/upload" class="nav-item">
+                    <a data-route="/documentos" class="nav-item">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                        Upload de PDFs
-                    </a>
-                    <a data-route="/analise" class="nav-item">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
-                        Análise de PDFs
+                        Upload + Análise
                     </a>
                 </div>
 
@@ -4607,16 +4603,23 @@ tr:hover {
                 </div>
 
                 <!-- ============================================
-                     PAGE: Upload de PDFs
+                     PAGE: Upload + Análise de PDFs (Unificado)
                      ============================================ -->
-                <div id="page-upload" class="page-view">
+                <div id="page-documentos" class="page-view">
                     <div class="page-header">
                         <div class="page-title-section">
-                            <h1 class="page-title">Upload de PDFs</h1>
-                            <p class="page-subtitle">Faça upload de documentos da ARTESP para análise e extração de dados</p>
+                            <h1 class="page-title">Upload + Análise de PDFs</h1>
+                            <p class="page-subtitle">Envie documentos e extraia deliberações automaticamente com processamento em fila</p>
+                        </div>
+                        <div class="page-actions">
+                            <button class="btn btn-primary" onclick="App.PageDocumentos.analisarTodos()">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                                Analisar Todos Pendentes
+                            </button>
                         </div>
                     </div>
 
+                    <!-- Stats -->
                     <div class="stats-grid">
                         <div class="stat-card">
                             <div class="stat-card-header">
@@ -4625,7 +4628,7 @@ tr:hover {
                                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                                 </div>
                             </div>
-                            <div class="stat-card-value" id="upload-total">0</div>
+                            <div class="stat-card-value" id="doc-total">0</div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-card-header">
@@ -4634,7 +4637,7 @@ tr:hover {
                                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                 </div>
                             </div>
-                            <div class="stat-card-value warning" id="upload-pendentes">0</div>
+                            <div class="stat-card-value warning" id="doc-pendentes">0</div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-card-header">
@@ -4643,21 +4646,21 @@ tr:hover {
                                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                 </div>
                             </div>
-                            <div class="stat-card-value success" id="upload-analisados">0</div>
+                            <div class="stat-card-value success" id="doc-analisados">0</div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-card-header">
-                                <span class="stat-card-title">Com Erro</span>
+                                <span class="stat-card-title">Deliberações Extraídas</span>
                                 <div class="stat-card-icon">
-                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
                                 </div>
                             </div>
-                            <div class="stat-card-value danger" id="upload-erros">0</div>
+                            <div class="stat-card-value primary" id="doc-deliberacoes">0</div>
                         </div>
                     </div>
 
+                    <!-- Upload Zone + URL -->
                     <div class="grid-2" style="margin-bottom: 24px;">
-                        <!-- Upload Zone -->
                         <div class="card">
                             <div class="card-header">
                                 <h2 class="card-title">
@@ -4666,29 +4669,28 @@ tr:hover {
                                 </h2>
                             </div>
                             <div class="card-body">
-                                <div class="upload-zone" id="upload-dropzone">
+                                <div class="upload-zone" id="doc-dropzone">
                                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="48" height="48"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
                                     <h3>Arraste arquivos PDF aqui</h3>
-                                    <p>ou clique para selecionar</p>
-                                    <input type="file" id="upload-input" accept=".pdf" multiple style="display: none;">
-                                    <button class="btn btn-primary" onclick="document.getElementById('upload-input').click()">
+                                    <p>ou clique para selecionar (vários arquivos aceitos)</p>
+                                    <input type="file" id="doc-input" accept=".pdf" multiple style="display: none;">
+                                    <button class="btn btn-primary" onclick="document.getElementById('doc-input').click()">
                                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
                                         Selecionar PDFs
                                     </button>
                                 </div>
-                                <div id="upload-progress" style="display: none; margin-top: 16px;">
+                                <div id="doc-upload-progress" style="display: none; margin-top: 16px;">
                                     <div class="progress-info">
-                                        <span id="upload-progress-text">Enviando...</span>
-                                        <span id="upload-progress-percent">0%</span>
+                                        <span id="doc-upload-text">Enviando...</span>
+                                        <span id="doc-upload-percent">0%</span>
                                     </div>
                                     <div class="progress-bar">
-                                        <div class="progress-fill" id="upload-progress-bar" style="width: 0%;"></div>
+                                        <div class="progress-fill" id="doc-upload-bar" style="width: 0%;"></div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Upload por URL -->
                         <div class="card">
                             <div class="card-header">
                                 <h2 class="card-title">
@@ -4699,9 +4701,9 @@ tr:hover {
                             <div class="card-body">
                                 <div class="form-group">
                                     <label class="form-label">URL do PDF da ARTESP</label>
-                                    <input type="text" class="form-input" id="upload-url" placeholder="https://www.artesp.sp.gov.br/...pdf">
+                                    <input type="text" class="form-input" id="doc-url" placeholder="https://www.artesp.sp.gov.br/...pdf">
                                 </div>
-                                <button class="btn btn-primary" onclick="App.PageUpload.uploadFromUrl()" style="margin-top: 12px;">
+                                <button class="btn btn-primary" onclick="App.PageDocumentos.uploadFromUrl()" style="margin-top: 12px;">
                                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
                                     Baixar e Importar
                                 </button>
@@ -4709,15 +4711,37 @@ tr:hover {
                         </div>
                     </div>
 
-                    <!-- Lista de PDFs -->
+                    <!-- Status da Análise em Fila -->
+                    <div class="card" id="doc-status-card" style="margin-bottom: 24px; display: none;">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                                Análise em Andamento
+                            </h2>
+                        </div>
+                        <div class="card-body">
+                            <div id="doc-status-content">
+                                <div class="progress-info">
+                                    <span id="doc-status-text">Iniciando análise...</span>
+                                    <span id="doc-status-percent">0%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="doc-progress-bar" style="width: 0%;"></div>
+                                </div>
+                                <div id="doc-queue-info" style="margin-top: 12px; font-size: 12px; color: var(--text-secondary);"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Lista Unificada de PDFs -->
                     <div class="card">
                         <div class="card-header">
                             <h2 class="card-title">
                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                PDFs Carregados
+                                Documentos
                             </h2>
                             <div class="card-actions">
-                                <button class="btn btn-secondary btn-sm" onclick="App.PageUpload.load()">
+                                <button class="btn btn-secondary btn-sm" onclick="App.PageDocumentos.load()">
                                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                                     Atualizar
                                 </button>
@@ -4732,124 +4756,26 @@ tr:hover {
                                         <th>Tamanho</th>
                                         <th>Status</th>
                                         <th>Deliberações</th>
-                                        <th>Ações</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="upload-table-body">
-                                    <tr><td colspan="6"><div class="empty-state">Nenhum PDF carregado ainda</div></td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ============================================
-                     PAGE: Análise de PDFs
-                     ============================================ -->
-                <div id="page-analise" class="page-view">
-                    <div class="page-header">
-                        <div class="page-title-section">
-                            <h1 class="page-title">Análise de PDFs</h1>
-                            <p class="page-subtitle">Analise os PDFs carregados para extrair deliberações e dados estruturados</p>
-                        </div>
-                        <div class="page-actions">
-                            <button class="btn btn-primary" onclick="App.PageAnalise.analisarTodos()">
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                                Analisar Todos
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <div class="stat-card-header">
-                                <span class="stat-card-title">Total de PDFs</span>
-                            </div>
-                            <div class="stat-card-value" id="analise-total">0</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-card-header">
-                                <span class="stat-card-title">Aguardando Análise</span>
-                            </div>
-                            <div class="stat-card-value warning" id="analise-pendentes">0</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-card-header">
-                                <span class="stat-card-title">Analisados</span>
-                            </div>
-                            <div class="stat-card-value success" id="analise-concluídos">0</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-card-header">
-                                <span class="stat-card-title">Deliberações Extraídas</span>
-                            </div>
-                            <div class="stat-card-value primary" id="analise-deliberacoes">0</div>
-                        </div>
-                    </div>
-
-                    <!-- Status da Analise -->
-                    <div class="card" id="analise-status-card" style="margin-bottom: 24px; display: none;">
-                        <div class="card-header">
-                            <h2 class="card-title">
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                                Análise em Andamento
-                            </h2>
-                        </div>
-                        <div class="card-body">
-                            <div id="analise-status-content">
-                                <div class="progress-info">
-                                    <span id="analise-status-text">Iniciando analise...</span>
-                                    <span id="analise-status-percent">0%</span>
-                                </div>
-                                <div class="progress-bar">
-                                    <div class="progress-fill" id="analise-progress-bar" style="width: 0%;"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Lista de PDFs para Análise -->
-                    <div class="card">
-                        <div class="card-header">
-                            <h2 class="card-title">
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
-                                PDFs para Análise
-                            </h2>
-                            <div class="card-actions">
-                                <button class="btn btn-secondary btn-sm" onclick="App.PageAnalise.load()">
-                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                                    Atualizar
-                                </button>
-                            </div>
-                        </div>
-                        <div class="card-body" style="padding: 0;">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>#</th>
-                                        <th>Arquivo</th>
-                                        <th>Status</th>
-                                        <th>Deliberações</th>
                                         <th>Última Análise</th>
                                         <th>Ações</th>
                                     </tr>
                                 </thead>
-                                <tbody id="analise-table-body">
-                                    <tr><td colspan="6"><div class="empty-state">Nenhum PDF disponível para analise</div></td></tr>
+                                <tbody id="doc-table-body">
+                                    <tr><td colspan="7"><div class="empty-state">Nenhum PDF carregado ainda. Arraste arquivos acima ou importe por URL.</div></td></tr>
                                 </tbody>
                             </table>
                         </div>
                     </div>
 
-                    <!-- Resultados da Analise -->
-                    <div class="card" id="analise-resultados-card" style="margin-top: 24px; display: none;">
+                    <!-- Resultados da Análise -->
+                    <div class="card" id="doc-resultados-card" style="margin-top: 24px; display: none;">
                         <div class="card-header">
                             <h2 class="card-title">
                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                 Resultado da Análise
                             </h2>
                         </div>
-                        <div class="card-body" id="analise-resultados-content">
+                        <div class="card-body" id="doc-resultados-content">
                         </div>
                     </div>
                 </div>
@@ -5725,9 +5651,11 @@ tr:hover {
             const handler = this.routes[path] || this.routes['/metricas'];
 
             // Update active nav
+            const routeAliases = { '/upload': '/documentos', '/analise': '/documentos' };
+            const activePath = routeAliases[path] || path;
             document.querySelectorAll('.nav-item').forEach(item => {
                 item.classList.remove('active');
-                if (item.dataset.route === path) {
+                if (item.dataset.route === activePath || item.dataset.route === path) {
                     item.classList.add('active');
                 }
             });
@@ -5742,8 +5670,9 @@ tr:hover {
                 '/governanca': 'Governança Regulatória',
                 '/boletim': 'Boletim Mensal',
                 '/auditoria': 'Auditoria Forense',
-                '/upload': 'Upload de PDFs',
-                '/analise': 'Análise de PDFs',
+                '/documentos': 'Upload + Análise de PDFs',
+                '/upload': 'Upload + Análise de PDFs',
+                '/analise': 'Upload + Análise de PDFs',
                 '/agencias': 'Agências Reguladoras',
                 '/mapa': 'Mapa do Brasil',
                 '/conexoes': 'Rede de Conexões'
@@ -6832,24 +6761,28 @@ tr:hover {
     // ============================================
     // PAGE: Upload de PDFs
     // ============================================
-    const PageUpload = {
+    // ============================================
+    // PAGE: Upload + Análise de PDFs (Unificado)
+    // ============================================
+    const PageDocumentos = {
         pdfs: [],
+        analisando: false,
+        filaAtual: 0,
+        filaTotal: 0,
 
         async init() {
-            const page = document.getElementById('page-upload');
+            const page = document.getElementById('page-documentos');
             page.classList.add('active');
-
             this.setupDropzone();
             await this.load();
         },
 
         setupDropzone() {
-            const dropzone = document.getElementById('upload-dropzone');
-            const input = document.getElementById('upload-input');
+            const dropzone = document.getElementById('doc-dropzone');
+            const input = document.getElementById('doc-input');
 
             if (!dropzone || !input) return;
 
-            // Drag and drop handlers
             dropzone.addEventListener('dragover', (e) => {
                 e.preventDefault();
                 dropzone.classList.add('dragover');
@@ -6868,7 +6801,6 @@ tr:hover {
                 }
             });
 
-            // Click to select
             dropzone.addEventListener('click', (e) => {
                 if (e.target.tagName !== 'BUTTON') {
                     input.click();
@@ -6884,8 +6816,12 @@ tr:hover {
         },
 
         async load() {
-            const response = await API.get('/api/pdfs');
-            this.pdfs = response?.pdfs || [];
+            try {
+                const response = await API.get('/api/pdfs');
+                this.pdfs = response?.pdfs || [];
+            } catch (e) {
+                this.pdfs = [];
+            }
             this.updateStats();
             this.render();
         },
@@ -6894,19 +6830,21 @@ tr:hover {
             const total = this.pdfs.length;
             const pendentes = this.pdfs.filter(p => p.status === 'pendente').length;
             const analisados = this.pdfs.filter(p => p.status === 'analisado').length;
-            const erros = this.pdfs.filter(p => p.status === 'erro').length;
+            const deliberacoes = this.pdfs.reduce((sum, p) => sum + (p.deliberacoes_count || 0), 0);
 
-            document.getElementById('upload-total').textContent = total;
-            document.getElementById('upload-pendentes').textContent = pendentes;
-            document.getElementById('upload-analisados').textContent = analisados;
-            document.getElementById('upload-erros').textContent = erros;
+            const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+            setEl('doc-total', total);
+            setEl('doc-pendentes', pendentes);
+            setEl('doc-analisados', analisados);
+            setEl('doc-deliberacoes', deliberacoes);
         },
 
         render() {
-            const tbody = document.getElementById('upload-table-body');
+            const tbody = document.getElementById('doc-table-body');
+            if (!tbody) return;
 
             if (this.pdfs.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state">Nenhum PDF carregado ainda</div></td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state">Nenhum PDF carregado ainda. Arraste arquivos acima ou importe por URL.</div></td></tr>';
                 return;
             }
 
@@ -6925,10 +6863,12 @@ tr:hover {
                     <td>${tamanho}</td>
                     <td><span class="badge ${statusClass}">${statusLabel}</span></td>
                     <td>${pdf.deliberacoes_count || 0}</td>
+                    <td>${pdf.ultima_analise || '-'}</td>
                     <td>
                         <div class="action-buttons">
-                            ${pdf.status === 'pendente' ? `<button class="btn btn-primary btn-sm" onclick="App.PageUpload.analisar(${index})">Analisar</button>` : ''}
-                            <button class="btn btn-danger btn-sm" onclick="App.PageUpload.excluir(${index})">Excluir</button>
+                            ${pdf.status === 'pendente' ? `<button class="btn btn-primary btn-sm" onclick="App.PageDocumentos.analisar(${index})">Analisar</button>` : ''}
+                            ${pdf.status === 'analisado' ? `<button class="btn btn-secondary btn-sm" onclick="App.PageDocumentos.verResultado(${index})">Ver Resultado</button>` : ''}
+                            ${pdf.status !== 'analisando' ? `<button class="btn btn-danger btn-sm" onclick="App.PageDocumentos.excluir(${index})">Excluir</button>` : '<span class="badge badge-warning">Em andamento</span>'}
                         </div>
                     </td>
                 </tr>`;
@@ -6936,14 +6876,13 @@ tr:hover {
         },
 
         async uploadFiles(files) {
-            const progressDiv = document.getElementById('upload-progress');
-            const progressBar = document.getElementById('upload-progress-bar');
-            const progressText = document.getElementById('upload-progress-text');
-            const progressPercent = document.getElementById('upload-progress-percent');
+            const progressDiv = document.getElementById('doc-upload-progress');
+            const progressBar = document.getElementById('doc-upload-bar');
+            const progressText = document.getElementById('doc-upload-text');
+            const progressPercent = document.getElementById('doc-upload-percent');
 
             progressDiv.style.display = 'block';
 
-            // Helper function to convert file to base64
             const fileToBase64 = (file) => {
                 return new Promise((resolve, reject) => {
                     const reader = new FileReader();
@@ -6953,50 +6892,52 @@ tr:hover {
                 });
             };
 
+            let successCount = 0;
+            let errorCount = 0;
+
             for (let i = 0; i < files.length; i++) {
                 const file = files[i];
+                const pct = Math.round(((i) / files.length) * 100);
 
                 progressText.textContent = `Enviando ${file.name}... (${i + 1}/${files.length})`;
-                progressPercent.textContent = Math.round((i / files.length) * 100) + '%';
-                progressBar.style.width = Math.round((i / files.length) * 100) + '%';
+                progressPercent.textContent = pct + '%';
+                progressBar.style.width = pct + '%';
 
                 try {
-                    // Convert file to base64
                     const base64 = await fileToBase64(file);
 
                     const response = await fetch('/api/upload-pdf', {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            arquivo: base64,
-                            nomeArquivo: file.name
-                        })
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ arquivo: base64, nomeArquivo: file.name })
                     });
                     const result = await response.json();
-                    if (!result.sucesso) {
+                    if (result.sucesso) {
+                        successCount++;
+                    } else {
+                        errorCount++;
                         console.error('Erro no upload:', result.erro);
                     }
                 } catch (error) {
+                    errorCount++;
                     console.error('Erro no upload:', error);
                 }
             }
 
-            progressText.textContent = 'Upload concluído!';
+            progressText.textContent = `Upload concluído! ${successCount} enviado(s)${errorCount > 0 ? `, ${errorCount} erro(s)` : ''}`;
             progressPercent.textContent = '100%';
             progressBar.style.width = '100%';
 
             setTimeout(() => {
                 progressDiv.style.display = 'none';
                 progressBar.style.width = '0%';
-            }, 2000);
+            }, 3000);
 
             await this.load();
         },
 
         async uploadFromUrl() {
-            const urlInput = document.getElementById('upload-url');
+            const urlInput = document.getElementById('doc-url');
             const url = urlInput?.value?.trim();
 
             if (!url) {
@@ -7019,118 +6960,30 @@ tr:hover {
         },
 
         async analisar(index) {
-            try {
-                const response = await API.post(`/api/analisar-pdf/${index}`);
-                if (response?.sucesso) {
-                    await this.load();
-                } else {
-                    alert('Erro: ' + (response?.erro || 'Erro na analise'));
-                }
-            } catch (error) {
-                alert('Erro ao analisar: ' + error.message);
-            }
-        },
-
-        async excluir(index) {
-            if (!confirm('Excluir este PDF?')) return;
-
-            try {
-                await API.delete(`/api/pdf/${index}`);
-                await this.load();
-            } catch (error) {
-                alert('Erro ao excluir: ' + error.message);
-            }
-        }
-    };
-
-    // ============================================
-    // PAGE: Análise de PDFs
-    // ============================================
-    const PageAnalise = {
-        pdfs: [],
-        analisando: false,
-
-        async init() {
-            const page = document.getElementById('page-analise');
-            page.classList.add('active');
-            await this.load();
-        },
-
-        async load() {
-            const response = await API.get('/api/pdfs');
-            this.pdfs = response?.pdfs || [];
-            this.updateStats();
-            this.render();
-        },
-
-        updateStats() {
-            const total = this.pdfs.length;
-            const pendentes = this.pdfs.filter(p => p.status === 'pendente').length;
-            const concluidos = this.pdfs.filter(p => p.status === 'analisado').length;
-            const deliberacoes = this.pdfs.reduce((sum, p) => sum + (p.deliberacoes_count || 0), 0);
-
-            document.getElementById('analise-total').textContent = total;
-            document.getElementById('analise-pendentes').textContent = pendentes;
-            document.getElementById('analise-concluídos').textContent = concluídos;
-            document.getElementById('analise-deliberacoes').textContent = deliberacoes;
-        },
-
-        render() {
-            const tbody = document.getElementById('analise-table-body');
-
-            if (this.pdfs.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state">Nenhum PDF disponível. Faça upload na página de Upload.</div></td></tr>';
-                return;
-            }
-
-            tbody.innerHTML = this.pdfs.map((pdf, index) => {
-                const statusClass = pdf.status === 'analisado' ? 'badge-success' :
-                                   pdf.status === 'erro' ? 'badge-danger' :
-                                   pdf.status === 'analisando' ? 'badge-warning' : 'badge-secondary';
-                const statusLabel = pdf.status === 'analisado' ? 'Analisado' :
-                                   pdf.status === 'erro' ? 'Erro' :
-                                   pdf.status === 'analisando' ? 'Analisando...' : 'Pendente';
-
-                return `<tr>
-                    <td>${index + 1}</td>
-                    <td><span class="file-name">${pdf.nome || pdf.filename || 'Arquivo ' + (index + 1)}</span></td>
-                    <td><span class="badge ${statusClass}">${statusLabel}</span></td>
-                    <td>${pdf.deliberacoes_count || 0}</td>
-                    <td>${pdf.ultima_analise || '-'}</td>
-                    <td>
-                        <div class="action-buttons">
-                            ${pdf.status !== 'analisando' ? `<button class="btn btn-primary btn-sm" onclick="App.PageAnalise.analisar(${index})">Analisar</button>` : '<span class="badge badge-warning">Em andamento</span>'}
-                            ${pdf.status === 'analisado' ? `<button class="btn btn-secondary btn-sm" onclick="App.PageAnalise.verResultado(${index})">Ver Resultado</button>` : ''}
-                        </div>
-                    </td>
-                </tr>`;
-            }).join('');
-        },
-
-        async analisar(index) {
-            const statusCard = document.getElementById('analise-status-card');
-            const statusText = document.getElementById('analise-status-text');
-            const statusPercent = document.getElementById('analise-status-percent');
-            const progressBar = document.getElementById('analise-progress-bar');
+            const statusCard = document.getElementById('doc-status-card');
+            const statusText = document.getElementById('doc-status-text');
+            const statusPercent = document.getElementById('doc-status-percent');
+            const progressBar = document.getElementById('doc-progress-bar');
+            const queueInfo = document.getElementById('doc-queue-info');
 
             statusCard.style.display = 'block';
             statusText.textContent = 'Analisando PDF ' + (index + 1) + '...';
             statusPercent.textContent = '0%';
             progressBar.style.width = '0%';
+            if (queueInfo) queueInfo.textContent = '';
 
             try {
-                // Simular progresso
                 let progress = 0;
                 const progressInterval = setInterval(() => {
                     if (progress < 90) {
                         progress += Math.random() * 10;
-                        statusPercent.textContent = Math.min(90, Math.round(progress)) + '%';
-                        progressBar.style.width = Math.min(90, Math.round(progress)) + '%';
+                        const val = Math.min(90, Math.round(progress));
+                        statusPercent.textContent = val + '%';
+                        progressBar.style.width = val + '%';
                     }
                 }, 500);
 
                 const response = await API.post(`/api/analisar-pdf/${index}`);
-
                 clearInterval(progressInterval);
 
                 if (response?.sucesso) {
@@ -7142,10 +6995,7 @@ tr:hover {
                         this.mostrarResultado(response);
                     }
 
-                    setTimeout(() => {
-                        statusCard.style.display = 'none';
-                    }, 2000);
-
+                    setTimeout(() => { statusCard.style.display = 'none'; }, 2000);
                     await this.load();
                 } else {
                     statusText.textContent = 'Erro: ' + (response?.erro || 'Erro desconhecido');
@@ -7164,43 +7014,61 @@ tr:hover {
                 return;
             }
 
-            const statusCard = document.getElementById('analise-status-card');
-            const statusText = document.getElementById('analise-status-text');
-            const statusPercent = document.getElementById('analise-status-percent');
-            const progressBar = document.getElementById('analise-progress-bar');
+            const statusCard = document.getElementById('doc-status-card');
+            const statusText = document.getElementById('doc-status-text');
+            const statusPercent = document.getElementById('doc-status-percent');
+            const progressBar = document.getElementById('doc-progress-bar');
+            const queueInfo = document.getElementById('doc-queue-info');
 
             statusCard.style.display = 'block';
             this.analisando = true;
+            this.filaTotal = pendentes.length;
+            this.filaAtual = 0;
 
-            try {
-                const response = await API.post('/api/analisar-todos');
+            // Processamento em fila sequencial com progresso individual
+            let totalDelib = 0;
+            let erros = 0;
 
-                if (response?.sucesso) {
-                    statusText.textContent = `Análise concluída! ${response.total_deliberacoes || 0} deliberações extraídas.`;
-                    statusPercent.textContent = '100%';
-                    progressBar.style.width = '100%';
+            for (let i = 0; i < pendentes.length; i++) {
+                this.filaAtual = i + 1;
+                const pdfIndex = this.pdfs.indexOf(pendentes[i]);
+                const pctGlobal = Math.round((i / pendentes.length) * 100);
 
-                    setTimeout(() => {
-                        statusCard.style.display = 'none';
-                    }, 3000);
+                statusText.textContent = `Analisando "${pendentes[i].nome || pendentes[i].filename || 'PDF ' + (pdfIndex + 1)}"...`;
+                statusPercent.textContent = pctGlobal + '%';
+                progressBar.style.width = pctGlobal + '%';
+                if (queueInfo) queueInfo.textContent = `Fila: ${i + 1} de ${pendentes.length} PDFs | ${erros > 0 ? erros + ' erro(s) | ' : ''}${totalDelib} deliberações extraídas`;
 
-                    await this.load();
-                } else {
-                    statusText.textContent = 'Erro: ' + (response?.erro || 'Erro desconhecido');
+                try {
+                    const response = await API.post(`/api/analisar-pdf/${pdfIndex}`);
+                    if (response?.sucesso) {
+                        totalDelib += (response.deliberacoes?.length || response.total_deliberacoes || 0);
+                    } else {
+                        erros++;
+                    }
+                } catch (error) {
+                    erros++;
+                    console.error('Erro ao analisar PDF:', error);
                 }
-            } catch (error) {
-                statusText.textContent = 'Erro: ' + error.message;
             }
 
+            statusText.textContent = `Análise concluída! ${totalDelib} deliberações extraídas.${erros > 0 ? ` ${erros} erro(s).` : ''}`;
+            statusPercent.textContent = '100%';
+            progressBar.style.width = '100%';
+            if (queueInfo) queueInfo.textContent = `${pendentes.length} PDFs processados`;
+
+            setTimeout(() => { statusCard.style.display = 'none'; }, 4000);
+
             this.analisando = false;
+            await this.load();
         },
 
         mostrarResultado(response) {
-            const card = document.getElementById('analise-resultados-card');
-            const content = document.getElementById('analise-resultados-content');
+            const card = document.getElementById('doc-resultados-card');
+            const content = document.getElementById('doc-resultados-content');
+            if (!card || !content) return;
 
             card.style.display = 'block';
-
             const deliberacoes = response.deliberacoes || [];
 
             content.innerHTML = `
@@ -7222,7 +7090,7 @@ tr:hover {
                             <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">${d.microtema || '-'}</div>
                         </div>
                     `).join('')}
-                    ${deliberacoes.length > 10 ? `<div style="text-align: center; padding: 12px; color: var(--text-secondary);">... e mais ${deliberacoes.length - 10} deliberacoes</div>` : ''}
+                    ${deliberacoes.length > 10 ? `<div style="text-align: center; padding: 12px; color: var(--text-secondary);">... e mais ${deliberacoes.length - 10} deliberações</div>` : ''}
                 </div>` : ''}
             `;
         },
@@ -7232,8 +7100,22 @@ tr:hover {
             if (pdf && pdf.deliberacoes) {
                 this.mostrarResultado({ deliberacoes: pdf.deliberacoes });
             }
+        },
+
+        async excluir(index) {
+            if (!confirm('Excluir este PDF?')) return;
+            try {
+                await API.delete(`/api/pdf/${index}`);
+                await this.load();
+            } catch (error) {
+                alert('Erro ao excluir: ' + error.message);
+            }
         }
     };
+
+    // Backward compatibility aliases
+    const PageUpload = PageDocumentos;
+    const PageAnalise = PageDocumentos;
 
     // ============================================
     // PAGE: Agencias (Visualizacao Isometrica 3D)
@@ -7477,36 +7359,39 @@ tr:hover {
         time: 0,
 
         // Intelligence network data
+        // LGPD: Fotos de diretores de agências reguladoras são dados públicos (Art. 7 II, Art. 23 LGPD)
+        // pois são agentes públicos com informações publicadas em Diários Oficiais e portais de transparência.
+        // Logos de agências e empresas são marcas institucionais públicas.
         graphData: {
             directors: [
-                { id: 'd1', label: 'André Isper', full: 'André Isper Rodrigues Barnabé', role: 'Diretor-Presidente', votes: 0, initials: 'AI' },
-                { id: 'd2', label: 'Diego Zanatto', full: 'Diego Albert Zanatto', role: 'Diretor de Fiscalização', votes: 0, initials: 'DZ' },
-                { id: 'd3', label: 'Fernanda Rudnik', full: 'Fernanda Esbizaro Rodrigues Rudnik', role: 'Diretora de Planejamento', votes: 0, initials: 'FR' },
-                { id: 'd4', label: 'Raquel Carneiro', full: 'Raquel França Carneiro', role: 'Diretora de Investimentos', votes: 0, initials: 'RC' }
+                { id: 'd1', label: 'André Isper', full: 'André Isper Rodrigues Barnabé', role: 'Diretor-Presidente', votes: 0, initials: 'AI', photoColor: '#3b82f6' },
+                { id: 'd2', label: 'Diego Zanatto', full: 'Diego Albert Zanatto', role: 'Diretor de Fiscalização', votes: 0, initials: 'DZ', photoColor: '#2563eb' },
+                { id: 'd3', label: 'Fernanda Rudnik', full: 'Fernanda Esbizaro Rodrigues Rudnik', role: 'Diretora de Planejamento', votes: 0, initials: 'FR', photoColor: '#1d4ed8' },
+                { id: 'd4', label: 'Raquel Carneiro', full: 'Raquel França Carneiro', role: 'Diretora de Investimentos', votes: 0, initials: 'RC', photoColor: '#1e40af' }
             ],
             companies: [
-                { id: 'c1', label: 'Ecovias', full: 'Ecovias dos Imigrantes S.A.', sector: 'Rodovias', contracts: 12 },
-                { id: 'c2', label: 'CCR AutoBAn', full: 'CCR AutoBAn S.A.', sector: 'Rodovias', contracts: 8 },
-                { id: 'c3', label: 'EcoRodovias', full: 'EcoRodovias Infraestrutura', sector: 'Rodovias', contracts: 6 },
-                { id: 'c4', label: 'Arteris', full: 'Arteris S.A.', sector: 'Rodovias', contracts: 9 },
-                { id: 'c5', label: 'ViaQuatro', full: 'ViaQuatro - Metrô Linha 4', sector: 'Metroviário', contracts: 5 },
-                { id: 'c6', label: 'ViaMobilidade', full: 'ViaMobilidade Linhas 8 e 9', sector: 'Ferroviário', contracts: 7 },
-                { id: 'c7', label: 'Tamoios', full: 'Concessionária Tamoios', sector: 'Rodovias', contracts: 4 },
-                { id: 'c8', label: 'CART', full: 'Conc. Auto Raposo Tavares', sector: 'Rodovias', contracts: 5 }
+                { id: 'c1', label: 'Ecovias', full: 'Ecovias dos Imigrantes S.A.', sector: 'Rodovias', contracts: 12, initials: 'EC' },
+                { id: 'c2', label: 'CCR AutoBAn', full: 'CCR AutoBAn S.A.', sector: 'Rodovias', contracts: 8, initials: 'CCR' },
+                { id: 'c3', label: 'EcoRodovias', full: 'EcoRodovias Infraestrutura', sector: 'Rodovias', contracts: 6, initials: 'ER' },
+                { id: 'c4', label: 'Arteris', full: 'Arteris S.A.', sector: 'Rodovias', contracts: 9, initials: 'AR' },
+                { id: 'c5', label: 'ViaQuatro', full: 'ViaQuatro - Metrô Linha 4', sector: 'Metroviário', contracts: 5, initials: 'V4' },
+                { id: 'c6', label: 'ViaMobilidade', full: 'ViaMobilidade Linhas 8 e 9', sector: 'Ferroviário', contracts: 7, initials: 'VM' },
+                { id: 'c7', label: 'Tamoios', full: 'Concessionária Tamoios', sector: 'Rodovias', contracts: 4, initials: 'TM' },
+                { id: 'c8', label: 'CART', full: 'Conc. Auto Raposo Tavares', sector: 'Rodovias', contracts: 5, initials: 'CT' }
             ],
             themes: [
-                { id: 't1', label: 'Revisão Tarifária', count: 45, category: 'financeiro' },
-                { id: 't2', label: 'Obras/Investimentos', count: 67, category: 'infraestrutura' },
-                { id: 't3', label: 'Reequilíbrio Econômico', count: 34, category: 'financeiro' },
-                { id: 't4', label: 'Fiscalização', count: 56, category: 'regulação' },
-                { id: 't5', label: 'Multas e Sanções', count: 28, category: 'regulação' },
-                { id: 't6', label: 'Contrato/Aditivo', count: 23, category: 'contratual' },
-                { id: 't7', label: 'Qualidade de Serviço', count: 19, category: 'operacional' },
-                { id: 't8', label: 'Segurança Viária', count: 15, category: 'operacional' }
+                { id: 't1', label: 'Revisão Tarifária', count: 45, category: 'financeiro', icon: '$' },
+                { id: 't2', label: 'Obras/Investimentos', count: 67, category: 'infraestrutura', icon: '!' },
+                { id: 't3', label: 'Reequilíbrio Econômico', count: 34, category: 'financeiro', icon: '%' },
+                { id: 't4', label: 'Fiscalização', count: 56, category: 'regulação', icon: '?' },
+                { id: 't5', label: 'Multas e Sanções', count: 28, category: 'regulação', icon: '#' },
+                { id: 't6', label: 'Contrato/Aditivo', count: 23, category: 'contratual', icon: '&' },
+                { id: 't7', label: 'Qualidade de Serviço', count: 19, category: 'operacional', icon: '*' },
+                { id: 't8', label: 'Segurança Viária', count: 15, category: 'operacional', icon: '+' }
             ],
             agencies: [
-                { id: 'a1', label: 'ARTESP', full: 'Agência de Transporte do Estado de SP', deliberations: 1247 },
-                { id: 'a2', label: 'ANTT', full: 'Agência Nacional de Transportes Terrestres', deliberations: 3456 }
+                { id: 'a1', label: 'ARTESP', full: 'Agência de Transporte do Estado de SP', deliberations: 1247, initials: 'ART' },
+                { id: 'a2', label: 'ANTT', full: 'Agência Nacional de Transportes Terrestres', deliberations: 3456, initials: 'ANTT' }
             ],
             connections: [
                 // Directors ↔ Companies (involvement in deliberations)
@@ -8015,24 +7900,50 @@ tr:hover {
                 ctx.lineWidth = isSelected ? 2.5 : isHovered ? 2 : 1;
                 ctx.stroke();
 
-                // Label
+                // Inner label/icon (initials for directors, logos for agencies/companies, icons for themes)
                 if (!dimmed || isHighlighted) {
-                    ctx.font = `${node.type === 'agency' ? '600 11px' : node.type === 'director' ? '600 10px' : '500 9px'} -apple-system, BlinkMacSystemFont, sans-serif`;
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
 
-                    // Text with shadow
-                    ctx.fillStyle = 'rgba(0,0,0,0.6)';
-                    ctx.fillText(node.type === 'director' ? node.initials : node.label, node.x + 0.5, node.y + 0.5);
-                    ctx.fillStyle = this.adjustAlpha('#e2e8f0', alpha);
-                    ctx.fillText(node.type === 'director' ? node.initials : node.label, node.x, node.y);
-
-                    // External label for directors
-                    if (node.type === 'director' || node.type === 'agency') {
-                        ctx.font = '500 9px -apple-system, BlinkMacSystemFont, sans-serif';
-                        ctx.fillStyle = this.adjustAlpha(node.color, alpha * 0.8);
-                        ctx.fillText(node.label, node.x, node.y + r + 14);
+                    if (node.type === 'director') {
+                        // Director: photo-style circle with initials
+                        const innerR = r * 0.65;
+                        const photoGrad = ctx.createRadialGradient(node.x - innerR * 0.3, node.y - innerR * 0.3, 0, node.x, node.y, innerR);
+                        photoGrad.addColorStop(0, this.adjustAlpha(node.photoColor || '#3b82f6', alpha * 0.7));
+                        photoGrad.addColorStop(1, this.adjustAlpha(node.photoColor || '#1e40af', alpha * 0.5));
+                        ctx.beginPath();
+                        ctx.arc(node.x, node.y, innerR, 0, Math.PI * 2);
+                        ctx.fillStyle = photoGrad;
+                        ctx.fill();
+                        // Initials inside photo circle
+                        ctx.font = `700 ${Math.round(r * 0.45)}px -apple-system, BlinkMacSystemFont, sans-serif`;
+                        ctx.fillStyle = this.adjustAlpha('#ffffff', alpha);
+                        ctx.fillText(node.initials, node.x, node.y + 1);
+                    } else if (node.type === 'agency') {
+                        // Agency: bold institutional logo text
+                        ctx.font = `800 ${Math.round(r * 0.38)}px -apple-system, BlinkMacSystemFont, sans-serif`;
+                        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+                        ctx.fillText(node.initials || node.label, node.x + 0.5, node.y + 0.5);
+                        ctx.fillStyle = this.adjustAlpha('#ffffff', alpha);
+                        ctx.fillText(node.initials || node.label, node.x, node.y);
+                    } else if (node.type === 'company') {
+                        // Company: initials inside hexagon
+                        ctx.font = `700 ${Math.round(r * 0.45)}px -apple-system, BlinkMacSystemFont, sans-serif`;
+                        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+                        ctx.fillText(node.initials || node.label.substring(0, 2), node.x + 0.5, node.y + 0.5);
+                        ctx.fillStyle = this.adjustAlpha('#ffffff', alpha * 0.95);
+                        ctx.fillText(node.initials || node.label.substring(0, 2), node.x, node.y);
+                    } else if (node.type === 'theme') {
+                        // Theme: category icon inside diamond
+                        ctx.font = `600 ${Math.round(r * 0.55)}px -apple-system, BlinkMacSystemFont, sans-serif`;
+                        ctx.fillStyle = this.adjustAlpha('#ffffff', alpha * 0.9);
+                        ctx.fillText(node.icon || '#', node.x, node.y + 1);
                     }
+
+                    // External label below node (for all types)
+                    ctx.font = `500 ${node.type === 'theme' ? 8 : 9}px -apple-system, BlinkMacSystemFont, sans-serif`;
+                    ctx.fillStyle = this.adjustAlpha(node.color, alpha * 0.85);
+                    ctx.fillText(node.label, node.x, node.y + r + 12);
                 }
             });
 
@@ -8075,6 +7986,7 @@ tr:hover {
         PageMetricas,
         PageBoletim,
         PageAuditoria,
+        PageDocumentos,
         PageUpload,
         PageAnalise,
         PageAgencias,
@@ -8112,13 +8024,17 @@ tr:hover {
                 PageMonitor.destroy();
                 PageAuditoria.init();
             });
+            Router.register('/documentos', () => {
+                PageMonitor.destroy();
+                PageDocumentos.init();
+            });
             Router.register('/upload', () => {
                 PageMonitor.destroy();
-                PageUpload.init();
+                PageDocumentos.init();
             });
             Router.register('/analise', () => {
                 PageMonitor.destroy();
-                PageAnalise.init();
+                PageDocumentos.init();
             });
             Router.register('/agencias', () => {
                 PageMonitor.destroy();
