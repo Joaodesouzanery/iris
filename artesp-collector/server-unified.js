@@ -2404,11 +2404,11 @@ app.post('/api/metricas/recalcular', authenticate, async (req, res) => {
 
 
 // ============================================================================
-// INTERFACE WEB UNIFICADA - Redireciona para SPA
+// INTERFACE WEB UNIFICADA - Serve SPA
 // ============================================================================
 
 app.get('/', (req, res) => {
-    res.redirect('/metricas');
+    res.sendFile(path.join(__dirname, 'public', 'app.html'));
 });
 
 

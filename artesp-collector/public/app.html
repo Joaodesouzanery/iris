@@ -6300,19 +6300,23 @@
     const LoginManager = {
         token: null,
 
-        init() {
-            // Check if user has a valid session
+        async init() {
+            // Check if user has a valid session and auto-enter platform
             const savedToken = localStorage.getItem('iris_token');
             if (savedToken) {
                 this.token = savedToken;
-                this.checkSession();
+                const valid = await this.checkSession();
+                if (valid) {
+                    this.enterPlatform();
+                }
             }
         },
 
         async checkSession() {
             try {
                 const resp = await fetch('/api/auth/status', {
-                    headers: { 'Authorization': 'Bearer ' + this.token }
+                    headers: { 'Authorization': 'Bearer ' + this.token },
+                    credentials: 'include'
                 });
                 if (resp.ok) {
                     return true;
@@ -6320,6 +6324,7 @@
                 this.clearSession();
                 return false;
             } catch {
+                this.clearSession();
                 return false;
             }
         },
@@ -6357,6 +6362,7 @@
                 const resp = await fetch('/api/auth/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
                     body: JSON.stringify({ username, password })
                 });
 
@@ -6406,7 +6412,8 @@
         logout() {
             fetch('/api/auth/logout', {
                 method: 'POST',
-                headers: this.token ? { 'Authorization': 'Bearer ' + this.token } : {}
+                headers: this.token ? { 'Authorization': 'Bearer ' + this.token } : {},
+                credentials: 'include'
             }).catch(() => {});
             this.clearSession();
             document.getElementById('app-platform').style.display = 'none';
