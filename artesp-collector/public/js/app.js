@@ -212,7 +212,7 @@
         data: [],
         filtered: [],
 
-        // Dados de exemplo para demonstracao
+        // Dados de exemplo para demonstração
         sampleData: [
             {
                 id: 1,
@@ -1649,7 +1649,7 @@
             const pageInfo = document.getElementById('painel-page-info');
             const prevBtn = document.getElementById('painel-prev-btn');
             const nextBtn = document.getElementById('painel-next-btn');
-            if (pageInfo) pageInfo.textContent = `Pagina ${this.currentPage} de ${totalPages}`;
+            if (pageInfo) pageInfo.textContent = `Página ${this.currentPage} de ${totalPages}`;
             if (prevBtn) prevBtn.disabled = this.currentPage <= 1;
             if (nextBtn) nextBtn.disabled = this.currentPage >= totalPages;
         },
@@ -5923,7 +5923,7 @@
             badge.className = 'hub-data-source-badge';
             badge.innerHTML = isRealData
                 ? '<span class="badge-live">AO VIVO</span> Dados de fontes oficiais (gov.br)'
-                : '<span class="badge-demo">DEMO</span> Dados de demonstracao';
+                : '<span class="badge-demo">DEMO</span> Dados de demonstração';
             container.insertBefore(badge, container.firstChild);
         },
 
@@ -6450,32 +6450,32 @@
 
         // Dados dos estados com coordenadas
         estados: {
-            'SP': { nome: 'Sao Paulo', lat: -23.5505, lng: -46.6333, decisoes: 4521, taxa: 78.5, regiao: 'Sudeste', agencias: ['ARTESP', 'ARSESP'] },
+            'SP': { nome: 'São Paulo', lat: -23.5505, lng: -46.6333, decisoes: 4521, taxa: 78.5, regiao: 'Sudeste', agencias: ['ARTESP', 'ARSESP'] },
             'RJ': { nome: 'Rio de Janeiro', lat: -22.9068, lng: -43.1729, decisoes: 2134, taxa: 72.3, regiao: 'Sudeste', agencias: ['AGENERSA'] },
             'MG': { nome: 'Minas Gerais', lat: -19.9167, lng: -43.9345, decisoes: 1876, taxa: 81.2, regiao: 'Sudeste', agencias: ['ARSAE-MG'] },
             'RS': { nome: 'Rio Grande do Sul', lat: -30.0346, lng: -51.2177, decisoes: 1245, taxa: 75.8, regiao: 'Sul', agencias: ['AGERGS'] },
-            'PR': { nome: 'Parana', lat: -25.4284, lng: -49.2733, decisoes: 1123, taxa: 79.4, regiao: 'Sul', agencias: ['AGEPAR'] },
+            'PR': { nome: 'Paraná', lat: -25.4284, lng: -49.2733, decisoes: 1123, taxa: 79.4, regiao: 'Sul', agencias: ['AGEPAR'] },
             'BA': { nome: 'Bahia', lat: -12.9714, lng: -38.5014, decisoes: 987, taxa: 68.9, regiao: 'Nordeste', agencias: ['AGERBA'] },
             'SC': { nome: 'Santa Catarina', lat: -27.5954, lng: -48.5480, decisoes: 876, taxa: 82.1, regiao: 'Sul', agencias: ['ARESC'] },
-            'GO': { nome: 'Goias', lat: -16.6869, lng: -49.2648, decisoes: 654, taxa: 71.5, regiao: 'Centro-Oeste', agencias: ['AGR'] },
+            'GO': { nome: 'Goiás', lat: -16.6869, lng: -49.2648, decisoes: 654, taxa: 71.5, regiao: 'Centro-Oeste', agencias: ['AGR'] },
             'PE': { nome: 'Pernambuco', lat: -8.0476, lng: -34.8770, decisoes: 543, taxa: 65.7, regiao: 'Nordeste', agencias: ['ARPE'] },
-            'CE': { nome: 'Ceara', lat: -3.7172, lng: -38.5433, decisoes: 432, taxa: 69.2, regiao: 'Nordeste', agencias: ['ARCE'] },
+            'CE': { nome: 'Ceará', lat: -3.7172, lng: -38.5433, decisoes: 432, taxa: 69.2, regiao: 'Nordeste', agencias: ['ARCE'] },
             'DF': { nome: 'Distrito Federal', lat: -15.7942, lng: -47.8822, decisoes: 398, taxa: 84.3, regiao: 'Centro-Oeste', agencias: ['ADASA'] },
-            'PA': { nome: 'Para', lat: -1.4558, lng: -48.4902, decisoes: 321, taxa: 62.8, regiao: 'Norte', agencias: [] },
+            'PA': { nome: 'Pará', lat: -1.4558, lng: -48.4902, decisoes: 321, taxa: 62.8, regiao: 'Norte', agencias: [] },
             'MT': { nome: 'Mato Grosso', lat: -15.6010, lng: -56.0979, decisoes: 287, taxa: 73.4, regiao: 'Centro-Oeste', agencias: ['AGER-MT'] },
-            'ES': { nome: 'Espirito Santo', lat: -20.3155, lng: -40.3128, decisoes: 265, taxa: 77.1, regiao: 'Sudeste', agencias: [] },
+            'ES': { nome: 'Espírito Santo', lat: -20.3155, lng: -40.3128, decisoes: 265, taxa: 77.1, regiao: 'Sudeste', agencias: [] },
             'MS': { nome: 'Mato Grosso do Sul', lat: -20.4697, lng: -54.6201, decisoes: 234, taxa: 74.6, regiao: 'Centro-Oeste', agencias: ['AGEPAN'] },
-            'MA': { nome: 'Maranhao', lat: -2.5297, lng: -44.3028, decisoes: 198, taxa: 61.3, regiao: 'Nordeste', agencias: [] },
+            'MA': { nome: 'Maranhão', lat: -2.5297, lng: -44.3028, decisoes: 198, taxa: 61.3, regiao: 'Nordeste', agencias: [] },
             'AM': { nome: 'Amazonas', lat: -3.1190, lng: -60.0217, decisoes: 176, taxa: 58.9, regiao: 'Norte', agencias: ['ARSAM'] },
             'RN': { nome: 'Rio Grande do Norte', lat: -5.7945, lng: -35.2110, decisoes: 154, taxa: 66.4, regiao: 'Nordeste', agencias: ['ARSEP'] },
-            'PB': { nome: 'Paraiba', lat: -7.1195, lng: -34.8450, decisoes: 143, taxa: 64.8, regiao: 'Nordeste', agencias: ['ARPB'] },
+            'PB': { nome: 'Paraíba', lat: -7.1195, lng: -34.8450, decisoes: 143, taxa: 64.8, regiao: 'Nordeste', agencias: ['ARPB'] },
             'AL': { nome: 'Alagoas', lat: -9.6658, lng: -35.7350, decisoes: 121, taxa: 63.2, regiao: 'Nordeste', agencias: ['ARSAL'] },
-            'PI': { nome: 'Piaui', lat: -5.0892, lng: -42.8019, decisoes: 98, taxa: 59.7, regiao: 'Nordeste', agencias: ['AGRESPI'] },
+            'PI': { nome: 'Piauí', lat: -5.0892, lng: -42.8019, decisoes: 98, taxa: 59.7, regiao: 'Nordeste', agencias: ['AGRESPI'] },
             'SE': { nome: 'Sergipe', lat: -10.9472, lng: -37.0731, decisoes: 87, taxa: 67.3, regiao: 'Nordeste', agencias: ['AGRESE'] },
-            'RO': { nome: 'Rondonia', lat: -8.7619, lng: -63.9039, decisoes: 76, taxa: 71.2, regiao: 'Norte', agencias: [] },
+            'RO': { nome: 'Rondônia', lat: -8.7619, lng: -63.9039, decisoes: 76, taxa: 71.2, regiao: 'Norte', agencias: [] },
             'TO': { nome: 'Tocantins', lat: -10.1753, lng: -48.2982, decisoes: 65, taxa: 68.5, regiao: 'Norte', agencias: ['ATR'] },
             'AC': { nome: 'Acre', lat: -9.9753, lng: -67.8243, decisoes: 43, taxa: 55.8, regiao: 'Norte', agencias: ['AGEAC'] },
-            'AP': { nome: 'Amapa', lat: 0.0349, lng: -51.0694, decisoes: 32, taxa: 53.1, regiao: 'Norte', agencias: [] },
+            'AP': { nome: 'Amapá', lat: 0.0349, lng: -51.0694, decisoes: 32, taxa: 53.1, regiao: 'Norte', agencias: [] },
             'RR': { nome: 'Roraima', lat: 2.8198, lng: -60.6719, decisoes: 21, taxa: 52.4, regiao: 'Norte', agencias: [] }
         },
 
@@ -6568,7 +6568,7 @@
                             <strong>${estado.nome}</strong>
                         </div>
                         <div class="popup-body">
-                            <div class="popup-row"><span>Decisoes:</span><strong>${estado.decisoes.toLocaleString('pt-BR')}</strong></div>
+                            <div class="popup-row"><span>Decisões:</span><strong>${estado.decisoes.toLocaleString('pt-BR')}</strong></div>
                             <div class="popup-row"><span>Taxa:</span><strong>${estado.taxa}%</strong></div>
                             <div class="popup-row"><span>Regiao:</span><strong>${estado.regiao}</strong></div>
                             ${estado.agencias.length > 0 ? `<div class="popup-row"><span>Agencias:</span><strong>${estado.agencias.join(', ')}</strong></div>` : ''}

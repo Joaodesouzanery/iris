@@ -208,7 +208,7 @@ FROM deliberacoes_extraidas
 GROUP BY microtema
 ORDER BY total DESC;
 
-COMMENT ON VIEW vw_estatisticas_microtema IS 'Estatisticas agregadas por microtema com breakdown de decisoes';
+COMMENT ON VIEW vw_estatisticas_microtema IS 'Estatísticas agregadas por microtema com breakdown de decisões';
 
 -- View: Deliberacoes recentes
 -- Ultimas 100 deliberacoes para exibicao rapida no dashboard
