@@ -2404,23 +2404,176 @@ app.post('/api/metricas/recalcular', authenticate, async (req, res) => {
 
 
 // ============================================================================
-// INTERFACE WEB UNIFICADA - Serve SPA
+// PAGINA DE LOGIN - Auto-contida (HTML + CSS + JS inline)
 // ============================================================================
 
+const LOGIN_PAGE_HTML = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IRIS - Login</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:linear-gradient(135deg,#0a0f1e 0%,#0f172a 40%,#1a1a2e 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;color:#f8fafc}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 50% at 50% -20%,rgba(255,239,77,.08) 0%,transparent 60%),radial-gradient(ellipse 60% 40% at 80% 100%,rgba(59,130,246,.06) 0%,transparent 50%);pointer-events:none}
+.card{position:relative;width:100%;max-width:420px;margin:20px;background:rgba(30,41,59,.85);border:1px solid rgba(148,163,184,.15);border-radius:20px;padding:48px 40px 36px;box-shadow:0 0 0 1px rgba(255,239,77,.05),0 25px 50px -12px rgba(0,0,0,.5),0 0 80px rgba(255,239,77,.04);backdrop-filter:blur(20px);animation:fadeIn .5s ease-out}
+@keyframes fadeIn{from{opacity:0;transform:translateY(20px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+.logo{text-align:center;margin-bottom:12px}
+.logo svg{filter:drop-shadow(0 0 12px rgba(255,239,77,.3))}
+h1{text-align:center;font-size:24px;font-weight:700;color:#f8fafc;margin:0 0 8px;letter-spacing:-.02em}
+.sub{text-align:center;font-size:14px;color:#94a3b8;margin:0 0 36px;line-height:1.5}
+.field{margin-bottom:20px}
+label{display:block;font-size:13px;font-weight:600;color:#cbd5e1;margin-bottom:8px;letter-spacing:.02em}
+.input-wrap{position:relative;display:flex;align-items:center}
+.input-wrap svg{position:absolute;left:14px;color:#64748b;pointer-events:none;transition:color .2s}
+input{width:100%;padding:14px 16px 14px 44px;background:rgba(15,23,42,.6);border:1px solid rgba(148,163,184,.2);border-radius:12px;color:#f8fafc;font-size:15px;outline:none;transition:all .2s}
+input::placeholder{color:#475569}
+input:focus{border-color:rgba(255,239,77,.5);box-shadow:0 0 0 3px rgba(255,239,77,.1),0 0 20px rgba(255,239,77,.05);background:rgba(15,23,42,.8)}
+input:focus~svg,.input-wrap:focus-within svg{color:#FFEF4D}
+.error{padding:12px 16px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);border-radius:10px;color:#fca5a5;font-size:13px;text-align:center;margin-bottom:16px;display:none;animation:shake .4s ease-out}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+button[type=submit]{width:100%;padding:14px 24px;margin-top:4px;background:linear-gradient(135deg,#FFEF4D 0%,#e6d645 100%);border:none;border-radius:12px;color:#0f172a;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;letter-spacing:.02em;box-shadow:0 4px 14px rgba(255,239,77,.25)}
+button[type=submit]:hover{background:linear-gradient(135deg,#fff59d 0%,#FFEF4D 100%);box-shadow:0 6px 20px rgba(255,239,77,.35);transform:translateY(-1px)}
+button[type=submit]:disabled{opacity:.7;cursor:not-allowed;transform:none}
+.spinner{display:none;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.footer{margin-top:28px;text-align:center;padding-top:20px;border-top:1px solid rgba(148,163,184,.1)}
+.footer a{color:#64748b;font-size:13px;text-decoration:none;display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:8px;transition:color .2s,background .2s}
+.footer a:hover{color:#FFEF4D;background:rgba(255,239,77,.06)}
+.cred{margin-top:24px;text-align:center;font-size:11px;color:#475569}
+@media(max-width:480px){.card{padding:36px 24px 28px;border-radius:16px}h1{font-size:20px}}
+</style>
+</head>
+<body>
+<div class="card">
+    <div class="logo">
+        <svg width="72" height="38" viewBox="0 0 120 50" fill="none">
+            <rect x="0" y="5" width="3" height="40" fill="#FFEF4D"/>
+            <rect x="6" y="5" width="3" height="40" fill="#FFEF4D"/>
+            <rect x="20" y="5" width="3" height="40" fill="#FFEF4D"/>
+            <path d="M23 5 H35 Q42 5 42 15 Q42 25 35 25 H23" stroke="#FFEF4D" stroke-width="3" fill="none"/>
+            <line x1="30" y1="25" x2="42" y2="45" stroke="#FFEF4D" stroke-width="3"/>
+            <rect x="52" y="5" width="3" height="40" fill="#FFEF4D"/>
+            <rect x="58" y="5" width="3" height="40" fill="#FFEF4D"/>
+            <path d="M72 12 Q72 5 82 5 Q92 5 92 12 Q92 20 82 22 Q72 24 72 32 Q72 45 82 45 Q92 45 92 38" stroke="#FFEF4D" stroke-width="3" fill="none"/>
+        </svg>
+    </div>
+    <h1>Acesso a Plataforma</h1>
+    <p class="sub">Entre com suas credenciais para acessar a plataforma IRIS</p>
+    <div class="error" id="err"></div>
+    <form id="loginForm">
+        <div class="field">
+            <label for="user">Usuario</label>
+            <div class="input-wrap">
+                <input type="text" id="user" name="username" placeholder="admin" autocomplete="username" required>
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+            </div>
+        </div>
+        <div class="field">
+            <label for="pass">Senha</label>
+            <div class="input-wrap">
+                <input type="password" id="pass" name="password" placeholder="&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;" autocomplete="current-password" required>
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+            </div>
+        </div>
+        <button type="submit" id="btn">
+            <span id="btnTxt">Entrar</span>
+            <svg class="spinner" id="btnSpin" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" stroke-opacity=".3"/><path d="M12 2a10 10 0 019.95 9" stroke-linecap="round"/></svg>
+        </button>
+    </form>
+    <div class="footer">
+        <a href="/">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+            Voltar ao Hub Publico
+        </a>
+    </div>
+</div>
+<script>
+document.getElementById('loginForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    var err = document.getElementById('err');
+    var btn = document.getElementById('btn');
+    var btnTxt = document.getElementById('btnTxt');
+    var btnSpin = document.getElementById('btnSpin');
+    var username = document.getElementById('user').value.trim();
+    var password = document.getElementById('pass').value;
+    if (!username || !password) { err.textContent = 'Preencha todos os campos'; err.style.display = 'block'; return; }
+    btnTxt.textContent = 'Autenticando...'; btnSpin.style.display = 'inline'; btn.disabled = true; err.style.display = 'none';
+    try {
+        var resp = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ username: username, password: password })
+        });
+        var data = await resp.json();
+        if (data.success) {
+            localStorage.setItem('iris_token', data.accessToken);
+            localStorage.setItem('iris_user', JSON.stringify(data.user));
+            var params = new URLSearchParams(window.location.search);
+            var redirect = params.get('redirect') || '/hub';
+            window.location.href = redirect;
+        } else {
+            err.textContent = data.error || 'Credenciais invalidas';
+            err.style.display = 'block';
+        }
+    } catch (ex) {
+        err.textContent = 'Erro de conexao com o servidor';
+        err.style.display = 'block';
+    } finally {
+        btnTxt.textContent = 'Entrar'; btnSpin.style.display = 'none'; btn.disabled = false;
+    }
+});
+document.getElementById('user').focus();
+</script>
+</body>
+</html>`;
+
+// ============================================================================
+// INTERFACE WEB UNIFICADA
+// ============================================================================
+
+// Pagina de login (rota publica)
+app.get('/login', optionalAuth, (req, res) => {
+    // Se ja esta autenticado, redireciona para a plataforma
+    if (req.user) {
+        return res.redirect('/hub');
+    }
+    res.send(LOGIN_PAGE_HTML);
+});
+
+// Landing page publica (hub de noticias)
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'app.html'));
 });
 
 
 // ============================================================================
-// PLATAFORMA IRIS - Single Page Application (SPA)
+// PLATAFORMA IRIS - Single Page Application (SPA) — REQUER LOGIN
 // ============================================================================
 
-// SPA - Todas as rotas de navegação servem o mesmo arquivo
+// Middleware: verifica autenticacao via cookie para paginas da plataforma
+function requirePageAuth(req, res, next) {
+    const token = req.cookies?.iris_access_token;
+    if (!token) {
+        return res.redirect('/login?redirect=' + encodeURIComponent(req.originalUrl));
+    }
+    // Usa optionalAuth para validar o token sem retornar 401 JSON
+    optionalAuth(req, res, () => {
+        if (req.user) {
+            next();
+        } else {
+            res.redirect('/login?redirect=' + encodeURIComponent(req.originalUrl));
+        }
+    });
+}
+
+// SPA - Todas as rotas de navegação servem o mesmo arquivo (requer login)
 const spaRoutes = ['/deliberacoes', '/monitor', '/diretores', '/jurimetria', '/governanca', '/metricas', '/boletim', '/auditoria', '/app', '/upload', '/analise', '/agencias', '/mapa', '/radar', '/painel-regulatorio', '/setores', '/microtemas', '/empresas', '/historico', '/grafo', '/monitoramento', '/dossie', '/cruzamento', '/hub', '/landing', '/analytics', '/noticias', '/dossies'];
 
 spaRoutes.forEach(route => {
-    app.get(route, (req, res) => {
+    app.get(route, requirePageAuth, (req, res) => {
         res.sendFile(path.join(__dirname, 'public', 'app.html'));
     });
 });
