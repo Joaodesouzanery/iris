@@ -121,7 +121,7 @@ async function consultarCNPJ(cnpj) {
 const backupService = require('./src/services/backup');
 
 // ── Authentication & Sanitization Middleware ──
-const { authenticate, optionalAuth, registerAuthRoutes } = require('./src/middleware/auth');
+const { authenticate, optionalAuth, registerAuthRoutes, isSupabaseAvailable: isAuthSupabase } = require('./src/middleware/auth');
 const {
     sanitizeString: sanitizeStr,
     escapeHtml,
@@ -5067,6 +5067,7 @@ backupService.registerBackupRoutes(app, authenticate, backupDataSource);
 app.listen(PORT, () => {
     const dbStatus = persistencia.getStatus();
     const dbLabel = dbStatus.supabaseConfigured ? 'Supabase' : 'Memoria local';
+    const authLabel = isAuthSupabase() ? 'Supabase' : 'Memoria local';
 
     console.log('');
     console.log('╔══════════════════════════════════════════════════════════════╗');
@@ -5078,7 +5079,8 @@ app.listen(PORT, () => {
     console.log('╠══════════════════════════════════════════════════════════════╣');
     console.log('║                                                              ║');
     console.log(`║   Acesse: http://localhost:${PORT}                          ║`);
-    console.log(`║   Banco: ${dbLabel.padEnd(20)}                        ║`);
+    console.log(`║   Dados: ${dbLabel.padEnd(20)}                        ║`);
+    console.log(`║   Auth:  ${authLabel.padEnd(20)}                        ║`);
     console.log('║                                                              ║');
     console.log('╚══════════════════════════════════════════════════════════════╝');
     console.log('');
