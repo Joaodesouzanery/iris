@@ -31,6 +31,10 @@ const users = new Map();
 const refreshTokens = new Set();
 const loginAttempts = new Map();
 const invalidatedTokens = new Set();
+const passwordResetTokens = new Map(); // { token -> { username, expiresAt, used } }
+const PASSWORD_RESET_EXPIRY = 15 * 60 * 1000; // 15 minutes
+const PASSWORD_RESET_MAX_ATTEMPTS = 5;
+const passwordResetAttempts = new Map(); // rate limit per IP
 
 // Initialize default admin user
 async function initDefaultAdmin() {
@@ -402,6 +406,118 @@ function handleAuthStatus(req, res) {
     });
 }
 
+// ── Password Reset ──
+function checkResetAttempts(ip) {
+    const attempts = passwordResetAttempts.get(ip);
+    if (!attempts) return { allowed: true };
+    const now = Date.now();
+    // Reset counter after 1 hour
+    if (now - attempts.firstAttempt > 60 * 60 * 1000) {
+        passwordResetAttempts.delete(ip);
+        return { allowed: true };
+    }
+    if (attempts.count >= PASSWORD_RESET_MAX_ATTEMPTS) {
+        return { allowed: false, message: 'Muitas tentativas. Tente novamente em 1 hora.' };
+    }
+    return { allowed: true };
+}
+
+function recordResetAttempt(ip) {
+    const attempts = passwordResetAttempts.get(ip) || { count: 0, firstAttempt: Date.now() };
+    attempts.count++;
+    passwordResetAttempts.set(ip, attempts);
+}
+
+async function handlePasswordResetRequest(req, res) {
+    const ip = req.ip || req.connection?.remoteAddress || 'unknown';
+    const rateCheck = checkResetAttempts(ip);
+    if (!rateCheck.allowed) {
+        return res.status(429).json({ success: false, error: rateCheck.message });
+    }
+
+    const { username } = req.body;
+    if (!username) {
+        return res.status(400).json({ success: false, error: 'Nome de usuario e obrigatorio' });
+    }
+
+    recordResetAttempt(ip);
+
+    // Always return success to prevent username enumeration
+    const successResponse = {
+        success: true,
+        message: 'Se o usuario existir, um codigo de recuperacao foi gerado. Solicite o codigo ao administrador do sistema.'
+    };
+
+    const user = users.get(username);
+    if (!user) {
+        // Same response time to prevent timing attacks
+        await new Promise(r => setTimeout(r, 100 + Math.random() * 200));
+        return res.json(successResponse);
+    }
+
+    // Generate a 6-digit numeric reset code (easier to communicate verbally)
+    const resetCode = String(Math.floor(100000 + Math.random() * 900000));
+    const resetToken = crypto.randomBytes(32).toString('hex');
+
+    // Store both code and token — code for user convenience, token for URL-safe usage
+    passwordResetTokens.set(resetCode, {
+        username: user.username,
+        token: resetToken,
+        expiresAt: Date.now() + PASSWORD_RESET_EXPIRY,
+        used: false
+    });
+
+    // Log the reset code for admin (in production, this would send an email)
+    console.log(`[Auth] PASSWORD RESET CODE for user '${username}': ${resetCode} (expires in 15 min)`);
+
+    res.json(successResponse);
+}
+
+async function handlePasswordReset(req, res) {
+    const { code, newPassword } = req.body;
+
+    if (!code || !newPassword) {
+        return res.status(400).json({ success: false, error: 'Codigo e nova senha sao obrigatorios' });
+    }
+
+    const resetData = passwordResetTokens.get(code);
+    if (!resetData || resetData.used) {
+        return res.status(400).json({ success: false, error: 'Codigo de recuperacao invalido ou ja utilizado' });
+    }
+
+    if (Date.now() > resetData.expiresAt) {
+        passwordResetTokens.delete(code);
+        return res.status(400).json({ success: false, error: 'Codigo de recuperacao expirado. Solicite um novo.' });
+    }
+
+    // Password strength validation
+    if (newPassword.length < 8) {
+        return res.status(400).json({ success: false, error: 'Nova senha deve ter no minimo 8 caracteres' });
+    }
+    if (!/[A-Z]/.test(newPassword) || !/[a-z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
+        return res.status(400).json({ success: false, error: 'Nova senha deve conter maiusculas, minusculas e numeros' });
+    }
+
+    const user = users.get(resetData.username);
+    if (!user) {
+        return res.status(400).json({ success: false, error: 'Usuario nao encontrado' });
+    }
+
+    // Update password
+    user.passwordHash = await bcrypt.hash(newPassword, BCRYPT_ROUNDS);
+    user.mustChangePassword = false;
+
+    // Mark token as used and clean up
+    resetData.used = true;
+    passwordResetTokens.delete(code);
+
+    // Clear any lockout on this account
+    clearLoginAttempts(resetData.username);
+
+    console.log(`[Auth] Password reset completed for user '${resetData.username}'`);
+    res.json({ success: true, message: 'Senha redefinida com sucesso. Faca login com a nova senha.' });
+}
+
 // ── Admin: Register New User ──
 async function handleRegisterUser(req, res) {
     const { username, password, role } = req.body;
@@ -479,6 +595,8 @@ function registerAuthRoutes(app) {
     app.post('/api/auth/login', handleLogin);
     app.post('/api/auth/refresh', handleRefreshToken);
     app.post('/api/auth/logout', handleLogout);
+    app.post('/api/auth/password-reset-request', handlePasswordResetRequest);
+    app.post('/api/auth/password-reset', handlePasswordReset);
 
     // Protected auth endpoints
     app.get('/api/auth/status', authenticate, handleAuthStatus);
@@ -505,10 +623,15 @@ function registerAuthRoutes(app) {
     initDefaultAdmin();
 }
 
-// Cleanup invalidated tokens periodically (every 2 hours)
+// Cleanup invalidated tokens and expired reset tokens periodically (every 2 hours)
 setInterval(() => {
     invalidatedTokens.clear();
-    console.log('[Auth] Cleared invalidated token cache');
+    const now = Date.now();
+    for (const [code, data] of passwordResetTokens.entries()) {
+        if (now > data.expiresAt) passwordResetTokens.delete(code);
+    }
+    passwordResetAttempts.clear();
+    console.log('[Auth] Cleared invalidated token and reset token caches');
 }, 2 * 60 * 60 * 1000);
 
 module.exports = {
