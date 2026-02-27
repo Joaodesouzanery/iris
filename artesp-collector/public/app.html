@@ -5,11 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IRIS - Plataforma de Inteligência Regulatória</title>
     <meta name="description" content="Hub de Inteligência Regulatória do Brasil — Notícias, deliberações e monitoramento de agências reguladoras.">
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://d3js.org" crossorigin>
     <link rel="preconnect" href="https://unpkg.com" crossorigin>
     <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/design-system.css">
+    <link rel="stylesheet" href="/css/layout.css">
+    <link rel="stylesheet" href="/css/components.css">
+    <link rel="stylesheet" href="/css/charts.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
     <!-- Defer non-critical JS to avoid blocking initial paint -->
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
     <script defer src="https://d3js.org/d3.v7.min.js"></script>
     <script defer src="https://d3js.org/topojson.v3.min.js"></script>
     <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
@@ -361,207 +368,182 @@
         <!-- Sidebar -->
         <nav class="sidebar" role="navigation" aria-label="Menu principal">
             <div class="sidebar-header">
-                <!-- Logo IRIS com linhas douradas -->
-                <div class="iris-logo">
-                    <svg width="60" height="32" viewBox="0 0 120 50" fill="none">
-                        <!-- I -->
-                        <rect x="0" y="5" width="3" height="40" fill="#c9a227"/>
-                        <rect x="6" y="5" width="3" height="40" fill="#c9a227"/>
-                        <!-- R -->
-                        <rect x="20" y="5" width="3" height="40" fill="#c9a227"/>
-                        <path d="M23 5 H35 Q42 5 42 15 Q42 25 35 25 H23" stroke="#c9a227" stroke-width="3" fill="none"/>
-                        <line x1="30" y1="25" x2="42" y2="45" stroke="#c9a227" stroke-width="3"/>
-                        <!-- I -->
-                        <rect x="52" y="5" width="3" height="40" fill="#c9a227"/>
-                        <rect x="58" y="5" width="3" height="40" fill="#c9a227"/>
-                        <!-- S -->
-                        <path d="M72 12 Q72 5 82 5 Q92 5 92 12 Q92 20 82 22 Q72 24 72 32 Q72 45 82 45 Q92 45 92 38" stroke="#c9a227" stroke-width="3" fill="none"/>
-                    </svg>
-                </div>
                 <div class="sidebar-brand">
-                    <span class="sidebar-brand-name">IRIS</span>
-                    <span class="sidebar-brand-subtitle">Instituto de Regulação</span>
-                    <span class="demo-badge">Demo</span>
+                    <div class="sidebar-logo">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                    </div>
+                    <div class="sidebar-brand-text">
+                        <div class="sidebar-brand-name">IRIS</div>
+                        <div class="sidebar-brand-sub">Inteligência Regulatória</div>
+                    </div>
                 </div>
             </div>
 
             <div class="sidebar-nav">
-                <div class="nav-section">
-                    <div class="nav-section-title">Início</div>
-                    <a data-route="/hub" class="nav-item">
-                        <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/></svg>
-                        Hub de Noticias
-                    </a>
-                    <a data-route="/landing" class="nav-item">
-                        <svg viewBox="0 0 20 20" fill="currentColor"><path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM14 11a1 1 0 011 1v1h1a1 1 0 110 2h-1v1a1 1 0 11-2 0v-1h-1a1 1 0 110-2h1v-1a1 1 0 011-1z"/></svg>
-                        Conheça a IRIS
-                    </a>
-                </div>
-                <div class="nav-section">
-                    <div class="nav-section-title">Decisões</div>
-                    <a data-route="/deliberações" class="nav-item">
-                        <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"/></svg>
-                        Deliberações
-                    </a>
-                    <a data-route="/monitor" class="nav-item">
-                        <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/></svg>
-                        Monitor
-                    </a>
-                </div>
+                <!-- Menu Principal -->
+                <div class="sidebar-section"><div class="sidebar-section-label">Menu Principal</div></div>
+                <a data-route="/hub" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                    <span>Dashboard</span>
+                </a>
+                <a data-route="/deliberacoes" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                    <span>Deliberações</span>
+                </a>
+                <a data-route="/diretores" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+                    <span>Diretores</span>
+                </a>
+                <a data-route="/landing" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2"/></svg>
+                    <span>Notícias</span>
+                </a>
+                <a data-route="/jurimetria" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                    <span>Jurimetria</span>
+                </a>
+                <a data-route="/monitor" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    <span>Monitoramento</span>
+                </a>
 
-                <div class="nav-section">
-                    <div class="nav-section-title">Diretores</div>
-                    <a data-route="/diretores" class="nav-item">
-                        <svg viewBox="0 0 20 20" fill="currentColor"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/></svg>
-                        Mandatos
-                    </a>
-                    <a data-route="/jurimetria" class="nav-item">
-                        <svg viewBox="0 0 20 20" fill="currentColor"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zm6-4a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zm6-3a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/></svg>
-                        Jurimetria
-                    </a>
-                    <a data-route="/governanca" class="nav-item">
-                        <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10.496 2.132a1 1 0 00-.992 0l-7 4A1 1 0 003 8v7a1 1 0 100 2h14a1 1 0 100-2V8a1 1 0 00.496-1.868l-7-4zM6 9a1 1 0 00-1 1v3a1 1 0 102 0v-3a1 1 0 00-1-1zm3 1a1 1 0 012 0v3a1 1 0 11-2 0v-3zm5-1a1 1 0 00-1 1v3a1 1 0 102 0v-3a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
-                        Governança
-                    </a>
-                </div>
+                <div class="sidebar-divider"></div>
 
-                <div class="nav-section">
-                    <div class="nav-section-title">Temas Regulados</div>
-                    <a data-route="/painel-regulatorio" class="nav-item">
-                        <svg viewBox="0 0 20 20" fill="currentColor"><path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 6a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zm11-1a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/></svg>
-                        Painel Regulatório
-                    </a>
-                    <a data-route="/setores" class="nav-item">
-                        <svg viewBox="0 0 20 20" fill="currentColor"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zm-2 4a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z"/></svg>
-                        Setores
-                    </a>
-                    <a data-route="/microtemas" class="nav-item">
-                        <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg>
-                        Microtemas
-                    </a>
-                    <a data-route="/empresas" class="nav-item">
-                        <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z" clip-rule="evenodd"/></svg>
-                        Empresas
-                    </a>
-                    <a data-route="/historico" class="nav-item">
-                        <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/></svg>
-                        Histórico
-                    </a>
-                </div>
+                <!-- Análise -->
+                <div class="sidebar-section"><div class="sidebar-section-label">Análise</div></div>
+                <a data-route="/dossie" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+                    <span>Dossiês</span>
+                </a>
+                <a data-route="/cruzamento" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+                    <span>Cruzamento de Dados</span>
+                </a>
+                <a data-route="/auditoria" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <span>Auditoria Forense</span>
+                </a>
+                <a data-route="/grafo" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                    <span>Grafo de Vínculos</span>
+                </a>
 
-                <div class="nav-section">
-                    <div class="nav-section-title">Documentos</div>
-                    <a data-route="/upload" class="nav-item">
-                        <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
-                        Upload de PDFs
-                    </a>
-                    <a data-route="/analise" class="nav-item">
-                        <svg viewBox="0 0 20 20" fill="currentColor"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/></svg>
-                        Análise de PDFs
-                    </a>
-                </div>
+                <div class="sidebar-divider"></div>
 
-                <div class="nav-section">
-                    <div class="nav-section-title">Agências</div>
-                    <a data-route="/agencias" class="nav-item">
-                        <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z" clip-rule="evenodd"/></svg>
-                        Visão Geral
-                    </a>
-                    <a data-route="/mapa" class="nav-item">
-                        <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12 1.586l-4 4v12.828l4-4V1.586zM3.707 3.293A1 1 0 002 4v10a1 1 0 00.293.707L6 18.414V5.586L3.707 3.293zm10.586 0L18 6.586v12.828l-3.707-3.707A1 1 0 0014 16V3.293z" clip-rule="evenodd"/></svg>
-                        Mapa do Brasil
-                    </a>
-                </div>
+                <!-- Temas -->
+                <div class="sidebar-section"><div class="sidebar-section-label">Temas</div></div>
+                <a data-route="/painel-regulatorio" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+                    <span>Painel Regulatório</span>
+                </a>
+                <a data-route="/setores" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+                    <span>Setores</span>
+                </a>
+                <a data-route="/microtemas" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg>
+                    <span>Microtemas</span>
+                </a>
+                <a data-route="/empresas" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                    <span>Empresas</span>
+                </a>
 
-                <div class="nav-section">
-                    <div class="nav-section-title">Inteligencia</div>
-                    <a data-route="/metricas" class="nav-item">
-                        <svg viewBox="0 0 20 20" fill="currentColor"><path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"/><path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z"/></svg>
-                        Dashboard Geral
-                    </a>
-                    <a data-route="/radar" class="nav-item">
-                        <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 5a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2h-2.22l.123.489.804.804A1 1 0 0113 18H7a1 1 0 01-.707-1.707l.804-.804L7.22 15H5a2 2 0 01-2-2V5zm5.771 7H5V5h10v7H8.771z" clip-rule="evenodd"/></svg>
-                        Radar Regulatório
-                    </a>
-                    <a data-route="/boletim" class="nav-item">
-                        <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M2 5a2 2 0 012-2h8a2 2 0 012 2v10a2 2 0 002 2H4a2 2 0 01-2-2V5zm3 1h6v4H5V6zm6 6H5v2h6v-2z" clip-rule="evenodd"/><path d="M15 7h1a2 2 0 012 2v5.5a1.5 1.5 0 01-3 0V7z"/></svg>
-                        Boletim Mensal
-                    </a>
-                    <a data-route="/auditoria" class="nav-item">
-                        <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-                        Auditoria Forense
-                    </a>
-                </div>
+                <div class="sidebar-divider"></div>
 
-                <div class="nav-section">
-                    <div class="nav-section-title">Investigação</div>
-                    <a data-route="/grafo" class="nav-item">
-                        <svg viewBox="0 0 20 20" fill="currentColor"><path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zm0 8a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zm6-6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zm4 8a2 2 0 00-2-2h-2a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2z"/></svg>
-                        Grafo de Conexões
-                    </a>
-                    <a data-route="/monitoramento" class="nav-item">
-                        <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zm0 16a3 3 0 01-3-3h6a3 3 0 01-3 3z"/></svg>
-                        Monitoramento 24/7
-                    </a>
-                    <a data-route="/dossie" class="nav-item">
-                        <svg viewBox="0 0 20 20" fill="currentColor"><path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"/></svg>
-                        Dossiês Automáticos
-                    </a>
-                    <a data-route="/cruzamento" class="nav-item">
-                        <svg viewBox="0 0 20 20" fill="currentColor"><path d="M3 12v3c0 1.657 3.134 3 7 3s7-1.343 7-3v-3c0 1.657-3.134 3-7 3s-7-1.343-7-3z"/><path d="M3 7v3c0 1.657 3.134 3 7 3s7-1.343 7-3V7c0 1.657-3.134 3-7 3S3 8.657 3 7z"/><path d="M17 5c0 1.657-3.134 3-7 3S3 6.657 3 5s3.134-3 7-3 7 1.343 7 3z"/></svg>
-                        Cruzamento de Dados
-                    </a>
-                    <a data-route="/analytics" class="nav-item">
-                        <svg viewBox="0 0 20 20" fill="currentColor"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zm6-4a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zm6-3a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/></svg>
-                        Analytics Avançado
-                    </a>
-                </div>
+                <!-- Configurações -->
+                <div class="sidebar-section"><div class="sidebar-section-label">Configurações</div></div>
+                <a data-route="/upload" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    <span>Upload de PDFs</span>
+                </a>
+                <a data-route="/analise" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/><path d="M4 5a2 2 0 012-2h12a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V5z"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/></svg>
+                    <span>Análise de PDFs</span>
+                </a>
+                <a data-route="/agencias" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                    <span>Agências</span>
+                </a>
+                <a data-route="/mapa" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+                    <span>Mapa do Brasil</span>
+                </a>
+
+                <div class="sidebar-divider"></div>
+
+                <!-- Extras -->
+                <div class="sidebar-section"><div class="sidebar-section-label">Extras</div></div>
+                <a data-route="/metricas" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 118 2.83"/><path d="M22 12A10 10 0 0012 2v10z"/></svg>
+                    <span>Métricas</span>
+                </a>
+                <a data-route="/radar" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                    <span>Radar</span>
+                </a>
+                <a data-route="/boletim" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 002-2V4a2 2 0 00-2-2H8a2 2 0 00-2 2v16a2 2 0 01-2 2zm0 0a2 2 0 01-2-2v-9c0-1.1.9-2 2-2h2"/></svg>
+                    <span>Boletim</span>
+                </a>
+                <a data-route="/governanca" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    <span>Governança</span>
+                </a>
+                <a data-route="/historico" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    <span>Histórico</span>
+                </a>
+                <a data-route="/monitoramento" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+                    <span>Alertas 24/7</span>
+                </a>
+                <a data-route="/analytics" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                    <span>Analytics</span>
+                </a>
             </div>
 
             <div class="sidebar-footer">
-                <div class="alert-badge">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
-                    3 alertas
+                <div class="sidebar-alert-badge">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+                    <span>3 alertas</span>
                 </div>
                 <button class="sidebar-back-btn" onclick="LoginManager.logout()" title="Sair da plataforma">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                    Sair
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                    <span>Sair</span>
                 </button>
             </div>
         </nav>
 
         <!-- Mobile sidebar overlay -->
-        <div class="sidebar-overlay" id="sidebar-overlay" onclick="document.querySelector('.sidebar').classList.remove('open');this.classList.remove('active');"></div>
+        <div id="sidebar-overlay" onclick="document.querySelector('.sidebar').classList.remove('open');this.classList.remove('active');"></div>
 
         <!-- Main Content -->
-        <main class="main-content" id="main-content" role="main">
-            <!-- Top Header -->
-            <header class="top-header">
-                <div class="header-left">
-                    <!-- Mobile hamburger menu button -->
-                    <button class="mobile-menu-btn" id="mobile-menu-btn" style="display:none;" aria-label="Abrir menu" onclick="document.querySelector('.sidebar').classList.toggle('open');document.getElementById('sidebar-overlay').classList.toggle('active');">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="22" height="22"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-                    </button>
-                    <div class="breadcrumb">
-                        <span class="breadcrumb-item">Plataforma IRIS</span>
-                        <span class="breadcrumb-separator">/</span>
-                        <span class="breadcrumb-current" id="breadcrumb-page">Inteligência Regulatória</span>
+        <div class="content-area" id="main-content" role="main">
+            <!-- Mobile Menu Button -->
+            <button id="mobile-menu-btn" onclick="document.querySelector('.sidebar').classList.toggle('open');document.getElementById('sidebar-overlay').classList.toggle('active');" aria-label="Abrir menu">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="22" height="22"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+            </button>
+
+            <!-- Top Bar -->
+            <div class="topbar">
+                <div class="topbar-breadcrumb">
+                    <span class="topbar-breadcrumb-parent">IRIS</span>
+                    <span class="topbar-breadcrumb-separator">/</span>
+                    <span class="topbar-breadcrumb-current" id="breadcrumb-page">Inteligência Regulatória</span>
+                </div>
+                <div class="topbar-actions">
+                    <div class="topbar-search">
+                        <svg class="topbar-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        <input type="text" placeholder="Buscar...">
+                    </div>
+                    <div class="topbar-notification">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+                        <span class="topbar-notification-badge">3</span>
                     </div>
                 </div>
-                <div class="header-right">
-                    <span class="status-badge">Sistema Ativo</span>
-                    <div class="header-icon">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-                    </div>
-                    <div class="header-icon">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
-                    </div>
-                    <div class="header-icon">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                    </div>
-                    <div class="user-avatar">AD</div>
-                </div>
-            </header>
+            </div>
 
             <!-- Page Content -->
             <div class="page-content">
@@ -3962,97 +3944,72 @@
                      ============================================ -->
                 <div id="page-upload" class="page-view">
                     <div class="page-header">
-                        <div class="page-title-section">
-                            <h1 class="page-title">Upload de PDFs</h1>
-                            <p class="page-subtitle">Faça upload de documentos da ARTESP para análise e extração de dados</p>
+                        <div class="page-header-row">
+                            <div>
+                                <h1 class="page-title">Upload de PDFs</h1>
+                                <p class="page-subtitle">Faça upload de documentos da ARTESP para análise e extração de dados</p>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <div class="stat-card-header">
-                                <span class="stat-card-title">PDFs Carregados</span>
-                                <div class="stat-card-icon">
-                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                </div>
-                            </div>
-                            <div class="stat-card-value" id="upload-total">0</div>
+                    <!-- Stat Cards -->
+                    <div class="metrics-row">
+                        <div class="metric-card">
+                            <div class="metric-card-label">PDFs Carregados</div>
+                            <div class="metric-card-value" id="upload-total">0</div>
                         </div>
-                        <div class="stat-card">
-                            <div class="stat-card-header">
-                                <span class="stat-card-title">Pendentes</span>
-                                <div class="stat-card-icon">
-                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                </div>
-                            </div>
-                            <div class="stat-card-value warning" id="upload-pendentes">0</div>
+                        <div class="metric-card">
+                            <div class="metric-card-label">Pendentes</div>
+                            <div class="metric-card-value" id="upload-pendentes" style="color:var(--accent-orange)">0</div>
                         </div>
-                        <div class="stat-card">
-                            <div class="stat-card-header">
-                                <span class="stat-card-title">Analisados</span>
-                                <div class="stat-card-icon">
-                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                </div>
-                            </div>
-                            <div class="stat-card-value success" id="upload-analisados">0</div>
+                        <div class="metric-card">
+                            <div class="metric-card-label">Analisados</div>
+                            <div class="metric-card-value" id="upload-analisados" style="color:var(--accent-green)">0</div>
                         </div>
-                        <div class="stat-card">
-                            <div class="stat-card-header">
-                                <span class="stat-card-title">Com Erro</span>
-                                <div class="stat-card-icon">
-                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                </div>
-                            </div>
-                            <div class="stat-card-value danger" id="upload-erros">0</div>
+                        <div class="metric-card">
+                            <div class="metric-card-label">Com Erro</div>
+                            <div class="metric-card-value" id="upload-erros" style="color:var(--accent-red)">0</div>
                         </div>
                     </div>
 
                     <div class="grid-2" style="margin-bottom: 24px;">
-                        <!-- Upload Zone -->
-                        <div class="card">
-                            <div class="card-header">
-                                <h2 class="card-title">
-                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                                    Enviar Arquivos
-                                </h2>
+                        <!-- Upload Dropzone -->
+                        <div class="ds-card">
+                            <div class="ds-card-header">
+                                <div class="ds-card-title">Enviar Arquivos</div>
                             </div>
-                            <div class="card-body">
-                                <div class="upload-zone" id="upload-dropzone">
-                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="48" height="48"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
-                                    <h3>Arraste arquivos PDF aqui</h3>
-                                    <p>ou clique para selecionar</p>
-                                    <input type="file" id="upload-input" accept=".pdf" multiple style="display: none;">
-                                    <button class="btn btn-primary" onclick="document.getElementById('upload-input').click()">
-                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                                        Selecionar PDFs
-                                    </button>
+                            <div class="ds-dropzone" id="upload-dropzone">
+                                <div class="ds-dropzone-icon">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="48" height="48"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
                                 </div>
-                                <div id="upload-progress" style="display: none; margin-top: 16px;">
-                                    <div class="progress-info">
-                                        <span id="upload-progress-text">Enviando...</span>
-                                        <span id="upload-progress-percent">0%</span>
-                                    </div>
-                                    <div class="progress-bar">
-                                        <div class="progress-fill" id="upload-progress-bar" style="width: 0%;"></div>
-                                    </div>
+                                <div class="ds-dropzone-text">Arraste arquivos PDF aqui</div>
+                                <div class="ds-dropzone-hint">ou clique para selecionar</div>
+                                <input type="file" id="upload-input" accept=".pdf" multiple style="display: none;">
+                                <button class="btn btn-primary" onclick="event.stopPropagation();document.getElementById('upload-input').click()" style="margin-top:16px;">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                                    Selecionar PDFs
+                                </button>
+                            </div>
+                            <div id="upload-progress" style="display: none; margin-top: 16px; padding: 0 24px 24px;">
+                                <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-secondary);margin-bottom:8px;">
+                                    <span id="upload-progress-text">Enviando...</span>
+                                    <span id="upload-progress-percent">0%</span>
+                                </div>
+                                <div class="ds-progress">
+                                    <div class="ds-progress-bar" id="upload-progress-bar" style="width: 0%;"></div>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Upload por URL -->
-                        <div class="card">
-                            <div class="card-header">
-                                <h2 class="card-title">
-                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
-                                    Importar por URL
-                                </h2>
+                        <div class="ds-card">
+                            <div class="ds-card-header">
+                                <div class="ds-card-title">Importar por URL</div>
                             </div>
-                            <div class="card-body">
-                                <div class="form-group">
-                                    <label class="form-label">URL do PDF da ARTESP</label>
-                                    <input type="text" class="form-input" id="upload-url" placeholder="https://www.artesp.sp.gov.br/...pdf">
-                                </div>
-                                <button class="btn btn-primary" onclick="App.PageUpload.uploadFromUrl()" style="margin-top: 12px;">
+                            <div style="padding:0 24px 24px;">
+                                <label style="display:block;font-size:12px;color:var(--text-secondary);margin-bottom:8px;">URL do PDF da ARTESP</label>
+                                <input type="text" id="upload-url" placeholder="https://www.artesp.sp.gov.br/...pdf" style="width:100%;margin-bottom:12px;">
+                                <button class="btn btn-primary" onclick="App.PageUpload.uploadFromUrl()">
                                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
                                     Baixar e Importar
                                 </button>
@@ -4060,117 +4017,83 @@
                         </div>
                     </div>
 
-                    <!-- Análise em Lote -->
-                    <div class="card" style="margin-bottom: 24px;">
-                        <div class="card-header">
-                            <h2 class="card-title">
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
-                                Análise em Lote
-                            </h2>
-                            <span class="badge badge-info">Multiplos PDFs</span>
+                    <!-- Batch Analysis -->
+                    <div class="ds-card" style="margin-bottom: 24px;">
+                        <div class="ds-card-header">
+                            <div class="ds-card-title">Análise em Lote</div>
+                            <span class="badge badge-info">Múltiplos PDFs</span>
                         </div>
-                        <div class="card-body">
-                            <p style="color: var(--text-secondary); margin-bottom: 16px;">
-                                Processe vários PDFs simultaneamente. Selecione os arquivos pendentes e inicie a análise em lote para extrair todas as deliberações de uma vez.
+                        <div style="padding:0 24px 24px;">
+                            <p style="color: var(--text-secondary); margin-bottom: 16px; font-size:13px;">
+                                Processe vários PDFs simultaneamente. Selecione os arquivos pendentes e inicie a análise em lote.
                             </p>
-
-                            <div class="batch-controls">
-                                <div class="batch-selection">
-                                    <label class="checkbox-container">
-                                        <input type="checkbox" id="batch-select-all" onchange="App.PageUpload.toggleSelectAll(this.checked)">
-                                        <span class="checkmark"></span>
-                                        <span>Selecionar todos os pendentes</span>
-                                    </label>
-                                    <span class="batch-count" id="batch-selected-count">0 arquivos selecionados</span>
-                                </div>
-
-                                <div class="batch-options">
-                                    <div class="form-group" style="margin-bottom: 0; flex: 1;">
-                                        <label class="form-label">Processamento paralelo</label>
-                                        <select class="form-input" id="batch-parallel-count" style="width: auto;">
-                                            <option value="1">1 arquivo por vez</option>
-                                            <option value="2">2 arquivos simultaneos</option>
-                                            <option value="3" selected>3 arquivos simultaneos</option>
-                                            <option value="5">5 arquivos simultaneos</option>
-                                        </select>
-                                    </div>
-
-                                    <button class="btn btn-primary" id="batch-start-btn" onclick="App.PageUpload.startBatchAnalysis()" disabled>
-                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                        Iniciar Análise em Lote
-                                    </button>
-                                </div>
+                            <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+                                <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-secondary);cursor:pointer;">
+                                    <input type="checkbox" id="batch-select-all" onchange="App.PageUpload.toggleSelectAll(this.checked)">
+                                    Selecionar todos os pendentes
+                                </label>
+                                <span style="font-size:12px;color:var(--text-tertiary)" id="batch-selected-count">0 arquivos selecionados</span>
+                                <select class="ds-select" id="batch-parallel-count">
+                                    <option value="1">1 arquivo por vez</option>
+                                    <option value="2">2 simultâneos</option>
+                                    <option value="3" selected>3 simultâneos</option>
+                                    <option value="5">5 simultâneos</option>
+                                </select>
+                                <button class="btn btn-primary btn-sm" id="batch-start-btn" onclick="App.PageUpload.startBatchAnalysis()" disabled>
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    Iniciar Lote
+                                </button>
                             </div>
-
-                            <!-- Progresso do Lote -->
+                            <!-- Batch Progress -->
                             <div id="batch-progress-container" style="display: none; margin-top: 20px;">
-                                <div class="batch-progress-header">
-                                    <span id="batch-progress-title">Processando lote...</span>
-                                    <button class="btn btn-danger btn-sm" onclick="App.PageUpload.cancelBatch()">
-                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                                        Cancelar
-                                    </button>
+                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                                    <span id="batch-progress-title" style="font-size:13px;color:var(--text-secondary);">Processando lote...</span>
+                                    <button class="btn btn-danger btn-sm" onclick="App.PageUpload.cancelBatch()">Cancelar</button>
                                 </div>
-                                <div class="batch-progress-stats">
-                                    <div class="batch-stat">
-                                        <span class="batch-stat-value" id="batch-completed">0</span>
-                                        <span class="batch-stat-label">Concluídos</span>
-                                    </div>
-                                    <div class="batch-stat">
-                                        <span class="batch-stat-value" id="batch-processing">0</span>
-                                        <span class="batch-stat-label">Processando</span>
-                                    </div>
-                                    <div class="batch-stat">
-                                        <span class="batch-stat-value" id="batch-remaining">0</span>
-                                        <span class="batch-stat-label">Restantes</span>
-                                    </div>
-                                    <div class="batch-stat">
-                                        <span class="batch-stat-value" id="batch-errors">0</span>
-                                        <span class="batch-stat-label">Erros</span>
-                                    </div>
+                                <div class="stat-cards-row">
+                                    <div class="stat-card"><div class="stat-card-label">Concluídos</div><div class="stat-card-value text-success" id="batch-completed">0</div></div>
+                                    <div class="stat-card"><div class="stat-card-label">Processando</div><div class="stat-card-value text-info" id="batch-processing">0</div></div>
+                                    <div class="stat-card"><div class="stat-card-label">Restantes</div><div class="stat-card-value text-warning" id="batch-remaining">0</div></div>
+                                    <div class="stat-card"><div class="stat-card-label">Erros</div><div class="stat-card-value text-danger" id="batch-errors">0</div></div>
                                 </div>
-                                <div class="progress-bar" style="height: 8px; margin-top: 12px;">
-                                    <div class="progress-fill" id="batch-progress-bar" style="width: 0%;"></div>
+                                <div class="ds-progress" style="margin-top:12px;">
+                                    <div class="ds-progress-bar" id="batch-progress-bar" style="width: 0%;"></div>
                                 </div>
                                 <div id="batch-current-files" style="margin-top: 12px; font-size: 12px; color: var(--text-secondary);"></div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Lista de PDFs -->
-                    <div class="card">
-                        <div class="card-header">
-                            <h2 class="card-title">
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    <!-- PDFs Table -->
+                    <div class="ds-table-container">
+                        <div class="ds-table-header">
+                            <div class="ds-table-title">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                                 PDFs Carregados
-                            </h2>
-                            <div class="card-actions">
-                                <button class="btn btn-secondary btn-sm" onclick="App.PageUpload.load()">
-                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                                    Atualizar
-                                </button>
                             </div>
+                            <button class="btn btn-secondary btn-sm" onclick="App.PageUpload.load()">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                Atualizar
+                            </button>
                         </div>
-                        <div class="card-body" style="padding: 0;">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th style="width: 40px;">
-                                            <input type="checkbox" id="table-select-all" onchange="App.PageUpload.toggleSelectAll(this.checked)" title="Selecionar todos">
-                                        </th>
-                                        <th>#</th>
-                                        <th>Arquivo</th>
-                                        <th>Tamanho</th>
-                                        <th>Status</th>
-                                        <th>Deliberações</th>
-                                        <th>Acoes</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="upload-table-body">
-                                    <tr><td colspan="7"><div class="empty-state">Nenhum PDF carregado ainda</div></td></tr>
-                                </tbody>
-                            </table>
-                        </div>
+                        <table class="ds-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 40px;">
+                                        <input type="checkbox" id="table-select-all" onchange="App.PageUpload.toggleSelectAll(this.checked)" title="Selecionar todos">
+                                    </th>
+                                    <th>#</th>
+                                    <th>Arquivo</th>
+                                    <th>Tamanho</th>
+                                    <th>Status</th>
+                                    <th>Deliberações</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="upload-table-body">
+                                <tr><td colspan="7"><div class="ds-empty"><div class="ds-empty-text">Nenhum PDF carregado ainda</div><div class="ds-empty-hint">Use o upload acima para enviar arquivos</div></div></td></tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 
@@ -4179,108 +4102,93 @@
                      ============================================ -->
                 <div id="page-analise" class="page-view">
                     <div class="page-header">
-                        <div class="page-title-section">
-                            <h1 class="page-title">Análise de PDFs</h1>
-                            <p class="page-subtitle">Analise os PDFs carregados para extrair deliberações e dados estruturados</p>
-                        </div>
-                        <div class="page-actions">
-                            <button class="btn btn-primary" onclick="App.PageAnalise.analisarTodos()">
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                                Analisar Todos
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <div class="stat-card-header">
-                                <span class="stat-card-title">Total de PDFs</span>
+                        <div class="page-header-row">
+                            <div>
+                                <h1 class="page-title">Análise de PDFs</h1>
+                                <p class="page-subtitle">Analise os PDFs carregados para extrair deliberações e dados estruturados</p>
                             </div>
-                            <div class="stat-card-value" id="analise-total">0</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-card-header">
-                                <span class="stat-card-title">Aguardando Análise</span>
-                            </div>
-                            <div class="stat-card-value warning" id="analise-pendentes">0</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-card-header">
-                                <span class="stat-card-title">Analisados</span>
-                            </div>
-                            <div class="stat-card-value success" id="analise-concluidos">0</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-card-header">
-                                <span class="stat-card-title">Deliberações Extraidas</span>
-                            </div>
-                            <div class="stat-card-value primary" id="analise-deliberações">0</div>
-                        </div>
-                    </div>
-
-                    <!-- Status da Análise -->
-                    <div class="card" id="analise-status-card" style="margin-bottom: 24px; display: none;">
-                        <div class="card-header">
-                            <h2 class="card-title">
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                                Análise em Andamento
-                            </h2>
-                        </div>
-                        <div class="card-body">
-                            <div id="analise-status-content">
-                                <div class="progress-info">
-                                    <span id="analise-status-text">Iniciando análise...</span>
-                                    <span id="analise-status-percent">0%</span>
-                                </div>
-                                <div class="progress-bar">
-                                    <div class="progress-fill" id="analise-progress-bar" style="width: 0%;"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Lista de PDFs para Análise -->
-                    <div class="card">
-                        <div class="card-header">
-                            <h2 class="card-title">
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
-                                PDFs para Análise
-                            </h2>
-                            <div class="card-actions">
-                                <button class="btn btn-secondary btn-sm" onclick="App.PageAnalise.load()">
-                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                                    Atualizar
+                            <div class="page-header-actions">
+                                <button class="btn btn-primary" onclick="App.PageAnalise.analisarTodos()">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                                    Analisar Todos
                                 </button>
                             </div>
                         </div>
-                        <div class="card-body" style="padding: 0;">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>#</th>
-                                        <th>Arquivo</th>
-                                        <th>Status</th>
-                                        <th>Deliberações</th>
-                                        <th>Ultima Análise</th>
-                                        <th>Acoes</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="analise-table-body">
-                                    <tr><td colspan="6"><div class="empty-state">Nenhum PDF disponível para análise</div></td></tr>
-                                </tbody>
-                            </table>
+                    </div>
+
+                    <!-- Stat Cards -->
+                    <div class="metrics-row">
+                        <div class="metric-card">
+                            <div class="metric-card-label">Total de PDFs</div>
+                            <div class="metric-card-value" id="analise-total">0</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-card-label">Aguardando Análise</div>
+                            <div class="metric-card-value" id="analise-pendentes" style="color:var(--accent-orange)">0</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-card-label">Analisados</div>
+                            <div class="metric-card-value" id="analise-concluidos" style="color:var(--accent-green)">0</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-card-label">Deliberações Extraídas</div>
+                            <div class="metric-card-value" id="analise-deliberações" style="color:var(--accent-cyan)">0</div>
                         </div>
                     </div>
 
-                    <!-- Resultados da Análise -->
-                    <div class="card" id="analise-resultados-card" style="margin-top: 24px; display: none;">
-                        <div class="card-header">
-                            <h2 class="card-title">
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                Resultado da Análise
-                            </h2>
+                    <!-- Analysis Status -->
+                    <div class="ds-card" id="analise-status-card" style="margin-bottom: 24px; display: none;">
+                        <div class="ds-card-header">
+                            <div class="ds-card-title">Análise em Andamento</div>
                         </div>
-                        <div class="card-body" id="analise-resultados-content">
+                        <div style="padding:0 24px 24px;">
+                            <div id="analise-status-content">
+                                <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-secondary);margin-bottom:8px;">
+                                    <span id="analise-status-text">Iniciando análise...</span>
+                                    <span id="analise-status-percent">0%</span>
+                                </div>
+                                <div class="ds-progress">
+                                    <div class="ds-progress-bar" id="analise-progress-bar" style="width: 0%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PDFs Analysis Table -->
+                    <div class="ds-table-container" style="margin-bottom:24px;">
+                        <div class="ds-table-header">
+                            <div class="ds-table-title">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                                PDFs para Análise
+                            </div>
+                            <button class="btn btn-secondary btn-sm" onclick="App.PageAnalise.load()">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                Atualizar
+                            </button>
+                        </div>
+                        <table class="ds-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Arquivo</th>
+                                    <th>Status</th>
+                                    <th>Deliberações</th>
+                                    <th>Última Análise</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="analise-table-body">
+                                <tr><td colspan="6"><div class="ds-empty"><div class="ds-empty-text">Nenhum PDF disponível para análise</div><div class="ds-empty-hint">Faça upload na página de Upload</div></div></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Analysis Results -->
+                    <div class="ds-card" id="analise-resultados-card" style="display: none;">
+                        <div class="ds-card-header">
+                            <div class="ds-card-title">Resultado da Análise</div>
+                        </div>
+                        <div style="padding:0 24px 24px;" id="analise-resultados-content">
                         </div>
                     </div>
                 </div>
@@ -4704,154 +4612,191 @@
                      ============================================ -->
                 <div id="page-hub" class="page-view">
                     <div class="page-header">
-                        <div class="page-title-section">
-                            <h1 class="page-title">Hub de Inteligência Regulatória</h1>
-                            <p class="page-subtitle">Noticias, analises e monitoramento das agencias reguladoras do Brasil</p>
-                        </div>
-                        <div class="page-actions">
-                            <select class="filter-select" id="hub-filtro-setor">
-                                <option value="">Todos os Setores</option>
-                                <option value="energia">Energia</option>
-                                <option value="telecom">Telecomunicacoes</option>
-                                <option value="transporte">Transportes</option>
-                                <option value="saude">Saude</option>
-                                <option value="saneamento">Saneamento</option>
-                                <option value="petroleo">Petroleo e Gas</option>
-                                <option value="mineracao">Mineração</option>
-                                <option value="aviacao">Aviacao</option>
-                                <option value="cinema">Cinema</option>
-                            </select>
-                            <select class="filter-select" id="hub-filtro-esfera">
-                                <option value="">Todas as Esferas</option>
-                                <option value="federal">Federal</option>
-                                <option value="estadual">Estadual</option>
-                            </select>
+                        <div class="page-header-row">
+                            <div>
+                                <h1 class="page-title">Hub de Inteligência Regulatória</h1>
+                                <p class="page-subtitle">Visão consolidada das agências reguladoras do Brasil</p>
+                            </div>
+                            <div class="page-header-actions">
+                                <select class="ds-select" id="hub-filtro-setor">
+                                    <option value="">Todos os Setores</option>
+                                    <option value="energia">Energia</option>
+                                    <option value="telecom">Telecomunicações</option>
+                                    <option value="transporte">Transportes</option>
+                                    <option value="saude">Saúde</option>
+                                    <option value="saneamento">Saneamento</option>
+                                    <option value="petroleo">Petróleo e Gás</option>
+                                    <option value="mineracao">Mineração</option>
+                                    <option value="aviacao">Aviação</option>
+                                    <option value="cinema">Cinema</option>
+                                </select>
+                                <select class="ds-select" id="hub-filtro-esfera">
+                                    <option value="">Todas as Esferas</option>
+                                    <option value="federal">Federal</option>
+                                    <option value="estadual">Estadual</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Stats Cards -->
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <div class="stat-card-header">
-                                <span class="stat-card-title">Agências Mapeadas</span>
+                    <!-- Metric Cards Row -->
+                    <div class="metrics-row">
+                        <div class="metric-card">
+                            <div class="metric-card-label">Agências Mapeadas</div>
+                            <div class="metric-card-value hub-stat-agencias">34</div>
+                            <div class="metric-card-change neutral">11 federais + 23 estaduais</div>
+                            <div class="metric-card-sparkline">
+                                <div class="sparkline-bar" style="height:60%"></div>
+                                <div class="sparkline-bar" style="height:80%"></div>
+                                <div class="sparkline-bar" style="height:45%"></div>
+                                <div class="sparkline-bar" style="height:90%"></div>
+                                <div class="sparkline-bar" style="height:70%"></div>
+                                <div class="sparkline-bar" style="height:100%"></div>
                             </div>
-                            <div class="stat-card-value hub-stat-agencias">34</div>
-                            <div class="stat-card-subtitle">11 federais + 23 estaduais</div>
                         </div>
-                        <div class="stat-card">
-                            <div class="stat-card-header">
-                                <span class="stat-card-title">Fontes de Dados</span>
+                        <div class="metric-card">
+                            <div class="metric-card-label">Fontes de Dados</div>
+                            <div class="metric-card-value hub-stat-fontes">28</div>
+                            <div class="metric-card-change neutral">APIs, RSS e dados abertos</div>
+                            <div class="metric-card-sparkline">
+                                <div class="sparkline-bar" style="height:40%;background:var(--accent-purple)"></div>
+                                <div class="sparkline-bar" style="height:65%;background:var(--accent-purple)"></div>
+                                <div class="sparkline-bar" style="height:55%;background:var(--accent-purple)"></div>
+                                <div class="sparkline-bar" style="height:75%;background:var(--accent-purple)"></div>
+                                <div class="sparkline-bar" style="height:85%;background:var(--accent-purple)"></div>
+                                <div class="sparkline-bar" style="height:95%;background:var(--accent-purple)"></div>
                             </div>
-                            <div class="stat-card-value hub-stat-fontes">28</div>
-                            <div class="stat-card-subtitle">APIs, RSS e dados abertos</div>
                         </div>
-                        <div class="stat-card">
-                            <div class="stat-card-header">
-                                <span class="stat-card-title">Diretores Monitorados</span>
+                        <div class="metric-card">
+                            <div class="metric-card-label">Diretores Monitorados</div>
+                            <div class="metric-card-value hub-stat-diretores">0</div>
+                            <div class="metric-card-change neutral">Mandatos ativos</div>
+                            <div class="metric-card-sparkline">
+                                <div class="sparkline-bar" style="height:30%;background:var(--accent-green)"></div>
+                                <div class="sparkline-bar" style="height:50%;background:var(--accent-green)"></div>
+                                <div class="sparkline-bar" style="height:40%;background:var(--accent-green)"></div>
+                                <div class="sparkline-bar" style="height:70%;background:var(--accent-green)"></div>
+                                <div class="sparkline-bar" style="height:55%;background:var(--accent-green)"></div>
+                                <div class="sparkline-bar" style="height:60%;background:var(--accent-green)"></div>
                             </div>
-                            <div class="stat-card-value hub-stat-diretores">0</div>
-                            <div class="stat-card-subtitle">Mandatos ativos</div>
                         </div>
-                        <div class="stat-card">
-                            <div class="stat-card-header">
-                                <span class="stat-card-title">Viabilidade Alta</span>
+                        <div class="metric-card">
+                            <div class="metric-card-label">Viabilidade Alta</div>
+                            <div class="metric-card-value hub-stat-viabilidade" style="color:var(--accent-green)">0</div>
+                            <div class="metric-card-change positive">Agências com API/RSS</div>
+                            <div class="metric-card-sparkline">
+                                <div class="sparkline-bar" style="height:50%;background:var(--accent-orange)"></div>
+                                <div class="sparkline-bar" style="height:70%;background:var(--accent-orange)"></div>
+                                <div class="sparkline-bar" style="height:60%;background:var(--accent-orange)"></div>
+                                <div class="sparkline-bar" style="height:85%;background:var(--accent-orange)"></div>
+                                <div class="sparkline-bar" style="height:75%;background:var(--accent-orange)"></div>
+                                <div class="sparkline-bar" style="height:90%;background:var(--accent-orange)"></div>
                             </div>
-                            <div class="stat-card-value success hub-stat-viabilidade">0</div>
-                            <div class="stat-card-subtitle">Agencias com API/RSS</div>
                         </div>
                     </div>
 
-                    <!-- Main Grid: News Feed + Sidebar -->
-                    <div class="hub-main-grid">
-                        <!-- Left: News Feed -->
-                        <div class="hub-news-section">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h2 class="card-title">
-                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path></svg>
-                                        Últimas Notícias das Agências
-                                    </h2>
-                                    <div class="hub-news-tabs">
-                                        <button class="hub-tab active" data-tab="todas">Todas</button>
-                                        <button class="hub-tab" data-tab="federal">Federais</button>
-                                        <button class="hub-tab" data-tab="estadual">Estaduais</button>
-                                        <button class="hub-tab" data-tab="resolucoes">Resoluções</button>
+                    <!-- Chart + Side Metric -->
+                    <div class="grid-70-30" style="margin-bottom:24px;">
+                        <div class="chart-container">
+                            <div class="chart-header">
+                                <div class="chart-title">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                                    Tendência de Deliberações
+                                </div>
+                                <div class="chart-summary">
+                                    <span class="chart-summary-total" id="hub-chart-total">0</span>
+                                    <div class="chart-legend">
+                                        <div class="chart-legend-item"><span class="chart-legend-dot cyan"></span>Deferido</div>
+                                        <div class="chart-legend-item"><span class="chart-legend-dot red"></span>Indeferido</div>
+                                        <div class="chart-legend-item"><span class="chart-legend-dot orange"></span>Parcial</div>
                                     </div>
                                 </div>
-                                <div class="card-body" id="hub-news-container">
-                                    <!-- Noticias serao renderizadas via JavaScript -->
-                                </div>
+                            </div>
+                            <div class="chart-canvas-wrap">
+                                <canvas id="hub-chart-deliberacoes"></canvas>
                             </div>
                         </div>
+                        <div class="chart-side-metric">
+                            <div class="chart-side-metric-label">PDFs Analisados</div>
+                            <div class="chart-side-metric-value" id="hub-pdfs-count">0</div>
+                            <div class="chart-side-metric-unit">documentos processados</div>
+                            <button class="chart-side-metric-btn" onclick="Router.navigate('/upload')">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                Enviar PDFs
+                            </button>
+                        </div>
+                    </div>
 
-                        <!-- Right: Sidebar -->
-                        <div class="hub-sidebar-section">
-                            <!-- Fontes de Dados -->
-                            <div class="card">
-                                <div class="card-header">
-                                    <h2 class="card-title">
-                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>
-                                        Fontes de Dados
-                                    </h2>
+                    <!-- Main Grid: News Feed + Sources -->
+                    <div class="grid-70-30" style="margin-bottom:24px;">
+                        <div class="ds-card">
+                            <div class="ds-card-header">
+                                <div class="ds-card-title">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2"/></svg>
+                                    Últimas Notícias
                                 </div>
-                                <div class="card-body" id="hub-fontes-container">
-                                    <!-- Fontes serao renderizadas via JavaScript -->
+                                <div class="chart-period-toggle hub-news-tabs">
+                                    <button class="chart-period-btn hub-tab active" data-tab="todas">Todas</button>
+                                    <button class="chart-period-btn hub-tab" data-tab="federal">Federais</button>
+                                    <button class="chart-period-btn hub-tab" data-tab="estadual">Estaduais</button>
+                                    <button class="chart-period-btn hub-tab" data-tab="resolucoes">Resoluções</button>
                                 </div>
+                            </div>
+                            <div id="hub-news-container">
+                                <!-- Notícias renderizadas via JavaScript -->
+                            </div>
+                        </div>
+                        <div class="ds-card">
+                            <div class="ds-card-header">
+                                <div class="ds-card-title">Fontes de Dados</div>
+                            </div>
+                            <div id="hub-fontes-container">
+                                <!-- Fontes renderizadas via JavaScript -->
                             </div>
                         </div>
                     </div>
 
-                    <!-- Agencias Federais -->
-                    <div class="card" style="margin-top: 24px;">
-                        <div class="card-header">
-                            <h2 class="card-title">
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                    <!-- Federal Agencies Table -->
+                    <div class="ds-table-container" style="margin-bottom:24px;">
+                        <div class="ds-table-header">
+                            <div class="ds-table-title">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
                                 Agências Reguladoras Federais
-                            </h2>
+                            </div>
                         </div>
-                        <div class="card-body" style="padding: 0;">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Agencia</th>
-                                        <th>Setor</th>
-                                        <th>Fonte de Dados</th>
-                                        <th>Diretores</th>
-                                        <th>Mandato</th>
-                                        <th>Viabilidade</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="hub-tabela-federais">
-                                    <!-- Renderizado via JavaScript -->
-                                </tbody>
-                            </table>
-                        </div>
+                        <table class="ds-table">
+                            <thead>
+                                <tr>
+                                    <th>Agência</th>
+                                    <th>Setor</th>
+                                    <th>Fonte de Dados</th>
+                                    <th>Diretores</th>
+                                    <th>Mandato</th>
+                                    <th>Viabilidade</th>
+                                </tr>
+                            </thead>
+                            <tbody id="hub-tabela-federais">
+                                <!-- Renderizado via JavaScript -->
+                            </tbody>
+                        </table>
                     </div>
 
-                    <!-- Agencias Estaduais -->
-                    <div class="card" style="margin-top: 24px;">
-                        <div class="card-header">
-                            <h2 class="card-title">
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm0 0h12"></path></svg>
-                                Agencias Estaduais Mapeadas
-                            </h2>
+                    <!-- State Agencies -->
+                    <div class="ds-card" style="margin-bottom:24px;">
+                        <div class="ds-card-header">
+                            <div class="ds-card-title">Agências Estaduais Mapeadas</div>
                         </div>
-                        <div class="card-body">
-                            <div class="hub-estaduais-grid" id="hub-estaduais-container">
-                                <!-- Renderizado via JavaScript -->
-                            </div>
+                        <div class="hub-estaduais-grid" id="hub-estaduais-container">
+                            <!-- Renderizado via JavaScript -->
                         </div>
                     </div>
 
                     <!-- Roadmap -->
-                    <div class="card" style="margin-top: 24px;">
-                        <div class="card-header">
-                            <h2 class="card-title">
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
-                                Roadmap de Implementacao
-                            </h2>
+                    <div class="ds-card">
+                        <div class="ds-card-header">
+                            <div class="ds-card-title">Roadmap de Implementação</div>
                         </div>
-                        <div class="card-body" id="hub-roadmap-container">
+                        <div id="hub-roadmap-container">
                             <!-- Renderizado via JavaScript -->
                         </div>
                     </div>
@@ -6398,7 +6343,7 @@
                 </div>
 
             </div>
-        </main>
+        </div>
     </div>
 
     <script src="/js/app.js"></script>

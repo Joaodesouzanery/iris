@@ -5755,7 +5755,52 @@
             this.renderEstaduais();
             this.renderRoadmap();
             this.updateStats();
+            this.renderChart();
+            this.updatePdfsCount();
             this.bindEvents();
+        },
+
+        // Chart.js — Deliberation trends
+        renderChart() {
+            const canvas = document.getElementById('hub-chart-deliberacoes');
+            if (!canvas || typeof Chart === 'undefined') return;
+            if (this._chart) { this._chart.destroy(); }
+
+            const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'];
+            const deferido = [12, 19, 8, 15, 22, 18];
+            const indeferido = [3, 5, 2, 4, 6, 3];
+            const parcial = [2, 3, 1, 2, 4, 2];
+            const total = deferido.reduce((a, b) => a + b, 0) + indeferido.reduce((a, b) => a + b, 0) + parcial.reduce((a, b) => a + b, 0);
+            const el = document.getElementById('hub-chart-total');
+            if (el) el.textContent = total;
+
+            this._chart = new Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels: months,
+                    datasets: [
+                        { label: 'Deferido', data: deferido, backgroundColor: '#00BCD4', borderRadius: 4 },
+                        { label: 'Indeferido', data: indeferido, backgroundColor: '#FF5252', borderRadius: 4 },
+                        { label: 'Parcial', data: parcial, backgroundColor: '#FFA726', borderRadius: 4 }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, tooltip: { backgroundColor: '#1A1F2E', titleColor: '#fff', bodyColor: '#8A8FA8', borderColor: '#2A2F3E', borderWidth: 1, cornerRadius: 8, padding: 12 } },
+                    scales: {
+                        x: { stacked: true, grid: { display: false }, ticks: { color: '#5A5F72', font: { size: 11 } } },
+                        y: { stacked: true, grid: { color: 'rgba(42,47,62,0.5)' }, ticks: { color: '#5A5F72', font: { size: 11 } } }
+                    }
+                }
+            });
+        },
+
+        async updatePdfsCount() {
+            try {
+                const data = await API.get('/api/pdfs');
+                const el = document.getElementById('hub-pdfs-count');
+                if (el && data) el.textContent = data.total || 0;
+            } catch (e) { /* silent */ }
         },
 
         async fetchNoticiasReais(forceRefresh = false) {

@@ -1,0 +1,595 @@
+/* =============================================================================
+   IRIS Platform — Components
+   Cards, Tables, Badges, Buttons, Forms
+   ============================================================================= */
+
+/* ── Buttons ── */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: var(--border-radius-sm);
+    transition: var(--transition);
+    white-space: nowrap;
+    cursor: pointer;
+    border: 1px solid transparent;
+}
+
+.btn svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+.btn-primary {
+    background: var(--accent-cyan);
+    color: var(--bg-primary);
+    font-weight: 600;
+}
+.btn-primary:hover {
+    opacity: 0.85;
+    box-shadow: 0 4px 12px rgba(0, 188, 212, 0.3);
+}
+
+.btn-secondary {
+    background: var(--bg-card);
+    color: var(--text-primary);
+    border-color: var(--border-subtle);
+}
+.btn-secondary:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--accent-cyan);
+}
+
+.btn-danger {
+    background: var(--accent-red-bg);
+    color: var(--accent-red);
+}
+.btn-danger:hover {
+    background: rgba(255, 82, 82, 0.2);
+}
+
+.btn-ghost {
+    background: transparent;
+    color: var(--text-secondary);
+}
+.btn-ghost:hover {
+    background: var(--bg-card);
+    color: var(--text-primary);
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 12px;
+}
+
+.btn-icon {
+    padding: 8px;
+    border-radius: var(--border-radius-xs);
+}
+
+/* ── Cards ── */
+.ds-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--border-radius);
+    padding: 24px;
+    transition: var(--transition);
+}
+
+.ds-card:hover {
+    border-color: rgba(0, 188, 212, 0.3);
+    box-shadow: var(--shadow-card-hover);
+}
+
+.ds-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.ds-card-title {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-tertiary);
+}
+
+/* Metric Cards Row */
+.metrics-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+.metric-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--border-radius);
+    padding: 24px;
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.metric-card:hover {
+    border-color: rgba(0, 188, 212, 0.3);
+    box-shadow: var(--shadow-card-hover);
+}
+
+.metric-card-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-tertiary);
+    margin-bottom: 8px;
+}
+
+.metric-card-value {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+    margin-bottom: 12px;
+}
+
+.metric-card-change {
+    font-size: 12px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.metric-card-change.positive {
+    color: var(--accent-green);
+}
+
+.metric-card-change.negative {
+    color: var(--accent-red);
+}
+
+.metric-card-change.neutral {
+    color: var(--text-secondary);
+}
+
+.metric-card-sparkline {
+    position: absolute;
+    right: 24px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 40px;
+}
+
+.sparkline-bar {
+    width: 6px;
+    border-radius: 2px;
+    background: var(--accent-cyan);
+    opacity: 0.7;
+    transition: var(--transition);
+}
+
+.metric-card:hover .sparkline-bar {
+    opacity: 1;
+}
+
+/* ── Badges ── */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.badge-success,
+.badge-deferido {
+    background: var(--accent-green-bg);
+    color: var(--accent-green);
+}
+
+.badge-danger,
+.badge-indeferido {
+    background: var(--accent-red-bg);
+    color: var(--accent-red);
+}
+
+.badge-warning,
+.badge-parcial {
+    background: var(--accent-orange-bg);
+    color: var(--accent-orange);
+}
+
+.badge-info,
+.badge-analise {
+    background: var(--accent-cyan-bg);
+    color: var(--accent-cyan);
+}
+
+.badge-secondary {
+    background: rgba(138, 143, 168, 0.12);
+    color: var(--text-secondary);
+}
+
+.badge-purple {
+    background: var(--accent-purple-bg);
+    color: var(--accent-purple);
+}
+
+.badge-outline {
+    background: transparent;
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+}
+
+/* ── Tables ── */
+.ds-table-container {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--border-radius);
+    padding: 24px;
+    overflow: hidden;
+}
+
+.ds-table-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    gap: 16px;
+}
+
+.ds-table-title {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-tertiary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ds-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.ds-table thead th {
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-tertiary);
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-subtle);
+    white-space: nowrap;
+}
+
+.ds-table tbody td {
+    padding: 16px;
+    font-size: 14px;
+    color: var(--text-primary);
+    border-bottom: 1px solid rgba(42, 47, 62, 0.5);
+    vertical-align: middle;
+}
+
+.ds-table tbody tr {
+    transition: var(--transition);
+}
+
+.ds-table tbody tr:hover {
+    background: var(--bg-card-hover);
+}
+
+.ds-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.ds-table .td-secondary {
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+.ds-table .td-mono {
+    font-variant-numeric: tabular-nums;
+}
+
+/* ── Stat Cards (compact row) ── */
+.stat-cards-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--border-radius);
+    padding: 20px;
+    transition: var(--transition);
+}
+
+.stat-card:hover {
+    border-color: rgba(0, 188, 212, 0.3);
+}
+
+.stat-card-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+.stat-card-value {
+    font-size: 24px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.stat-card-value.text-warning { color: var(--accent-orange); }
+.stat-card-value.text-success { color: var(--accent-green); }
+.stat-card-value.text-danger { color: var(--accent-red); }
+.stat-card-value.text-info { color: var(--accent-cyan); }
+
+/* ── Dropzone ── */
+.ds-dropzone {
+    border: 2px dashed var(--border-subtle);
+    border-radius: var(--border-radius);
+    padding: 48px 24px;
+    text-align: center;
+    transition: var(--transition);
+    cursor: pointer;
+}
+
+.ds-dropzone:hover,
+.ds-dropzone.dragover {
+    border-color: var(--accent-cyan);
+    background: rgba(0, 188, 212, 0.04);
+}
+
+.ds-dropzone-icon {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 16px;
+    color: var(--text-tertiary);
+}
+
+.ds-dropzone-text {
+    font-size: 15px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+.ds-dropzone-hint {
+    font-size: 13px;
+    color: var(--text-tertiary);
+}
+
+/* ── Progress ── */
+.ds-progress {
+    height: 6px;
+    background: var(--border-subtle);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.ds-progress-bar {
+    height: 100%;
+    background: var(--accent-cyan);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+/* ── Empty State ── */
+.ds-empty {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--text-secondary);
+}
+
+.ds-empty svg {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 16px;
+    color: var(--text-tertiary);
+}
+
+.ds-empty-text {
+    font-size: 15px;
+    margin-bottom: 8px;
+}
+
+.ds-empty-hint {
+    font-size: 13px;
+    color: var(--text-tertiary);
+}
+
+/* ── Dropdown / Select ── */
+.ds-select {
+    appearance: none;
+    padding: 8px 32px 8px 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--border-radius-xs);
+    font-size: 12px;
+    color: var(--text-primary);
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235A5F72' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+}
+
+.ds-select:hover {
+    border-color: var(--accent-cyan);
+}
+
+/* ── Toggle Buttons ── */
+.toggle-group {
+    display: inline-flex;
+    border-radius: var(--border-radius-xs);
+    overflow: hidden;
+    border: 1px solid var(--border-subtle);
+}
+
+.toggle-btn {
+    padding: 6px 14px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    background: transparent;
+    transition: var(--transition);
+    border: none;
+    cursor: pointer;
+}
+
+.toggle-btn:hover {
+    color: var(--text-primary);
+}
+
+.toggle-btn.active {
+    background: var(--border-subtle);
+    color: var(--text-primary);
+}
+
+/* ── Tabs ── */
+.ds-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border-subtle);
+    padding-bottom: 0;
+}
+
+.ds-tab {
+    padding: 10px 16px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: var(--transition);
+    cursor: pointer;
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+}
+
+.ds-tab:hover {
+    color: var(--text-primary);
+}
+
+.ds-tab.active {
+    color: var(--accent-cyan);
+    border-bottom-color: var(--accent-cyan);
+}
+
+/* ── Toast Notifications ── */
+#iris-toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 50000;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.iris-toast {
+    padding: 14px 20px;
+    border-radius: var(--border-radius-sm);
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    transform: translateX(0);
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    max-width: 360px;
+}
+
+.iris-toast.success {
+    background: var(--accent-green-bg);
+    border: 1px solid rgba(0, 230, 118, 0.3);
+    color: var(--accent-green);
+}
+
+.iris-toast.error {
+    background: var(--accent-red-bg);
+    border: 1px solid rgba(255, 82, 82, 0.3);
+    color: var(--accent-red);
+}
+
+.iris-toast.info {
+    background: var(--accent-cyan-bg);
+    border: 1px solid rgba(0, 188, 212, 0.3);
+    color: var(--accent-cyan);
+}
+
+.iris-toast.warning {
+    background: var(--accent-orange-bg);
+    border: 1px solid rgba(255, 167, 38, 0.3);
+    color: var(--accent-orange);
+}
+
+/* ── Grid Layouts ── */
+.grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+}
+
+.grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 24px;
+}
+
+.grid-70-30 {
+    display: grid;
+    grid-template-columns: 7fr 3fr;
+    gap: 24px;
+}
+
+@media (max-width: 1200px) {
+    .metrics-row {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .grid-70-30 {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .metrics-row {
+        grid-template-columns: 1fr;
+    }
+    .grid-2, .grid-3 {
+        grid-template-columns: 1fr;
+    }
+    .stat-cards-row {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .ds-table-container {
+        overflow-x: auto;
+    }
+    .ds-table {
+        min-width: 600px;
+    }
+}
