@@ -21,23 +21,23 @@
     --text-tertiary: #5A5F72;
     --text-header: #6B7080;
 
-    /* Accents */
-    --accent-cyan: #00BCD4;
-    --accent-purple: #7C4DFF;
-    --accent-green: #00E676;
-    --accent-orange: #FFA726;
-    --accent-red: #FF5252;
+    /* Accents — Gold/Amber palette matching IRIS logo */
+    --accent-cyan: #C9A227;
+    --accent-purple: #A67C2E;
+    --accent-green: #4CAF50;
+    --accent-orange: #E8A817;
+    --accent-red: #EF5350;
 
     /* Accent translucent */
-    --accent-cyan-bg: rgba(0, 188, 212, 0.12);
-    --accent-purple-bg: rgba(124, 77, 255, 0.12);
-    --accent-green-bg: rgba(0, 230, 118, 0.12);
-    --accent-orange-bg: rgba(255, 167, 38, 0.12);
-    --accent-red-bg: rgba(255, 82, 82, 0.12);
+    --accent-cyan-bg: rgba(201, 162, 39, 0.12);
+    --accent-purple-bg: rgba(166, 124, 46, 0.12);
+    --accent-green-bg: rgba(76, 175, 80, 0.12);
+    --accent-orange-bg: rgba(232, 168, 23, 0.12);
+    --accent-red-bg: rgba(239, 83, 80, 0.12);
 
     /* Shadows */
     --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.3);
-    --shadow-card-hover: 0 4px 12px rgba(0, 188, 212, 0.1);
+    --shadow-card-hover: 0 4px 12px rgba(201, 162, 39, 0.1);
 
     /* Sizing */
     --sidebar-width: 260px;
@@ -111,7 +111,7 @@ input, select, textarea {
 
 input:focus, select:focus, textarea:focus {
     border-color: var(--accent-cyan);
-    box-shadow: 0 0 0 3px rgba(0, 188, 212, 0.15);
+    box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.15);
 }
 
 input::placeholder {
@@ -169,7 +169,7 @@ h4 { font-size: 16px; font-weight: 600; line-height: 1.4; }
 
 /* ── Selection ── */
 ::selection {
-    background: rgba(0, 188, 212, 0.25);
+    background: rgba(201, 162, 39, 0.25);
 }
 
 /* ── Utility Classes ── */

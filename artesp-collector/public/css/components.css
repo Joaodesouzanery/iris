@@ -32,7 +32,7 @@
 }
 .btn-primary:hover {
     opacity: 0.85;
-    box-shadow: 0 4px 12px rgba(0, 188, 212, 0.3);
+    box-shadow: 0 4px 12px rgba(201, 162, 39, 0.3);
 }
 
 .btn-secondary {
@@ -82,7 +82,7 @@
 }
 
 .ds-card:hover {
-    border-color: rgba(0, 188, 212, 0.3);
+    border-color: rgba(201, 162, 39, 0.3);
     box-shadow: var(--shadow-card-hover);
 }
 
@@ -120,7 +120,7 @@
 }
 
 .metric-card:hover {
-    border-color: rgba(0, 188, 212, 0.3);
+    border-color: rgba(201, 162, 39, 0.3);
     box-shadow: var(--shadow-card-hover);
 }
 
@@ -328,7 +328,7 @@
 }
 
 .stat-card:hover {
-    border-color: rgba(0, 188, 212, 0.3);
+    border-color: rgba(201, 162, 39, 0.3);
 }
 
 .stat-card-label {
@@ -361,7 +361,7 @@
 .ds-dropzone:hover,
 .ds-dropzone.dragover {
     border-color: var(--accent-cyan);
-    background: rgba(0, 188, 212, 0.04);
+    background: rgba(201, 162, 39, 0.04);
 }
 
 .ds-dropzone-icon {
@@ -535,7 +535,7 @@
 
 .iris-toast.info {
     background: var(--accent-cyan-bg);
-    border: 1px solid rgba(0, 188, 212, 0.3);
+    border: 1px solid rgba(201, 162, 39, 0.3);
     color: var(--accent-cyan);
 }
 

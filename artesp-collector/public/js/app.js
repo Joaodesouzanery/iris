@@ -60,8 +60,8 @@
                 '/governanca': 'Governança Regulatória',
                 '/boletim': 'Boletim Mensal',
                 '/auditoria': 'Auditoria Forense',
-                '/upload': 'Upload de PDFs',
-                '/analise': 'Análise de PDFs',
+                '/upload': 'Upload e Análise de PDFs',
+                '/analise': 'Upload e Análise de PDFs',
                 '/agencias': 'Agências Reguladoras',
                 '/mapa': 'Mapa do Brasil',
                 '/radar': 'Radar Regulatório',
@@ -4878,6 +4878,7 @@
     // ============================================
     const PageUpload = {
         pdfs: [],
+        _dropzoneSetup: false,
 
         async init() {
             const page = document.getElementById('page-upload');
@@ -4888,10 +4889,12 @@
         },
 
         setupDropzone() {
+            if (this._dropzoneSetup) return;
             const dropzone = document.getElementById('upload-dropzone');
             const input = document.getElementById('upload-input');
 
             if (!dropzone || !input) return;
+            this._dropzoneSetup = true;
 
             // Drag and drop handlers
             dropzone.addEventListener('dragover', (e) => {
@@ -4939,44 +4942,14 @@
             const pendentes = this.pdfs.filter(p => p.status === 'pendente').length;
             const analisados = this.pdfs.filter(p => p.status === 'analisado').length;
             const erros = this.pdfs.filter(p => p.status === 'erro').length;
+            const deliberacoes = this.pdfs.reduce((sum, p) => sum + (p.deliberacoes_count || 0), 0);
 
-            document.getElementById('upload-total').textContent = total;
-            document.getElementById('upload-pendentes').textContent = pendentes;
-            document.getElementById('upload-analisados').textContent = analisados;
-            document.getElementById('upload-erros').textContent = erros;
-        },
-
-        render() {
-            const tbody = document.getElementById('upload-table-body');
-
-            if (this.pdfs.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state">Nenhum PDF carregado ainda</div></td></tr>';
-                return;
-            }
-
-            tbody.innerHTML = this.pdfs.map((pdf, index) => {
-                const statusClass = pdf.status === 'analisado' ? 'badge-success' :
-                                   pdf.status === 'erro' ? 'badge-danger' :
-                                   pdf.status === 'analisando' ? 'badge-warning' : 'badge-secondary';
-                const statusLabel = pdf.status === 'analisado' ? 'Analisado' :
-                                   pdf.status === 'erro' ? 'Erro' :
-                                   pdf.status === 'analisando' ? 'Analisando...' : 'Pendente';
-                const tamanho = pdf.size ? (pdf.size / 1024 / 1024).toFixed(2) + ' MB' : '-';
-
-                return `<tr>
-                    <td>${index + 1}</td>
-                    <td><span class="file-name">${pdf.nome || pdf.filename || 'Arquivo ' + (index + 1)}</span></td>
-                    <td>${tamanho}</td>
-                    <td><span class="badge ${statusClass}">${statusLabel}</span></td>
-                    <td>${pdf.deliberacoes_count || 0}</td>
-                    <td>
-                        <div class="action-buttons">
-                            ${pdf.status === 'pendente' ? `<button class="btn btn-primary btn-sm" onclick="App.PageUpload.analisar(${index})">Analisar</button>` : ''}
-                            <button class="btn btn-danger btn-sm" onclick="App.PageUpload.excluir(${index})">Excluir</button>
-                        </div>
-                    </td>
-                </tr>`;
-            }).join('');
+            const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+            setEl('upload-total', total);
+            setEl('upload-pendentes', pendentes);
+            setEl('upload-analisados', analisados);
+            setEl('upload-erros', erros);
+            setEl('upload-deliberacoes', deliberacoes);
         },
 
         async uploadFiles(files) {
@@ -5350,7 +5323,8 @@
                     <td>${pdf.deliberacoes_count || 0}</td>
                     <td>
                         <div class="action-buttons">
-                            ${pdf.status === 'pendente' ? `<button class="btn btn-primary btn-sm" onclick="App.PageUpload.analisar(${index})">Analisar</button>` : ''}
+                            ${isPendente ? `<button class="btn btn-primary btn-sm" onclick="App.PageUpload.analisarPdf(${index})">Analisar</button>` : ''}
+                            ${pdf.status === 'analisado' ? `<button class="btn btn-secondary btn-sm" onclick="App.PageUpload.verResultado(${index})">Ver Resultado</button>` : ''}
                             <button class="btn btn-danger btn-sm" onclick="App.PageUpload.excluir(${index})">Excluir</button>
                         </div>
                     </td>
@@ -5358,92 +5332,27 @@
             }).join('');
 
             this.updateBatchUI();
-        }
-    };
-
-    // ============================================
-    // PAGE: Analise de PDFs
-    // ============================================
-    const PageAnalise = {
-        pdfs: [],
-        analisando: false,
-
-        async init() {
-            const page = document.getElementById('page-analise');
-            page.classList.add('active');
-            await this.load();
         },
 
-        async load() {
-            const response = await API.get('/api/pdfs');
-            this.pdfs = response?.pdfs || [];
-            this.updateStats();
-            this.render();
-        },
-
-        updateStats() {
-            const total = this.pdfs.length;
-            const pendentes = this.pdfs.filter(p => p.status === 'pendente').length;
-            const concluidos = this.pdfs.filter(p => p.status === 'analisado').length;
-            const deliberacoes = this.pdfs.reduce((sum, p) => sum + (p.deliberacoes_count || 0), 0);
-
-            document.getElementById('analise-total').textContent = total;
-            document.getElementById('analise-pendentes').textContent = pendentes;
-            document.getElementById('analise-concluidos').textContent = concluidos;
-            document.getElementById('analise-deliberacoes').textContent = deliberacoes;
-        },
-
-        render() {
-            const tbody = document.getElementById('analise-table-body');
-
-            if (this.pdfs.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state">Nenhum PDF disponível. Faça upload na página de Upload.</div></td></tr>';
-                return;
-            }
-
-            tbody.innerHTML = this.pdfs.map((pdf, index) => {
-                const statusClass = pdf.status === 'analisado' ? 'badge-success' :
-                                   pdf.status === 'erro' ? 'badge-danger' :
-                                   pdf.status === 'analisando' ? 'badge-warning' : 'badge-secondary';
-                const statusLabel = pdf.status === 'analisado' ? 'Analisado' :
-                                   pdf.status === 'erro' ? 'Erro' :
-                                   pdf.status === 'analisando' ? 'Analisando...' : 'Pendente';
-
-                return `<tr>
-                    <td>${index + 1}</td>
-                    <td><span class="file-name">${pdf.nome || pdf.filename || 'Arquivo ' + (index + 1)}</span></td>
-                    <td><span class="badge ${statusClass}">${statusLabel}</span></td>
-                    <td>${pdf.deliberacoes_count || 0}</td>
-                    <td>${pdf.ultima_analise || '-'}</td>
-                    <td>
-                        <div class="action-buttons">
-                            ${pdf.status !== 'analisando' ? `<button class="btn btn-primary btn-sm" onclick="App.PageAnalise.analisar(${index})">Analisar</button>` : '<span class="badge badge-warning">Em andamento</span>'}
-                            ${pdf.status === 'analisado' ? `<button class="btn btn-secondary btn-sm" onclick="App.PageAnalise.verResultado(${index})">Ver Resultado</button>` : ''}
-                        </div>
-                    </td>
-                </tr>`;
-            }).join('');
-        },
-
-        async analisar(index) {
+        // ── Analysis functionality (merged from PageAnalise) ──
+        async analisarPdf(index) {
             const statusCard = document.getElementById('analise-status-card');
             const statusText = document.getElementById('analise-status-text');
             const statusPercent = document.getElementById('analise-status-percent');
             const progressBar = document.getElementById('analise-progress-bar');
 
-            statusCard.style.display = 'block';
-            statusText.textContent = 'Analisando PDF ' + (index + 1) + '...';
-            statusPercent.textContent = '0%';
-            progressBar.style.width = '0%';
+            if (statusCard) statusCard.style.display = 'block';
+            if (statusText) statusText.textContent = 'Analisando PDF ' + (index + 1) + '...';
+            if (statusPercent) statusPercent.textContent = '0%';
+            if (progressBar) progressBar.style.width = '0%';
 
             try {
-                // Simular progresso
                 let progress = 0;
                 const progressInterval = setInterval(() => {
                     if (progress < 90) {
                         progress += Math.random() * 10;
-                        statusPercent.textContent = Math.min(90, Math.round(progress)) + '%';
-                        progressBar.style.width = Math.min(90, Math.round(progress)) + '%';
+                        if (statusPercent) statusPercent.textContent = Math.min(90, Math.round(progress)) + '%';
+                        if (progressBar) progressBar.style.width = Math.min(90, Math.round(progress)) + '%';
                     }
                 }, 500);
 
@@ -5452,76 +5361,53 @@
                 clearInterval(progressInterval);
 
                 if (response?.sucesso) {
-                    statusText.textContent = 'Análise concluída!';
-                    statusPercent.textContent = '100%';
-                    progressBar.style.width = '100%';
+                    if (statusText) statusText.textContent = 'Análise concluída!';
+                    if (statusPercent) statusPercent.textContent = '100%';
+                    if (progressBar) progressBar.style.width = '100%';
 
                     if (response.deliberacoes) {
                         this.mostrarResultado(response);
                     }
 
-                    setTimeout(() => {
-                        statusCard.style.display = 'none';
-                    }, 2000);
-
+                    setTimeout(() => { if (statusCard) statusCard.style.display = 'none'; }, 2000);
                     await this.load();
                 } else {
-                    statusText.textContent = 'Erro: ' + (response?.erro || 'Erro desconhecido');
-                    progressBar.style.width = '0%';
+                    if (statusText) statusText.textContent = 'Erro: ' + (response?.erro || 'Erro desconhecido');
+                    if (progressBar) progressBar.style.width = '0%';
+                    this._showToast('Erro na análise: ' + (response?.erro || 'Erro desconhecido'), 'error', 6000);
                 }
             } catch (error) {
-                statusText.textContent = 'Erro: ' + error.message;
+                if (statusText) statusText.textContent = 'Erro: ' + error.message;
+                this._showToast('Erro ao analisar: ' + error.message, 'error', 6000);
             }
         },
 
-        async analisarTodos() {
+        async analisarTodosPendentes() {
             const pendentes = this.pdfs.filter(p => p.status === 'pendente');
 
             if (pendentes.length === 0) {
-                alert('Nenhum PDF pendente para análise');
+                this._showToast('Nenhum PDF pendente para análise', 'warning');
                 return;
             }
 
-            const statusCard = document.getElementById('analise-status-card');
-            const statusText = document.getElementById('analise-status-text');
-            const statusPercent = document.getElementById('analise-status-percent');
-            const progressBar = document.getElementById('analise-progress-bar');
-
-            statusCard.style.display = 'block';
-            this.analisando = true;
-
-            try {
-                const response = await API.post('/api/analisar-todos');
-
-                if (response?.sucesso) {
-                    statusText.textContent = `Análise concluída! ${response.total_deliberacoes || 0} deliberações extraídas.`;
-                    statusPercent.textContent = '100%';
-                    progressBar.style.width = '100%';
-
-                    setTimeout(() => {
-                        statusCard.style.display = 'none';
-                    }, 3000);
-
-                    await this.load();
-                } else {
-                    statusText.textContent = 'Erro: ' + (response?.erro || 'Erro desconhecido');
-                }
-            } catch (error) {
-                statusText.textContent = 'Erro: ' + error.message;
-            }
-
-            this.analisando = false;
+            // Select all pendentes and trigger batch analysis
+            this.selectedFiles.clear();
+            pendentes.forEach(p => {
+                const idx = this.pdfs.indexOf(p);
+                if (idx >= 0) this.selectedFiles.add(idx);
+            });
+            this.updateBatchUI();
+            await this.startBatchAnalysis();
         },
 
         mostrarResultado(response) {
             const card = document.getElementById('analise-resultados-card');
             const content = document.getElementById('analise-resultados-content');
+            if (!card || !content) return;
 
             card.style.display = 'block';
 
             const deliberacoes = response.deliberacoes || [];
-
-            // Contagem por resultado
             const deferidos = deliberacoes.filter(d => d.resultado === 'Deferido').length;
             const indeferidos = deliberacoes.filter(d => d.resultado === 'Indeferido').length;
             const parciais = deliberacoes.filter(d => d.resultado === 'Parcialmente Deferido').length;
@@ -5531,7 +5417,7 @@
                     <div class="summary-stats">
                         <div class="summary-stat">
                             <div class="summary-value">${deliberacoes.length}</div>
-                            <div class="summary-label">Total Extraidas</div>
+                            <div class="summary-label">Total Extraídas</div>
                         </div>
                         <div class="summary-stat success">
                             <div class="summary-value">${deferidos}</div>
@@ -5553,7 +5439,6 @@
                         const resultadoClass = d.resultado === 'Deferido' ? 'badge-success' :
                                               d.resultado === 'Parcialmente Deferido' ? 'badge-warning' :
                                               d.resultado === 'Indeferido' ? 'badge-danger' : 'badge-secondary';
-
                         const votosAFavor = d.votos_a_favor || [];
                         const votosContra = d.votos_contra || [];
                         const totalVotos = votosAFavor.length + votosContra.length;
@@ -5568,7 +5453,6 @@
                                 </div>
                                 <span class="badge ${resultadoClass}">${d.resultado || '-'}</span>
                             </div>
-
                             <div class="deliberacao-body">
                                 <div class="deliberacao-row">
                                     <span class="deliberacao-label">Interessado:</span>
@@ -5585,41 +5469,29 @@
                                 </div>` : ''}
                                 ${d.classificacao ? `
                                 <div class="deliberacao-row">
-                                    <span class="deliberacao-label">Classificacao:</span>
+                                    <span class="deliberacao-label">Classificação:</span>
                                     <span class="deliberacao-value">${d.classificacao}</span>
                                 </div>` : ''}
                             </div>
-
                             ${totalVotos > 0 ? `
                             <div class="deliberacao-votos">
                                 <div class="votos-header">
                                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                                    Votacao dos Diretores
+                                    Votação dos Diretores
                                 </div>
                                 <div class="votos-grid">
                                     ${votosAFavor.length > 0 ? `
                                     <div class="votos-column favor">
-                                        <div class="votos-title">
-                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="12" height="12"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                            A Favor (${votosAFavor.length})
-                                        </div>
-                                        <div class="votos-list">
-                                            ${votosAFavor.map(v => `<span class="voto-diretor">${v}</span>`).join('')}
-                                        </div>
+                                        <div class="votos-title">A Favor (${votosAFavor.length})</div>
+                                        <div class="votos-list">${votosAFavor.map(v => `<span class="voto-diretor">${v}</span>`).join('')}</div>
                                     </div>` : ''}
                                     ${votosContra.length > 0 ? `
                                     <div class="votos-column contra">
-                                        <div class="votos-title">
-                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="12" height="12"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                                            Contra (${votosContra.length})
-                                        </div>
-                                        <div class="votos-list">
-                                            ${votosContra.map(v => `<span class="voto-diretor">${v}</span>`).join('')}
-                                        </div>
+                                        <div class="votos-title">Contra (${votosContra.length})</div>
+                                        <div class="votos-list">${votosContra.map(v => `<span class="voto-diretor">${v}</span>`).join('')}</div>
                                     </div>` : ''}
                                 </div>
                             </div>` : ''}
-
                             <div class="deliberacao-footer">
                                 <span class="agencia-badge">${d.agencia || 'ARTESP'}</span>
                             </div>
@@ -5635,6 +5507,19 @@
                 this.mostrarResultado({ deliberacoes: pdf.deliberacoes });
             }
         }
+    };
+
+    // PageAnalise now redirects to the unified PageUpload page
+    const PageAnalise = {
+        async init() {
+            // Redirect to unified upload page
+            Router.navigate('/upload');
+        },
+        async load() {},
+        analisar(index) { PageUpload.analisarPdf(index); },
+        analisarTodos() { PageUpload.analisarTodosPendentes(); },
+        mostrarResultado(r) { PageUpload.mostrarResultado(r); },
+        verResultado(i) { PageUpload.verResultado(i); }
     };
 
     // ============================================
@@ -5779,7 +5664,7 @@
                 data: {
                     labels: months,
                     datasets: [
-                        { label: 'Deferido', data: deferido, backgroundColor: '#00BCD4', borderRadius: 4 },
+                        { label: 'Deferido', data: deferido, backgroundColor: '#C9A227', borderRadius: 4 },
                         { label: 'Indeferido', data: indeferido, backgroundColor: '#FF5252', borderRadius: 4 },
                         { label: 'Parcial', data: parcial, backgroundColor: '#FFA726', borderRadius: 4 }
                     ]

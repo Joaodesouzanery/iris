@@ -455,11 +455,7 @@
                 <div class="sidebar-section"><div class="sidebar-section-label">Configurações</div></div>
                 <a data-route="/upload" class="nav-item">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                    <span>Upload de PDFs</span>
-                </a>
-                <a data-route="/analise" class="nav-item">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/><path d="M4 5a2 2 0 012-2h12a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V5z"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/></svg>
-                    <span>Análise de PDFs</span>
+                    <span>Upload e Análise</span>
                 </a>
                 <a data-route="/agencias" class="nav-item">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
@@ -3940,20 +3936,26 @@
                 </div>
 
                 <!-- ============================================
-                     PAGE: Upload de PDFs
+                     PAGE: Documentos — Upload + Análise de PDFs (Unificado)
                      ============================================ -->
                 <div id="page-upload" class="page-view">
                     <div class="page-header">
                         <div class="page-header-row">
                             <div>
-                                <h1 class="page-title">Upload de PDFs</h1>
-                                <p class="page-subtitle">Faça upload de documentos da ARTESP para análise e extração de dados</p>
+                                <h1 class="page-title">Upload e Análise de PDFs</h1>
+                                <p class="page-subtitle">Faça upload de documentos e analise-os para extrair deliberações e dados estruturados</p>
+                            </div>
+                            <div class="page-header-actions">
+                                <button class="btn btn-primary" onclick="App.PageUpload.analisarTodosPendentes()">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                                    Analisar Todos Pendentes
+                                </button>
                             </div>
                         </div>
                     </div>
 
                     <!-- Stat Cards -->
-                    <div class="metrics-row">
+                    <div class="metrics-row" style="grid-template-columns: repeat(5, 1fr);">
                         <div class="metric-card">
                             <div class="metric-card-label">PDFs Carregados</div>
                             <div class="metric-card-value" id="upload-total">0</div>
@@ -3969,6 +3971,10 @@
                         <div class="metric-card">
                             <div class="metric-card-label">Com Erro</div>
                             <div class="metric-card-value" id="upload-erros" style="color:var(--accent-red)">0</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-card-label">Deliberações Extraídas</div>
+                            <div class="metric-card-value" id="upload-deliberacoes" style="color:var(--accent-cyan)">0</div>
                         </div>
                     </div>
 
@@ -4013,6 +4019,24 @@
                                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
                                     Baixar e Importar
                                 </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Analysis Status (shown during analysis) -->
+                    <div class="ds-card" id="analise-status-card" style="margin-bottom: 24px; display: none;">
+                        <div class="ds-card-header">
+                            <div class="ds-card-title">Análise em Andamento</div>
+                        </div>
+                        <div style="padding:0 24px 24px;">
+                            <div id="analise-status-content">
+                                <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-secondary);margin-bottom:8px;">
+                                    <span id="analise-status-text">Iniciando análise...</span>
+                                    <span id="analise-status-percent">0%</span>
+                                </div>
+                                <div class="ds-progress">
+                                    <div class="ds-progress-bar" id="analise-progress-bar" style="width: 0%;"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -4064,8 +4088,8 @@
                         </div>
                     </div>
 
-                    <!-- PDFs Table -->
-                    <div class="ds-table-container">
+                    <!-- PDFs Table (unified) -->
+                    <div class="ds-table-container" style="margin-bottom: 24px;">
                         <div class="ds-table-header">
                             <div class="ds-table-title">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
@@ -4095,93 +4119,6 @@
                             </tbody>
                         </table>
                     </div>
-                </div>
-
-                <!-- ============================================
-                     PAGE: Análise de PDFs
-                     ============================================ -->
-                <div id="page-analise" class="page-view">
-                    <div class="page-header">
-                        <div class="page-header-row">
-                            <div>
-                                <h1 class="page-title">Análise de PDFs</h1>
-                                <p class="page-subtitle">Analise os PDFs carregados para extrair deliberações e dados estruturados</p>
-                            </div>
-                            <div class="page-header-actions">
-                                <button class="btn btn-primary" onclick="App.PageAnalise.analisarTodos()">
-                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                                    Analisar Todos
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Stat Cards -->
-                    <div class="metrics-row">
-                        <div class="metric-card">
-                            <div class="metric-card-label">Total de PDFs</div>
-                            <div class="metric-card-value" id="analise-total">0</div>
-                        </div>
-                        <div class="metric-card">
-                            <div class="metric-card-label">Aguardando Análise</div>
-                            <div class="metric-card-value" id="analise-pendentes" style="color:var(--accent-orange)">0</div>
-                        </div>
-                        <div class="metric-card">
-                            <div class="metric-card-label">Analisados</div>
-                            <div class="metric-card-value" id="analise-concluidos" style="color:var(--accent-green)">0</div>
-                        </div>
-                        <div class="metric-card">
-                            <div class="metric-card-label">Deliberações Extraídas</div>
-                            <div class="metric-card-value" id="analise-deliberações" style="color:var(--accent-cyan)">0</div>
-                        </div>
-                    </div>
-
-                    <!-- Analysis Status -->
-                    <div class="ds-card" id="analise-status-card" style="margin-bottom: 24px; display: none;">
-                        <div class="ds-card-header">
-                            <div class="ds-card-title">Análise em Andamento</div>
-                        </div>
-                        <div style="padding:0 24px 24px;">
-                            <div id="analise-status-content">
-                                <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-secondary);margin-bottom:8px;">
-                                    <span id="analise-status-text">Iniciando análise...</span>
-                                    <span id="analise-status-percent">0%</span>
-                                </div>
-                                <div class="ds-progress">
-                                    <div class="ds-progress-bar" id="analise-progress-bar" style="width: 0%;"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- PDFs Analysis Table -->
-                    <div class="ds-table-container" style="margin-bottom:24px;">
-                        <div class="ds-table-header">
-                            <div class="ds-table-title">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-                                PDFs para Análise
-                            </div>
-                            <button class="btn btn-secondary btn-sm" onclick="App.PageAnalise.load()">
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                                Atualizar
-                            </button>
-                        </div>
-                        <table class="ds-table">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Arquivo</th>
-                                    <th>Status</th>
-                                    <th>Deliberações</th>
-                                    <th>Última Análise</th>
-                                    <th>Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody id="analise-table-body">
-                                <tr><td colspan="6"><div class="ds-empty"><div class="ds-empty-text">Nenhum PDF disponível para análise</div><div class="ds-empty-hint">Faça upload na página de Upload</div></div></td></tr>
-                            </tbody>
-                        </table>
-                    </div>
 
                     <!-- Analysis Results -->
                     <div class="ds-card" id="analise-resultados-card" style="display: none;">
@@ -4192,6 +4129,9 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Keep page-analise as alias that redirects to upload page -->
+                <div id="page-analise" class="page-view" style="display:none;"></div>
 
                 <!-- ============================================
                      PAGE: Auditoria
