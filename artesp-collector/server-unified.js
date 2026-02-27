@@ -2422,6 +2422,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .logo{text-align:center;margin-bottom:12px}
 .logo svg{filter:drop-shadow(0 0 12px rgba(255,239,77,.3))}
 h1{text-align:center;font-size:24px;font-weight:700;color:#f8fafc;margin:0 0 8px;letter-spacing:-.02em}
+h2{text-align:center;font-size:22px;font-weight:700;color:#f8fafc;margin:0 0 8px;letter-spacing:-.02em}
 .sub{text-align:center;font-size:14px;color:#94a3b8;margin:0 0 36px;line-height:1.5}
 .field{margin-bottom:20px}
 label{display:block;font-size:13px;font-weight:600;color:#cbd5e1;margin-bottom:8px;letter-spacing:.02em}
@@ -2433,16 +2434,44 @@ input:focus{border-color:rgba(255,239,77,.5);box-shadow:0 0 0 3px rgba(255,239,7
 input:focus~svg,.input-wrap:focus-within svg{color:#FFEF4D}
 .error{padding:12px 16px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);border-radius:10px;color:#fca5a5;font-size:13px;text-align:center;margin-bottom:16px;display:none;animation:shake .4s ease-out}
 @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
-button[type=submit]{width:100%;padding:14px 24px;margin-top:4px;background:linear-gradient(135deg,#FFEF4D 0%,#e6d645 100%);border:none;border-radius:12px;color:#0f172a;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;letter-spacing:.02em;box-shadow:0 4px 14px rgba(255,239,77,.25)}
-button[type=submit]:hover{background:linear-gradient(135deg,#fff59d 0%,#FFEF4D 100%);box-shadow:0 6px 20px rgba(255,239,77,.35);transform:translateY(-1px)}
-button[type=submit]:disabled{opacity:.7;cursor:not-allowed;transform:none}
+.btn-primary{width:100%;padding:14px 24px;margin-top:4px;background:linear-gradient(135deg,#FFEF4D 0%,#e6d645 100%);border:none;border-radius:12px;color:#0f172a;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;letter-spacing:.02em;box-shadow:0 4px 14px rgba(255,239,77,.25)}
+.btn-primary:hover{background:linear-gradient(135deg,#fff59d 0%,#FFEF4D 100%);box-shadow:0 6px 20px rgba(255,239,77,.35);transform:translateY(-1px)}
+.btn-primary:disabled{opacity:.7;cursor:not-allowed;transform:none}
 .spinner{display:none;animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .footer{margin-top:28px;text-align:center;padding-top:20px;border-top:1px solid rgba(148,163,184,.1)}
-.footer a{color:#64748b;font-size:13px;text-decoration:none;display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:8px;transition:color .2s,background .2s}
-.footer a:hover{color:#FFEF4D;background:rgba(255,239,77,.06)}
+.footer a,.footer button{color:#64748b;font-size:13px;text-decoration:none;display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:8px;transition:color .2s,background .2s;background:none;border:none;cursor:pointer;font-family:inherit}
+.footer a:hover,.footer button:hover{color:#FFEF4D;background:rgba(255,239,77,.06)}
 .cred{margin-top:24px;text-align:center;font-size:11px;color:#475569}
-@media(max-width:480px){.card{padding:36px 24px 28px;border-radius:16px}h1{font-size:20px}}
+
+/* Modal overlay */
+.modal-overlay{display:none;position:fixed;inset:0;z-index:1000;align-items:center;justify-content:center;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);animation:modalFadeIn .25s ease-out}
+.modal-overlay.active{display:flex}
+@keyframes modalFadeIn{from{opacity:0}to{opacity:1}}
+.modal-card{position:relative;width:100%;max-width:440px;margin:20px;background:rgba(30,41,59,.95);border:1px solid rgba(148,163,184,.15);border-radius:20px;padding:40px 36px 32px;box-shadow:0 0 0 1px rgba(255,239,77,.05),0 25px 50px -12px rgba(0,0,0,.6);animation:fadeIn .35s ease-out}
+.modal-close{position:absolute;top:16px;right:16px;background:none;border:none;color:#64748b;cursor:pointer;padding:6px;border-radius:8px;transition:all .2s;display:flex;align-items:center;justify-content:center}
+.modal-close:hover{color:#f8fafc;background:rgba(255,255,255,.08)}
+.modal-header{text-align:center;margin-bottom:28px}
+.modal-icon{width:64px;height:64px;border-radius:16px;background:rgba(255,239,77,.1);border:1px solid rgba(255,239,77,.2);display:inline-flex;align-items:center;justify-content:center;margin-bottom:16px;color:#FFEF4D}
+.modal-icon.blue{background:rgba(59,130,246,.1);border-color:rgba(59,130,246,.2);color:#60a5fa}
+.modal-icon.green{background:rgba(34,197,94,.1);border-color:rgba(34,197,94,.2);color:#4ade80}
+.modal-desc{font-size:13px;color:#94a3b8;margin:0;line-height:1.6}
+
+/* Messages */
+.msg{padding:12px 16px;border-radius:10px;font-size:13px;text-align:center;margin-bottom:16px;display:none;animation:fadeIn .3s ease-out}
+.msg.msg-error{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#fca5a5;display:block}
+.msg.msg-success{background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.3);color:#86efac;display:block}
+
+/* Password rules */
+.pwd-rules{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.pwd-rule{font-size:11px;padding:3px 8px;border-radius:6px;background:rgba(100,116,139,.15);color:#64748b;border:1px solid rgba(100,116,139,.2);transition:all .2s}
+.pwd-rule.ok{background:rgba(34,197,94,.12);color:#4ade80;border-color:rgba(34,197,94,.3)}
+
+/* Back step button */
+.btn-back{background:none;border:none;color:#64748b;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:color .2s;padding:10px 12px;border-radius:8px;margin-top:16px;width:100%;justify-content:center;font-family:inherit}
+.btn-back:hover{color:#FFEF4D;background:rgba(255,239,77,.06)}
+
+@media(max-width:480px){.card{padding:36px 24px 28px;border-radius:16px}h1{font-size:20px}.modal-card{padding:32px 20px 24px;border-radius:16px}h2{font-size:18px}}
 </style>
 </head>
 <body>
@@ -2477,19 +2506,121 @@ button[type=submit]:disabled{opacity:.7;cursor:not-allowed;transform:none}
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
             </div>
         </div>
-        <button type="submit" id="btn">
+        <button type="submit" class="btn-primary" id="btn">
             <span id="btnTxt">Entrar</span>
             <svg class="spinner" id="btnSpin" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" stroke-opacity=".3"/><path d="M12 2a10 10 0 019.95 9" stroke-linecap="round"/></svg>
         </button>
     </form>
     <div class="footer">
+        <button type="button" onclick="openResetModal()">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+            Esqueci minha senha
+        </button>
+        <br>
         <a href="/">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
             Voltar ao Hub Publico
         </a>
     </div>
 </div>
+
+<!-- Modal: Esqueci minha senha -->
+<div class="modal-overlay" id="resetModal">
+    <div class="modal-card">
+        <button class="modal-close" onclick="closeResetModal()" title="Fechar">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+
+        <!-- Passo 1: Solicitar codigo -->
+        <div id="step1">
+            <div class="modal-header">
+                <div class="modal-icon">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="32" height="32"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+                </div>
+                <h2>Recuperar Senha</h2>
+                <p class="modal-desc">Informe seu nome de usuario. Um codigo de recuperacao sera gerado e disponibilizado pelo administrador do sistema.</p>
+            </div>
+            <div class="msg" id="msg1"></div>
+            <form onsubmit="requestCode(event)">
+                <div class="field">
+                    <label for="resetUser">Nome de usuario</label>
+                    <div class="input-wrap">
+                        <input type="text" id="resetUser" placeholder="Seu usuario" autocomplete="username" required>
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                    </div>
+                </div>
+                <button type="submit" class="btn-primary" id="resetBtn1">
+                    <span id="resetBtn1Txt">Solicitar Codigo</span>
+                    <svg class="spinner" id="resetBtn1Spin" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" stroke-opacity=".3"/><path d="M12 2a10 10 0 019.95 9" stroke-linecap="round"/></svg>
+                </button>
+            </form>
+        </div>
+
+        <!-- Passo 2: Inserir codigo e nova senha -->
+        <div id="step2" style="display:none">
+            <div class="modal-header">
+                <div class="modal-icon blue">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="32" height="32"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                </div>
+                <h2>Redefinir Senha</h2>
+                <p class="modal-desc">Insira o codigo de 6 digitos fornecido pelo administrador e defina sua nova senha.</p>
+            </div>
+            <div class="msg" id="msg2"></div>
+            <form onsubmit="resetPassword(event)">
+                <div class="field">
+                    <label for="resetCode">Codigo de recuperacao</label>
+                    <div class="input-wrap">
+                        <input type="text" id="resetCode" placeholder="000000" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" autocomplete="one-time-code" required>
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"/></svg>
+                    </div>
+                </div>
+                <div class="field">
+                    <label for="newPass">Nova senha</label>
+                    <div class="input-wrap">
+                        <input type="password" id="newPass" placeholder="Minimo 8 caracteres" autocomplete="new-password" required minlength="8">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                    </div>
+                    <div class="pwd-rules">
+                        <span class="pwd-rule" id="ruleLen">8+ caracteres</span>
+                        <span class="pwd-rule" id="ruleUpper">Maiuscula</span>
+                        <span class="pwd-rule" id="ruleLower">Minuscula</span>
+                        <span class="pwd-rule" id="ruleNum">Numero</span>
+                    </div>
+                </div>
+                <div class="field">
+                    <label for="confirmPass">Confirmar nova senha</label>
+                    <div class="input-wrap">
+                        <input type="password" id="confirmPass" placeholder="Repita a nova senha" autocomplete="new-password" required minlength="8">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                </div>
+                <button type="submit" class="btn-primary" id="resetBtn2">
+                    <span id="resetBtn2Txt">Redefinir Senha</span>
+                    <svg class="spinner" id="resetBtn2Spin" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" stroke-opacity=".3"/><path d="M12 2a10 10 0 019.95 9" stroke-linecap="round"/></svg>
+                </button>
+            </form>
+            <button class="btn-back" onclick="goToStep1()" type="button">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                Voltar ao passo anterior
+            </button>
+        </div>
+
+        <!-- Passo 3: Sucesso -->
+        <div id="step3" style="display:none">
+            <div class="modal-header">
+                <div class="modal-icon green">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="36" height="36"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+                <h2>Senha Redefinida!</h2>
+                <p class="modal-desc">Sua senha foi alterada com sucesso. Agora voce pode fazer login com a nova senha.</p>
+            </div>
+            <button class="btn-primary" onclick="closeResetAndFocus()" type="button">Fazer Login</button>
+        </div>
+    </div>
+</div>
+
 <script>
+// Login form
 document.getElementById('loginForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     var err = document.getElementById('err');
@@ -2526,6 +2657,167 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
     }
 });
 document.getElementById('user').focus();
+
+// Password reset flow
+function openResetModal() {
+    document.getElementById('resetModal').classList.add('active');
+    goToStep1();
+    document.getElementById('resetUser').focus();
+}
+
+function closeResetModal() {
+    document.getElementById('resetModal').classList.remove('active');
+    clearMsgs();
+    resetForms();
+}
+
+function closeResetAndFocus() {
+    closeResetModal();
+    document.getElementById('user').focus();
+}
+
+function goToStep1() {
+    document.getElementById('step1').style.display = 'block';
+    document.getElementById('step2').style.display = 'none';
+    document.getElementById('step3').style.display = 'none';
+    clearMsgs();
+}
+
+function goToStep2() {
+    document.getElementById('step1').style.display = 'none';
+    document.getElementById('step2').style.display = 'block';
+    document.getElementById('step3').style.display = 'none';
+    document.getElementById('resetCode').focus();
+    clearMsgs();
+    bindPwdValidation();
+}
+
+function goToStep3() {
+    document.getElementById('step1').style.display = 'none';
+    document.getElementById('step2').style.display = 'none';
+    document.getElementById('step3').style.display = 'block';
+}
+
+function clearMsgs() {
+    ['msg1','msg2'].forEach(function(id) {
+        var el = document.getElementById(id);
+        el.className = 'msg';
+        el.textContent = '';
+    });
+}
+
+function showMsg(step, text, type) {
+    var el = document.getElementById('msg' + step);
+    el.textContent = text;
+    el.className = 'msg msg-' + type;
+}
+
+function resetForms() {
+    document.getElementById('resetUser').value = '';
+    document.getElementById('resetCode').value = '';
+    document.getElementById('newPass').value = '';
+    document.getElementById('confirmPass').value = '';
+    document.querySelectorAll('.pwd-rule').forEach(function(r) { r.className = 'pwd-rule'; });
+}
+
+function setLoading(num, loading) {
+    var txt = document.getElementById('resetBtn' + num + 'Txt');
+    var spin = document.getElementById('resetBtn' + num + 'Spin');
+    var btn = document.getElementById('resetBtn' + num);
+    txt.style.display = loading ? 'none' : 'inline';
+    spin.style.display = loading ? 'inline' : 'none';
+    btn.disabled = loading;
+}
+
+function bindPwdValidation() {
+    var input = document.getElementById('newPass');
+    input.oninput = function() {
+        var v = input.value;
+        setRule('ruleLen', v.length >= 8);
+        setRule('ruleUpper', /[A-Z]/.test(v));
+        setRule('ruleLower', /[a-z]/.test(v));
+        setRule('ruleNum', /[0-9]/.test(v));
+    };
+}
+
+function setRule(id, valid) {
+    document.getElementById(id).className = valid ? 'pwd-rule ok' : 'pwd-rule';
+}
+
+async function requestCode(e) {
+    e.preventDefault();
+    var username = document.getElementById('resetUser').value.trim();
+    if (!username) { showMsg(1, 'Informe o nome de usuario.', 'error'); return; }
+
+    setLoading(1, true);
+    clearMsgs();
+
+    try {
+        var resp = await fetch('/api/auth/password-reset-request', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: username })
+        });
+        var data = await resp.json();
+        if (resp.ok && data.success) {
+            showMsg(1, data.message, 'success');
+            setTimeout(goToStep2, 1500);
+        } else {
+            showMsg(1, data.error || 'Erro ao solicitar codigo.', 'error');
+        }
+    } catch (ex) {
+        showMsg(1, 'Erro de conexao com o servidor.', 'error');
+    } finally {
+        setLoading(1, false);
+    }
+}
+
+async function resetPassword(e) {
+    e.preventDefault();
+    var code = document.getElementById('resetCode').value.trim();
+    var newPassword = document.getElementById('newPass').value;
+    var confirm = document.getElementById('confirmPass').value;
+
+    if (!code || code.length !== 6) { showMsg(2, 'Informe o codigo de 6 digitos.', 'error'); return; }
+    if (newPassword !== confirm) { showMsg(2, 'As senhas nao coincidem.', 'error'); return; }
+    if (newPassword.length < 8 || !/[A-Z]/.test(newPassword) || !/[a-z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
+        showMsg(2, 'A senha deve ter 8+ caracteres, maiuscula, minuscula e numero.', 'error');
+        return;
+    }
+
+    setLoading(2, true);
+    clearMsgs();
+
+    try {
+        var resp = await fetch('/api/auth/password-reset', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code: code, newPassword: newPassword })
+        });
+        var data = await resp.json();
+        if (resp.ok && data.success) {
+            goToStep3();
+        } else {
+            showMsg(2, data.error || 'Erro ao redefinir senha.', 'error');
+        }
+    } catch (ex) {
+        showMsg(2, 'Erro de conexao com o servidor.', 'error');
+    } finally {
+        setLoading(2, false);
+    }
+}
+
+// Close modal on Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && document.getElementById('resetModal').classList.contains('active')) {
+        closeResetModal();
+    }
+});
+
+// Close modal on overlay click
+document.getElementById('resetModal').addEventListener('click', function(e) {
+    if (e.target === this) closeResetModal();
+});
 </script>
 </body>
 </html>`;
