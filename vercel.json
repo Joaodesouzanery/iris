@@ -3,34 +3,13 @@
   "builds": [
     {
       "src": "api/index.js",
-      "use": "@vercel/node"
-    },
-    {
-      "src": "artesp-collector/public/**",
-      "use": "@vercel/static"
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": ["artesp-collector/**"]
+      }
     }
   ],
   "routes": [
-    {
-      "src": "/css/(.*)",
-      "dest": "artesp-collector/public/css/$1"
-    },
-    {
-      "src": "/js/(.*)",
-      "dest": "artesp-collector/public/js/$1"
-    },
-    {
-      "src": "/styles/(.*)",
-      "dest": "artesp-collector/public/styles/$1"
-    },
-    {
-      "src": "/video/(.*)",
-      "dest": "artesp-collector/public/video/$1"
-    },
-    {
-      "src": "/app.html",
-      "dest": "artesp-collector/public/app.html"
-    },
     {
       "src": "/(.*)",
       "dest": "api/index.js"
