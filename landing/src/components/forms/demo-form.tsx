@@ -113,8 +113,8 @@ export function DemoForm() {
         <p className="text-[#A1A1AA] mb-6">
           Entraremos em contato em até 24 horas com uma demonstração personalizada.
         </p>
-        <Button variant="secondary" href="#hero">
-          Voltar para o início
+        <Button variant="outline" asChild>
+          <a href="#hero">Voltar para o início</a>
         </Button>
       </motion.div>
     );

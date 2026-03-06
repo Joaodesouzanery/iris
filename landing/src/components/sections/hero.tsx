@@ -111,13 +111,17 @@ export function HeroSection() {
             transition={{ duration: 0.5, delay: 1.1 }}
             className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16"
           >
-            <Button size="lg" href="#demo">
-              Solicitar Demonstração
-              <ArrowRight className="w-5 h-5" />
+            <Button size="lg" asChild>
+              <a href="#demo">
+                Solicitar Demonstração
+                <ArrowRight className="w-5 h-5" />
+              </a>
             </Button>
-            <Button variant="secondary" size="lg" href="#modulos">
-              <Play className="w-5 h-5" />
-              Ver Módulos
+            <Button variant="outline" size="lg" asChild>
+              <a href="#modulos">
+                <Play className="w-5 h-5" />
+                Ver Módulos
+              </a>
             </Button>
           </motion.div>
 

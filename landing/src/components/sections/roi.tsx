@@ -72,9 +72,11 @@ export function ROISection() {
 
         <FadeIn delay={0.3}>
           <div className="text-center">
-            <Button size="lg" href="#demo">
-              Solicitar Demonstração
-              <ArrowRight className="w-5 h-5" />
+            <Button size="lg" asChild>
+              <a href="#demo">
+                Solicitar Demonstração
+                <ArrowRight className="w-5 h-5" />
+              </a>
             </Button>
           </div>
         </FadeIn>

@@ -94,8 +94,8 @@ export function Navbar() {
 
             {/* Desktop CTA */}
             <div className="hidden md:block">
-              <Button size="sm" href="#demo">
-                Solicitar Demo
+              <Button size="sm" asChild>
+                <a href="#demo">Solicitar Demo</a>
               </Button>
             </div>
 
@@ -139,12 +139,10 @@ export function Navbar() {
                   {link.label}
                 </a>
               ))}
-              <Button
-                size="lg"
-                href="#demo"
-                onClick={() => setIsMobileOpen(false)}
-              >
-                Solicitar Demo
+              <Button size="lg" asChild>
+                <a href="#demo" onClick={() => setIsMobileOpen(false)}>
+                  Solicitar Demo
+                </a>
               </Button>
             </div>
           </motion.div>
