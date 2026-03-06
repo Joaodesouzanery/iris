@@ -5063,30 +5063,35 @@ const backupDataSource = {
 
 backupService.registerBackupRoutes(app, authenticate, backupDataSource);
 
-// Inicia servidor
-app.listen(PORT, () => {
-    const dbStatus = persistencia.getStatus();
-    const dbLabel = dbStatus.supabaseConfigured ? 'Supabase' : 'Memoria local';
-    const authLabel = isAuthSupabase() ? 'Supabase' : 'Memoria local';
+// Export app for Vercel serverless deployment
+module.exports = app;
 
-    console.log('');
-    console.log('╔══════════════════════════════════════════════════════════════╗');
-    console.log('║                                                              ║');
-    console.log('║   IRIS PLATFORM - Plataforma Unificada                      ║');
-    console.log('║                                                              ║');
-    console.log('║   Coleta de PDFs + Analise de Deliberacoes                  ║');
-    console.log('║                                                              ║');
-    console.log('╠══════════════════════════════════════════════════════════════╣');
-    console.log('║                                                              ║');
-    console.log(`║   Acesse: http://localhost:${PORT}                          ║`);
-    console.log(`║   Dados: ${dbLabel.padEnd(20)}                        ║`);
-    console.log(`║   Auth:  ${authLabel.padEnd(20)}                        ║`);
-    console.log('║                                                              ║');
-    console.log('╚══════════════════════════════════════════════════════════════╝');
-    console.log('');
+// Start server only when run directly (not imported by Vercel)
+if (require.main === module) {
+    app.listen(PORT, () => {
+        const dbStatus = persistencia.getStatus();
+        const dbLabel = dbStatus.supabaseConfigured ? 'Supabase' : 'Memoria local';
+        const authLabel = isAuthSupabase() ? 'Supabase' : 'Memoria local';
 
-    // Pre-fetch news in background so first user gets instant results
-    if (newsFetcher.startBackgroundPrefetch) {
-        newsFetcher.startBackgroundPrefetch();
-    }
-});
+        console.log('');
+        console.log('╔══════════════════════════════════════════════════════════════╗');
+        console.log('║                                                              ║');
+        console.log('║   IRIS PLATFORM - Plataforma Unificada                      ║');
+        console.log('║                                                              ║');
+        console.log('║   Coleta de PDFs + Analise de Deliberacoes                  ║');
+        console.log('║                                                              ║');
+        console.log('╠══════════════════════════════════════════════════════════════╣');
+        console.log('║                                                              ║');
+        console.log(`║   Acesse: http://localhost:${PORT}                          ║`);
+        console.log(`║   Dados: ${dbLabel.padEnd(20)}                        ║`);
+        console.log(`║   Auth:  ${authLabel.padEnd(20)}                        ║`);
+        console.log('║                                                              ║');
+        console.log('╚══════════════════════════════════════════════════════════════╝');
+        console.log('');
+
+        // Pre-fetch news in background so first user gets instant results
+        if (newsFetcher.startBackgroundPrefetch) {
+            newsFetcher.startBackgroundPrefetch();
+        }
+    });
+}
