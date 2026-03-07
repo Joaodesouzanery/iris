@@ -1,20 +1,7 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "api/index.js",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": ["artesp-collector/**"]
-      }
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "api/index.js"
-    }
-  ],
-  "installCommand": "cd artesp-collector && npm install",
-  "framework": null
+  "framework": "nextjs",
+  "buildCommand": "cd landing && npm install && npm run build",
+  "outputDirectory": "landing/.next",
+  "installCommand": "cd landing && npm install"
 }
