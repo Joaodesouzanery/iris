@@ -9,7 +9,7 @@
  * 5. Atualização de status
  */
 
-require('dotenv').config();
+try { require('dotenv').config(); } catch { /* dotenv optional */ }
 
 const classificador = require('./services/classificador');
 const extratorVotos = require('./services/extrator-votos');
