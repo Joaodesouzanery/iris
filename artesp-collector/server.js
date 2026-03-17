@@ -638,6 +638,14 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+/**
+ * GET /plataforma
+ * Serve a plataforma IRIS completa
+ */
+app.get('/plataforma', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'IRIS-Plataforma-Completa.html'));
+});
+
 // Inicia servidor
 const server = app.listen(PORT, () => {
     console.log('='.repeat(60));

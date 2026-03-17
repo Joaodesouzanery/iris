@@ -18,23 +18,229 @@ require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 const pdfParse = require('pdf-parse');
+
+// Supabase SDK — optional dependency (server works without it)
+let createClient = null;
+try {
+    createClient = require('@supabase/supabase-js').createClient;
+} catch (_) {
+    console.warn('[Supabase] Pacote @supabase/supabase-js não instalado. Rode: npm install');
+}
 
 // Importa serviços do coletor
 const { scrapeWithRetry } = require('./src/services/scraper');
 const { downloadMultiplePDFs } = require('./src/services/downloader');
 const { extractFromMultiple, gerarEstatisticas } = require('./src/services/extractor');
 const syncManager = require('./src/services/sync-manager');
+const { processarPipeline } = require('./src/services/pipeline-processor');
 
 // Importa serviços do IRIS Core
 const irisCore = require('../iris-core/processador');
+const newsFetcher = require('../iris-core/services/news-fetcher');
+const persistencia = require('../iris-core/services/persistencia');
+const intelligence = require('../iris-core/services/intelligence-correlator');
+const geminiAnalyzer = require('../iris-core/services/gemini-analyzer');
+const filaProcessamento = require('../iris-core/services/fila-processamento');
+const metricasEngine = require('../iris-core/services/metricas-engine');
+
+// ── ReceitaWS CNPJ Lookup Cache ──
+const cnpjCache = new Map();
+const CNPJ_CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days
+const CNPJ_CACHE_MAX = 500;
+
+async function consultarCNPJ(cnpj) {
+    const cleaned = cnpj.replace(/\D/g, '');
+    if (cleaned.length !== 14) return null;
+
+    // Check cache
+    const cached = cnpjCache.get(cleaned);
+    if (cached && (Date.now() - cached.ts) < CNPJ_CACHE_TTL) return cached.data;
+
+    try {
+        const https = require('https');
+        const data = await new Promise((resolve, reject) => {
+            const req = https.get(`https://receitaws.com.br/v1/cnpj/${cleaned}`, {
+                headers: { 'Accept': 'application/json' },
+                timeout: 10000
+            }, (res) => {
+                let body = '';
+                res.on('data', chunk => body += chunk);
+                res.on('end', () => {
+                    try { resolve(JSON.parse(body)); }
+                    catch { reject(new Error('Invalid JSON')); }
+                });
+            });
+            req.on('error', reject);
+            req.on('timeout', () => { req.destroy(); reject(new Error('Timeout')); });
+        });
+
+        if (data.status === 'ERROR') return null;
+
+        const result = {
+            cnpj: data.cnpj,
+            razao_social: data.nome,
+            nome_fantasia: data.fantasia,
+            situacao: data.situacao,
+            data_situacao: data.data_situacao,
+            tipo: data.tipo,
+            porte: data.porte,
+            capital_social: data.capital_social,
+            natureza_juridica: data.natureza_juridica,
+            atividade_principal: data.atividade_principal?.[0]?.text || '',
+            cnae_principal: data.atividade_principal?.[0]?.code || '',
+            atividades_secundarias: (data.atividades_secundarias || []).slice(0, 5).map(a => ({ code: a.code, text: a.text })),
+            logradouro: data.logradouro,
+            numero: data.numero,
+            complemento: data.complemento,
+            bairro: data.bairro,
+            municipio: data.municipio,
+            uf: data.uf,
+            cep: data.cep,
+            email: data.email,
+            telefone: data.telefone,
+            data_abertura: data.abertura,
+            qsa: (data.qsa || []).map(s => ({ nome: s.nome, qual: s.qual }))
+        };
+
+        // Evict oldest if cache full
+        if (cnpjCache.size >= CNPJ_CACHE_MAX) {
+            const oldest = [...cnpjCache.entries()].sort((a, b) => a[1].ts - b[1].ts)[0];
+            if (oldest) cnpjCache.delete(oldest[0]);
+        }
+        cnpjCache.set(cleaned, { data: result, ts: Date.now() });
+        return result;
+    } catch (err) {
+        console.warn('[ReceitaWS] Erro ao consultar CNPJ:', cleaned, err.message);
+        return null;
+    }
+}
+
+// ── Backup Service ──
+const backupService = require('./src/services/backup');
+
+// ── Authentication & Sanitization Middleware ──
+const { authenticate, optionalAuth, registerAuthRoutes, isSupabaseAvailable: isAuthSupabase } = require('./src/middleware/auth');
+const {
+    sanitizeString: sanitizeStr,
+    escapeHtml,
+    deepSanitize,
+    validateCNPJ: validateCNPJFull,
+    validateUrl,
+    validatePDFUpload,
+    validateInt,
+    sanitizeRequestMiddleware
+} = require('./src/middleware/sanitize');
+
+// ============================================================================
+// SUPABASE CLIENT INITIALIZATION
+// ============================================================================
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
+
+let supabase = null;
+let supabaseAdmin = null;
+
+function isSupabaseConfigured() {
+    return createClient &&
+           SUPABASE_URL &&
+           !SUPABASE_URL.includes('SEU_PROJECT_ID') &&
+           SUPABASE_ANON_KEY &&
+           !SUPABASE_ANON_KEY.includes('COLE_SUA');
+}
+
+if (isSupabaseConfigured()) {
+    supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    if (SUPABASE_SERVICE_KEY && !SUPABASE_SERVICE_KEY.includes('COLE_SUA')) {
+        supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+    }
+    console.log('[Supabase] Client initialized successfully');
+    console.log(`[Supabase] URL: ${SUPABASE_URL}`);
+    console.log(`[Supabase] Admin client: ${supabaseAdmin ? 'yes' : 'no (service key not set)'}`);
+} else {
+    console.warn('[Supabase] Not configured — using local data only');
+    console.warn('[Supabase] Set SUPABASE_URL and SUPABASE_ANON_KEY in .env to enable');
+}
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Armazena PDFs processados em memória
+// Armazena PDFs processados em memória (LRU-style, limited to prevent OOM)
+const MAX_PDFS_IN_MEMORY = 200;
+const MAX_PDF_MEMORY_BYTES = 500 * 1024 * 1024; // 500MB
 let pdfsProcessados = [];
 let ultimaColeta = null;
+
+// ── Standardized API Response Helper ──
+function apiResponse(res, data, status = 200) {
+    return res.status(status).json({
+        success: status < 400,
+        data,
+        timestamp: new Date().toISOString()
+    });
+}
+
+function apiError(res, message, status = 500, context = {}) {
+    return res.status(status).json({
+        success: false,
+        error: message,
+        ...context,
+        timestamp: new Date().toISOString()
+    });
+}
+
+// ── Circuit Breaker for external services ──
+const circuitBreaker = {
+    artesp: { state: 'closed', failures: 0, lastFailureTime: null, threshold: 5, cooldown: 60000 }
+};
+
+function checkCircuitBreaker(service) {
+    const cb = circuitBreaker[service];
+    if (!cb) return true;
+    if (cb.state === 'open') {
+        if (Date.now() - cb.lastFailureTime > cb.cooldown) {
+            cb.state = 'half-open';
+            cb.failures = 0;
+            return true;
+        }
+        return false;
+    }
+    return true;
+}
+
+function recordCircuitFailure(service) {
+    const cb = circuitBreaker[service];
+    if (!cb) return;
+    cb.failures++;
+    cb.lastFailureTime = Date.now();
+    if (cb.failures >= cb.threshold) {
+        cb.state = 'open';
+    }
+}
+
+function recordCircuitSuccess(service) {
+    const cb = circuitBreaker[service];
+    if (!cb) return;
+    cb.state = 'closed';
+    cb.failures = 0;
+}
+
+// ── Memory-safe PDF storage ──
+function addPdfToMemory(pdf) {
+    if (pdfsProcessados.length >= MAX_PDFS_IN_MEMORY) {
+        pdfsProcessados.shift();
+    }
+    // Estimate memory usage
+    const totalSize = pdfsProcessados.reduce((sum, p) => sum + (p.texto?.length || 0), 0) + (pdf.texto?.length || 0);
+    if (totalSize > MAX_PDF_MEMORY_BYTES) {
+        while (pdfsProcessados.length > 0 && pdfsProcessados.reduce((s, p) => s + (p.texto?.length || 0), 0) > MAX_PDF_MEMORY_BYTES * 0.8) {
+            pdfsProcessados.shift();
+        }
+    }
+    pdfsProcessados.push(pdf);
+}
 
 // Sistema de Monitoramento
 let monitoramentoAtivo = false;
@@ -97,6 +303,7 @@ const empresasConhecidas = [
 
 /**
  * Detecta empresas mencionadas no texto do PDF
+ * Usa a lista local de concessionárias + normalização unificada do iris-core
  * @param {string} texto - Texto extraido do PDF
  * @returns {Array} - Lista de empresas detectadas com suas informacoes
  */
@@ -109,8 +316,11 @@ function detectarEmpresas(texto) {
     for (const empresa of empresasConhecidas) {
         // Verifica o nome principal
         if (textoUpper.includes(empresa.nome.toUpperCase())) {
+            // Usa normalizarEmpresa do iris-core para nome consistente
+            const nomeNormalizado = irisCore.normalizarEmpresa ? irisCore.normalizarEmpresa(empresa.nome) : empresa.nome;
             empresasDetectadas.push({
                 nome: empresa.nome,
+                nomeNormalizado: nomeNormalizado,
                 setor: empresa.setor,
                 tipo: empresa.tipo,
                 mencoes: contarMencoes(textoUpper, empresa.nome.toUpperCase())
@@ -121,8 +331,10 @@ function detectarEmpresas(texto) {
         // Verifica aliases
         for (const alias of empresa.aliases || []) {
             if (textoUpper.includes(alias.toUpperCase())) {
+                const nomeNormalizado = irisCore.normalizarEmpresa ? irisCore.normalizarEmpresa(empresa.nome) : empresa.nome;
                 empresasDetectadas.push({
                     nome: empresa.nome,
+                    nomeNormalizado: nomeNormalizado,
                     setor: empresa.setor,
                     tipo: empresa.tipo,
                     mencoes: contarMencoes(textoUpper, alias.toUpperCase())
@@ -154,9 +366,113 @@ function contarMencoes(texto, termo) {
     return (texto.match(regex) || []).length;
 }
 
-// Middleware - aumentado para suportar uploads grandes
-app.use(express.json({ limit: '500mb' }));
-app.use(express.urlencoded({ extended: true, limit: '500mb' }));
+// Middleware - body parsers (limit to 50MB — 500MB is dangerous)
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// ── CORS Configuration ──
+app.use((req, res, next) => {
+    const allowedOrigins = process.env.ALLOWED_ORIGINS
+        ? process.env.ALLOWED_ORIGINS.split(',')
+        : ['http://localhost:3000', 'http://localhost:5173'];
+    const origin = req.headers.origin;
+    if (origin && allowedOrigins.includes(origin)) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+    }
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-CSRF-Token');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Max-Age', '86400');
+    if (req.method === 'OPTIONS') {
+        return res.status(204).end();
+    }
+    next();
+});
+
+// ── Authentication System ──
+registerAuthRoutes(app);
+
+// ── Input Sanitization Middleware (query + params) ──
+app.use(sanitizeRequestMiddleware);
+
+// ── Security Headers (OWASP recommended) ──
+app.use((req, res, next) => {
+    // Prevent MIME sniffing
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    // Prevent clickjacking
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+    // XSS Protection (legacy browsers)
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    // HSTS - force HTTPS in production
+    if (process.env.NODE_ENV === 'production') {
+        res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    }
+    // Referrer policy
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    // Content Security Policy
+    res.setHeader('Content-Security-Policy', [
+        "default-src 'self'",
+        "script-src 'self' 'unsafe-inline' https://d3js.org https://cdn.jsdelivr.net https://unpkg.com",
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com",
+        "font-src 'self' https://fonts.gstatic.com",
+        "img-src 'self' data: https: blob:",
+        "connect-src 'self' https://receitaws.com.br https://api.portaldatransparencia.gov.br https://*.supabase.co",
+        "frame-ancestors 'self'"
+    ].join('; '));
+    // Permissions policy
+    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+    // Remove Express fingerprint
+    res.removeHeader('X-Powered-By');
+    next();
+});
+
+// ── Rate Limiting (Map-based, prevents memory leak) ──
+const rateLimitStore = new Map();
+const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minuto
+const RATE_LIMIT_MAX = 120; // 120 req/min por IP (generoso para SPA)
+const RATE_LIMIT_STRICT = 20; // 20 req/min para endpoints pesados
+
+function rateLimit(maxReqs = RATE_LIMIT_MAX) {
+    return (req, res, next) => {
+        // Use authenticated user if available, otherwise IP
+        const identifier = req.user?.id || req.ip || req.connection.remoteAddress || 'unknown';
+        const key = `${identifier}:${maxReqs}`;
+        const now = Date.now();
+
+        const entry = rateLimitStore.get(key);
+        if (!entry || (now - entry.start) > RATE_LIMIT_WINDOW) {
+            rateLimitStore.set(key, { count: 1, start: now });
+        } else {
+            entry.count++;
+        }
+
+        const current = rateLimitStore.get(key);
+        if (current.count > maxReqs) {
+            return res.status(429).json({
+                success: false,
+                error: 'Limite de requisições excedido. Tente novamente em 1 minuto.',
+                retryAfter: Math.ceil((RATE_LIMIT_WINDOW - (now - current.start)) / 1000)
+            });
+        }
+
+        res.setHeader('X-RateLimit-Limit', maxReqs);
+        res.setHeader('X-RateLimit-Remaining', maxReqs - current.count);
+        next();
+    };
+}
+
+// Limpar entradas antigas do rate limit store a cada 5 min
+setInterval(() => {
+    const now = Date.now();
+    for (const [key, value] of rateLimitStore.entries()) {
+        if ((now - value.start) > RATE_LIMIT_WINDOW * 2) {
+            rateLimitStore.delete(key);
+        }
+    }
+}, 5 * 60 * 1000);
+
+// Rate limit global
+app.use(rateLimit(RATE_LIMIT_MAX));
 
 // Timeout para requisições longas (10 minutos)
 app.use((req, res, next) => {
@@ -165,8 +481,233 @@ app.use((req, res, next) => {
     next();
 });
 
-// Servir arquivos estáticos (CSS, JS, imagens)
-app.use(express.static(path.join(__dirname, 'public')));
+// ── Input Validation Helpers (enhanced from middleware/sanitize.js) ──
+function sanitizeString(str, maxLen = 500) {
+    return sanitizeStr(str, maxLen);
+}
+
+function validateCNPJ(cnpj) {
+    return validateCNPJFull(cnpj);
+}
+
+// ── Performance: Cache headers for API ──
+app.use((req, res, next) => {
+    const origJson = res.json.bind(res);
+    res.json = (body) => {
+        res.setHeader('Cache-Control', 'no-cache');
+        return origJson(body);
+    };
+    next();
+});
+
+// Servir arquivos estáticos — sem cache em dev para evitar CSS/JS desatualizado
+app.use(express.static(path.join(__dirname, 'public'), {
+    maxAge: process.env.NODE_ENV === 'production' ? '1h' : 0,
+    etag: true,
+    lastModified: true,
+    setHeaders: (res, filePath) => {
+        if (filePath.endsWith('.html')) {
+            res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        } else if (filePath.endsWith('.css') || filePath.endsWith('.js')) {
+            res.setHeader('Cache-Control', process.env.NODE_ENV === 'production'
+                ? 'public, max-age=3600'
+                : 'no-cache, no-store, must-revalidate');
+        }
+    }
+}));
+
+// ============================================================================
+// API - NOTÍCIAS REAIS (RSS das Agências Reguladoras)
+// ============================================================================
+
+app.get('/api/noticias', async (req, res) => {
+    try {
+        const limite = Math.min(Math.max(parseInt(req.query.limite) || 50, 1), 200);
+        const forceRefresh = req.query.forceRefresh === 'true';
+        const setor = sanitizeString(req.query.setor || '', 50);
+        const esfera = sanitizeString(req.query.esfera || '', 20);
+
+        console.log(`[Notícias] Buscando notícias reais (limite=${limite}, refresh=${forceRefresh})`);
+
+        let noticias;
+
+        if (setor) {
+            noticias = await newsFetcher.fetchNoticiasPorSetor(setor, limite);
+        } else if (esfera) {
+            noticias = await newsFetcher.fetchNoticiasPorEsfera(esfera, limite);
+        } else {
+            noticias = await newsFetcher.fetchNoticiasComCache(forceRefresh);
+            noticias = noticias.slice(0, limite);
+        }
+
+        console.log(`[Notícias] ${noticias.length} notícias obtidas de fontes oficiais`);
+
+        res.json({
+            success: true,
+            noticias: noticias,
+            total: noticias.length,
+            fontes: Object.keys(newsFetcher.FONTES_RSS).length,
+            cache: !forceRefresh,
+            atualizadoEm: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error('[Notícias] Erro:', error.message);
+        res.status(500).json({
+            success: false,
+            noticias: [],
+            erro: error.message
+        });
+    }
+});
+
+// Status de todas as fontes de notícias
+app.get('/api/noticias/status', (req, res) => {
+    res.json({
+        success: true,
+        fontes: newsFetcher.getStatusFontes ? newsFetcher.getStatusFontes() : [],
+        total: Object.keys(newsFetcher.FONTES_RSS).length
+    });
+});
+
+// ============================================================================
+// API - INTELIGENCIA REGULATORIA (cruzamento noticias x deliberacoes)
+// ============================================================================
+
+// Noticias enriquecidas com inteligencia (empresas, deliberacoes relacionadas)
+app.get('/api/noticias/inteligencia', async (req, res) => {
+    try {
+        const limite = Math.min(Math.max(parseInt(req.query.limite) || 50, 1), 200);
+        const forceRefresh = req.query.forceRefresh === 'true';
+
+        // 1. Busca noticias
+        let noticias = await newsFetcher.fetchNoticiasComCache(forceRefresh);
+        noticias = noticias.slice(0, limite);
+
+        // 2. Busca deliberacoes disponíveis
+        const deliberacoes = coletarTodasDeliberacoes();
+
+        // 3. Cruza noticias com deliberacoes
+        const noticiasEnriquecidas = intelligence.enriquecerNoticias(noticias, deliberacoes);
+
+        // 4. Verifica alertas configurados
+        const alertasNovos = intelligence.verificarAlertas(noticias);
+
+        const comInteligencia = noticiasEnriquecidas.filter(n => n.inteligencia && n.inteligencia.temInteligencia);
+
+        res.json({
+            success: true,
+            noticias: noticiasEnriquecidas,
+            total: noticiasEnriquecidas.length,
+            comInteligencia: comInteligencia.length,
+            deliberacoesDisponiveis: deliberacoes.length,
+            alertasDisparados: alertasNovos.length,
+            fontes: Object.keys(newsFetcher.FONTES_RSS).length,
+            atualizadoEm: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error('[Inteligencia] Erro:', error.message);
+        res.status(500).json({ success: false, erro: error.message });
+    }
+});
+
+// Radar regulatorio — temas quentes da semana
+app.get('/api/inteligencia/radar', async (req, res) => {
+    try {
+        const dias = Math.min(Math.max(parseInt(req.query.dias) || 7, 1), 90);
+
+        const noticias = await newsFetcher.fetchNoticiasComCache(false);
+        const deliberacoes = coletarTodasDeliberacoes();
+
+        const radar = intelligence.gerarRadarRegulatorio(noticias, deliberacoes, dias);
+
+        res.json({
+            success: true,
+            periodo: dias + ' dias',
+            temas: radar,
+            totalTemas: radar.length,
+            temasQuentes: radar.filter(t => t.nivel === 'critico' || t.nivel === 'alto').length,
+            geradoEm: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error('[Radar] Erro:', error.message);
+        res.status(500).json({ success: false, erro: error.message });
+    }
+});
+
+// Listar alertas configurados
+app.get('/api/inteligencia/alertas', (req, res) => {
+    res.json({
+        success: true,
+        alertas: intelligence.listarAlertas(),
+        total: intelligence.listarAlertas().length
+    });
+});
+
+// Criar alerta
+app.post('/api/inteligencia/alertas', authenticate, (req, res) => {
+    const { tipo, valor } = req.body || {};
+
+    if (!tipo || !valor) {
+        return res.status(400).json({ success: false, erro: 'Campos tipo e valor sao obrigatorios' });
+    }
+
+    const tiposValidos = ['empresa', 'tema', 'agencia'];
+    if (!tiposValidos.includes(tipo)) {
+        return res.status(400).json({ success: false, erro: 'Tipo deve ser: empresa, tema ou agencia' });
+    }
+
+    const valorSanitizado = sanitizeStr(valor, 200);
+    const alerta = intelligence.adicionarAlerta({ tipo, valor: valorSanitizado });
+
+    res.json({ success: true, alerta });
+});
+
+// Remover alerta
+app.delete('/api/inteligencia/alertas/:id', authenticate, (req, res) => {
+    const removido = intelligence.removerAlerta(req.params.id);
+    res.json({ success: true, removido });
+});
+
+// Verificar alertas contra noticias recentes
+app.get('/api/inteligencia/alertas/verificar', async (req, res) => {
+    try {
+        const noticias = await newsFetcher.fetchNoticiasComCache(false);
+        const novosAlertas = intelligence.verificarAlertas(noticias);
+
+        res.json({
+            success: true,
+            novosAlertas,
+            total: novosAlertas.length,
+            verificadoEm: new Date().toISOString()
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, erro: error.message });
+    }
+});
+
+// Historico de alertas disparados
+app.get('/api/inteligencia/alertas/historico', (req, res) => {
+    const limite = Math.min(Math.max(parseInt(req.query.limite) || 50, 1), 200);
+    res.json({
+        success: true,
+        historico: intelligence.historicoAlertas(limite)
+    });
+});
+
+// Perfil completo de uma empresa
+app.get('/api/inteligencia/empresa/:nome', async (req, res) => {
+    try {
+        const nome = decodeURIComponent(req.params.nome);
+        const deliberacoes = coletarTodasDeliberacoes();
+        const noticias = await newsFetcher.fetchNoticiasComCache(false);
+
+        const perfil = intelligence.perfilEmpresa(nome, deliberacoes, noticias);
+
+        res.json({ success: true, perfil });
+    } catch (error) {
+        res.status(500).json({ success: false, erro: error.message });
+    }
+});
 
 // ============================================================================
 // API - COLETA DE PDFs
@@ -176,12 +717,14 @@ app.get('/api/health', (req, res) => {
     res.json({
         status: 'ok',
         service: 'IRIS Platform',
+        version: '1.1.0',
         pdfsEmMemoria: pdfsProcessados.length,
-        ultimaColeta
+        ultimaColeta,
+        uptime: process.uptime()
     });
 });
 
-app.post('/api/scrape-and-extract', async (req, res) => {
+app.post('/api/scrape-and-extract', authenticate, rateLimit(RATE_LIMIT_STRICT), async (req, res) => {
     try {
         const forceComplete = req.query.force === 'true';
 
@@ -211,18 +754,24 @@ app.post('/api/scrape-and-extract', async (req, res) => {
         let pdfsParaProcessar = links.map(pdf => ({ ...pdf, ehNovo: true }));
         console.log(`[IRIS] → ${pdfsParaProcessar.length} PDFs para processar`);
 
-        // 3. Download
-        console.log(`\n[IRIS] ETAPA 3: Download de ${pdfsParaProcessar.length} PDFs...`);
-        console.log('[IRIS] ⏳ Isso pode demorar alguns minutos...');
+        // 3+4. Pipeline: Download + Extração concorrente
+        console.log(`\n[IRIS] ETAPA 3: Pipeline rapido — download + extracao de ${pdfsParaProcessar.length} PDFs...`);
+        console.log('[IRIS] Concorrencia: 10 PDFs simultaneos | Custo: R$ 0,00');
 
-        const pdfsComBuffer = await downloadMultiplePDFs(pdfsParaProcessar);
+        const pdfsExtraidos = await processarPipeline(pdfsParaProcessar, {
+            concurrency: 10,
+            staggerMs: 200,
+            batchPauseMs: 1000
+        });
 
-        const downloadSucesso = pdfsComBuffer.filter(p => p.status === 'sucesso').length;
-        const downloadErro = pdfsComBuffer.filter(p => p.status === 'erro').length;
-        console.log(`[IRIS] → Download: ${downloadSucesso} sucesso, ${downloadErro} erros`);
+        const downloadSucesso = pdfsExtraidos.filter(p => p.status === 'sucesso').length;
+        const downloadErro = pdfsExtraidos.filter(p => p.status === 'erro').length;
+        const extracaoSucesso = pdfsExtraidos.filter(p => p.statusExtracao === 'sucesso').length;
+
+        console.log(`[IRIS] → Pipeline: ${downloadSucesso} baixados, ${extracaoSucesso} extraidos, ${downloadErro} erros`);
 
         if (downloadSucesso === 0) {
-            console.log('[IRIS] ⚠️ Nenhum PDF baixado com sucesso!');
+            console.log('[IRIS] Nenhum PDF baixado com sucesso!');
             return res.json({
                 sucesso: false,
                 mensagem: `Nenhum PDF baixado. ${downloadErro} erros de download. Verifique o terminal.`,
@@ -232,15 +781,8 @@ app.post('/api/scrape-and-extract', async (req, res) => {
             });
         }
 
-        // 4. Extração
-        console.log('\n[IRIS] ETAPA 4: Extração de texto...');
-        const pdfsExtraidos = await extractFromMultiple(pdfsComBuffer);
-
-        const extracaoSucesso = pdfsExtraidos.filter(p => p.statusExtracao === 'sucesso').length;
-        console.log(`[IRIS] → Extração: ${extracaoSucesso} PDFs com texto extraído`);
-
-        // 5. Atualiza histórico
-        console.log('\n[IRIS] ETAPA 5: Finalizando...');
+        // 4. Atualiza histórico
+        console.log('\n[IRIS] ETAPA 4: Finalizando...');
         await syncManager.updateHistory(pdfsExtraidos, true);
 
         // Armazena em memória
@@ -326,7 +868,7 @@ app.get('/api/pdfs/:index', (req, res) => {
 // API - ANÁLISE IRIS CORE
 // ============================================================================
 
-app.post('/api/analisar', (req, res) => {
+app.post('/api/analisar', authenticate, (req, res) => {
     try {
         const { texto } = req.body;
 
@@ -342,7 +884,7 @@ app.post('/api/analisar', (req, res) => {
     }
 });
 
-app.post('/api/analisar-pdf/:index', (req, res) => {
+app.post('/api/analisar-pdf/:index', authenticate, async (req, res) => {
     try {
         const index = parseInt(req.params.index);
 
@@ -356,32 +898,84 @@ app.post('/api/analisar-pdf/:index', (req, res) => {
             return res.status(400).json({ erro: 'PDF não possui texto extraído' });
         }
 
-        // Usa a nova extração estruturada
-        const extracao = irisCore.extrairDeliberacoesEstruturadas(pdf.texto);
+        // Auto-detecta agência a partir do texto do PDF
+        const agenciasConhecidas = ['ARTESP', 'ANEEL', 'ANATEL', 'ANP', 'ANTT', 'ANTAQ', 'ANS', 'ANVISA', 'ANA', 'ANAC', 'ANM', 'ANCINE'];
+        const textoUpper = pdf.texto.substring(0, 3000).toUpperCase();
+        const agenciaDetectada = agenciasConhecidas.find(a => textoUpper.includes(a)) || 'ARTESP';
+        console.log(`[IRIS] Agência detectada no PDF: ${agenciaDetectada}`);
 
-        // Também faz análise tradicional para manter compatibilidade
+        // Tenta extração via Gemini (IA) - se disponível
+        let deliberacoesGemini = null;
+        let fonteExtracao = 'regex';
+        if (geminiAnalyzer.isGeminiAvailable()) {
+            console.log('[IRIS] Gemini disponível — usando IA para extração');
+            deliberacoesGemini = await geminiAnalyzer.analisarMultiplasDeliberacoes(pdf.texto);
+            if (deliberacoesGemini) {
+                fonteExtracao = 'gemini';
+                console.log(`[IRIS] Gemini extraiu ${deliberacoesGemini.length} deliberação(ões)`);
+            }
+        }
+
+        // Extração regex (sempre roda — como fallback ou complemento)
+        const extracao = irisCore.extrairDeliberacoesEstruturadas(pdf.texto);
         const analiseTradicional = irisCore.analisarTexto(pdf.texto);
 
         // Detecta empresas mencionadas no texto
         const empresasDetectadas = detectarEmpresas(pdf.texto);
 
+        // Decide qual fonte de deliberações usar
+        const deliberacoesFinais = deliberacoesGemini || extracao.deliberations;
+
         // Combina os resultados
         const analise = {
             ...analiseTradicional,
-            deliberacoes: extracao.deliberations,
-            totalDeliberacoes: extracao.total,
-            empresasDetectadas: empresasDetectadas
+            deliberacoes: deliberacoesFinais,
+            totalDeliberacoes: deliberacoesFinais.length,
+            empresasDetectadas: empresasDetectadas,
+            agenciaDetectada,
+            fonteExtracao
         };
 
         // Salva análise no PDF
         pdfsProcessados[index].analise = analise;
         pdfsProcessados[index].empresasDetectadas = empresasDetectadas;
 
+        // Persiste deliberações no Supabase/memória
+        let persistidas = 0;
+        for (const delib of deliberacoesFinais) {
+            try {
+                await persistencia.salvarDeliberacao({
+                    agencia: agenciaDetectada,
+                    numeroReuniao: delib.numero_reuniao || delib.reuniao_ordinaria || '',
+                    dataReuniao: delib.data_reuniao || '',
+                    processo: delib.processo || delib.numero_deliberacao || '',
+                    interessado: delib.interessado || '',
+                    tipo: delib.pauta_interna ? 'Ato Administrativo Interno' : (delib.classificacao || analiseTradicional.tipo || 'Pleito Externo'),
+                    microtema: delib.microtema || analiseTradicional.microtema || '',
+                    decisao: delib.decisao || delib.resultado || analiseTradicional.decisao || '',
+                    resumoPleito: delib.resumo_pleito || delib.texto_resumo || '',
+                    fundamentoDecisao: delib.fundamento_decisao || '',
+                    votosFavoraveis: delib.votos_a_favor || [],
+                    votosContrarios: delib.votos_contra || [],
+                    linkPdf: pdf.url || '',
+                    confiancaGeral: analiseTradicional.confiancaGeral || 0,
+                    hashTexto: analiseTradicional.hashTexto || ''
+                });
+                persistidas++;
+            } catch (err) {
+                console.log(`[IRIS] Aviso: não persistiu deliberação: ${err.message}`);
+            }
+        }
+
+        console.log(`[IRIS] ${persistidas}/${deliberacoesFinais.length} deliberações persistidas (fonte: ${fonteExtracao})`);
+
         res.json({
             sucesso: true,
             nomeArquivo: pdf.nomeArquivo,
             analise,
-            empresasDetectadas
+            empresasDetectadas,
+            persistidas,
+            fonteExtracao
         });
 
     } catch (error) {
@@ -389,7 +983,7 @@ app.post('/api/analisar-pdf/:index', (req, res) => {
     }
 });
 
-app.post('/api/analisar-todos', async (req, res) => {
+app.post('/api/analisar-todos', authenticate, async (req, res) => {
     try {
         if (pdfsProcessados.length === 0) {
             return res.status(400).json({ erro: 'Nenhum PDF em memória. Execute a coleta primeiro.' });
@@ -397,29 +991,88 @@ app.post('/api/analisar-todos', async (req, res) => {
 
         const resultados = [];
         let totalDeliberacoes = 0;
+        let totalPersistidas = 0;
+        const errosPersistencia = [];
         const todasEmpresas = new Map();
 
         for (let i = 0; i < pdfsProcessados.length; i++) {
             const pdf = pdfsProcessados[i];
 
             if (pdf.texto) {
-                // Usa a nova extração estruturada
+                // Auto-detecta agência
+                const agenciasConhecidas = ['ARTESP', 'ANEEL', 'ANATEL', 'ANP', 'ANTT', 'ANTAQ', 'ANS', 'ANVISA', 'ANA', 'ANAC', 'ANM', 'ANCINE'];
+                const textoUpper = pdf.texto.substring(0, 3000).toUpperCase();
+                const agenciaDetectada = agenciasConhecidas.find(a => textoUpper.includes(a)) || 'ARTESP';
+
+                // Tenta Gemini (IA) se disponível
+                let deliberacoesGemini = null;
+                let fonteExtracao = 'regex';
+                if (geminiAnalyzer.isGeminiAvailable()) {
+                    deliberacoesGemini = await geminiAnalyzer.analisarMultiplasDeliberacoes(pdf.texto);
+                    if (deliberacoesGemini) fonteExtracao = 'gemini';
+                }
+
+                // Extração regex (sempre roda)
                 const extracao = irisCore.extrairDeliberacoesEstruturadas(pdf.texto);
                 const analiseTradicional = irisCore.analisarTexto(pdf.texto);
 
                 // Detecta empresas mencionadas
                 const empresasDetectadas = detectarEmpresas(pdf.texto);
 
+                // Decide fonte de deliberações
+                const deliberacoesFinais = deliberacoesGemini || extracao.deliberations;
+
                 const analise = {
                     ...analiseTradicional,
-                    deliberacoes: extracao.deliberations,
-                    totalDeliberacoes: extracao.total,
-                    empresasDetectadas: empresasDetectadas
+                    deliberacoes: deliberacoesFinais,
+                    totalDeliberacoes: deliberacoesFinais.length,
+                    empresasDetectadas: empresasDetectadas,
+                    agenciaDetectada,
+                    fonteExtracao
                 };
 
                 pdfsProcessados[i].analise = analise;
                 pdfsProcessados[i].empresasDetectadas = empresasDetectadas;
-                totalDeliberacoes += extracao.total;
+                totalDeliberacoes += deliberacoesFinais.length;
+
+                // Persiste deliberações em paralelo (Promise.allSettled)
+                const savePromises = deliberacoesFinais.map(delib =>
+                    persistencia.salvarDeliberacao({
+                        agencia: agenciaDetectada,
+                        numeroReuniao: delib.numero_reuniao || delib.reuniao_ordinaria || '',
+                        dataReuniao: delib.data_reuniao || '',
+                        processo: delib.processo || delib.numero_deliberacao || '',
+                        interessado: delib.interessado || '',
+                        tipo: delib.pauta_interna ? 'Ato Administrativo Interno' : (delib.classificacao || analiseTradicional.tipo || 'Pleito Externo'),
+                        microtema: delib.microtema || analiseTradicional.microtema || '',
+                        decisao: delib.decisao || delib.resultado || analiseTradicional.decisao || '',
+                        resumoPleito: delib.resumo_pleito || delib.texto_resumo || '',
+                        fundamentoDecisao: delib.fundamento_decisao || '',
+                        votosFavoraveis: delib.votos_a_favor || [],
+                        votosContrarios: delib.votos_contra || [],
+                        linkPdf: pdf.url || '',
+                        confiancaGeral: analiseTradicional.confiancaGeral || 0,
+                        hashTexto: analiseTradicional.hashTexto || ''
+                    }).then(() => ({ status: 'ok', processo: delib.processo || delib.numero_deliberacao }))
+                      .catch(err => ({ status: 'error', processo: delib.processo || delib.numero_deliberacao || 'N/A', error: err.message }))
+                );
+
+                const saveResults = await Promise.allSettled(savePromises);
+                for (const result of saveResults) {
+                    const val = result.status === 'fulfilled' ? result.value : { status: 'error', error: result.reason?.message };
+                    if (val.status === 'ok') {
+                        totalPersistidas++;
+                    } else {
+                        const isDuplicate = val.error && val.error.includes('duplicate');
+                        if (!isDuplicate) {
+                            console.warn(`[IRIS] Erro ao persistir deliberação: ${val.error}`);
+                        }
+                        errosPersistencia.push({
+                            processo: val.processo || 'N/A',
+                            erro: isDuplicate ? 'Duplicata ignorada' : val.error
+                        });
+                    }
+                }
 
                 // Agrega empresas detectadas
                 for (const emp of empresasDetectadas) {
@@ -444,10 +1097,17 @@ app.post('/api/analisar-todos', async (req, res) => {
             }
         }
 
+        console.log(`[IRIS] Total: ${totalPersistidas}/${totalDeliberacoes} deliberações persistidas`);
+        if (errosPersistencia.length > 0) {
+            console.warn(`[IRIS] ${errosPersistencia.filter(e => e.erro !== 'Duplicata ignorada').length} erros de persistência`);
+        }
+
         res.json({
             sucesso: true,
             totalAnalisados: resultados.length,
             totalDeliberacoes,
+            totalPersistidas,
+            errosPersistencia: errosPersistencia.length > 0 ? errosPersistencia : undefined,
             empresasAgregadas: Array.from(todasEmpresas.values()).sort((a, b) => b.mencoes - a.mencoes),
             resultados
         });
@@ -458,23 +1118,28 @@ app.post('/api/analisar-todos', async (req, res) => {
 });
 
 app.get('/api/estatisticas', (req, res) => {
-    const analisados = pdfsProcessados.filter(p => p.analise);
-
-    const stats = {
+    // Single-pass reduce instead of 6 separate .filter() calls
+    const stats = pdfsProcessados.reduce((acc, p) => {
+        if (!p.analise) return acc;
+        acc.totalAnalisados++;
+        // Por tipo
+        const tipo = p.analise.tipo;
+        if (tipo === 'Pleito Externo') acc.porTipo.pleitoExterno++;
+        else if (tipo === 'Ato Administrativo Interno') acc.porTipo.atoInterno++;
+        else acc.porTipo.naoClassificado++;
+        // Por decisao
+        const decisao = p.analise.decisao;
+        if (decisao === 'Deferido') acc.porDecisao.deferido++;
+        else if (decisao === 'Indeferido') acc.porDecisao.indeferido++;
+        else acc.porDecisao.naoIdentificado++;
+        return acc;
+    }, {
         totalPdfs: pdfsProcessados.length,
-        totalAnalisados: analisados.length,
-        porTipo: {
-            pleitoExterno: analisados.filter(p => p.analise.tipo === 'Pleito Externo').length,
-            atoInterno: analisados.filter(p => p.analise.tipo === 'Ato Administrativo Interno').length,
-            naoClassificado: analisados.filter(p => p.analise.tipo === 'Não Classificado').length
-        },
-        porDecisao: {
-            deferido: analisados.filter(p => p.analise.decisao === 'Deferido').length,
-            indeferido: analisados.filter(p => p.analise.decisao === 'Indeferido').length,
-            naoIdentificado: analisados.filter(p => p.analise.decisao === 'Não Identificada').length
-        },
+        totalAnalisados: 0,
+        porTipo: { pleitoExterno: 0, atoInterno: 0, naoClassificado: 0 },
+        porDecisao: { deferido: 0, indeferido: 0, naoIdentificado: 0 },
         ultimaColeta
-    };
+    });
 
     res.json(stats);
 });
@@ -522,11 +1187,13 @@ app.get('/api/empresas/detectadas', (req, res) => {
 });
 
 // Endpoint para adicionar empresa a partir de deteccao
-app.post('/api/empresas/adicionar', (req, res) => {
-    const { nome, setor, tipo } = req.body;
+app.post('/api/empresas/adicionar', authenticate, rateLimit(RATE_LIMIT_STRICT), (req, res) => {
+    const nome = sanitizeString(req.body.nome, 200);
+    const setor = sanitizeString(req.body.setor, 100);
+    const tipo = sanitizeString(req.body.tipo, 100);
 
-    if (!nome || !setor) {
-        return res.status(400).json({ erro: 'Nome e setor sao obrigatorios' });
+    if (!nome || nome.length < 2 || !setor || setor.length < 2) {
+        return res.status(400).json({ erro: 'Nome (min 2 chars) e setor sao obrigatorios' });
     }
 
     // Verifica se ja existe
@@ -555,7 +1222,7 @@ app.post('/api/empresas/adicionar', (req, res) => {
 // ============================================================================
 
 // Endpoint para upload de PDFs (aceita base64)
-app.post('/api/upload-pdf', async (req, res) => {
+app.post('/api/upload-pdf', authenticate, async (req, res) => {
     try {
         const { arquivo, nomeArquivo } = req.body;
 
@@ -586,7 +1253,7 @@ app.post('/api/upload-pdf', async (req, res) => {
             empresasDetectadas: empresasDetectadas
         };
 
-        pdfsProcessados.push(pdf);
+        addPdfToMemory(pdf);
 
         console.log(`[IRIS] Upload processado: ${pdf.nomeArquivo} (${pdf.numPaginas} páginas)`);
         if (empresasDetectadas.length > 0) {
@@ -612,7 +1279,7 @@ app.post('/api/upload-pdf', async (req, res) => {
 });
 
 // Endpoint para upload múltiplo
-app.post('/api/upload-multiplo', async (req, res) => {
+app.post('/api/upload-multiplo', authenticate, async (req, res) => {
     try {
         const { arquivos } = req.body;
 
@@ -699,7 +1366,7 @@ app.post('/api/upload-multiplo', async (req, res) => {
 });
 
 // Endpoint para upload via URL
-app.post('/api/upload-url', async (req, res) => {
+app.post('/api/upload-url', authenticate, async (req, res) => {
     try {
         const { url } = req.body;
 
@@ -707,15 +1374,22 @@ app.post('/api/upload-url', async (req, res) => {
             return res.status(400).json({ erro: 'URL é obrigatória' });
         }
 
-        console.log(`\n[IRIS] Baixando PDF de: ${url}`);
+        // Validate URL (SSRF prevention)
+        const urlValidation = validateUrl(url);
+        if (!urlValidation.valid) {
+            return res.status(400).json({ erro: urlValidation.error });
+        }
+
+        console.log(`\n[IRIS] Baixando PDF de: ${urlValidation.url} (trusted: ${urlValidation.trusted})`);
 
         // Baixa o PDF
         const axios = require('axios');
-        const response = await axios.get(url, {
+        const response = await axios.get(urlValidation.url, {
             responseType: 'arraybuffer',
             timeout: 60000,
+            maxRedirects: 3,
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                'User-Agent': 'IRIS-Platform/2.0'
             }
         });
 
@@ -760,7 +1434,7 @@ app.post('/api/upload-url', async (req, res) => {
 });
 
 // Endpoint para excluir PDF
-app.delete('/api/pdf/:index', (req, res) => {
+app.delete('/api/pdf/:index', authenticate, (req, res) => {
     try {
         const index = parseInt(req.params.index);
 
@@ -781,6 +1455,163 @@ app.delete('/api/pdf/:index', (req, res) => {
     } catch (error) {
         res.status(500).json({ erro: error.message });
     }
+});
+
+// ============================================================================
+// API - PROCESSAMENTO UNIFICADO DE DELIBERAÇÕES
+// ============================================================================
+
+// Endpoint unificado: Upload + Extração + Análise + Métricas + Persistência
+app.post('/api/processar-deliberacoes', authenticate, async (req, res) => {
+    try {
+        const { arquivos, arquivo, nomeArquivo, url, agencia, forcarReprocessamento } = req.body;
+
+        // Monta lista de PDFs a processar
+        const pdfsParaProcessar = [];
+
+        // Caso 1: Upload único (base64)
+        if (arquivo) {
+            const base64Data = arquivo.replace(/^data:application\/pdf;base64,/, '');
+            const buffer = Buffer.from(base64Data, 'base64');
+            pdfsParaProcessar.push({ buffer, nomeArquivo: nomeArquivo || `upload_${Date.now()}.pdf` });
+        }
+
+        // Caso 2: Upload múltiplo (array de base64)
+        if (arquivos && Array.isArray(arquivos)) {
+            for (const arq of arquivos) {
+                const base64Data = arq.arquivo.replace(/^data:application\/pdf;base64,/, '');
+                const buffer = Buffer.from(base64Data, 'base64');
+                pdfsParaProcessar.push({ buffer, nomeArquivo: arq.nomeArquivo || `upload_${Date.now()}.pdf` });
+                arq.arquivo = null; // Libera memória
+            }
+        }
+
+        // Caso 3: Upload via URL
+        if (url) {
+            const urlValidation = validateUrl(url);
+            if (!urlValidation.valid) {
+                return res.status(400).json({ erro: urlValidation.error });
+            }
+
+            const axios = require('axios');
+            const response = await axios.get(urlValidation.url, {
+                responseType: 'arraybuffer',
+                timeout: 60000,
+                maxRedirects: 3,
+                headers: { 'User-Agent': 'IRIS-Platform/3.0' }
+            });
+
+            const buffer = Buffer.from(response.data);
+            const nome = url.split('/').pop() || `download_${Date.now()}.pdf`;
+            pdfsParaProcessar.push({ buffer, nomeArquivo: nome, url: urlValidation.url });
+        }
+
+        if (pdfsParaProcessar.length === 0) {
+            return res.status(400).json({ erro: 'Nenhum PDF enviado. Use "arquivo" (base64), "arquivos" (array) ou "url".' });
+        }
+
+        console.log(`\n[IRIS] ════════════════════════════════════════════════`);
+        console.log(`[IRIS] PROCESSAMENTO UNIFICADO: ${pdfsParaProcessar.length} PDF(s)`);
+        console.log(`[IRIS] ════════════════════════════════════════════════`);
+
+        // Adiciona na fila de processamento
+        const { jobId } = filaProcessamento.adicionarNaFila(pdfsParaProcessar, {
+            agencia: agencia || null,
+            forcarReprocessamento: forcarReprocessamento || false
+        });
+
+        // Processa a fila de forma assíncrona
+        const processamentoPromise = filaProcessamento.processarFila({
+            pdfParse,
+            geminiAnalyzer,
+            irisCore: { extrairDeliberacoesEstruturadas: irisCore.extrairDeliberacoesEstruturadas, analisarTexto: irisCore.analisarTexto },
+            persistencia,
+            detectarEmpresas
+        });
+
+        // Para poucos PDFs (<=3), espera concluir e retorna resultado imediato
+        if (pdfsParaProcessar.length <= 3) {
+            await processamentoPromise;
+            const resultado = filaProcessamento.consultarJob(jobId);
+
+            // Também adiciona PDFs à memória para compatibilidade com endpoints antigos
+            for (const r of (resultado?.resultadosPorPdf || [])) {
+                if (r.status === 'concluido') {
+                    // Busca o item com deliberações completas do resultado
+                    const item = filaProcessamento.consultarJob(jobId);
+                    // Os PDFs já foram persistidos pelo processamento da fila
+                }
+            }
+
+            // Calcula métricas com todas as deliberações disponíveis
+            const todasDelibs = coletarTodasDeliberacoes();
+            const delibsPersistidas = await persistencia.buscarTodasDeliberacoesParaMetricas();
+            const delibsParaMetricas = delibsPersistidas.length > todasDelibs.length ? delibsPersistidas : todasDelibs;
+            const metricas = metricasEngine.calcularTodasMetricas(delibsParaMetricas);
+
+            // Salva métricas no cache persistente
+            persistencia.salvarMetricasCache('completo', metricas).catch(() => {});
+
+            console.log(`[IRIS] ════════════════════════════════════════════════`);
+            console.log(`[IRIS] PROCESSAMENTO CONCLUÍDO: ${resultado?.processados || 0} PDFs, ${resultado?.deliberacoesExtraidas || 0} deliberações`);
+            console.log(`[IRIS] ════════════════════════════════════════════════\n`);
+
+            return res.json({
+                sucesso: true,
+                jobId,
+                status: 'concluido',
+                resultado: {
+                    totalPdfs: resultado?.totalPdfs || 0,
+                    processados: resultado?.processados || 0,
+                    erros: resultado?.erros || 0,
+                    deliberacoesExtraidas: resultado?.deliberacoesExtraidas || 0,
+                    resultadosPorPdf: resultado?.resultadosPorPdf || []
+                },
+                metricas
+            });
+        }
+
+        // Para muitos PDFs (>3), retorna jobId e processa em background
+        processamentoPromise.then(async () => {
+            // Recalcula métricas após processamento
+            try {
+                const delibsPersistidas = await persistencia.buscarTodasDeliberacoesParaMetricas();
+                const metricas = metricasEngine.calcularTodasMetricas(delibsPersistidas);
+                await persistencia.salvarMetricasCache('completo', metricas);
+                console.log(`[IRIS] Métricas recalculadas após processamento do job ${jobId}`);
+            } catch (err) {
+                console.warn(`[IRIS] Erro ao recalcular métricas: ${err.message}`);
+            }
+        }).catch(err => {
+            console.error(`[IRIS] Erro no processamento do job ${jobId}: ${err.message}`);
+        });
+
+        res.json({
+            sucesso: true,
+            jobId,
+            status: 'processando',
+            mensagem: `${pdfsParaProcessar.length} PDFs enviados para processamento. Use GET /api/processar-deliberacoes/status/${jobId} para acompanhar.`,
+            totalNaFila: pdfsParaProcessar.length
+        });
+
+    } catch (error) {
+        console.error('[IRIS] Erro no processamento unificado:', error.message);
+        res.status(500).json({ erro: 'Erro ao processar: ' + error.message });
+    }
+});
+
+// Status de um job específico
+app.get('/api/processar-deliberacoes/status/:jobId', (req, res) => {
+    const job = filaProcessamento.consultarJob(req.params.jobId);
+    if (!job) {
+        return res.status(404).json({ erro: 'Job não encontrado' });
+    }
+    res.json(job);
+});
+
+// Status geral da fila de processamento
+app.get('/api/fila/status', (req, res) => {
+    res.json(filaProcessamento.statusFila());
 });
 
 // ============================================================================
@@ -836,7 +1667,7 @@ async function verificarNovosDocumentos() {
 }
 
 // Iniciar monitoramento
-app.post('/api/monitoramento/iniciar', (req, res) => {
+app.post('/api/monitoramento/iniciar', authenticate, (req, res) => {
     if (monitoramentoAtivo) {
         return res.json({ sucesso: false, mensagem: 'Monitoramento já está ativo' });
     }
@@ -859,7 +1690,7 @@ app.post('/api/monitoramento/iniciar', (req, res) => {
 });
 
 // Parar monitoramento
-app.post('/api/monitoramento/parar', (req, res) => {
+app.post('/api/monitoramento/parar', authenticate, (req, res) => {
     if (!monitoramentoAtivo) {
         return res.json({ sucesso: false, mensagem: 'Monitoramento não está ativo' });
     }
@@ -899,7 +1730,7 @@ app.get('/api/monitoramento/novos', (req, res) => {
 });
 
 // Marcar documentos como lidos
-app.post('/api/monitoramento/marcar-lidos', (req, res) => {
+app.post('/api/monitoramento/marcar-lidos', authenticate, (req, res) => {
     const naoLidos = novosDocumentos.filter(d => !d.lido).length;
     novosDocumentos.forEach(d => d.lido = true);
 
@@ -910,13 +1741,13 @@ app.post('/api/monitoramento/marcar-lidos', (req, res) => {
 });
 
 // Verificar agora (manual)
-app.post('/api/monitoramento/verificar-agora', async (req, res) => {
+app.post('/api/monitoramento/verificar-agora', authenticate, async (req, res) => {
     const resultado = await verificarNovosDocumentos();
     res.json(resultado);
 });
 
 // Limpar PDFs da memória
-app.post('/api/limpar-pdfs', (req, res) => {
+app.post('/api/limpar-pdfs', authenticate, (req, res) => {
     const total = pdfsProcessados.length;
     pdfsProcessados = [];
     ultimaColeta = null;
@@ -1437,27 +2268,1125 @@ app.get('/api/metricas/exportar', (req, res) => {
     });
 });
 
-
 // ============================================================================
-// INTERFACE WEB UNIFICADA - Redireciona para SPA
+// API - MÉTRICAS UNIFICADAS (Motor de Métricas v3)
 // ============================================================================
 
-app.get('/', (req, res) => {
-    res.redirect('/metricas');
+// Todas as métricas calculadas de uma vez (5 grupos)
+app.get('/api/metricas/completo', async (req, res) => {
+    try {
+        // Tenta buscar do Supabase primeiro, senão usa memória
+        const delibsPersistidas = await persistencia.buscarTodasDeliberacoesParaMetricas();
+        const delibsMemoria = coletarTodasDeliberacoes();
+
+        // Usa a fonte com mais dados
+        const deliberacoes = delibsPersistidas.length > delibsMemoria.length
+            ? delibsPersistidas
+            : delibsMemoria;
+
+        if (deliberacoes.length === 0) {
+            return res.json({
+                sucesso: true,
+                mensagem: 'Nenhuma deliberação encontrada. Faça upload de PDFs via /api/processar-deliberacoes.',
+                metricas: null
+            });
+        }
+
+        const metricas = metricasEngine.calcularTodasMetricas(deliberacoes);
+
+        // Persiste no cache
+        persistencia.salvarMetricasCache('completo', metricas).catch(() => {});
+
+        res.json({
+            sucesso: true,
+            totalDeliberacoes: deliberacoes.length,
+            fonte: delibsPersistidas.length > delibsMemoria.length ? 'supabase' : 'memoria',
+            metricas
+        });
+    } catch (error) {
+        res.status(500).json({ erro: error.message });
+    }
+});
+
+// Grupo 1: Métricas de Valor Regulatório
+app.get('/api/metricas/valor-regulatorio', async (req, res) => {
+    try {
+        const delibsPersistidas = await persistencia.buscarTodasDeliberacoesParaMetricas();
+        const delibsMemoria = coletarTodasDeliberacoes();
+        const deliberacoes = delibsPersistidas.length > delibsMemoria.length ? delibsPersistidas : delibsMemoria;
+
+        const metricas = metricasEngine.calcularMetricasValorRegulatorio(deliberacoes);
+        res.json({ sucesso: true, metricas });
+    } catch (error) {
+        res.status(500).json({ erro: error.message });
+    }
+});
+
+// Grupo 2: Métricas por Diretor (com tendência e divergências)
+app.get('/api/metricas/diretor-completo', async (req, res) => {
+    try {
+        const delibsPersistidas = await persistencia.buscarTodasDeliberacoesParaMetricas();
+        const delibsMemoria = coletarTodasDeliberacoes();
+        const deliberacoes = delibsPersistidas.length > delibsMemoria.length ? delibsPersistidas : delibsMemoria;
+
+        const metricas = metricasEngine.calcularMetricasPorDiretor(deliberacoes);
+        res.json({ sucesso: true, metricas });
+    } catch (error) {
+        res.status(500).json({ erro: error.message });
+    }
+});
+
+// Grupo 3: Métricas por Tema (com evolução temporal)
+app.get('/api/metricas/tema-completo', async (req, res) => {
+    try {
+        const delibsPersistidas = await persistencia.buscarTodasDeliberacoesParaMetricas();
+        const delibsMemoria = coletarTodasDeliberacoes();
+        const deliberacoes = delibsPersistidas.length > delibsMemoria.length ? delibsPersistidas : delibsMemoria;
+
+        const metricas = metricasEngine.calcularMetricasPorTema(deliberacoes);
+        res.json({ sucesso: true, metricas });
+    } catch (error) {
+        res.status(500).json({ erro: error.message });
+    }
+});
+
+// Grupo 4: Métricas Institucionais
+app.get('/api/metricas/institucional-completo', async (req, res) => {
+    try {
+        const delibsPersistidas = await persistencia.buscarTodasDeliberacoesParaMetricas();
+        const delibsMemoria = coletarTodasDeliberacoes();
+        const deliberacoes = delibsPersistidas.length > delibsMemoria.length ? delibsPersistidas : delibsMemoria;
+
+        const metricas = metricasEngine.calcularMetricasInstitucionais(deliberacoes);
+        res.json({ sucesso: true, metricas });
+    } catch (error) {
+        res.status(500).json({ erro: error.message });
+    }
+});
+
+// Grupo 5: Métricas Competitivas (matriz tema x diretor, padrões)
+app.get('/api/metricas/competitivo-completo', async (req, res) => {
+    try {
+        const delibsPersistidas = await persistencia.buscarTodasDeliberacoesParaMetricas();
+        const delibsMemoria = coletarTodasDeliberacoes();
+        const deliberacoes = delibsPersistidas.length > delibsMemoria.length ? delibsPersistidas : delibsMemoria;
+
+        const metricas = metricasEngine.calcularMetricasCompetitivas(deliberacoes);
+        res.json({ sucesso: true, metricas });
+    } catch (error) {
+        res.status(500).json({ erro: error.message });
+    }
+});
+
+// Recalcular métricas manualmente (força recálculo do cache)
+app.post('/api/metricas/recalcular', authenticate, async (req, res) => {
+    try {
+        metricasEngine.invalidarCache();
+
+        const delibsPersistidas = await persistencia.buscarTodasDeliberacoesParaMetricas();
+        const delibsMemoria = coletarTodasDeliberacoes();
+        const deliberacoes = delibsPersistidas.length > delibsMemoria.length ? delibsPersistidas : delibsMemoria;
+
+        const metricas = metricasEngine.calcularTodasMetricas(deliberacoes);
+
+        await persistencia.salvarMetricasCache('completo', metricas);
+
+        res.json({
+            sucesso: true,
+            mensagem: `Métricas recalculadas: ${deliberacoes.length} deliberações processadas`,
+            totalDeliberacoes: deliberacoes.length,
+            metricas
+        });
+    } catch (error) {
+        res.status(500).json({ erro: error.message });
+    }
 });
 
 
 // ============================================================================
-// PLATAFORMA IRIS - Single Page Application (SPA)
+// PAGINA DE LOGIN - Auto-contida (HTML + CSS + JS inline)
 // ============================================================================
 
-// SPA - Todas as rotas de navegação servem o mesmo arquivo
-const spaRoutes = ['/deliberacoes', '/monitor', '/diretores', '/jurimetria', '/governanca', '/metricas', '/boletim', '/auditoria', '/app', '/upload', '/analise'];
+const LOGIN_PAGE_HTML = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IRIS - Login</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:linear-gradient(135deg,#0a0f1e 0%,#0f172a 40%,#1a1a2e 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;color:#f8fafc}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 50% at 50% -20%,rgba(255,239,77,.08) 0%,transparent 60%),radial-gradient(ellipse 60% 40% at 80% 100%,rgba(59,130,246,.06) 0%,transparent 50%);pointer-events:none}
+.card{position:relative;width:100%;max-width:420px;margin:20px;background:rgba(30,41,59,.85);border:1px solid rgba(148,163,184,.15);border-radius:20px;padding:48px 40px 36px;box-shadow:0 0 0 1px rgba(255,239,77,.05),0 25px 50px -12px rgba(0,0,0,.5),0 0 80px rgba(255,239,77,.04);backdrop-filter:blur(20px);animation:fadeIn .5s ease-out}
+@keyframes fadeIn{from{opacity:0;transform:translateY(20px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+.logo{text-align:center;margin-bottom:12px}
+.logo svg{filter:drop-shadow(0 0 12px rgba(255,239,77,.3))}
+h1{text-align:center;font-size:24px;font-weight:700;color:#f8fafc;margin:0 0 8px;letter-spacing:-.02em}
+h2{text-align:center;font-size:22px;font-weight:700;color:#f8fafc;margin:0 0 8px;letter-spacing:-.02em}
+.sub{text-align:center;font-size:14px;color:#94a3b8;margin:0 0 36px;line-height:1.5}
+.field{margin-bottom:20px}
+label{display:block;font-size:13px;font-weight:600;color:#cbd5e1;margin-bottom:8px;letter-spacing:.02em}
+.input-wrap{position:relative;display:flex;align-items:center}
+.input-wrap svg{position:absolute;left:14px;color:#64748b;pointer-events:none;transition:color .2s}
+input{width:100%;padding:14px 16px 14px 44px;background:rgba(15,23,42,.6);border:1px solid rgba(148,163,184,.2);border-radius:12px;color:#f8fafc;font-size:15px;outline:none;transition:all .2s}
+input::placeholder{color:#475569}
+input:focus{border-color:rgba(255,239,77,.5);box-shadow:0 0 0 3px rgba(255,239,77,.1),0 0 20px rgba(255,239,77,.05);background:rgba(15,23,42,.8)}
+input:focus~svg,.input-wrap:focus-within svg{color:#FFEF4D}
+.error{padding:12px 16px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);border-radius:10px;color:#fca5a5;font-size:13px;text-align:center;margin-bottom:16px;display:none;animation:shake .4s ease-out}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+.btn-primary{width:100%;padding:14px 24px;margin-top:4px;background:linear-gradient(135deg,#FFEF4D 0%,#e6d645 100%);border:none;border-radius:12px;color:#0f172a;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;letter-spacing:.02em;box-shadow:0 4px 14px rgba(255,239,77,.25)}
+.btn-primary:hover{background:linear-gradient(135deg,#fff59d 0%,#FFEF4D 100%);box-shadow:0 6px 20px rgba(255,239,77,.35);transform:translateY(-1px)}
+.btn-primary:disabled{opacity:.7;cursor:not-allowed;transform:none}
+.spinner{display:none;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.footer{margin-top:28px;text-align:center;padding-top:20px;border-top:1px solid rgba(148,163,184,.1)}
+.footer a,.footer button{color:#64748b;font-size:13px;text-decoration:none;display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:8px;transition:color .2s,background .2s;background:none;border:none;cursor:pointer;font-family:inherit}
+.footer a:hover,.footer button:hover{color:#FFEF4D;background:rgba(255,239,77,.06)}
+.cred{margin-top:24px;text-align:center;font-size:11px;color:#475569}
+
+/* Modal overlay */
+.modal-overlay{display:none;position:fixed;inset:0;z-index:1000;align-items:center;justify-content:center;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);animation:modalFadeIn .25s ease-out}
+.modal-overlay.active{display:flex}
+@keyframes modalFadeIn{from{opacity:0}to{opacity:1}}
+.modal-card{position:relative;width:100%;max-width:440px;margin:20px;background:rgba(30,41,59,.95);border:1px solid rgba(148,163,184,.15);border-radius:20px;padding:40px 36px 32px;box-shadow:0 0 0 1px rgba(255,239,77,.05),0 25px 50px -12px rgba(0,0,0,.6);animation:fadeIn .35s ease-out}
+.modal-close{position:absolute;top:16px;right:16px;background:none;border:none;color:#64748b;cursor:pointer;padding:6px;border-radius:8px;transition:all .2s;display:flex;align-items:center;justify-content:center}
+.modal-close:hover{color:#f8fafc;background:rgba(255,255,255,.08)}
+.modal-header{text-align:center;margin-bottom:28px}
+.modal-icon{width:64px;height:64px;border-radius:16px;background:rgba(255,239,77,.1);border:1px solid rgba(255,239,77,.2);display:inline-flex;align-items:center;justify-content:center;margin-bottom:16px;color:#FFEF4D}
+.modal-icon.blue{background:rgba(59,130,246,.1);border-color:rgba(59,130,246,.2);color:#60a5fa}
+.modal-icon.green{background:rgba(34,197,94,.1);border-color:rgba(34,197,94,.2);color:#4ade80}
+.modal-desc{font-size:13px;color:#94a3b8;margin:0;line-height:1.6}
+
+/* Messages */
+.msg{padding:12px 16px;border-radius:10px;font-size:13px;text-align:center;margin-bottom:16px;display:none;animation:fadeIn .3s ease-out}
+.msg.msg-error{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#fca5a5;display:block}
+.msg.msg-success{background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.3);color:#86efac;display:block}
+
+/* Password rules */
+.pwd-rules{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.pwd-rule{font-size:11px;padding:3px 8px;border-radius:6px;background:rgba(100,116,139,.15);color:#64748b;border:1px solid rgba(100,116,139,.2);transition:all .2s}
+.pwd-rule.ok{background:rgba(34,197,94,.12);color:#4ade80;border-color:rgba(34,197,94,.3)}
+
+/* Back step button */
+.btn-back{background:none;border:none;color:#64748b;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:color .2s;padding:10px 12px;border-radius:8px;margin-top:16px;width:100%;justify-content:center;font-family:inherit}
+.btn-back:hover{color:#FFEF4D;background:rgba(255,239,77,.06)}
+
+@media(max-width:480px){.card{padding:36px 24px 28px;border-radius:16px}h1{font-size:20px}.modal-card{padding:32px 20px 24px;border-radius:16px}h2{font-size:18px}}
+</style>
+</head>
+<body>
+<div class="card">
+    <div class="logo">
+        <svg width="72" height="38" viewBox="0 0 120 50" fill="none">
+            <rect x="0" y="5" width="3" height="40" fill="#FFEF4D"/>
+            <rect x="6" y="5" width="3" height="40" fill="#FFEF4D"/>
+            <rect x="20" y="5" width="3" height="40" fill="#FFEF4D"/>
+            <path d="M23 5 H35 Q42 5 42 15 Q42 25 35 25 H23" stroke="#FFEF4D" stroke-width="3" fill="none"/>
+            <line x1="30" y1="25" x2="42" y2="45" stroke="#FFEF4D" stroke-width="3"/>
+            <rect x="52" y="5" width="3" height="40" fill="#FFEF4D"/>
+            <rect x="58" y="5" width="3" height="40" fill="#FFEF4D"/>
+            <path d="M72 12 Q72 5 82 5 Q92 5 92 12 Q92 20 82 22 Q72 24 72 32 Q72 45 82 45 Q92 45 92 38" stroke="#FFEF4D" stroke-width="3" fill="none"/>
+        </svg>
+    </div>
+    <h1>Acesso a Plataforma</h1>
+    <p class="sub">Entre com suas credenciais para acessar a plataforma IRIS</p>
+    <div class="error" id="err"></div>
+    <form id="loginForm">
+        <div class="field">
+            <label for="user">Usuario</label>
+            <div class="input-wrap">
+                <input type="text" id="user" name="username" placeholder="admin" autocomplete="username" required>
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+            </div>
+        </div>
+        <div class="field">
+            <label for="pass">Senha</label>
+            <div class="input-wrap">
+                <input type="password" id="pass" name="password" placeholder="&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;" autocomplete="current-password" required>
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+            </div>
+        </div>
+        <button type="submit" class="btn-primary" id="btn">
+            <span id="btnTxt">Entrar</span>
+            <svg class="spinner" id="btnSpin" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" stroke-opacity=".3"/><path d="M12 2a10 10 0 019.95 9" stroke-linecap="round"/></svg>
+        </button>
+    </form>
+    <div class="footer">
+        <button type="button" onclick="openResetModal()">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+            Esqueci minha senha
+        </button>
+        <br>
+        <a href="/">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+            Voltar ao Hub Publico
+        </a>
+    </div>
+</div>
+
+<!-- Modal: Esqueci minha senha -->
+<div class="modal-overlay" id="resetModal">
+    <div class="modal-card">
+        <button class="modal-close" onclick="closeResetModal()" title="Fechar">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+
+        <!-- Passo 1: Solicitar codigo -->
+        <div id="step1">
+            <div class="modal-header">
+                <div class="modal-icon">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="32" height="32"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+                </div>
+                <h2>Recuperar Senha</h2>
+                <p class="modal-desc">Informe seu nome de usuario. Um codigo de recuperacao sera gerado e disponibilizado pelo administrador do sistema.</p>
+            </div>
+            <div class="msg" id="msg1"></div>
+            <form onsubmit="requestCode(event)">
+                <div class="field">
+                    <label for="resetUser">Nome de usuario</label>
+                    <div class="input-wrap">
+                        <input type="text" id="resetUser" placeholder="Seu usuario" autocomplete="username" required>
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                    </div>
+                </div>
+                <button type="submit" class="btn-primary" id="resetBtn1">
+                    <span id="resetBtn1Txt">Solicitar Codigo</span>
+                    <svg class="spinner" id="resetBtn1Spin" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" stroke-opacity=".3"/><path d="M12 2a10 10 0 019.95 9" stroke-linecap="round"/></svg>
+                </button>
+            </form>
+        </div>
+
+        <!-- Passo 2: Inserir codigo e nova senha -->
+        <div id="step2" style="display:none">
+            <div class="modal-header">
+                <div class="modal-icon blue">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="32" height="32"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                </div>
+                <h2>Redefinir Senha</h2>
+                <p class="modal-desc">Insira o codigo de 6 digitos fornecido pelo administrador e defina sua nova senha.</p>
+            </div>
+            <div class="msg" id="msg2"></div>
+            <form onsubmit="resetPassword(event)">
+                <div class="field">
+                    <label for="resetCode">Codigo de recuperacao</label>
+                    <div class="input-wrap">
+                        <input type="text" id="resetCode" placeholder="000000" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" autocomplete="one-time-code" required>
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"/></svg>
+                    </div>
+                </div>
+                <div class="field">
+                    <label for="newPass">Nova senha</label>
+                    <div class="input-wrap">
+                        <input type="password" id="newPass" placeholder="Minimo 8 caracteres" autocomplete="new-password" required minlength="8">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                    </div>
+                    <div class="pwd-rules">
+                        <span class="pwd-rule" id="ruleLen">8+ caracteres</span>
+                        <span class="pwd-rule" id="ruleUpper">Maiuscula</span>
+                        <span class="pwd-rule" id="ruleLower">Minuscula</span>
+                        <span class="pwd-rule" id="ruleNum">Numero</span>
+                    </div>
+                </div>
+                <div class="field">
+                    <label for="confirmPass">Confirmar nova senha</label>
+                    <div class="input-wrap">
+                        <input type="password" id="confirmPass" placeholder="Repita a nova senha" autocomplete="new-password" required minlength="8">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                </div>
+                <button type="submit" class="btn-primary" id="resetBtn2">
+                    <span id="resetBtn2Txt">Redefinir Senha</span>
+                    <svg class="spinner" id="resetBtn2Spin" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" stroke-opacity=".3"/><path d="M12 2a10 10 0 019.95 9" stroke-linecap="round"/></svg>
+                </button>
+            </form>
+            <button class="btn-back" onclick="goToStep1()" type="button">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                Voltar ao passo anterior
+            </button>
+        </div>
+
+        <!-- Passo 3: Sucesso -->
+        <div id="step3" style="display:none">
+            <div class="modal-header">
+                <div class="modal-icon green">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="36" height="36"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+                <h2>Senha Redefinida!</h2>
+                <p class="modal-desc">Sua senha foi alterada com sucesso. Agora voce pode fazer login com a nova senha.</p>
+            </div>
+            <button class="btn-primary" onclick="closeResetAndFocus()" type="button">Fazer Login</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// Login form
+document.getElementById('loginForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    var err = document.getElementById('err');
+    var btn = document.getElementById('btn');
+    var btnTxt = document.getElementById('btnTxt');
+    var btnSpin = document.getElementById('btnSpin');
+    var username = document.getElementById('user').value.trim();
+    var password = document.getElementById('pass').value;
+    if (!username || !password) { err.textContent = 'Preencha todos os campos'; err.style.display = 'block'; return; }
+    btnTxt.textContent = 'Autenticando...'; btnSpin.style.display = 'inline'; btn.disabled = true; err.style.display = 'none';
+    try {
+        var resp = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ username: username, password: password })
+        });
+        var data = await resp.json();
+        if (data.success) {
+            localStorage.setItem('iris_token', data.accessToken);
+            localStorage.setItem('iris_user', JSON.stringify(data.user));
+            var params = new URLSearchParams(window.location.search);
+            var redirect = params.get('redirect') || '/hub';
+            window.location.href = redirect;
+        } else {
+            err.textContent = data.error || 'Credenciais invalidas';
+            err.style.display = 'block';
+        }
+    } catch (ex) {
+        err.textContent = 'Erro de conexao com o servidor';
+        err.style.display = 'block';
+    } finally {
+        btnTxt.textContent = 'Entrar'; btnSpin.style.display = 'none'; btn.disabled = false;
+    }
+});
+document.getElementById('user').focus();
+
+// Password reset flow
+function openResetModal() {
+    document.getElementById('resetModal').classList.add('active');
+    goToStep1();
+    document.getElementById('resetUser').focus();
+}
+
+function closeResetModal() {
+    document.getElementById('resetModal').classList.remove('active');
+    clearMsgs();
+    resetForms();
+}
+
+function closeResetAndFocus() {
+    closeResetModal();
+    document.getElementById('user').focus();
+}
+
+function goToStep1() {
+    document.getElementById('step1').style.display = 'block';
+    document.getElementById('step2').style.display = 'none';
+    document.getElementById('step3').style.display = 'none';
+    clearMsgs();
+}
+
+function goToStep2() {
+    document.getElementById('step1').style.display = 'none';
+    document.getElementById('step2').style.display = 'block';
+    document.getElementById('step3').style.display = 'none';
+    document.getElementById('resetCode').focus();
+    clearMsgs();
+    bindPwdValidation();
+}
+
+function goToStep3() {
+    document.getElementById('step1').style.display = 'none';
+    document.getElementById('step2').style.display = 'none';
+    document.getElementById('step3').style.display = 'block';
+}
+
+function clearMsgs() {
+    ['msg1','msg2'].forEach(function(id) {
+        var el = document.getElementById(id);
+        el.className = 'msg';
+        el.textContent = '';
+    });
+}
+
+function showMsg(step, text, type) {
+    var el = document.getElementById('msg' + step);
+    el.textContent = text;
+    el.className = 'msg msg-' + type;
+}
+
+function resetForms() {
+    document.getElementById('resetUser').value = '';
+    document.getElementById('resetCode').value = '';
+    document.getElementById('newPass').value = '';
+    document.getElementById('confirmPass').value = '';
+    document.querySelectorAll('.pwd-rule').forEach(function(r) { r.className = 'pwd-rule'; });
+}
+
+function setLoading(num, loading) {
+    var txt = document.getElementById('resetBtn' + num + 'Txt');
+    var spin = document.getElementById('resetBtn' + num + 'Spin');
+    var btn = document.getElementById('resetBtn' + num);
+    txt.style.display = loading ? 'none' : 'inline';
+    spin.style.display = loading ? 'inline' : 'none';
+    btn.disabled = loading;
+}
+
+function bindPwdValidation() {
+    var input = document.getElementById('newPass');
+    input.oninput = function() {
+        var v = input.value;
+        setRule('ruleLen', v.length >= 8);
+        setRule('ruleUpper', /[A-Z]/.test(v));
+        setRule('ruleLower', /[a-z]/.test(v));
+        setRule('ruleNum', /[0-9]/.test(v));
+    };
+}
+
+function setRule(id, valid) {
+    document.getElementById(id).className = valid ? 'pwd-rule ok' : 'pwd-rule';
+}
+
+async function requestCode(e) {
+    e.preventDefault();
+    var username = document.getElementById('resetUser').value.trim();
+    if (!username) { showMsg(1, 'Informe o nome de usuario.', 'error'); return; }
+
+    setLoading(1, true);
+    clearMsgs();
+
+    try {
+        var resp = await fetch('/api/auth/password-reset-request', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: username })
+        });
+        var data = await resp.json();
+        if (resp.ok && data.success) {
+            showMsg(1, data.message, 'success');
+            setTimeout(goToStep2, 1500);
+        } else {
+            showMsg(1, data.error || 'Erro ao solicitar codigo.', 'error');
+        }
+    } catch (ex) {
+        showMsg(1, 'Erro de conexao com o servidor.', 'error');
+    } finally {
+        setLoading(1, false);
+    }
+}
+
+async function resetPassword(e) {
+    e.preventDefault();
+    var code = document.getElementById('resetCode').value.trim();
+    var newPassword = document.getElementById('newPass').value;
+    var confirm = document.getElementById('confirmPass').value;
+
+    if (!code || code.length !== 6) { showMsg(2, 'Informe o codigo de 6 digitos.', 'error'); return; }
+    if (newPassword !== confirm) { showMsg(2, 'As senhas nao coincidem.', 'error'); return; }
+    if (newPassword.length < 8 || !/[A-Z]/.test(newPassword) || !/[a-z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
+        showMsg(2, 'A senha deve ter 8+ caracteres, maiuscula, minuscula e numero.', 'error');
+        return;
+    }
+
+    setLoading(2, true);
+    clearMsgs();
+
+    try {
+        var resp = await fetch('/api/auth/password-reset', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code: code, newPassword: newPassword })
+        });
+        var data = await resp.json();
+        if (resp.ok && data.success) {
+            goToStep3();
+        } else {
+            showMsg(2, data.error || 'Erro ao redefinir senha.', 'error');
+        }
+    } catch (ex) {
+        showMsg(2, 'Erro de conexao com o servidor.', 'error');
+    } finally {
+        setLoading(2, false);
+    }
+}
+
+// Close modal on Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && document.getElementById('resetModal').classList.contains('active')) {
+        closeResetModal();
+    }
+});
+
+// Close modal on overlay click
+document.getElementById('resetModal').addEventListener('click', function(e) {
+    if (e.target === this) closeResetModal();
+});
+</script>
+</body>
+</html>`;
+
+// ============================================================================
+// INTERFACE WEB UNIFICADA
+// ============================================================================
+
+// Pagina de login (rota publica)
+app.get('/login', optionalAuth, (req, res) => {
+    // Se ja esta autenticado, redireciona para a plataforma
+    if (req.user) {
+        return res.redirect('/hub');
+    }
+    res.send(LOGIN_PAGE_HTML);
+});
+
+// Landing page publica (hub de noticias)
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'app.html'));
+});
+
+
+// ============================================================================
+// PLATAFORMA IRIS - Single Page Application (SPA) — REQUER LOGIN
+// ============================================================================
+
+// Middleware: verifica autenticacao via cookie para paginas da plataforma
+function requirePageAuth(req, res, next) {
+    const token = req.cookies?.iris_access_token;
+    if (!token) {
+        return res.redirect('/login?redirect=' + encodeURIComponent(req.originalUrl));
+    }
+    // Usa optionalAuth para validar o token sem retornar 401 JSON
+    optionalAuth(req, res, () => {
+        if (req.user) {
+            next();
+        } else {
+            res.redirect('/login?redirect=' + encodeURIComponent(req.originalUrl));
+        }
+    });
+}
+
+// SPA - Todas as rotas de navegação servem o mesmo arquivo (requer login)
+const spaRoutes = ['/deliberacoes', '/monitor', '/diretores', '/jurimetria', '/governanca', '/metricas', '/boletim', '/auditoria', '/app', '/upload', '/analise', '/agencias', '/mapa', '/radar', '/painel-regulatorio', '/setores', '/microtemas', '/empresas', '/historico', '/grafo', '/monitoramento', '/dossie', '/cruzamento', '/hub', '/landing', '/analytics', '/noticias', '/dossies'];
 
 spaRoutes.forEach(route => {
-    app.get(route, (req, res) => {
+    app.get(route, requirePageAuth, (req, res) => {
         res.sendFile(path.join(__dirname, 'public', 'app.html'));
     });
+});
+
+// Plataforma IRIS Completa (standalone)
+app.get('/plataforma', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'IRIS-Plataforma-Completa.html'));
+});
+
+// ============================================================================
+// API - GRAFO DE VÍNCULOS (dados reais dos PDFs)
+// ============================================================================
+app.get('/api/grafo-data', (req, res) => {
+    const deliberacoes = coletarTodasDeliberacoes();
+    const nodesMap = {};
+    const edgesMap = {};
+
+    // Central agency node
+    nodesMap['ARTESP'] = {
+        id: 'ARTESP', label: 'ARTESP', full: 'Agência de Transporte do Estado de SP',
+        type: 'agency', deliberations: deliberacoes.length
+    };
+
+    deliberacoes.forEach(d => {
+        const allVoters = [...(d.votos_a_favor || []), ...(d.votos_contra || [])];
+
+        // Directors
+        allVoters.forEach(dir => {
+            if (!nodesMap[dir]) {
+                nodesMap[dir] = { id: dir, label: dir, type: 'director', votesCount: 0, role: 'Diretor(a)' };
+            }
+            nodesMap[dir].votesCount++;
+            const ek = `ARTESP||${dir}`;
+            if (!edgesMap[ek]) edgesMap[ek] = { source: 'ARTESP', target: dir, label: 'Membro', count: 0, type: 'membro' };
+            edgesMap[ek].count++;
+        });
+
+        // Companies from interessado
+        if (d.interessado && d.interessado !== 'ARTESP' && d.interessado.length > 2) {
+            const comp = d.interessado;
+            if (!nodesMap[comp]) nodesMap[comp] = { id: comp, label: comp, type: 'company', mentions: 0 };
+            nodesMap[comp].mentions = (nodesMap[comp].mentions || 0) + 1;
+
+            allVoters.forEach(dir => {
+                const ek = `${dir}||${comp}`;
+                if (!edgesMap[ek]) edgesMap[ek] = { source: dir, target: comp, label: 'Deliberação', count: 0, type: 'deliberacao' };
+                edgesMap[ek].count++;
+            });
+        }
+
+        // Themes from microtema (singular) and microtemas (array)
+        const temas = d.microtemas && d.microtemas.length > 0 ? d.microtemas : (d.microtema ? [d.microtema] : []);
+        temas.forEach(theme => {
+            if (!theme || theme.length < 2) return;
+            if (!nodesMap[theme]) nodesMap[theme] = { id: theme, label: theme, type: 'theme', count: 0 };
+            nodesMap[theme].count = (nodesMap[theme].count || 0) + 1;
+
+            // Theme ↔ Director edges
+            allVoters.forEach(dir => {
+                const ek = `${dir}||${theme}`;
+                if (!edgesMap[ek]) edgesMap[ek] = { source: dir, target: theme, label: 'Votou sobre', count: 0, type: 'tema_voto' };
+                edgesMap[ek].count++;
+            });
+
+            // Theme ↔ Company edges
+            if (d.interessado && d.interessado !== 'ARTESP' && d.interessado.length > 2) {
+                const ek = `${d.interessado}||${theme}`;
+                if (!edgesMap[ek]) edgesMap[ek] = { source: d.interessado, target: theme, label: 'Relacionado a', count: 0, type: 'tema_empresa' };
+                edgesMap[ek].count++;
+            }
+        });
+    });
+
+    // Add detected companies from PDFs
+    pdfsProcessados.forEach(pdf => {
+        (pdf.empresasDetectadas || []).forEach(emp => {
+            if (!nodesMap[emp.nome]) {
+                nodesMap[emp.nome] = { id: emp.nome, label: emp.nome, type: 'company', sector: emp.setor, companyType: emp.tipo, mentions: emp.mencoes };
+            } else {
+                nodesMap[emp.nome].sector = nodesMap[emp.nome].sector || emp.setor;
+                nodesMap[emp.nome].companyType = nodesMap[emp.nome].companyType || emp.tipo;
+            }
+        });
+    });
+
+    // Calculate edge strength based on count (normalized 0-1)
+    const allEdges = Object.values(edgesMap);
+    const maxCount = Math.max(1, ...allEdges.map(e => e.count));
+    allEdges.forEach(e => {
+        e.strength = Math.max(0.15, e.count / maxCount);
+        if (e.count > 1) e.label = `${e.label} (${e.count}x)`;
+    });
+
+    res.json({
+        success: true,
+        nodes: Object.values(nodesMap),
+        edges: allEdges,
+        meta: { totalDeliberacoes: deliberacoes.length, totalPdfs: pdfsProcessados.length, pdfsAnalisados: pdfsProcessados.filter(p => p.analise).length }
+    });
+});
+
+// ============================================================================
+// API: DOSSIÊ AUTOMÁTICO POR ENTIDADE (Estilo Sherlocker)
+// ============================================================================
+app.get('/api/dossie/:entidade', (req, res) => {
+    const entidadeNome = sanitizeString(decodeURIComponent(req.params.entidade), 300);
+    const deliberacoes = coletarTodasDeliberacoes();
+
+    // Identify entity type
+    const DIRETORES = ['André Isper', 'Diego Albert', 'Fernanda Esbizaro', 'Raquel França', 'Milton Persoli', 'Sergio Massaru', 'Carlos Eduardo', 'Antonio Carlos', 'Flavio Augusto'];
+    const isDiretor = DIRETORES.some(d => entidadeNome.includes(d)) ||
+                      deliberacoes.some(dl => [...(dl.votos_a_favor || []), ...(dl.votos_contra || [])].includes(entidadeNome));
+    const tipo = entidadeNome === 'ARTESP' ? 'agencia' : isDiretor ? 'diretor' : 'empresa';
+
+    // Filter relevant deliberations
+    let delibsRelevantes = [];
+    if (tipo === 'diretor') {
+        delibsRelevantes = deliberacoes.filter(d =>
+            [...(d.votos_a_favor || []), ...(d.votos_contra || [])].includes(entidadeNome)
+        );
+    } else if (tipo === 'empresa') {
+        delibsRelevantes = deliberacoes.filter(d =>
+            d.interessado && d.interessado.toLowerCase().includes(entidadeNome.toLowerCase())
+        );
+    } else {
+        delibsRelevantes = deliberacoes;
+    }
+
+    // Timeline — group by date
+    const timeline = {};
+    delibsRelevantes.forEach(d => {
+        const data = d.data_reuniao || d.dataArquivo || 'Sem data';
+        if (!timeline[data]) timeline[data] = [];
+        timeline[data].push({
+            numero: d.numero_deliberacao || '',
+            resultado: d.resultado || '',
+            interessado: d.interessado || '',
+            microtema: d.microtema || '',
+            confianca: d.confianca || 0
+        });
+    });
+
+    // Connected entities
+    const entidadesConectadas = { diretores: {}, empresas: {}, temas: {} };
+    delibsRelevantes.forEach(d => {
+        const voters = [...(d.votos_a_favor || []), ...(d.votos_contra || [])];
+        voters.forEach(v => {
+            if (v !== entidadeNome) {
+                entidadesConectadas.diretores[v] = (entidadesConectadas.diretores[v] || 0) + 1;
+            }
+        });
+        if (d.interessado && d.interessado !== entidadeNome && d.interessado !== 'ARTESP' && d.interessado.length > 2) {
+            entidadesConectadas.empresas[d.interessado] = (entidadesConectadas.empresas[d.interessado] || 0) + 1;
+        }
+        const temas = d.microtemas && d.microtemas.length > 0 ? d.microtemas : (d.microtema ? [d.microtema] : []);
+        temas.forEach(t => {
+            entidadesConectadas.temas[t] = (entidadesConectadas.temas[t] || 0) + 1;
+        });
+    });
+
+    // Voting pattern analysis (for directors) — single-pass reduce (avoids N+1)
+    let padraoVotos = null;
+    if (tipo === 'diretor') {
+        const voteStats = deliberacoes.reduce((acc, d) => {
+            if ((d.votos_a_favor || []).includes(entidadeNome)) acc.aFavor++;
+            if ((d.votos_contra || []).includes(entidadeNome)) acc.contra++;
+            return acc;
+        }, { aFavor: 0, contra: 0 });
+        const total = voteStats.aFavor + voteStats.contra;
+        // Single-pass for relevant delib stats
+        const relStats = delibsRelevantes.reduce((acc, d) => {
+            if (d.resultado === 'Deferido') acc.deferidos++;
+            if (d.resultado === 'Indeferido') acc.indeferidos++;
+            return acc;
+        }, { deferidos: 0, indeferidos: 0 });
+        padraoVotos = { ...voteStats, total, ...relStats, taxaDeferimento: total > 0 ? Math.round((relStats.deferidos / total) * 100) : 0 };
+    }
+
+    // Risk alerts + stats — single-pass reduce over delibsRelevantes
+    const delibStats = delibsRelevantes.reduce((acc, d) => {
+        if (d.resultado === 'Deferido') acc.deferidos++;
+        if (d.resultado === 'Indeferido') acc.indeferidos++;
+        acc.confiancaTotal += (d.confianca || 0);
+        if ((d.confianca || 0) < 50) acc.baixaConfianca++;
+        const dt = d.data_reuniao;
+        if (dt) {
+            if (!acc.primeiraData || dt < acc.primeiraData) acc.primeiraData = dt;
+            if (!acc.ultimaData || dt > acc.ultimaData) acc.ultimaData = dt;
+        }
+        return acc;
+    }, { deferidos: 0, indeferidos: 0, confiancaTotal: 0, baixaConfianca: 0, primeiraData: null, ultimaData: null });
+
+    const alertas = [];
+    if (tipo === 'empresa') {
+        if (delibStats.indeferidos > 3) alertas.push({ nivel: 'alto', mensagem: `${delibStats.indeferidos} deliberações indeferidas`, detalhe: 'Volume acima do normal de decisões negativas' });
+        if (delibStats.baixaConfianca > delibsRelevantes.length * 0.3) alertas.push({ nivel: 'medio', mensagem: `${delibStats.baixaConfianca} extrações com baixa confiança`, detalhe: 'Verifique manualmente estas deliberações' });
+    }
+    if (tipo === 'diretor' && padraoVotos) {
+        if (padraoVotos.contra > 5) alertas.push({ nivel: 'medio', mensagem: `${padraoVotos.contra} votos contrários registrados`, detalhe: 'Padrão divergente detectado' });
+    }
+    if (delibsRelevantes.length === 0) alertas.push({ nivel: 'info', mensagem: 'Nenhuma deliberação encontrada', detalhe: 'Faça upload de PDFs para gerar o dossiê' });
+
+    // Stats summary (reuses single-pass results)
+    const resumo = {
+        totalDeliberacoes: delibsRelevantes.length,
+        deferidos: delibStats.deferidos,
+        indeferidos: delibStats.indeferidos,
+        confiancaMedia: delibsRelevantes.length > 0 ? Math.round(delibStats.confiancaTotal / delibsRelevantes.length) : 0,
+        primeiraData: delibStats.primeiraData,
+        ultimaData: delibStats.ultimaData,
+        totalConexoes: Object.keys(entidadesConectadas.diretores).length + Object.keys(entidadesConectadas.empresas).length + Object.keys(entidadesConectadas.temas).length
+    };
+
+    res.json({
+        success: true,
+        entidade: entidadeNome,
+        tipo,
+        resumo,
+        timeline: Object.entries(timeline).sort(([a], [b]) => b.localeCompare(a)).map(([data, itens]) => ({ data, itens })),
+        conexoes: {
+            diretores: Object.entries(entidadesConectadas.diretores).map(([nome, count]) => ({ nome, deliberacoes: count })).sort((a, b) => b.deliberacoes - a.deliberacoes),
+            empresas: Object.entries(entidadesConectadas.empresas).map(([nome, count]) => ({ nome, deliberacoes: count })).sort((a, b) => b.deliberacoes - a.deliberacoes),
+            temas: Object.entries(entidadesConectadas.temas).map(([nome, count]) => ({ nome, ocorrencias: count })).sort((a, b) => b.ocorrencias - a.ocorrencias)
+        },
+        padraoVotos,
+        alertas,
+        geradoEm: new Date().toISOString()
+    });
+});
+
+// API: Listar entidades disponíveis para dossiê — O(n) with Map instead of O(n²)
+app.get('/api/dossie-entidades', (req, res) => {
+    const deliberacoes = coletarTodasDeliberacoes();
+
+    // Single-pass: count deliberations per entity using Maps
+    const diretorCounts = new Map();
+    const empresaCounts = new Map();
+
+    deliberacoes.forEach(d => {
+        [...(d.votos_a_favor || []), ...(d.votos_contra || [])].forEach(v => {
+            diretorCounts.set(v, (diretorCounts.get(v) || 0) + 1);
+        });
+        if (d.interessado && d.interessado !== 'ARTESP' && d.interessado.length > 2) {
+            empresaCounts.set(d.interessado, (empresaCounts.get(d.interessado) || 0) + 1);
+        }
+    });
+
+    const entidades = [
+        { nome: 'ARTESP', tipo: 'agencia', deliberacoes: deliberacoes.length },
+        ...[...diretorCounts.entries()].map(([nome, count]) => ({ nome, tipo: 'diretor', deliberacoes: count })),
+        ...[...empresaCounts.entries()].map(([nome, count]) => ({ nome, tipo: 'empresa', deliberacoes: count }))
+    ];
+
+    res.json({
+        success: true,
+        entidades: entidades.sort((a, b) => b.deliberacoes - a.deliberacoes)
+    });
+});
+
+// ============================================================================
+// API: CONSULTA CNPJ VIA RECEITAWS
+// ============================================================================
+app.get('/api/cnpj/:cnpj', async (req, res) => {
+    const cnpj = req.params.cnpj.replace(/\D/g, '');
+    if (cnpj.length !== 14) {
+        return apiError(res, 'CNPJ inválido. Deve conter 14 dígitos.', 400);
+    }
+    const data = await consultarCNPJ(cnpj);
+    if (!data) {
+        return apiError(res, 'CNPJ não encontrado ou serviço indisponível.', 404);
+    }
+    res.json({ success: true, data });
+});
+
+// Busca CNPJ por nome da empresa (tenta encontrar na lista de empresas conhecidas)
+app.get('/api/cnpj-busca', async (req, res) => {
+    const nome = (req.query.nome || '').trim();
+    if (nome.length < 3) {
+        return apiError(res, 'Nome deve ter pelo menos 3 caracteres.', 400);
+    }
+    // Busca na lista de empresas conhecidas com CNPJ pré-cadastrado
+    const empresa = empresasConhecidas.find(e =>
+        e.nome.toLowerCase().includes(nome.toLowerCase()) ||
+        (e.aliases || []).some(a => a.toLowerCase().includes(nome.toLowerCase()))
+    );
+    res.json({
+        success: true,
+        empresa: empresa ? { nome: empresa.nome, setor: empresa.setor, tipo: empresa.tipo } : null,
+        message: empresa ? 'Empresa encontrada na base local.' : 'Empresa não encontrada. Use /api/cnpj/:cnpj para consultar diretamente.'
+    });
+});
+
+// ============================================================================
+// API: ANALYTICS DASHBOARD
+// ============================================================================
+
+// Tendências temporais — deliberações por mês/semana
+app.get('/api/analytics/tendencias', (req, res) => {
+    const deliberacoes = coletarTodasDeliberacoes();
+
+    // Agrupa por mês
+    const porMes = {};
+    const porSemana = {};
+    deliberacoes.forEach(d => {
+        const data = d.data_reuniao || d.dataArquivo || '';
+        if (!data) return;
+        // Mês: YYYY-MM
+        const partes = data.split(/[/-]/);
+        let mes;
+        if (partes[0] && partes[0].length === 4) {
+            mes = `${partes[0]}-${(partes[1] || '01').padStart(2, '0')}`;
+        } else if (partes[2] && partes[2].length === 4) {
+            mes = `${partes[2]}-${(partes[1] || '01').padStart(2, '0')}`;
+        } else {
+            mes = data.substring(0, 7);
+        }
+        if (!porMes[mes]) porMes[mes] = { total: 0, deferidos: 0, indeferidos: 0 };
+        porMes[mes].total++;
+        if (d.resultado === 'Deferido') porMes[mes].deferidos++;
+        if (d.resultado === 'Indeferido') porMes[mes].indeferidos++;
+    });
+
+    // Ranking de empresas por volume
+    const empresaRank = {};
+    deliberacoes.forEach(d => {
+        if (d.interessado && d.interessado !== 'ARTESP' && d.interessado.length > 2) {
+            if (!empresaRank[d.interessado]) empresaRank[d.interessado] = { total: 0, deferidos: 0, indeferidos: 0 };
+            empresaRank[d.interessado].total++;
+            if (d.resultado === 'Deferido') empresaRank[d.interessado].deferidos++;
+            if (d.resultado === 'Indeferido') empresaRank[d.interessado].indeferidos++;
+        }
+    });
+
+    // Heatmap: diretor × tema
+    const heatmap = {};
+    deliberacoes.forEach(d => {
+        const tema = d.microtema || 'Outros';
+        const voters = [...(d.votos_a_favor || []), ...(d.votos_contra || [])];
+        voters.forEach(dir => {
+            const key = `${dir}||${tema}`;
+            if (!heatmap[key]) heatmap[key] = { diretor: dir, tema, count: 0, deferidos: 0 };
+            heatmap[key].count++;
+            if (d.resultado === 'Deferido') heatmap[key].deferidos++;
+        });
+    });
+
+    // Diversidade temática por diretor
+    const diretorTemas = {};
+    deliberacoes.forEach(d => {
+        const tema = d.microtema || 'Outros';
+        [...(d.votos_a_favor || []), ...(d.votos_contra || [])].forEach(dir => {
+            if (!diretorTemas[dir]) diretorTemas[dir] = new Set();
+            diretorTemas[dir].add(tema);
+        });
+    });
+
+    res.json({
+        success: true,
+        tendencias: Object.entries(porMes)
+            .sort(([a], [b]) => a.localeCompare(b))
+            .map(([mes, dados]) => ({ mes, ...dados })),
+        ranking_empresas: Object.entries(empresaRank)
+            .map(([nome, dados]) => ({ nome, ...dados, taxa: dados.total > 0 ? Math.round((dados.deferidos / dados.total) * 100) : 0 }))
+            .sort((a, b) => b.total - a.total)
+            .slice(0, 20),
+        heatmap: Object.values(heatmap).sort((a, b) => b.count - a.count).slice(0, 100),
+        diversidade_tematica: Object.entries(diretorTemas)
+            .map(([dir, temas]) => ({ diretor: dir, temas_distintos: temas.size, temas: [...temas] }))
+            .sort((a, b) => b.temas_distintos - a.temas_distintos),
+        total_deliberacoes: deliberacoes.length
+    });
+});
+
+// Correlações entre diretores — quem vota junto
+app.get('/api/analytics/correlacoes', (req, res) => {
+    const deliberacoes = coletarTodasDeliberacoes();
+    const pares = {};
+
+    deliberacoes.forEach(d => {
+        const favor = d.votos_a_favor || [];
+        const contra = d.votos_contra || [];
+        // Pares que votaram na mesma direção
+        [favor, contra].forEach(grupo => {
+            for (let i = 0; i < grupo.length; i++) {
+                for (let j = i + 1; j < grupo.length; j++) {
+                    const key = [grupo[i], grupo[j]].sort().join('||');
+                    if (!pares[key]) pares[key] = { d1: grupo[i] < grupo[j] ? grupo[i] : grupo[j], d2: grupo[i] < grupo[j] ? grupo[j] : grupo[i], concordam: 0, discordam: 0 };
+                    pares[key].concordam++;
+                }
+            }
+        });
+        // Pares que votaram em direções opostas
+        favor.forEach(f => {
+            contra.forEach(c => {
+                const key = [f, c].sort().join('||');
+                if (!pares[key]) pares[key] = { d1: f < c ? f : c, d2: f < c ? c : f, concordam: 0, discordam: 0 };
+                pares[key].discordam++;
+            });
+        });
+    });
+
+    const result = Object.values(pares).map(p => ({
+        ...p,
+        total: p.concordam + p.discordam,
+        taxa_concordancia: (p.concordam + p.discordam) > 0 ? Math.round((p.concordam / (p.concordam + p.discordam)) * 100) : 0
+    })).sort((a, b) => b.total - a.total);
+
+    res.json({ success: true, correlacoes: result });
+});
+
+// ============================================================================
+// API: EXPORTAÇÃO PDF (HTML renderizável para impressão)
+// ============================================================================
+app.get('/api/dossie-pdf/:entidade', (req, res) => {
+    const entidadeRaw = sanitizeStr(decodeURIComponent(req.params.entidade), 300);
+    const entidadeNome = entidadeRaw;
+    const entidadeSafe = escapeHtml(entidadeRaw);
+    const deliberacoes = coletarTodasDeliberacoes();
+
+    // Re-use dossiê logic inline
+    const DIRETORES = ['André Isper', 'Diego Albert', 'Fernanda Esbizaro', 'Raquel França', 'Milton Persoli', 'Sergio Massaru', 'Carlos Eduardo', 'Antonio Carlos', 'Flavio Augusto'];
+    const isDiretor = DIRETORES.some(d => entidadeNome.includes(d)) ||
+                      deliberacoes.some(dl => [...(dl.votos_a_favor || []), ...(dl.votos_contra || [])].includes(entidadeNome));
+    const tipo = entidadeNome === 'ARTESP' ? 'agencia' : isDiretor ? 'diretor' : 'empresa';
+
+    let delibsRelevantes;
+    if (tipo === 'diretor') {
+        delibsRelevantes = deliberacoes.filter(d => [...(d.votos_a_favor || []), ...(d.votos_contra || [])].includes(entidadeNome));
+    } else if (tipo === 'empresa') {
+        delibsRelevantes = deliberacoes.filter(d => d.interessado && d.interessado.toLowerCase().includes(entidadeNome.toLowerCase()));
+    } else {
+        delibsRelevantes = deliberacoes;
+    }
+
+    const stats = delibsRelevantes.reduce((acc, d) => {
+        if (d.resultado === 'Deferido') acc.deferidos++;
+        if (d.resultado === 'Indeferido') acc.indeferidos++;
+        return acc;
+    }, { deferidos: 0, indeferidos: 0 });
+
+    // Build print-optimized HTML
+    const tipoLabel = { diretor: 'Diretor(a)', empresa: 'Empresa', agencia: 'Agência' };
+    const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Dossiê IRIS — ${entidadeSafe}</title>
+<style>
+    @page { margin: 20mm; size: A4; }
+    body { font-family: 'Segoe UI', -apple-system, sans-serif; color: #1e293b; max-width: 800px; margin: 0 auto; padding: 40px 20px; }
+    .header { border-bottom: 3px solid #3b82f6; padding-bottom: 16px; margin-bottom: 24px; }
+    .header h1 { font-size: 24px; margin: 0; }
+    .header .subtitle { color: #64748b; font-size: 13px; margin-top: 4px; }
+    .badge { display: inline-block; padding: 2px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+    .badge-blue { background: #dbeafe; color: #1d4ed8; }
+    .badge-green { background: #dcfce7; color: #166534; }
+    .badge-red { background: #fee2e2; color: #991b1b; }
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+    .stat-box { text-align: center; padding: 16px; border: 1px solid #e2e8f0; border-radius: 8px; }
+    .stat-box .value { font-size: 28px; font-weight: 700; }
+    .stat-box .label { font-size: 11px; color: #64748b; margin-top: 4px; }
+    .section { margin: 24px 0; padding: 16px; border: 1px solid #e2e8f0; border-radius: 8px; }
+    .section h2 { font-size: 16px; margin: 0 0 12px; padding-bottom: 8px; border-bottom: 1px solid #f1f5f9; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 8px 12px; border-bottom: 1px solid #f1f5f9; text-align: left; font-size: 13px; }
+    th { font-weight: 600; color: #64748b; font-size: 11px; text-transform: uppercase; }
+    .timeline-item { border-left: 3px solid #3b82f6; padding: 8px 16px; margin-bottom: 12px; }
+    .timeline-date { font-weight: 600; color: #3b82f6; font-size: 13px; }
+    .footer { margin-top: 40px; text-align: center; color: #94a3b8; font-size: 11px; border-top: 1px solid #e2e8f0; padding-top: 16px; }
+    @media print { .no-print { display: none; } }
+</style>
+</head>
+<body>
+<div class="no-print" style="margin-bottom:20px;">
+    <button onclick="window.print()" style="padding:10px 24px;background:#3b82f6;color:white;border:none;border-radius:6px;cursor:pointer;font-size:14px;">Imprimir / Salvar PDF</button>
+    <button onclick="window.close()" style="padding:10px 24px;background:#e2e8f0;color:#1e293b;border:none;border-radius:6px;cursor:pointer;font-size:14px;margin-left:8px;">Fechar</button>
+</div>
+<div class="header">
+    <h1>DOSSIÊ IRIS</h1>
+    <div style="display:flex;align-items:center;gap:12px;margin-top:8px;">
+        <span style="font-size:20px;font-weight:700;">${entidadeSafe}</span>
+        <span class="badge badge-blue">${tipoLabel[tipo] || tipo}</span>
+    </div>
+    <div class="subtitle">Gerado em ${new Date().toLocaleString('pt-BR')} | IRIS — Inteligência Regulatória</div>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-box"><div class="value">${delibsRelevantes.length}</div><div class="label">Deliberações</div></div>
+    <div class="stat-box"><div class="value" style="color:#166534;">${stats.deferidos}</div><div class="label">Deferidos</div></div>
+    <div class="stat-box"><div class="value" style="color:#991b1b;">${stats.indeferidos}</div><div class="label">Indeferidos</div></div>
+    <div class="stat-box"><div class="value" style="color:#3b82f6;">${delibsRelevantes.length > 0 ? Math.round((stats.deferidos / delibsRelevantes.length) * 100) : 0}%</div><div class="label">Taxa Deferimento</div></div>
+</div>
+
+<div class="section">
+    <h2>Deliberações Detalhadas</h2>
+    <table>
+        <thead><tr><th>Data</th><th>Deliberação</th><th>Interessado</th><th>Tema</th><th>Resultado</th></tr></thead>
+        <tbody>
+        ${delibsRelevantes.slice(0, 100).map(d => `
+            <tr>
+                <td>${escapeHtml(d.data_reuniao || d.dataArquivo || '--')}</td>
+                <td>${escapeHtml(d.numero_deliberacao || '--')}</td>
+                <td>${escapeHtml(d.interessado || '--')}</td>
+                <td>${escapeHtml(d.microtema || '--')}</td>
+                <td><span class="badge ${d.resultado === 'Deferido' ? 'badge-green' : d.resultado === 'Indeferido' ? 'badge-red' : 'badge-blue'}">${escapeHtml(d.resultado || '--')}</span></td>
+            </tr>
+        `).join('')}
+        </tbody>
+    </table>
+    ${delibsRelevantes.length > 100 ? `<p style="color:#64748b;font-size:12px;margin-top:8px;">Mostrando 100 de ${delibsRelevantes.length} deliberações.</p>` : ''}
+</div>
+
+<div class="footer">
+    <p>IRIS — Instituto de Regulação, Inovação e Sustentabilidade</p>
+    <p>Documento gerado automaticamente. Dados extraídos de deliberações oficiais.</p>
+</div>
+</body>
+</html>`;
+
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(html);
 });
 
 // ============================================================================
@@ -1467,6 +3396,9 @@ spaRoutes.forEach(route => {
 // Lista todas as deliberações extraídas
 app.get('/api/deliberacoes', (req, res) => {
     // Extrai deliberações de todos os PDFs analisados
+    // Campos seguem o modelo: numero_deliberacao, reuniao_ordinaria, data_reuniao,
+    // agencia, interessado, processo, classificacao, microtema, resultado,
+    // votos_a_favor, votos_contra, resumo_pleito, fundamento_decisao
     const deliberacoes = [];
 
     pdfsProcessados.forEach((pdf, pdfIndex) => {
@@ -1475,23 +3407,37 @@ app.get('/api/deliberacoes', (req, res) => {
                 deliberacoes.push({
                     id: `${pdfIndex}-${delibIndex}`,
                     pdf_nome: pdf.nomeArquivo,
-                    processo: delib.numero_deliberacao || delib.processo || '',
+                    numero_deliberacao: delib.numero_deliberacao || '',
+                    reuniao_ordinaria: delib.reuniao_ordinaria || delib.numero_reuniao || '',
+                    data_reuniao: delib.data_reuniao || pdf.data || '',
+                    agencia: delib.agencia || 'ARTESP',
                     interessado: delib.interessado || '',
-                    microtema: delib.microtema || delib.classificacao || '',
-                    decisao: delib.resultado || '',
-                    pauta_interna: delib.classificacao === 'Ato Interno',
-                    numero_reuniao: delib.reuniao_ordinaria || '',
-                    data_reuniao: pdf.data || '',
-                    votos_favor: delib.votos_a_favor || [],
-                    votos_contra: delib.votos_contra || []
+                    processo: delib.processo || delib.numero_deliberacao || '',
+                    classificacao: delib.classificacao || (delib.pauta_interna ? 'Pauta Interna da Agência' : 'Pleito Externo'),
+                    microtema: delib.microtema || '',
+                    resultado: delib.resultado || delib.decisao || '',
+                    votos_a_favor: delib.votos_a_favor || delib.votosFavor || [],
+                    votos_contra: delib.votos_contra || delib.votosContra || [],
+                    resumo_pleito: delib.resumo_pleito || delib.resumo || '',
+                    fundamento_decisao: delib.fundamento_decisao || delib.fundamento || ''
                 });
             });
         }
     });
 
+    // Optional filters via query params
+    const { microtema, resultado, reuniao, diretor } = req.query;
+    let filtered = deliberacoes;
+    if (microtema) filtered = filtered.filter(d => d.microtema === microtema);
+    if (resultado) filtered = filtered.filter(d => d.resultado === resultado);
+    if (reuniao) filtered = filtered.filter(d => d.reuniao_ordinaria == reuniao);
+    if (diretor) filtered = filtered.filter(d =>
+        [...(d.votos_a_favor || []), ...(d.votos_contra || [])].some(v => v.includes(diretor))
+    );
+
     res.json({
-        total: deliberacoes.length,
-        deliberacoes
+        total: filtered.length,
+        deliberacoes: filtered
     });
 });
 
@@ -1509,7 +3455,7 @@ app.get('/api/reunioes-monitoradas', (req, res) => {
     });
 });
 
-app.post('/api/reunioes-monitoradas', (req, res) => {
+app.post('/api/reunioes-monitoradas', authenticate, (req, res) => {
     const { url, tipo } = req.body;
 
     if (!url) {
@@ -1535,7 +3481,7 @@ app.post('/api/reunioes-monitoradas', (req, res) => {
     });
 });
 
-app.post('/api/reunioes-monitoradas/:id/processar', async (req, res) => {
+app.post('/api/reunioes-monitoradas/:id/processar', authenticate, async (req, res) => {
     const { id } = req.params;
     const reuniao = reunioesMonitoradas.find(r => r.id === id);
 
@@ -1543,20 +3489,120 @@ app.post('/api/reunioes-monitoradas/:id/processar', async (req, res) => {
         return res.status(404).json({ erro: 'Reunião não encontrada' });
     }
 
-    // Simula início do processamento
     reuniao.status = 'processando';
     reuniao.progresso = 10;
     reuniao.tentativas++;
 
-    // Em produção, aqui seria chamada a função de processamento real
+    // Responder imediatamente e processar em background
     res.json({
         sucesso: true,
-        mensagem: 'Processamento iniciado',
+        mensagem: 'Processamento iniciado — acompanhe via /api/reunioes-monitoradas',
         reuniao
     });
+
+    // Processamento real em background
+    (async () => {
+        try {
+            const url = reuniao.url_origem;
+            if (!url) {
+                reuniao.status = 'erro';
+                reuniao.error_message = 'URL de origem não definida';
+                return;
+            }
+
+            // 1. Baixar PDF
+            reuniao.progresso = 20;
+            console.log(`[IRIS] Processando reunião ${id}: baixando PDF de ${url}`);
+            const axios = require('axios');
+            const pdfResponse = await axios.get(url, {
+                responseType: 'arraybuffer',
+                timeout: 60000,
+                headers: { 'User-Agent': 'IRIS-Platform/2.0' }
+            });
+
+            // 2. Extrair texto do PDF
+            reuniao.progresso = 40;
+            const pdfBuffer = Buffer.from(pdfResponse.data);
+            const pdfData = await pdfParse(pdfBuffer);
+            const texto = pdfData.text;
+
+            if (!texto || texto.trim().length < 50) {
+                reuniao.status = 'erro';
+                reuniao.error_message = 'PDF sem texto extraível';
+                return;
+            }
+
+            // 3. Extrair deliberações estruturadas
+            reuniao.progresso = 60;
+            const extracao = irisCore.extrairDeliberacoesEstruturadas(texto);
+            const analise = irisCore.analisarTexto(texto);
+
+            // Auto-detect agency from PDF text
+            const agenciasConhecidas = ['ARTESP', 'ANEEL', 'ANATEL', 'ANP', 'ANTT', 'ANTAQ', 'ANS', 'ANVISA', 'ANA', 'ANAC', 'ANM', 'ANCINE', 'ARSESP'];
+            const textoAgencia = texto.substring(0, 3000).toUpperCase();
+            const agenciaDetectada = agenciasConhecidas.find(a => textoAgencia.includes(a)) || 'ARTESP';
+
+            // 4. Persistir deliberações
+            reuniao.progresso = 80;
+            let persistidas = 0;
+            const erros = [];
+
+            // Tenta Gemini para esta reunião também
+            let deliberacoesFinaisReuniao = extracao.deliberations;
+            if (geminiAnalyzer.isGeminiAvailable()) {
+                const geminiResult = await geminiAnalyzer.analisarMultiplasDeliberacoes(texto);
+                if (geminiResult) deliberacoesFinaisReuniao = geminiResult;
+            }
+
+            for (const delib of deliberacoesFinaisReuniao) {
+                try {
+                    await persistencia.salvarDeliberacao({
+                        agencia: agenciaDetectada,
+                        numeroReuniao: delib.numero_reuniao || delib.reuniao_ordinaria || '',
+                        dataReuniao: delib.data_reuniao || '',
+                        processo: delib.processo || delib.numero_deliberacao || '',
+                        interessado: delib.interessado || '',
+                        tipo: delib.pauta_interna ? 'Ato Administrativo Interno' : (delib.classificacao || analise.tipo || 'Pleito Externo'),
+                        microtema: delib.microtema || analise.microtema || '',
+                        decisao: delib.decisao || delib.resultado || analise.decisao || '',
+                        resumoPleito: delib.resumo_pleito || delib.texto_resumo || '',
+                        fundamentoDecisao: delib.fundamento_decisao || '',
+                        votosFavoraveis: delib.votos_a_favor || [],
+                        votosContrarios: delib.votos_contra || [],
+                        linkPdf: url,
+                        confiancaGeral: analise.confiancaGeral || 0,
+                        hashTexto: analise.hashTexto || ''
+                    });
+                    persistidas++;
+                } catch (err) {
+                    if (!err.message?.includes('duplicate')) {
+                        erros.push(err.message);
+                    }
+                }
+            }
+
+            // 5. Finalizar
+            reuniao.status = 'processado';
+            reuniao.progresso = 100;
+            reuniao.resultado = {
+                agencia: agenciaDetectada,
+                totalDeliberacoes: extracao.deliberations.length,
+                persistidas,
+                erros: erros.length > 0 ? erros : undefined,
+                processadoEm: new Date().toISOString()
+            };
+
+            console.log(`[IRIS] Reunião ${id} processada: ${persistidas}/${extracao.deliberations.length} deliberações salvas`);
+
+        } catch (err) {
+            reuniao.status = 'erro';
+            reuniao.error_message = err.message;
+            console.error(`[IRIS] Erro ao processar reunião ${id}: ${err.message}`);
+        }
+    })();
 });
 
-app.delete('/api/reunioes-monitoradas/:id', (req, res) => {
+app.delete('/api/reunioes-monitoradas/:id', authenticate, (req, res) => {
     const { id } = req.params;
     const index = reunioesMonitoradas.findIndex(r => r.id === id);
 
@@ -2080,19 +4126,972 @@ Agora serve: public/metricas.html
 </html>
 FIM DO CÓDIGO ANTIGO DESATIVADO */
 
-// Inicia servidor
-app.listen(PORT, () => {
-    console.log('');
-    console.log('╔══════════════════════════════════════════════════════════════╗');
-    console.log('║                                                              ║');
-    console.log('║   🔍 IRIS PLATFORM - Plataforma Unificada                   ║');
-    console.log('║                                                              ║');
-    console.log('║   Coleta de PDFs + Análise de Deliberações                  ║');
-    console.log('║                                                              ║');
-    console.log('╠══════════════════════════════════════════════════════════════╣');
-    console.log('║                                                              ║');
-    console.log('║   🌐 Acesse: http://localhost:' + PORT + '                          ║');
-    console.log('║                                                              ║');
-    console.log('╚══════════════════════════════════════════════════════════════╝');
-    console.log('');
+// ============================================================================
+// BASE DE DADOS PÚBLICA - AGÊNCIAS REGULADORAS E DIRETORES
+// Fonte: Portais de transparência, DOU, sites oficiais das agências
+// LGPD Art. 7º, II e III — Dados públicos de agentes públicos no exercício
+// de suas funções. Nomes, cargos e mandatos são informações de domínio público.
+// ============================================================================
+
+// ============================================================================
+// BASE DE DADOS: AGÊNCIAS REGULADORAS E DIRIGENTES
+// Fonte: Diário Oficial da União, portais gov.br, Lei de Acesso à Informação
+// LGPD Art. 7º, II e III — dados públicos de agentes públicos
+// Verificado: fevereiro/2026 via portais oficiais
+// Nota: Houve grande renovação de diretorias em ago-set/2025
+// ============================================================================
+const AGENCIAS_REGULADORAS = {
+    'ANEEL': {
+        nome: 'Agência Nacional de Energia Elétrica',
+        sigla: 'ANEEL',
+        esfera: 'federal',
+        setor: 'Energia Elétrica',
+        site: 'https://www.gov.br/aneel',
+        lei_criacao: 'Lei nº 9.427/1996',
+        vinculacao: 'Ministério de Minas e Energia',
+        diretores: [
+            { nome: 'Sandoval de Araújo Feitosa Neto', cargo: 'Diretor-Geral', mandato: '2022-2027' },
+            { nome: 'Agnes Maria de Aragão da Costa', cargo: 'Diretora', mandato: '2022-2028' },
+            { nome: 'Fernando Luiz Mosna Ferreira da Silva', cargo: 'Diretor', mandato: '2022-2026' },
+            { nome: 'Willamy Moreira Frota', cargo: 'Diretor', mandato: '2025-2029' },
+            { nome: 'Gentil Nogueira de Sá Júnior', cargo: 'Diretor', mandato: '2025-2030' }
+        ]
+    },
+    'ANATEL': {
+        nome: 'Agência Nacional de Telecomunicações',
+        sigla: 'ANATEL',
+        esfera: 'federal',
+        setor: 'Telecomunicações',
+        site: 'https://www.gov.br/anatel',
+        lei_criacao: 'Lei nº 9.472/1997',
+        vinculacao: 'Ministério das Comunicações',
+        diretores: [
+            { nome: 'Carlos Manuel Baigorri', cargo: 'Presidente', mandato: '2022-2026' },
+            { nome: 'Alexandre Reis Siqueira Freire', cargo: 'Conselheiro', mandato: '2022-2027' },
+            { nome: 'Octávio Penna Pieranti', cargo: 'Conselheiro', mandato: '2025-2028' },
+            { nome: 'Edson Victor Eugênio de Holanda', cargo: 'Conselheiro', mandato: '2025-2029' }
+        ]
+    },
+    'ANP': {
+        nome: 'Agência Nacional do Petróleo, Gás Natural e Biocombustíveis',
+        sigla: 'ANP',
+        esfera: 'federal',
+        setor: 'Petróleo e Gás',
+        site: 'https://www.gov.br/anp',
+        lei_criacao: 'Lei nº 9.478/1997',
+        vinculacao: 'Ministério de Minas e Energia',
+        diretores: [
+            { nome: 'Artur Watt Neto', cargo: 'Diretor-Geral', mandato: '2025-2029' },
+            { nome: 'Symone Christine de Santana Araújo', cargo: 'Diretora', mandato: '2023-2027' },
+            { nome: 'Daniel Maia Vieira', cargo: 'Diretor', mandato: '2022-2026' },
+            { nome: 'Fernando Luiz Gonçalves Moura', cargo: 'Diretor', mandato: '2022-2026' },
+            { nome: 'Pietro Adamo Sampaio Mendes', cargo: 'Diretor', mandato: '2025-2029' }
+        ]
+    },
+    'ANVISA': {
+        nome: 'Agência Nacional de Vigilância Sanitária',
+        sigla: 'ANVISA',
+        esfera: 'federal',
+        setor: 'Vigilância Sanitária',
+        site: 'https://www.gov.br/anvisa',
+        lei_criacao: 'Lei nº 9.782/1999',
+        vinculacao: 'Ministério da Saúde',
+        diretores: [
+            { nome: 'Leandro Pinheiro Safatle', cargo: 'Diretor-Presidente', mandato: '2025-2030' },
+            { nome: 'Daniel Meirelles Fernandes Pereira', cargo: 'Diretor', mandato: '2023-2028' },
+            { nome: 'Daniela Marreco Cerqueira', cargo: 'Diretora', mandato: '2025-2030' },
+            { nome: 'Thiago Lopes Cardoso Campos', cargo: 'Diretor', mandato: '2025-2030' }
+        ]
+    },
+    'ANS': {
+        nome: 'Agência Nacional de Saúde Suplementar',
+        sigla: 'ANS',
+        esfera: 'federal',
+        setor: 'Saúde Suplementar',
+        site: 'https://www.gov.br/ans',
+        lei_criacao: 'Lei nº 9.961/2000',
+        vinculacao: 'Ministério da Saúde',
+        diretores: [
+            { nome: 'Wadih Nemer Damous Filho', cargo: 'Diretor-Presidente', mandato: '2025-2029' },
+            { nome: 'Eliane Aparecida de Castro Medeiros', cargo: 'Diretora de Fiscalização', mandato: '2022-2026' },
+            { nome: 'Lenise Barcellos de Mello Secchin', cargo: 'Diretora de Normas', mandato: '2025-2030' },
+            { nome: 'Jorge Antônio Aquino Lopes', cargo: 'Diretor de Normas e Habilitação', mandato: '2022-2026' }
+        ]
+    },
+    'ANTT': {
+        nome: 'Agência Nacional de Transportes Terrestres',
+        sigla: 'ANTT',
+        esfera: 'federal',
+        setor: 'Transportes Terrestres',
+        site: 'https://www.gov.br/antt',
+        lei_criacao: 'Lei nº 10.233/2001',
+        vinculacao: 'Ministério dos Transportes',
+        diretores: [
+            { nome: 'Guilherme Theo Rodrigues da Rocha Sampaio', cargo: 'Diretor-Geral', mandato: '2025-2030' },
+            { nome: 'Alex Antônio de Azevedo Cruz', cargo: 'Diretor', mandato: '2025-2030' },
+            { nome: 'Felipe Fernandes Queiroz', cargo: 'Diretor', mandato: '2022-2027' },
+            { nome: 'Lucas Asfor Rocha Lima', cargo: 'Diretor', mandato: '2023-2028' }
+        ]
+    },
+    'ANTAQ': {
+        nome: 'Agência Nacional de Transportes Aquaviários',
+        sigla: 'ANTAQ',
+        esfera: 'federal',
+        setor: 'Transportes Aquaviários',
+        site: 'https://www.gov.br/antaq',
+        lei_criacao: 'Lei nº 10.233/2001',
+        vinculacao: 'Ministério de Portos e Aeroportos',
+        diretores: [
+            { nome: 'Frederico Carvalho Dias', cargo: 'Diretor-Geral', mandato: '2025-2030' },
+            { nome: 'Wilson Pereira de Lima Filho', cargo: 'Diretor', mandato: '2022-2027' },
+            { nome: 'Alber Furtado de Vasconcelos Neto', cargo: 'Diretor', mandato: '2022-2026' },
+            { nome: 'Caio César Farias Leôncio', cargo: 'Diretor', mandato: '2022-2027' }
+        ]
+    },
+    'ANAC': {
+        nome: 'Agência Nacional de Aviação Civil',
+        sigla: 'ANAC',
+        esfera: 'federal',
+        setor: 'Aviação Civil',
+        site: 'https://www.gov.br/anac',
+        lei_criacao: 'Lei nº 11.182/2005',
+        vinculacao: 'Ministério de Portos e Aeroportos',
+        diretores: [
+            { nome: 'Tiago Chagas Faierstein', cargo: 'Diretor-Presidente', mandato: '2025-2030' },
+            { nome: 'Tiago Sousa Pereira', cargo: 'Diretor', mandato: '2021-2026' },
+            { nome: 'Rui Chagas Mesquita', cargo: 'Diretor', mandato: '2025-2030' },
+            { nome: 'Antônio Mathias Nogueira Moreira', cargo: 'Diretor', mandato: '2025-2030' }
+        ]
+    },
+    'ANA': {
+        nome: 'Agência Nacional de Águas e Saneamento Básico',
+        sigla: 'ANA',
+        esfera: 'federal',
+        setor: 'Águas e Saneamento',
+        site: 'https://www.gov.br/ana',
+        lei_criacao: 'Lei nº 9.984/2000',
+        vinculacao: 'Ministério da Integração e do Desenvolvimento Regional',
+        diretores: [
+            { nome: 'Ana Carolina Argolo Nascimento de Castro', cargo: 'Diretora-Presidente Interina', mandato: '2022-2026' },
+            { nome: 'Larissa Oliveira Rego', cargo: 'Diretora', mandato: '2025-2029' },
+            { nome: 'Cristiane Collet Battiston', cargo: 'Diretora', mandato: '2025-2030' },
+            { nome: 'Leonardo Goes Silva', cargo: 'Diretor', mandato: '2025-2029' }
+        ]
+    },
+    'ANM': {
+        nome: 'Agência Nacional de Mineração',
+        sigla: 'ANM',
+        esfera: 'federal',
+        setor: 'Mineração',
+        site: 'https://www.gov.br/anm',
+        lei_criacao: 'Lei nº 13.575/2017',
+        vinculacao: 'Ministério de Minas e Energia',
+        diretores: [
+            { nome: 'Mauro Henrique Moreira Sousa', cargo: 'Diretor-Geral', mandato: '2022-2026' },
+            { nome: 'José Fernando de Mendonça Gomes Júnior', cargo: 'Diretor', mandato: '2025-2028' },
+            { nome: 'Luiz Paniago Neves', cargo: 'Diretor Substituto', mandato: '2025-2026' },
+            { nome: 'Fábio Fernando Borges', cargo: 'Diretor Substituto', mandato: '2025-2026' }
+        ]
+    },
+    'ANCINE': {
+        nome: 'Agência Nacional do Cinema',
+        sigla: 'ANCINE',
+        esfera: 'federal',
+        setor: 'Audiovisual',
+        site: 'https://www.gov.br/ancine',
+        lei_criacao: 'MP nº 2.228-1/2001',
+        vinculacao: 'Ministério da Cultura',
+        diretores: [
+            { nome: 'Alex Braga Muniz', cargo: 'Diretor-Presidente', mandato: '2021-2026' },
+            { nome: 'Vinícius Clay Araújo Gomes', cargo: 'Diretor', mandato: '2021-2026' },
+            { nome: 'Paulo Xavier Alcoforado', cargo: 'Diretor', mandato: '2023-2027' },
+            { nome: 'Patrícia Barcelos', cargo: 'Diretora', mandato: '2025-2029' }
+        ]
+    },
+    'CVM': {
+        nome: 'Comissão de Valores Mobiliários',
+        sigla: 'CVM',
+        esfera: 'federal',
+        setor: 'Mercado de Capitais',
+        site: 'https://www.gov.br/cvm',
+        lei_criacao: 'Lei nº 6.385/1976',
+        vinculacao: 'Ministério da Fazenda',
+        diretores: [
+            { nome: 'João Carlos de Andrade Uzeda Accioly', cargo: 'Presidente Interino', mandato: '2022-2026' },
+            { nome: 'Marina Palma Copola de Carvalho', cargo: 'Diretora', mandato: '2024-2028' }
+        ]
+    },
+    'CADE': {
+        nome: 'Conselho Administrativo de Defesa Econômica',
+        sigla: 'CADE',
+        esfera: 'federal',
+        setor: 'Defesa da Concorrência',
+        site: 'https://www.gov.br/cade',
+        lei_criacao: 'Lei nº 12.529/2011',
+        vinculacao: 'Ministério da Justiça',
+        diretores: [
+            { nome: 'Gustavo Augusto Freitas de Lima', cargo: 'Presidente', mandato: '2022-2026' },
+            { nome: 'Carlos Jacques Vieira Gomes', cargo: 'Conselheiro', mandato: '2024-2028' },
+            { nome: 'Diogo Thomson de Andrade', cargo: 'Conselheiro', mandato: '2023-2027' },
+            { nome: 'Victor Oliveira Fernandes', cargo: 'Conselheiro', mandato: '2022-2026' },
+            { nome: 'Camila Cabral Pires Alves', cargo: 'Conselheira', mandato: '2024-2028' },
+            { nome: 'José Levi Mello do Amaral Júnior', cargo: 'Conselheiro', mandato: '2024-2028' }
+        ]
+    },
+    // ─── Agências Estaduais ───
+    'ARTESP': {
+        nome: 'Agência de Transporte do Estado de São Paulo',
+        sigla: 'ARTESP',
+        esfera: 'estadual',
+        setor: 'Transportes SP',
+        site: 'https://www.artesp.sp.gov.br',
+        lei_criacao: 'Lei Complementar nº 914/2002',
+        vinculacao: 'Governo do Estado de São Paulo',
+        diretores: [
+            { nome: 'André Isper Rodrigues Barnabé', cargo: 'Diretor-Presidente', mandato: '2023-2027' },
+            { nome: 'Diego Zanatto', cargo: 'Diretor', mandato: '2023-2027' },
+            { nome: 'Fernanda Esbizaro Rodrigues Rudnik', cargo: 'Diretora', mandato: '2023-2027' },
+            { nome: 'Raquel França Carneiro', cargo: 'Diretora', mandato: '2025-2029' }
+        ]
+    },
+    'ARSESP': {
+        nome: 'Agência Reguladora de Serviços Públicos do Estado de São Paulo',
+        sigla: 'ARSESP',
+        esfera: 'estadual',
+        setor: 'Saneamento e Energia SP',
+        site: 'https://www.arsesp.sp.gov.br',
+        lei_criacao: 'Lei Complementar nº 1.025/2007',
+        vinculacao: 'Governo do Estado de São Paulo',
+        diretores: [
+            { nome: 'Thiago Mesquita Nunes', cargo: 'Diretor-Presidente', mandato: '2023-2027' },
+            { nome: 'Amauri Gavião Almeida Marques da Silva', cargo: 'Diretor de Gás', mandato: '2022-2027' },
+            { nome: 'Gustavo Zarif Frayha', cargo: 'Diretor de Saneamento', mandato: '2023-2027' },
+            { nome: 'Daniel Antônio Narzetti', cargo: 'Diretor de Regulação', mandato: '2024-2028' },
+            { nome: 'Thiago Roberto Magalhães Veloso', cargo: 'Diretor de Energia', mandato: '2023-2027' }
+        ]
+    }
+};
+
+// ============================================================================
+// API: CRUZAMENTO DE DADOS - Consulta a bases públicas externas
+// LGPD Art. 7º, III — Tratamento pela administração pública
+// Todas as consultas são a portais de transparência pública
+// ============================================================================
+
+// Consulta CNPJ na Receita Federal (API pública)
+async function consultarCNPJ(cnpj) {
+    const cnpjLimpo = cnpj.replace(/\D/g, '');
+    if (cnpjLimpo.length !== 14) {
+        return { erro: 'CNPJ inválido — deve conter 14 dígitos' };
+    }
+
+    try {
+        const axios = require('axios');
+        // API pública do ReceitaWS (sem autenticação, limite de 3/min)
+        const resp = await axios.get(`https://receitaws.com.br/v1/cnpj/${cnpjLimpo}`, {
+            timeout: 15000,
+            headers: { 'Accept': 'application/json' }
+        });
+
+        if (resp.data.status === 'ERROR') {
+            return { erro: resp.data.message || 'CNPJ não encontrado' };
+        }
+
+        return {
+            cnpj: resp.data.cnpj,
+            razao_social: resp.data.nome,
+            nome_fantasia: resp.data.fantasia,
+            situacao: resp.data.situacao,
+            data_abertura: resp.data.abertura,
+            natureza_juridica: resp.data.natureza_juridica,
+            porte: resp.data.porte,
+            capital_social: resp.data.capital_social,
+            atividade_principal: resp.data.atividade_principal,
+            atividades_secundarias: resp.data.atividades_secundarias,
+            endereco: {
+                logradouro: resp.data.logradouro,
+                numero: resp.data.numero,
+                complemento: resp.data.complemento,
+                bairro: resp.data.bairro,
+                municipio: resp.data.municipio,
+                uf: resp.data.uf,
+                cep: resp.data.cep
+            },
+            socios: (resp.data.qsa || []).map(s => ({
+                nome: s.nome,
+                qualificacao: s.qual,
+                pais_origem: s.pais_origem
+            })),
+            fonte: 'ReceitaWS (dados públicos da Receita Federal)'
+        };
+    } catch (error) {
+        if (error.response && error.response.status === 429) {
+            return { erro: 'Limite de consultas atingido. Aguarde 1 minuto e tente novamente.' };
+        }
+        return { erro: `Erro na consulta: ${error.message}` };
+    }
+}
+
+// Consulta dados de transparência do Portal da Transparência
+async function consultarTransparencia(tipo, termo) {
+    try {
+        const axios = require('axios');
+        let url = '';
+
+        if (tipo === 'servidores') {
+            url = `https://api.portaldatransparencia.gov.br/api-de-dados/servidores?nome=${encodeURIComponent(termo)}&pagina=1&tamanhoPagina=10`;
+        } else if (tipo === 'contratos') {
+            url = `https://api.portaldatransparencia.gov.br/api-de-dados/contratos?codigoOrgao=&dataInicial=2024-01-01&dataFinal=2025-12-31&pagina=1&tamanhoPagina=10`;
+        } else if (tipo === 'licitacoes') {
+            url = `https://api.portaldatransparencia.gov.br/api-de-dados/licitacoes?codigoOrgao=&dataInicial=2024-01-01&dataFinal=2025-12-31&pagina=1&tamanhoPagina=10`;
+        }
+
+        // Nota: O Portal da Transparência exige chave de API
+        // Cadastro gratuito em: https://portaldatransparencia.gov.br/api-de-dados
+        const apiKey = process.env.PORTAL_TRANSPARENCIA_API_KEY;
+        if (!apiKey) {
+            return {
+                aviso: 'API Key do Portal da Transparência não configurada.',
+                instrucoes: 'Cadastre-se gratuitamente em https://portaldatransparencia.gov.br/api-de-dados e adicione PORTAL_TRANSPARENCIA_API_KEY ao .env',
+                dados_disponiveis: ['servidores', 'contratos', 'licitacoes', 'convenios', 'despesas']
+            };
+        }
+
+        const resp = await axios.get(url, {
+            headers: {
+                'chave-api-dados': apiKey,
+                'Accept': 'application/json'
+            },
+            timeout: 15000
+        });
+
+        return { dados: resp.data, fonte: 'Portal da Transparência (gov.br)' };
+    } catch (error) {
+        return { erro: `Erro na consulta: ${error.message}` };
+    }
+}
+
+// ── ENDPOINT: Consulta CNPJ ──
+app.get('/api/cruzamento/cnpj/:cnpj', rateLimit(RATE_LIMIT_STRICT), async (req, res) => {
+    const cnpj = req.params.cnpj;
+    if (!validateCNPJ(cnpj)) {
+        return res.status(400).json({ success: false, erro: 'CNPJ inválido. Use formato: 00.000.000/0000-00 ou 14 dígitos.' });
+    }
+    const resultado = await consultarCNPJ(cnpj);
+    res.json({ success: !resultado.erro, ...resultado });
 });
+
+// ── ENDPOINT: Consulta Transparência ──
+app.get('/api/cruzamento/transparencia/:tipo', rateLimit(RATE_LIMIT_STRICT), async (req, res) => {
+    const tiposPermitidos = ['contratos', 'servidores', 'licitacoes', 'convenios'];
+    const tipo = req.params.tipo;
+    if (!tiposPermitidos.includes(tipo)) {
+        return res.status(400).json({ success: false, erro: 'Tipo inválido. Use: ' + tiposPermitidos.join(', ') });
+    }
+    const termo = sanitizeString(req.query.termo || '', 200);
+    const resultado = await consultarTransparencia(tipo, termo);
+    res.json({ success: !resultado.erro, ...resultado });
+});
+
+// ── ENDPOINT: Base completa de agências e diretores ──
+app.get('/api/agencias-reguladoras', (req, res) => {
+    const lista = Object.values(AGENCIAS_REGULADORAS).map(ag => ({
+        sigla: ag.sigla,
+        nome: ag.nome,
+        esfera: ag.esfera,
+        setor: ag.setor,
+        site: ag.site,
+        lei_criacao: ag.lei_criacao,
+        vinculacao: ag.vinculacao,
+        total_diretores: ag.diretores.length,
+        diretores: ag.diretores
+    }));
+
+    res.json({
+        success: true,
+        total: lista.length,
+        agencias: lista,
+        aviso_lgpd: 'Todos os dados são públicos — nomes, cargos e mandatos de dirigentes de agências reguladoras são informações de acesso público (Lei de Acesso à Informação, Art. 7º, §3º; LGPD Art. 7º, II e III).'
+    });
+});
+
+// ── ENDPOINT: Grafo completo com dados de TODAS as agências ──
+// Cache for grafo-data-completo (rebuilt every 5 min or on PDF change)
+let _grafoCache = null;
+let _grafoCacheTime = 0;
+const GRAFO_CACHE_TTL = 5 * 60 * 1000;
+
+app.get('/api/grafo-data-completo', (req, res) => {
+    if (_grafoCache && (Date.now() - _grafoCacheTime) < GRAFO_CACHE_TTL) {
+        return res.json(_grafoCache);
+    }
+    const nodesMap = {};
+    const edgesMap = {};
+
+    // Adiciona todas as agências como nós (dados verificados de fontes oficiais)
+    for (const [sigla, ag] of Object.entries(AGENCIAS_REGULADORAS)) {
+        nodesMap[sigla] = {
+            id: sigla,
+            label: sigla,
+            full: ag.nome,
+            type: 'agency',
+            setor: ag.setor,
+            esfera: ag.esfera,
+            site: ag.site,
+            lei_criacao: ag.lei_criacao || '',
+            vinculacao: ag.vinculacao || '',
+            situacao: 'Ativo',
+            cidade: 'Brasília',
+            uf: 'DF'
+        };
+
+        // Adiciona diretores como nós (dados públicos DOU/gov.br)
+        ag.diretores.forEach(dir => {
+            const dirId = dir.nome;
+            if (!nodesMap[dirId]) {
+                nodesMap[dirId] = {
+                    id: dirId,
+                    label: dir.nome,
+                    type: 'director',
+                    role: dir.cargo,
+                    mandato: dir.mandato,
+                    agency: sigla,
+                    situacao: 'Ativo',
+                    initials: dir.nome.split(' ').filter(w => w.length > 1).map(w => w[0]).join('').substring(0, 2).toUpperCase()
+                };
+            }
+
+            // Edge: Diretor → Agência
+            const ek = `${sigla}||${dirId}`;
+            const relLabel = dir.cargo.includes('Geral') || dir.cargo.includes('Presidente') ? 'Diretor-Geral' : 'Membro';
+            edgesMap[ek] = {
+                source: sigla,
+                target: dirId,
+                label: relLabel,
+                type: 'membro',
+                strength: dir.cargo.includes('Geral') || dir.cargo.includes('Presidente') ? 1 : 0.7
+            };
+        });
+
+        // Conecta agências do mesmo setor regulatório
+        for (const [sigla2, ag2] of Object.entries(AGENCIAS_REGULADORAS)) {
+            if (sigla === sigla2) continue;
+
+            // Same sector connection
+            if (ag.setor === ag2.setor) {
+                const ek = [sigla, sigla2].sort().join('||');
+                if (!edgesMap[ek]) {
+                    edgesMap[ek] = {
+                        source: sigla, target: sigla2,
+                        label: `Mesmo setor: ${ag.setor}`,
+                        type: 'setor', strength: 0.35
+                    };
+                }
+            }
+
+            // Same ministry connection (separate edge)
+            if (ag.vinculacao && ag.vinculacao === ag2.vinculacao && ag.setor !== ag2.setor) {
+                const ek = `min:${[sigla, sigla2].sort().join('||')}`;
+                if (!edgesMap[ek]) {
+                    edgesMap[ek] = {
+                        source: sigla, target: sigla2,
+                        label: ag.vinculacao,
+                        type: 'ministerio', strength: 0.25
+                    };
+                }
+            }
+        }
+    }
+
+    // Merge com dados das deliberações (se existirem)
+    const deliberacoes = coletarTodasDeliberacoes();
+    deliberacoes.forEach(d => {
+        const allVoters = [...(d.votos_a_favor || []), ...(d.votos_contra || [])];
+
+        if (d.interessado && d.interessado !== 'ARTESP' && d.interessado.length > 2) {
+            const comp = d.interessado;
+            if (!nodesMap[comp]) {
+                nodesMap[comp] = {
+                    id: comp, label: comp, type: 'company', mentions: 0,
+                    situacao: 'Ativo',
+                    setor: 'Infraestrutura',
+                    cnpj: '',
+                    cidade: 'São Paulo',
+                    uf: 'SP',
+                    initials: comp.split(' ').filter(w => w.length > 1).map(w => w[0]).join('').substring(0, 2).toUpperCase()
+                };
+            }
+            nodesMap[comp].mentions = (nodesMap[comp].mentions || 0) + 1;
+
+            allVoters.forEach(dir => {
+                const ek = `${dir}||${comp}`;
+                if (!edgesMap[ek]) edgesMap[ek] = { source: dir, target: comp, label: 'Deliberação', count: 0, type: 'deliberacao', strength: 0.5 };
+                edgesMap[ek].count = (edgesMap[ek].count || 0) + 1;
+            });
+        }
+
+        const temas = d.microtemas && d.microtemas.length > 0 ? d.microtemas : (d.microtema ? [d.microtema] : []);
+        temas.forEach(theme => {
+            if (!theme || theme.length < 2) return;
+            if (!nodesMap[theme]) nodesMap[theme] = { id: theme, label: theme, type: 'theme', count: 0 };
+            nodesMap[theme].count = (nodesMap[theme].count || 0) + 1;
+
+            allVoters.forEach(dir => {
+                const ek = `${dir}||${theme}`;
+                if (!edgesMap[ek]) edgesMap[ek] = { source: dir, target: theme, label: 'Votou sobre', count: 0, type: 'tema_voto', strength: 0.4 };
+                edgesMap[ek].count = (edgesMap[ek].count || 0) + 1;
+            });
+        });
+    });
+
+    const allEdges = Object.values(edgesMap);
+    const maxCount = Math.max(1, ...allEdges.map(e => e.count || 1));
+    allEdges.forEach(e => {
+        if (!e.strength) e.strength = Math.max(0.15, (e.count || 1) / maxCount);
+    });
+
+    const result = {
+        success: true,
+        nodes: Object.values(nodesMap),
+        edges: allEdges,
+        meta: {
+            totalAgencias: Object.keys(AGENCIAS_REGULADORAS).length,
+            totalDiretores: Object.values(AGENCIAS_REGULADORAS).reduce((acc, ag) => acc + ag.diretores.length, 0),
+            totalDeliberacoes: deliberacoes.length,
+            aviso_lgpd: 'Dados públicos de agentes públicos no exercício de funções regulatórias.'
+        }
+    };
+    _grafoCache = result;
+    _grafoCacheTime = Date.now();
+    res.json(result);
+});
+
+// ── ENDPOINT: Status de integração com bases externas ──
+app.get('/api/cruzamento/status', (req, res) => {
+    const portalKey = !!process.env.PORTAL_TRANSPARENCIA_API_KEY;
+    res.json({
+        success: true,
+        integracoes: {
+            receita_federal: { status: 'ativo', descricao: 'Consulta CNPJ via ReceitaWS (API pública, 3 req/min)', endpoint: '/api/cruzamento/cnpj/:cnpj' },
+            portal_transparencia: { status: portalKey ? 'ativo' : 'requer_configuracao', descricao: 'Servidores, contratos, licitações', endpoint: '/api/cruzamento/transparencia/:tipo', configurado: portalKey },
+            diarios_oficiais: { status: 'ativo', descricao: 'DOU via RSS (Imprensa Nacional)', endpoint: '/api/noticias?setor=geral' },
+            agencias_reguladoras: { status: 'ativo', descricao: 'Base própria com dados públicos de 15 agências e 50+ diretores', endpoint: '/api/agencias-reguladoras' }
+        },
+        bases_futuras: [
+            { nome: 'JUCESP/JUCERJA', descricao: 'Juntas Comerciais — consulta de empresas e sócios', status: 'planejado', motivo: 'Requer convênio ou API específica' },
+            { nome: 'TSE', descricao: 'Doações eleitorais de empresas/pessoas', status: 'planejado', api: 'https://divulgacandcontas.tse.jus.br/divulga/' },
+            { nome: 'CEIS/CNEP', descricao: 'Cadastro de empresas inidôneas e punidas', status: 'planejado', api: 'Portal da Transparência' },
+            { nome: 'Dados Abertos', descricao: 'Portal brasileiro de dados abertos', status: 'planejado', api: 'https://dados.gov.br/dados/api/publico/1' }
+        ]
+    });
+});
+
+// ============================================================================
+// SUPABASE API ENDPOINTS
+// ============================================================================
+
+// Status da conexão Supabase
+// ============================================================================
+// API - PERSISTÊNCIA (Supabase + fallback memória via iris-core/persistencia)
+// ============================================================================
+
+app.get('/api/supabase/status', async (req, res) => {
+    const status = persistencia.getStatus();
+
+    if (!status.supabaseConfigured) {
+        return res.json({
+            success: true,
+            connected: false,
+            mode: 'memory',
+            message: 'Supabase não configurado. Usando armazenamento em memória.',
+            memoryStats: status.memoryStats,
+            configured: false
+        });
+    }
+
+    try {
+        // Testa conexão buscando 1 registro
+        const delibs = await persistencia.buscarDeliberacoesCompletas({ limite: 1 });
+        return res.json({
+            success: true,
+            connected: true,
+            mode: 'supabase',
+            message: 'Conectado ao Supabase'
+        });
+    } catch (e) {
+        return res.json({
+            success: true,
+            connected: false,
+            mode: 'memory',
+            message: `Erro de conexão: ${e.message}`,
+            memoryStats: status.memoryStats
+        });
+    }
+});
+
+// Sync deliberações locais (em memória do servidor) para Supabase
+app.post('/api/supabase/sync', authenticate, rateLimit(RATE_LIMIT_STRICT), async (req, res) => {
+    const deliberacoes = coletarTodasDeliberacoes();
+
+    if (deliberacoes.length === 0) {
+        return res.json({ success: true, synced: 0, message: 'Nenhuma deliberação local para sincronizar' });
+    }
+
+    let synced = 0;
+    let errors = 0;
+
+    for (const d of deliberacoes) {
+        try {
+            await persistencia.salvarDeliberacao({
+                agencia: 'ARTESP',
+                processo: d.numero_deliberacao || d.processo || null,
+                numeroReuniao: d.reuniao_ordinaria || d.numero_reuniao || null,
+                interessado: d.interessado || null,
+                tipo: d.classificacao || d.tipo_deliberacao || null,
+                microtema: d.microtema || null,
+                decisao: d.resultado || d.decisao || 'A classificar',
+                resumoPleito: d.resumo_pleito || d.resumo || null,
+                fundamentoDecisao: d.fundamento_decisao || null,
+                votosFavoraveis: d.votos_a_favor || [],
+                votosContrarios: d.votos_contra || [],
+                linkPdf: d.link_pdf || null,
+                confiancaGeral: d.confianca || 0
+            });
+            synced++;
+        } catch (err) {
+            errors++;
+        }
+    }
+
+    res.json({
+        success: true,
+        total: deliberacoes.length,
+        synced,
+        errors,
+        message: `${synced} deliberações sincronizadas`
+    });
+});
+
+// Buscar deliberações do banco (Supabase ou memória)
+app.get('/api/supabase/deliberacoes', async (req, res) => {
+    try {
+        const limite = Math.min(Math.max(parseInt(req.query.limite) || 50, 1), 500);
+        const agencia = sanitizeString(req.query.agencia || '', 50);
+        const decisao = sanitizeString(req.query.decisao || '', 50);
+        const microtema = sanitizeString(req.query.microtema || '', 100);
+        const interessado = sanitizeString(req.query.interessado || '', 200);
+        const offset = Math.max(parseInt(req.query.offset) || 0, 0);
+
+        const filtros = { limite, offset };
+        if (agencia) filtros.agencia = agencia;
+        if (decisao) filtros.decisao = decisao;
+        if (microtema) filtros.microtema = microtema;
+        if (interessado) filtros.interessado = interessado;
+
+        const data = await persistencia.buscarDeliberacoesCompletas(filtros);
+
+        res.json({
+            success: true,
+            total: data.length,
+            offset,
+            limite,
+            deliberacoes: data
+        });
+    } catch (e) {
+        res.status(500).json({ success: false, erro: e.message });
+    }
+});
+
+// Buscar métricas do banco
+app.get('/api/supabase/metricas', async (req, res) => {
+    try {
+        const stats = await persistencia.buscarEstatisticas();
+        const diretores = await persistencia.buscarDiretores({ ativo: true });
+
+        res.json({
+            success: true,
+            mode: persistencia.getStatus().mode,
+            metricas: {
+                total_deliberacoes: stats.total || 0,
+                deferidos: stats.deferidos || 0,
+                indeferidos: stats.indeferidos || 0,
+                total_diretores: diretores.length || 0,
+                taxa_deferimento: stats.total > 0 ? Math.round(((stats.deferidos || 0) / stats.total) * 100) : 0,
+                ultimaAtualizacao: stats.ultimaAtualizacao
+            }
+        });
+    } catch (e) {
+        res.status(500).json({ success: false, erro: e.message });
+    }
+});
+
+// Buscar diretores do banco
+app.get('/api/supabase/diretores', async (req, res) => {
+    try {
+        const agency = sanitizeString(req.query.agency || '', 50);
+        const filtros = {};
+        if (agency) filtros.agency = agency;
+
+        const diretores = await persistencia.buscarDiretores(filtros);
+
+        res.json({
+            success: true,
+            total: diretores.length,
+            diretores
+        });
+    } catch (e) {
+        res.status(500).json({ success: false, erro: e.message });
+    }
+});
+
+// Buscar votos do banco
+app.get('/api/supabase/votos', async (req, res) => {
+    try {
+        const deliberacaoId = sanitizeString(req.query.deliberacao_id || '', 100);
+        const directorId = sanitizeString(req.query.director_id || '', 100);
+        const filtros = {};
+        if (deliberacaoId) filtros.deliberacaoId = deliberacaoId;
+        if (directorId) filtros.directorId = directorId;
+
+        const votos = await persistencia.buscarVotos(filtros);
+
+        res.json({
+            success: true,
+            total: votos.length,
+            votos
+        });
+    } catch (e) {
+        res.status(500).json({ success: false, erro: e.message });
+    }
+});
+
+// Buscar estatísticas do banco
+app.get('/api/supabase/estatisticas', async (req, res) => {
+    try {
+        const stats = await persistencia.buscarEstatisticas();
+        res.json({ success: true, ...stats });
+    } catch (e) {
+        res.status(500).json({ success: false, erro: e.message });
+    }
+});
+
+// ============================================================================
+// MONITORING & UPTIME SYSTEM
+// ============================================================================
+
+const serverStartTime = Date.now();
+const requestMetrics = {
+    totalRequests: 0,
+    totalErrors: 0,
+    responseTimesMs: [],
+    statusCodes: {},
+    endpointHits: {},
+    lastHour: { requests: 0, errors: 0, startTime: Date.now() }
+};
+
+// Request tracking middleware
+app.use((req, res, next) => {
+    const start = Date.now();
+    requestMetrics.totalRequests++;
+    requestMetrics.lastHour.requests++;
+
+    // Track endpoint hits
+    const endpoint = `${req.method} ${req.route?.path || req.path}`;
+    requestMetrics.endpointHits[endpoint] = (requestMetrics.endpointHits[endpoint] || 0) + 1;
+
+    const originalEnd = res.end;
+    res.end = function(...args) {
+        const duration = Date.now() - start;
+
+        // Keep last 1000 response times for percentile calculation
+        requestMetrics.responseTimesMs.push(duration);
+        if (requestMetrics.responseTimesMs.length > 1000) {
+            requestMetrics.responseTimesMs.shift();
+        }
+
+        // Track status codes
+        const statusGroup = `${Math.floor(res.statusCode / 100)}xx`;
+        requestMetrics.statusCodes[statusGroup] = (requestMetrics.statusCodes[statusGroup] || 0) + 1;
+
+        if (res.statusCode >= 500) {
+            requestMetrics.totalErrors++;
+            requestMetrics.lastHour.errors++;
+        }
+
+        originalEnd.apply(res, args);
+    };
+
+    next();
+});
+
+// Reset hourly metrics
+setInterval(() => {
+    requestMetrics.lastHour = { requests: 0, errors: 0, startTime: Date.now() };
+}, 60 * 60 * 1000);
+
+// Enhanced health check with monitoring data
+app.get('/api/monitoring/health', (req, res) => {
+    const uptime = process.uptime();
+    const memUsage = process.memoryUsage();
+
+    // Calculate p50, p95, p99 response times
+    const sortedTimes = [...requestMetrics.responseTimesMs].sort((a, b) => a - b);
+    const p50 = sortedTimes[Math.floor(sortedTimes.length * 0.5)] || 0;
+    const p95 = sortedTimes[Math.floor(sortedTimes.length * 0.95)] || 0;
+    const p99 = sortedTimes[Math.floor(sortedTimes.length * 0.99)] || 0;
+
+    const health = {
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+        uptime: {
+            seconds: Math.round(uptime),
+            human: `${Math.floor(uptime / 86400)}d ${Math.floor((uptime % 86400) / 3600)}h ${Math.floor((uptime % 3600) / 60)}m`
+        },
+        memory: {
+            heapUsedMB: Math.round(memUsage.heapUsed / 1024 / 1024),
+            heapTotalMB: Math.round(memUsage.heapTotal / 1024 / 1024),
+            rssMB: Math.round(memUsage.rss / 1024 / 1024),
+            percentUsed: Math.round((memUsage.heapUsed / memUsage.heapTotal) * 100)
+        },
+        requests: {
+            total: requestMetrics.totalRequests,
+            errors: requestMetrics.totalErrors,
+            errorRate: requestMetrics.totalRequests > 0
+                ? (requestMetrics.totalErrors / requestMetrics.totalRequests * 100).toFixed(2) + '%'
+                : '0%',
+            lastHour: requestMetrics.lastHour,
+            statusCodes: requestMetrics.statusCodes
+        },
+        performance: {
+            p50ms: p50,
+            p95ms: p95,
+            p99ms: p99,
+            sampleSize: sortedTimes.length
+        },
+        data: {
+            pdfsInMemory: pdfsProcessados.length,
+            pdfsAnalyzed: pdfsProcessados.filter(p => p.analise).length,
+            lastCollection: ultimaColeta,
+            monitoringActive: monitoramentoAtivo
+        },
+        database: {
+            type: isSupabaseConfigured() ? 'supabase' : 'memory',
+            connected: isSupabaseConfigured()
+        },
+        environment: process.env.NODE_ENV || 'development',
+        nodeVersion: process.version
+    };
+
+    // Set warning status if issues detected
+    if (memUsage.heapUsed / memUsage.heapTotal > 0.9) {
+        health.status = 'warning';
+        health.warnings = health.warnings || [];
+        health.warnings.push('High memory usage (>90%)');
+    }
+    if (requestMetrics.lastHour.errors > 50) {
+        health.status = 'warning';
+        health.warnings = health.warnings || [];
+        health.warnings.push('High error rate in last hour');
+    }
+
+    res.json(health);
+});
+
+// Top endpoints by usage
+app.get('/api/monitoring/endpoints', (req, res) => {
+    const sorted = Object.entries(requestMetrics.endpointHits)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 20)
+        .map(([endpoint, hits]) => ({ endpoint, hits }));
+    res.json({ success: true, endpoints: sorted });
+});
+
+// Readiness probe (for load balancers/k8s)
+app.get('/api/monitoring/ready', (req, res) => {
+    // Check critical dependencies
+    const checks = {
+        server: true,
+        memory: process.memoryUsage().heapUsed / process.memoryUsage().heapTotal < 0.95
+    };
+    const ready = Object.values(checks).every(Boolean);
+    res.status(ready ? 200 : 503).json({ ready, checks });
+});
+
+// Liveness probe
+app.get('/api/monitoring/live', (req, res) => {
+    res.status(200).json({ alive: true, uptime: process.uptime() });
+});
+
+// ============================================================================
+// BACKUP SYSTEM
+// ============================================================================
+const backupDataSource = {
+    getPdfs: () => pdfsProcessados,
+    getDeliberacoes: () => {
+        const todas = [];
+        for (const pdf of pdfsProcessados) {
+            if (pdf.analise && pdf.analise.deliberacoes) {
+                for (const d of pdf.analise.deliberacoes) {
+                    todas.push({ ...d, arquivoOrigem: pdf.nomeArquivo, dataArquivo: pdf.data });
+                }
+            }
+        }
+        return todas;
+    },
+    getEmpresas: () => {
+        const empresasAgregadas = new Map();
+        for (const pdf of pdfsProcessados) {
+            for (const emp of (pdf.empresasDetectadas || [])) {
+                if (empresasAgregadas.has(emp.nome)) {
+                    empresasAgregadas.get(emp.nome).mencoes += emp.mencoes;
+                } else {
+                    empresasAgregadas.set(emp.nome, { ...emp });
+                }
+            }
+        }
+        return Array.from(empresasAgregadas.values());
+    },
+    getReunioes: () => typeof reunioesMonitoradas !== 'undefined' ? reunioesMonitoradas : [],
+    getMetricas: () => ({
+        totalPdfs: pdfsProcessados.length,
+        pdfsAnalisados: pdfsProcessados.filter(p => p.analise).length,
+        ultimaColeta,
+        monitoramentoAtivo,
+        timestamp: new Date().toISOString()
+    })
+};
+
+backupService.registerBackupRoutes(app, authenticate, backupDataSource);
+
+// Export app for Vercel serverless deployment
+module.exports = app;
+
+// Start server only when run directly (not imported by Vercel)
+if (require.main === module) {
+    app.listen(PORT, () => {
+        const dbStatus = persistencia.getStatus();
+        const dbLabel = dbStatus.supabaseConfigured ? 'Supabase' : 'Memoria local';
+        const authLabel = isAuthSupabase() ? 'Supabase' : 'Memoria local';
+
+        console.log('');
+        console.log('╔══════════════════════════════════════════════════════════════╗');
+        console.log('║                                                              ║');
+        console.log('║   IRIS PLATFORM - Plataforma Unificada                      ║');
+        console.log('║                                                              ║');
+        console.log('║   Coleta de PDFs + Analise de Deliberacoes                  ║');
+        console.log('║                                                              ║');
+        console.log('╠══════════════════════════════════════════════════════════════╣');
+        console.log('║                                                              ║');
+        console.log(`║   Acesse: http://localhost:${PORT}                          ║`);
+        console.log(`║   Dados: ${dbLabel.padEnd(20)}                        ║`);
+        console.log(`║   Auth:  ${authLabel.padEnd(20)}                        ║`);
+        console.log('║                                                              ║');
+        console.log('╚══════════════════════════════════════════════════════════════╝');
+        console.log('');
+
+        // Pre-fetch news in background so first user gets instant results
+        if (newsFetcher.startBackgroundPrefetch) {
+            newsFetcher.startBackgroundPrefetch();
+        }
+    });
+}

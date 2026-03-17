@@ -9,7 +9,7 @@
  * 5. Atualização de status
  */
 
-require('dotenv').config();
+try { require('dotenv').config(); } catch { /* dotenv optional */ }
 
 const classificador = require('./services/classificador');
 const extratorVotos = require('./services/extrator-votos');
@@ -451,5 +451,9 @@ module.exports = {
     detectorDuplicidade,
     extratorDeliberacoes,
     persistencia,
-    logger
+    logger,
+
+    // Re-exporta funções de normalização para uso unificado
+    normalizarEmpresa: extratorDeliberacoes.normalizarEmpresa,
+    extrairEmpresas: extratorDeliberacoes.extrairEmpresas
 };

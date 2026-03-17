@@ -442,20 +442,39 @@ function classificarDeliberacao(texto, metadata = {}) {
     const decisao = classificarDecisao(texto);
     const microtema = inferirMicrotema(texto);
 
+    const confiancaGeral = Math.round((tipo.confianca + decisao.confianca + microtema.confianca) / 3);
+
+    // Threshold de confiança: se muito baixa, marcar como "A classificar"
+    const THRESHOLD_CONFIANCA = 30;
+    const decisaoFinal = decisao.confianca < THRESHOLD_CONFIANCA ? 'A classificar' : decisao.decisao;
+    const microtemaFinal = microtema.confianca < THRESHOLD_CONFIANCA ? 'A classificar' : microtema.microtema;
+
+    if (decisaoFinal === 'A classificar' || microtemaFinal === 'A classificar') {
+        logger.warn('Classificador', 'Confiança abaixo do threshold', {
+            decisaoConfianca: decisao.confianca,
+            microtemaConfianca: microtema.confianca,
+            threshold: THRESHOLD_CONFIANCA
+        });
+    }
+
     const resultado = {
         tipo: tipo.tipo,
         tipoConfianca: tipo.confianca,
         tipoJustificativa: tipo.justificativa,
 
-        decisao: decisao.decisao,
+        decisao: decisaoFinal,
         decisaoConfianca: decisao.confianca,
-        decisaoJustificativa: decisao.justificativa,
+        decisaoJustificativa: decisaoFinal === 'A classificar'
+            ? `Confiança (${decisao.confianca}%) abaixo do threshold (${THRESHOLD_CONFIANCA}%)`
+            : decisao.justificativa,
 
-        microtema: microtema.microtema,
+        microtema: microtemaFinal,
         microtemaConfianca: microtema.confianca,
-        microtemaJustificativa: microtema.justificativa,
+        microtemaJustificativa: microtemaFinal === 'A classificar'
+            ? `Confiança (${microtema.confianca}%) abaixo do threshold (${THRESHOLD_CONFIANCA}%)`
+            : microtema.justificativa,
 
-        confiancaGeral: Math.round((tipo.confianca + decisao.confianca + microtema.confianca) / 3),
+        confiancaGeral,
 
         processadoEm: new Date().toISOString(),
         tempoProcessamento: Date.now() - startTime

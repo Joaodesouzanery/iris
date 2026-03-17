@@ -13,6 +13,7 @@ module.exports = {
     processarLote: processador.processarLote,
     processarTexto: processador.processarTexto,
     analisarTexto: processador.analisarTexto,
+    extrairDeliberacoesEstruturadas: processador.extrairDeliberacoesEstruturadas,
 
     // Serviços individuais
     classificador: processador.classificador,
