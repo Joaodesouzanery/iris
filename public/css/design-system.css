@@ -8,18 +8,18 @@
 /* ── CSS Custom Properties ── */
 :root {
     /* Backgrounds */
-    --bg-primary: #111111;
-    --bg-card: #1C1C1C;
-    --bg-card-hover: #222222;
-    --bg-sidebar: #0D0D0D;
-    --bg-input: #1A1A1A;
-    --border-subtle: #2A2A2A;
+    --bg-primary: #121212;
+    --bg-card: #1E1E1E;
+    --bg-card-hover: #252525;
+    --bg-sidebar: #181818;
+    --bg-input: #1E1E1E;
+    --border-subtle: #2E2E2E;
 
     /* Text */
     --text-primary: #FFFFFF;
-    --text-secondary: #8A8FA8;
-    --text-tertiary: #5A5F72;
-    --text-header: #6B7080;
+    --text-secondary: #A0A6B8;
+    --text-tertiary: #6E7485;
+    --text-header: #8B919E;
 
     /* Accents — Orange palette */
     --accent-cyan: #F97316;
@@ -43,9 +43,9 @@
     --shadow-card-hover: 0 4px 12px rgba(249, 115, 22, 0.15);
 
     /* Sizing */
-    --sidebar-width: 260px;
-    --sidebar-collapsed: 64px;
-    --topbar-height: 64px;
+    --sidebar-width: 240px;
+    --sidebar-collapsed: 60px;
+    --topbar-height: 56px;
     --border-radius: 12px;
     --border-radius-sm: 8px;
     --border-radius-xs: 6px;

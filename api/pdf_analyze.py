@@ -490,6 +490,27 @@ def handle_request(body: dict) -> dict:
         if not d.get("agencia"):
             d["agencia"] = agencia
 
+    # Check for duplicates before saving
+    duplicate = False
+    if deliberacoes and create_client and SUPABASE_URL and SUPABASE_SERVICE_KEY:
+        try:
+            _client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+            first = deliberacoes[0]
+            nr = first.get("numero_reuniao")
+            ag = first.get("agencia") or agencia
+            if nr:
+                existing = (
+                    _client.table("deliberacoes_extraidas")
+                    .select("id")
+                    .eq("numero_reuniao", nr)
+                    .eq("agencia", ag)
+                    .limit(1)
+                    .execute()
+                )
+                duplicate = bool(existing.data)
+        except Exception:
+            pass
+
     # Save to Supabase
     saved = 0
     save_error = None
@@ -502,6 +523,7 @@ def handle_request(body: dict) -> dict:
         "deliberacoes": deliberacoes,
         "total": len(deliberacoes),
         "saved": saved,
+        "duplicate": duplicate,
         "extraction_method": extraction_method,
         "text_length": len(text),
     }

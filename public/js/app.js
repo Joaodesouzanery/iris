@@ -10,6 +10,24 @@
     'use strict';
 
     // ============================================
+    // DEMO_MODE — toggle between mock data and real-only data
+    // ============================================
+    const DEMO_MODE = {
+        isActive: () => localStorage.getItem('iris_demo_mode') !== 'false',
+        disable:  () => { localStorage.setItem('iris_demo_mode', 'false'); location.reload(); },
+        enable:   () => { localStorage.setItem('iris_demo_mode', 'true');  location.reload(); },
+    };
+
+    // ============================================
+    // DATA BUS — cross-page event notifications
+    // ============================================
+    const DataBus = {
+        _h: {},
+        on:   (e, fn) => { (DataBus._h[e] = DataBus._h[e] || []).push(fn); },
+        emit: (e, d)  => { (DataBus._h[e] || []).forEach(fn => fn(d)); },
+    };
+
+    // ============================================
     // ROUTER - SPA Navigation
     // ============================================
     const Router = {
@@ -293,6 +311,8 @@
 
             this._page = 1;
             await this._loadFromAPI();
+
+            DataBus.on('data:updated', () => { this._page = 1; this._loadFromAPI(); });
         },
 
         async _loadFromAPI() {
@@ -309,10 +329,10 @@
                 this.data = (response?.deliberacoes || []).map(d => this._normalizeRow(d));
                 this._total = response?.total ?? this.data.length;
                 if (this.data.length > 0) usingReal = true;
-                else this.data = this._page === 1 ? this.sampleData : [];
+                else this.data = (this._page === 1 && DEMO_MODE.isActive()) ? this.sampleData : [];
             } catch (e) {
-                this.data = this._page === 1 ? this.sampleData : [];
-                this._total = this.sampleData.length;
+                this.data = (this._page === 1 && DEMO_MODE.isActive()) ? this.sampleData : [];
+                this._total = DEMO_MODE.isActive() ? this.sampleData.length : 0;
             }
             this.filtered = this.data;
             setDataMode('page-deliberacoes', usingReal);
@@ -1142,6 +1162,8 @@
 
             this.setupAgencyTabs();
             this.renderAll();
+
+            DataBus.on('data:updated', () => this.loadRealData().then(() => this.renderAll()));
         },
 
         async loadRealData() {
@@ -3035,6 +3057,8 @@
             this._loadDiretoresTable();
             this._loadInstitucional();
             this._loadCompetitivo();
+
+            DataBus.on('data:updated', () => { this._loadDiretoresTable(); this._loadInstitucional(); });
         },
 
         async checkSupabaseStatus() {
@@ -4313,8 +4337,34 @@
             const page = document.getElementById('page-upload');
             page.classList.add('active');
 
+            this._renderDemoBanner();
             this.setupDropzone();
             await this.load();
+        },
+
+        _renderDemoBanner() {
+            const existing = document.getElementById('iris-demo-banner');
+            if (existing) existing.remove();
+
+            const banner = document.createElement('div');
+            banner.id = 'iris-demo-banner';
+            banner.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 16px;border-radius:8px;margin-bottom:16px;font-size:13px;';
+
+            if (DEMO_MODE.isActive()) {
+                banner.style.background = 'rgba(251,146,60,.12)';
+                banner.style.border = '1px solid rgba(251,146,60,.3)';
+                banner.innerHTML = '<span style="color:var(--accent-orange);">⚠ Dados demo ativos — outras abas mostram valores hardcoded. Remova para ver apenas dados reais do Supabase.</span>'
+                    + '<button onclick="DEMO_MODE.disable()" class="btn btn-sm" style="background:rgba(239,83,80,.15);color:#ef5350;border:1px solid rgba(239,83,80,.3);white-space:nowrap;">Limpar Dados Demo</button>';
+            } else {
+                banner.style.background = 'rgba(76,175,80,.10)';
+                banner.style.border = '1px solid rgba(76,175,80,.25)';
+                banner.innerHTML = '<span style="color:var(--accent-green);">✓ Modo real ativo — apenas dados reais do Supabase são exibidos nas outras abas.</span>'
+                    + '<button onclick="DEMO_MODE.enable()" class="btn btn-sm" style="background:rgba(255,255,255,.06);color:var(--text-secondary);border:1px solid var(--border-subtle);white-space:nowrap;">Restaurar Demo</button>';
+            }
+
+            const page = document.getElementById('page-upload');
+            const firstChild = page?.firstElementChild;
+            if (firstChild) page.insertBefore(banner, firstChild);
         },
 
         setupDropzone() {
@@ -4696,6 +4746,7 @@
                                     ? `IA indisponível; regex não extraiu dados. (${result.gemini_error})`
                                     : 'Nenhuma deliberação encontrada no PDF';
                             }
+                            pdf.isDuplicate = result.duplicate === true;
                             pdf.deliberacoes_count = result.total || 0;
                             pdf.deliberacoes = result.deliberacoes || [];
                             completed++;
@@ -4763,12 +4814,9 @@
                     : `Análise concluída! ${completed} sucesso, ${errors} erros${ignorados > 0 ? `, ${ignorados} ignorado(s)` : ''}`;
             document.getElementById('batch-current-files').innerHTML = '';
 
-            // Refresh deliberações page if active so new data shows immediately
+            // Notify all pages that new data is available
             if (completed > 0) {
-                const activePage = document.querySelector('.page-view.active');
-                if (activePage && activePage.id === 'page-deliberacoes' && typeof App !== 'undefined' && App.PageDeliberacoes && App.PageDeliberacoes._loadFromAPI) {
-                    App.PageDeliberacoes.filter();
-                }
+                DataBus.emit('data:updated', { source: 'upload', count: completed });
             }
 
             // Reload the list
@@ -4817,6 +4865,7 @@
                     <td>${tamanho}</td>
                     <td>
                         <span class="badge ${statusClass}">${statusLabel}</span>
+                        ${pdf.isDuplicate ? ' <span class="badge badge-warning" title="Deliberações já existem no banco">Duplicado</span>' : ''}
                         ${pdf.status === 'erro' && pdf.erro ? `<div class="upload-error-msg" title="${pdf.erro.replace(/"/g, '&quot;')}">${pdf.erro.length > 80 ? pdf.erro.substring(0, 80) + '…' : pdf.erro}</div>` : ''}
                     </td>
                     <td>${pdf.deliberacoes_count || 0}</td>
@@ -4885,6 +4934,7 @@
                 } else if (result && !result.error) {
                     pdf.deliberacoes_count = result.total || 0;
                     pdf.deliberacoes = result.deliberacoes || [];
+                    pdf.isDuplicate = result.duplicate === true;
                     if (result.total > 0) {
                         pdf.status = 'analisado';
                     } else {
@@ -7125,6 +7175,8 @@
 
     // Export to window
     window.App = App;
+    window.DEMO_MODE = DEMO_MODE;
+    window.DataBus = DataBus;
 
     // Initialize on DOM ready
     if (document.readyState === 'loading') {
