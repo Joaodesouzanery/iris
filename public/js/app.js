@@ -41,6 +41,16 @@
             const path = window.location.pathname || '/hub';
             const handler = this.routes[path] || this.routes['/hub'];
 
+            // Ensure platform is visible when navigating to any non-root route
+            if (path !== '/' && path !== '') {
+                const landingEl = document.getElementById('landing-page');
+                const loginEl = document.getElementById('login-screen');
+                const platformEl = document.getElementById('app-platform');
+                if (landingEl) landingEl.style.display = 'none';
+                if (loginEl) loginEl.style.display = 'none';
+                if (platformEl) platformEl.style.display = 'flex';
+            }
+
             // Update active nav
             document.querySelectorAll('.nav-item').forEach(item => {
                 item.classList.remove('active');
