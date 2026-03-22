@@ -32,7 +32,7 @@
 }
 .btn-primary:hover {
     opacity: 0.85;
-    box-shadow: 0 4px 12px rgba(201, 162, 39, 0.3);
+    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
 }
 
 .btn-secondary {
@@ -82,7 +82,7 @@
 }
 
 .ds-card:hover {
-    border-color: rgba(201, 162, 39, 0.3);
+    border-color: rgba(249, 115, 22, 0.3);
     box-shadow: var(--shadow-card-hover);
 }
 
@@ -99,6 +99,7 @@
     text-transform: uppercase;
     letter-spacing: 1.5px;
     color: var(--text-tertiary);
+    font-family: var(--font-mono);
 }
 
 /* Metric Cards Row */
@@ -120,7 +121,7 @@
 }
 
 .metric-card:hover {
-    border-color: rgba(201, 162, 39, 0.3);
+    border-color: rgba(249, 115, 22, 0.3);
     box-shadow: var(--shadow-card-hover);
 }
 
@@ -131,6 +132,7 @@
     letter-spacing: 1.5px;
     color: var(--text-tertiary);
     margin-bottom: 8px;
+    font-family: var(--font-mono);
 }
 
 .metric-card-value {
@@ -325,28 +327,69 @@
     border-radius: var(--border-radius);
     padding: 20px;
     transition: var(--transition);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
 }
 
 .stat-card:hover {
-    border-color: rgba(201, 162, 39, 0.3);
+    border-color: rgba(249, 115, 22, 0.3);
+}
+
+.stat-card-left {
+    flex: 1;
+    min-width: 0;
 }
 
 .stat-card-label {
-    font-size: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
     color: var(--text-secondary);
     margin-bottom: 4px;
+    font-family: var(--font-mono);
 }
 
 .stat-card-value {
     font-size: 24px;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
+    font-family: var(--font-mono);
 }
 
 .stat-card-value.text-warning { color: var(--accent-orange); }
 .stat-card-value.text-success { color: var(--accent-green); }
 .stat-card-value.text-danger { color: var(--accent-red); }
 .stat-card-value.text-info { color: var(--accent-cyan); }
+
+/* Sparkline within stat card */
+.stat-card-sparkline {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 40px;
+    flex-shrink: 0;
+    opacity: 0.55;
+    transition: opacity 0.2s ease;
+}
+
+.stat-card:hover .stat-card-sparkline {
+    opacity: 0.85;
+}
+
+.stat-card-sparkline .spark-bar {
+    width: 4px;
+    background: var(--accent-cyan);
+    border-radius: 2px 2px 0 0;
+    min-height: 4px;
+}
+
+.stat-card-sparkline .spark-bar:last-child {
+    opacity: 1;
+    background: var(--accent-cyan);
+}
 
 /* ── Dropzone ── */
 .ds-dropzone {
@@ -361,7 +404,7 @@
 .ds-dropzone:hover,
 .ds-dropzone.dragover {
     border-color: var(--accent-cyan);
-    background: rgba(201, 162, 39, 0.04);
+    background: rgba(249, 115, 22, 0.04);
 }
 
 .ds-dropzone-icon {
@@ -535,7 +578,7 @@
 
 .iris-toast.info {
     background: var(--accent-cyan-bg);
-    border: 1px solid rgba(201, 162, 39, 0.3);
+    border: 1px solid rgba(249, 115, 22, 0.3);
     color: var(--accent-cyan);
 }
 

@@ -29,50 +29,64 @@
 
 /* Sidebar Header */
 .sidebar-header {
-    padding: 20px 20px 16px;
+    padding: 0;
     border-bottom: 1px solid var(--border-subtle);
     flex-shrink: 0;
 }
 
-.sidebar-brand {
+/* Agency Selector */
+.sidebar-agency-selector {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
+    padding: 16px 20px;
 }
 
-.sidebar-logo {
-    width: 36px;
-    height: 36px;
+.agency-selector-logo {
+    width: 34px;
+    height: 34px;
     background: var(--accent-cyan);
-    border-radius: 10px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
 }
 
-.sidebar-logo svg {
-    width: 20px;
-    height: 20px;
-    color: var(--bg-primary);
+.agency-selector-initials {
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    font-family: var(--font-mono);
 }
 
-.sidebar-brand-text {
+.agency-selector-info {
     flex: 1;
     min-width: 0;
 }
 
-.sidebar-brand-name {
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--text-primary);
-    white-space: nowrap;
+.agency-selector-label {
+    font-size: 10px;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-family: var(--font-mono);
+    line-height: 1;
+    margin-bottom: 3px;
 }
 
-.sidebar-brand-sub {
-    font-size: 11px;
-    color: var(--text-tertiary);
-    white-space: nowrap;
+.agency-selector-select {
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+    outline: none;
+    width: 100%;
+    font-family: inherit;
+    box-shadow: none;
 }
 
 /* Sidebar Navigation */
@@ -137,7 +151,7 @@
 .nav-item.active {
     color: var(--accent-cyan);
     border-left-color: var(--accent-cyan);
-    background: rgba(201, 162, 39, 0.06);
+    background: rgba(249, 115, 22, 0.06);
 }
 
 .nav-item.active svg,
@@ -379,6 +393,7 @@
         width: var(--sidebar-collapsed);
     }
     .sidebar .sidebar-brand-text,
+    .sidebar .agency-selector-info,
     .sidebar .sidebar-section-label,
     .sidebar .nav-item span:not(.nav-icon),
     .sidebar .nav-item-badge,
@@ -393,7 +408,7 @@
     }
     .sidebar .nav-item.active {
         border-left: none;
-        background: rgba(201, 162, 39, 0.12);
+        background: rgba(249, 115, 22, 0.12);
         border-radius: var(--border-radius-sm);
         margin: 2px 8px;
     }
@@ -407,6 +422,7 @@
         width: var(--sidebar-width);
     }
     .sidebar.open .sidebar-brand-text,
+    .sidebar.open .agency-selector-info,
     .sidebar.open .sidebar-section-label,
     .sidebar.open .nav-item span,
     .sidebar.open .nav-item-badge,

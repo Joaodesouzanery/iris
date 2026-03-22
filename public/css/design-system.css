@@ -3,17 +3,17 @@
    Variables, Reset, Typography, Global Utilities
    ============================================================================= */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 /* ── CSS Custom Properties ── */
 :root {
     /* Backgrounds */
-    --bg-primary: #0A0E1A;
-    --bg-card: #1A1F2E;
-    --bg-card-hover: #222840;
-    --bg-sidebar: #0D1117;
-    --bg-input: #151B28;
-    --border-subtle: #2A2F3E;
+    --bg-primary: #111111;
+    --bg-card: #1C1C1C;
+    --bg-card-hover: #222222;
+    --bg-sidebar: #0D0D0D;
+    --bg-input: #1A1A1A;
+    --border-subtle: #2A2A2A;
 
     /* Text */
     --text-primary: #FFFFFF;
@@ -21,23 +21,26 @@
     --text-tertiary: #5A5F72;
     --text-header: #6B7080;
 
-    /* Accents — Gold/Amber palette matching IRIS logo */
-    --accent-cyan: #C9A227;
+    /* Accents — Orange palette */
+    --accent-cyan: #F97316;
     --accent-purple: #A67C2E;
     --accent-green: #4CAF50;
-    --accent-orange: #E8A817;
+    --accent-orange: #FB923C;
     --accent-red: #EF5350;
 
     /* Accent translucent */
-    --accent-cyan-bg: rgba(201, 162, 39, 0.12);
+    --accent-cyan-bg: rgba(249, 115, 22, 0.12);
     --accent-purple-bg: rgba(166, 124, 46, 0.12);
     --accent-green-bg: rgba(76, 175, 80, 0.12);
-    --accent-orange-bg: rgba(232, 168, 23, 0.12);
+    --accent-orange-bg: rgba(251, 146, 60, 0.12);
     --accent-red-bg: rgba(239, 83, 80, 0.12);
+
+    /* Fonts */
+    --font-mono: 'JetBrains Mono', 'Courier New', monospace;
 
     /* Shadows */
     --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.3);
-    --shadow-card-hover: 0 4px 12px rgba(201, 162, 39, 0.1);
+    --shadow-card-hover: 0 4px 12px rgba(249, 115, 22, 0.15);
 
     /* Sizing */
     --sidebar-width: 260px;
@@ -111,7 +114,7 @@ input, select, textarea {
 
 input:focus, select:focus, textarea:focus {
     border-color: var(--accent-cyan);
-    box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.15);
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
 }
 
 input::placeholder {
@@ -136,6 +139,7 @@ h4 { font-size: 16px; font-weight: 600; line-height: 1.4; }
     font-size: 32px;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
+    font-family: var(--font-mono);
     line-height: 1.1;
 }
 
@@ -143,6 +147,13 @@ h4 { font-size: 16px; font-weight: 600; line-height: 1.4; }
     font-size: 20px;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
+    font-family: var(--font-mono);
+}
+
+/* Apply mono font to all metric number elements */
+.stat-card-value, .metric-card-value, .metricas-total-delib,
+.hub-stat-value, .chart-summary-total, .chart-side-metric-value {
+    font-family: var(--font-mono);
 }
 
 /* ── Scrollbar ── */
@@ -169,7 +180,7 @@ h4 { font-size: 16px; font-weight: 600; line-height: 1.4; }
 
 /* ── Selection ── */
 ::selection {
-    background: rgba(201, 162, 39, 0.25);
+    background: rgba(249, 115, 22, 0.25);
 }
 
 /* ── Utility Classes ── */

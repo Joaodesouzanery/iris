@@ -80,7 +80,6 @@
                 '/microtemas': 'Microtemas',
                 '/empresas': 'Empresas',
                 '/historico': 'Histórico',
-                '/grafo': 'Grafo de Conexões',
                 '/monitoramento': 'Monitoramento 24/7',
                 '/dossie': 'Dossiês Automáticos',
                 '/cruzamento': 'Cruzamento de Dados',
@@ -790,7 +789,7 @@
         agenciasData: {
             artesp: {
                 nome: 'ARTESP',
-                cor: '#c9a227',
+                cor: '#F97316',
                 diretores: [
                     {
                         nome: 'Andre Isper Rodrigues Barnabe',
@@ -858,11 +857,11 @@
                     relator: 0
                 },
                 setores: [
-                    { nome: 'Rodovias', valor: 48, cor: '#c9a227' },
-                    { nome: 'Onibus', valor: 21, cor: '#c9a227' },
-                    { nome: 'Regulacao', valor: 12, cor: '#c9a227' },
-                    { nome: 'Marcos Legais', valor: 5, cor: '#c9a227' },
-                    { nome: 'Ferrovias', valor: 1, cor: '#c9a227' }
+                    { nome: 'Rodovias', valor: 48, cor: '#F97316' },
+                    { nome: 'Onibus', valor: 21, cor: '#F97316' },
+                    { nome: 'Regulacao', valor: 12, cor: '#F97316' },
+                    { nome: 'Marcos Legais', valor: 5, cor: '#F97316' },
+                    { nome: 'Ferrovias', valor: 1, cor: '#F97316' }
                 ]
             },
             anm: {
@@ -2757,7 +2756,7 @@
                     </div>
                 </div>
 
-                <div class="profile-alert" style="background: rgba(201, 162, 39, 0.1); border-left: 3px solid var(--accent);">
+                <div class="profile-alert" style="background: rgba(249, 115, 22, 0.1); border-left: 3px solid var(--accent);">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     <p>Dados extraídos automaticamente dos PDFs processados. Os valores refletem a <strong>participação institucional</strong> identificada nas deliberações analisadas.</p>
                 </div>
@@ -3630,853 +3629,9 @@
     };
 
     // ============================================
-    // PAGE: Análise de Vínculos — Sherlocker-style
-    // Select entity first, then render graph on demand
+    // PAGE: Grafo de Vinculos — removido
     // ============================================
-    const PageGrafo = {
-        canvas: null, ctx: null, nodes: [], edges: [], animFrame: null,
-        dragging: null, hovering: null, selected: null,
-        mouse: { x: 0, y: 0 }, camera: { x: 0, y: 0, zoom: 1 },
-        width: 0, height: 0, time: 0, currentCategory: 'all',
-        dataLoaded: false,
-        _settled: false, _settledFrames: 0,
-        _cachedRect: null, _gridCanvas: null,
-        _connIndex: null,
-        // ----------- Catalog loaded from API (real data) -----------
-        catalog: { directors: [], companies: [], themes: [], agencies: [], connections: [] },
-
-        // ========== INIT: Load real data then show selection screen ==========
-        async init() {
-            document.getElementById('page-grafo').classList.add('active');
-            if (!this.dataLoaded) {
-                await this.loadRealData();
-            }
-            this.showSelectionScreen();
-        },
-
-        async loadRealData() {
-            try {
-                const grid = document.getElementById('grafo-entity-grid');
-                if (grid) grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:48px 0;color:var(--text-muted);">Carregando dados dos PDFs analisados...</div>';
-
-                const response = await fetch('/api/grafo-data-completo');
-                const data = await response.json();
-
-                if (data.success && data.nodes && data.nodes.length > 0) {
-                    const directors = [], companies = [], themes = [], agencies = [], connections = [];
-
-                    data.nodes.forEach(n => {
-                        if (n.type === 'agency') agencies.push({ id: n.id, label: n.label, full: n.full || n.label, setor: n.setor || '', esfera: n.esfera || 'federal', site: n.site || '', lei_criacao: n.lei_criacao || '', vinculacao: n.vinculacao || '', deliberations: n.deliberations || 0 });
-                        else if (n.type === 'director') directors.push({ id: n.id, label: n.label, full: n.full || n.label, role: n.role || 'Diretor(a)', mandato: n.mandato || '', initials: n.initials || n.label.split(' ').map(w=>w[0]).join('').substring(0,2), agency: n.agency || '' });
-                        else if (n.type === 'company') companies.push({ id: n.id, label: n.label, full: n.full || n.label, sector: n.sector || 'Regulado', contracts: n.contracts || 0, mentions: n.mentions || 0 });
-                        else if (n.type === 'theme') themes.push({ id: n.id, label: n.label, count: n.count || 0, category: n.category || 'regulação' });
-                    });
-
-                    data.edges.forEach(e => {
-                        connections.push({ source: e.source, target: e.target, strength: e.strength || 0.5, label: e.label || '' });
-                    });
-
-                    this.catalog = { directors, companies, themes, agencies, connections };
-                    this._buildConnIndex();
-                    this.dataLoaded = true;
-                    console.log(`[Grafo] Dados reais carregados: ${data.nodes.length} nós, ${data.edges.length} conexões`);
-
-                    const demoBanner = document.querySelector('#page-grafo .demo-banner');
-                    if (demoBanner && data.nodes.length > 1) demoBanner.style.display = 'none';
-                } else {
-                    console.warn('[Grafo] Nenhum dado real disponível — faça upload de PDFs para alimentar o grafo');
-                    this.catalog = { directors: [], companies: [], themes: [], agencies: [], connections: [] };
-                    this._connIndex = {};
-                    this.dataLoaded = true;
-                }
-            } catch (error) {
-                console.warn('[Grafo] Erro ao carregar dados reais:', error.message);
-                this.catalog = { directors: [], companies: [], themes: [], agencies: [], connections: [] };
-                this._connIndex = {};
-                this.dataLoaded = true;
-            }
-        },
-        destroy() {
-            if (this.animFrame) { cancelAnimationFrame(this.animFrame); this.animFrame = null; }
-        },
-
-        // Pre-compute connection counts (avoids O(n²) in getAllEntities)
-        _buildConnIndex() {
-            this._connIndex = {};
-            this.catalog.connections.forEach(cn => {
-                this._connIndex[cn.source] = (this._connIndex[cn.source] || 0) + 1;
-                this._connIndex[cn.target] = (this._connIndex[cn.target] || 0) + 1;
-            });
-        },
-
-        // ========== SELECTION SCREEN ==========
-        showSelectionScreen() {
-            document.getElementById('grafo-selection-screen').style.display = '';
-            document.getElementById('grafo-graph-screen').style.display = 'none';
-            if (this.animFrame) { cancelAnimationFrame(this.animFrame); this.animFrame = null; }
-            this.currentCategory = 'all';
-            this.renderEntityGrid();
-        },
-        getAllEntities() {
-            const c = this.catalog;
-            const ci = this._connIndex || {};
-            const entities = [];
-            c.agencies.forEach(a => {
-                const dirCount = c.directors.filter(d => d.agency === a.id).length;
-                entities.push({ ...a, type: 'agency', icon: 'A', color: '#a78bfa', subtitle: a.full, meta: `${a.deliberations} deliberações · ${dirCount} diretores`, connCount: ci[a.id] || 0 });
-            });
-            c.directors.forEach(d => {
-                entities.push({ ...d, type: 'director', icon: d.initials, color: '#60a5fa', subtitle: d.role, meta: `${ci[d.id] || 0} vínculos`, connCount: ci[d.id] || 0 });
-            });
-            c.companies.forEach(co => {
-                entities.push({ ...co, type: 'company', icon: co.label.charAt(0), color: '#fbbf24', subtitle: co.full, meta: `${co.sector} · ${co.contracts} contratos`, connCount: ci[co.id] || 0 });
-            });
-            c.themes.forEach(t => {
-                entities.push({ ...t, type: 'theme', icon: t.label.charAt(0), color: '#4ade80', subtitle: t.category, meta: `${t.count} ocorrências`, connCount: ci[t.id] || 0 });
-            });
-            return entities;
-        },
-        renderEntityGrid(filter) {
-            let entities = this.getAllEntities();
-            if (this.currentCategory !== 'all') entities = entities.filter(e => e.type === this.currentCategory);
-            if (filter) { const q = filter.toLowerCase(); entities = entities.filter(e => e.label.toLowerCase().includes(q) || (e.full || '').toLowerCase().includes(q) || (e.subtitle || '').toLowerCase().includes(q)); }
-            const grid = document.getElementById('grafo-entity-grid');
-            if (!entities.length) {
-                const isSearch = !!filter;
-                grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:48px 0;color:var(--text-muted);">
-                    ${isSearch ? 'Nenhuma entidade encontrada para esta busca.' : 'Carregando entidades... Se não aparecerem, verifique a conexão com o servidor.'}
-                </div>`;
-                return;
-            }
-            const typeLabel = { agency: 'Agência', director: 'Diretor(a)', company: 'Empresa', theme: 'Tema' };
-            grid.innerHTML = entities.map(e => `
-                <div class="grafo-entity-card" onclick="App.PageGrafo.selectEntity('${e.id}')" data-type="${e.type}">
-                    <div class="grafo-entity-card-icon" style="background:${e.color}20;color:${e.color};border:1px solid ${e.color}40;">${e.icon}</div>
-                    <div class="grafo-entity-card-body">
-                        <div class="grafo-entity-card-name">${e.label}</div>
-                        <div class="grafo-entity-card-type" style="color:${e.color}">${typeLabel[e.type]}</div>
-                        <div class="grafo-entity-card-meta">${e.meta}</div>
-                    </div>
-                    <div class="grafo-entity-card-arrow">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                    </div>
-                </div>
-            `).join('');
-        },
-        filterEntities(q) { this.renderEntityGrid(q); },
-        filterByCategory(cat) {
-            this.currentCategory = cat;
-            document.querySelectorAll('.grafo-cat-tab').forEach(b => {
-                const active = b.getAttribute('data-cat') === cat;
-                b.classList.toggle('active', active);
-                b.classList.toggle('btn-primary', active);
-                b.classList.toggle('btn-outline', !active);
-            });
-            this.renderEntityGrid(document.getElementById('grafo-entity-search').value);
-        },
-
-        // ========== TYPE/COLOR/SIZE HELPERS (card dimensions for Sherlocker style) ==========
-        _typeConfig: {
-            agency:   { color: '#a78bfa', radius: 34, cardW: 190, cardH: 64 },
-            director: { color: '#60a5fa', radius: 28, cardW: 180, cardH: 60 },
-            company:  { color: '#fbbf24', radius: 22, cardW: 180, cardH: 60 },
-            theme:    { color: '#4ade80', radius: 18, cardW: 160, cardH: 52 }
-        },
-        _typeIcons: {
-            agency: '\u{1F3DB}',
-            director: '\u{1F464}',
-            company: '\u{1F3E2}',
-            theme: '\u{1F3F7}'
-        },
-        _getItemType(item) {
-            // Use catalog membership to determine type (IDs are names, not prefixed)
-            const c = this.catalog;
-            if (c.agencies.some(a => a.id === item.id)) return 'agency';
-            if (c.directors.some(d => d.id === item.id)) return 'director';
-            if (c.companies.some(co => co.id === item.id)) return 'company';
-            if (c.themes.some(t => t.id === item.id)) return 'theme';
-            return item.type || 'theme';
-        },
-        // Track expansion depth for on-demand expansion
-        expandedIds: new Set(),
-        currentRootId: null,
-
-        // ========== SELECT ENTITY → BUILD GRAPH ==========
-        selectEntity(entityId) {
-            document.getElementById('grafo-selection-screen').style.display = 'none';
-            document.getElementById('grafo-graph-screen').style.display = '';
-
-            this.currentRootId = entityId;
-            this.expandedIds = new Set([entityId]);
-            this._buildSubgraph(entityId, 1); // Start with 1st degree only
-        },
-
-        // Build subgraph showing connections up to the expanded depth
-        _buildSubgraph(centerId, degree) {
-            const c = this.catalog;
-            const relevantIds = new Set();
-
-            // Add all expanded entities and their 1st-degree connections
-            this.expandedIds.forEach(eid => {
-                relevantIds.add(eid);
-                c.connections.forEach(cn => {
-                    if (cn.source === eid) relevantIds.add(cn.target);
-                    if (cn.target === eid) relevantIds.add(cn.source);
-                });
-            });
-
-            // Build node/edge arrays
-            const allItems = [...c.agencies, ...c.directors, ...c.companies, ...c.themes];
-            const nodeMap = {};
-            const existingPos = {};
-            this.nodes.forEach(n => { existingPos[n.id] = { x: n.x, y: n.y }; });
-
-            allItems.forEach(item => {
-                if (!relevantIds.has(item.id)) return;
-                const type = this._getItemType(item);
-                const cfg = this._typeConfig[type];
-                const existing = existingPos[item.id];
-                // Pre-parse color to RGB (avoids parseInt every frame)
-                const num = parseInt(cfg.color.slice(1), 16);
-                nodeMap[item.id] = {
-                    ...item, type, color: cfg.color, radius: cfg.radius,
-                    _cr: (num >> 16) & 255, _cg: (num >> 8) & 255, _cb: num & 255,
-                    x: existing ? existing.x : 0, y: existing ? existing.y : 0,
-                    vx: 0, vy: 0, pulsePhase: Math.random() * Math.PI * 2,
-                    connections: 0, _isRoot: item.id === this.currentRootId,
-                    _isExpanded: this.expandedIds.has(item.id),
-                    _depth: this.expandedIds.has(item.id) ? 0 : 1
-                };
-            });
-
-            this.nodes = Object.values(nodeMap);
-            this.edges = [];
-            c.connections.forEach(cn => {
-                const s = nodeMap[cn.source], t = nodeMap[cn.target];
-                if (s && t) {
-                    s.connections++; t.connections++;
-                    this.edges.push({
-                        source: s, target: t, strength: cn.strength, label: cn.label,
-                        phase: Math.random() * Math.PI * 2,
-                        _particleSpeed: 0.3 + (cn.strength || 0.5) * 0.3
-                    });
-                }
-            });
-
-            // Update stats
-            const rootNode = nodeMap[this.currentRootId];
-            document.getElementById('grafo-graph-title').textContent = 'Vínculos: ' + (rootNode ? rootNode.label : '');
-            document.getElementById('grafo-graph-subtitle').textContent = `${this.nodes.length} entidades · ${this.edges.length} conexões`;
-            document.getElementById('intel-total-nodes').textContent = this.nodes.length;
-            document.getElementById('intel-total-edges').textContent = this.edges.length;
-            const maxDeg = this.nodes.reduce((m, n) => Math.max(m, n.connections), 0);
-            document.getElementById('intel-max-degree').textContent = maxDeg;
-            const depthEl = document.getElementById('intel-depth');
-            if (depthEl) depthEl.textContent = this.expandedIds.size;
-
-            // Layout only new nodes (keep existing positions)
-            const hasExisting = Object.keys(existingPos).length > 0;
-            if (!hasExisting) {
-                this.setupCanvas();
-                this.layoutNodes(this.currentRootId);
-            } else {
-                // Position only new nodes near their connected node
-                this.nodes.forEach(n => {
-                    if (!existingPos[n.id]) {
-                        const connEdge = this.edges.find(e => (e.source === n && existingPos[e.target.id]) || (e.target === n && existingPos[e.source.id]));
-                        if (connEdge) {
-                            const anchor = connEdge.source === n ? connEdge.target : connEdge.source;
-                            n.x = anchor.x + (Math.random() - 0.5) * 120;
-                            n.y = anchor.y + (Math.random() - 0.5) * 120;
-                        } else {
-                            n.x = this.width / 2 + (Math.random() - 0.5) * 200;
-                            n.y = this.height / 2 + (Math.random() - 0.5) * 200;
-                        }
-                    }
-                });
-            }
-
-            for (let i = 0; i < 200; i++) this.simulateForces(0.4 * (1 - i / 200));
-            if (!hasExisting) { this.setupEvents(); this.time = 0; this.animate(); }
-        },
-
-        // ========== EXPAND NODE: Double-click to reveal 2nd/3rd degree connections ==========
-        expandNode(node) {
-            if (this.expandedIds.has(node.id)) return; // Already expanded
-            this.expandedIds.add(node.id);
-            this._buildSubgraph(node.id, 1);
-            // Flash effect to show expansion
-            node._expandFlash = this.time;
-        },
-        layoutNodes(rootId) {
-            const cx = this.width / 2, cy = this.height / 2;
-            const root = this.nodes.find(n => n.id === rootId);
-            if (root) { root.x = cx; root.y = cy; }
-            const others = this.nodes.filter(n => n.id !== rootId);
-            others.forEach((n, i) => {
-                const angle = (i / others.length) * Math.PI * 2 - Math.PI / 2;
-                const ring = 340 + (Math.random() - 0.5) * 100;
-                n.x = cx + Math.cos(angle) * ring;
-                n.y = cy + Math.sin(angle) * ring;
-            });
-        },
-        backToSelection() {
-            if (this.animFrame) { cancelAnimationFrame(this.animFrame); this.animFrame = null; }
-            this.nodes = []; this.edges = [];
-            this.dragging = null; this.hovering = null; this.selected = null;
-            this.expandedIds.clear();
-            this._gridCanvas = null;
-            this.showSelectionScreen();
-        },
-
-        // ========== GRAPH ENGINE (optimized rendering) ==========
-        setupCanvas() {
-            this.canvas = document.getElementById('intel-canvas');
-            this.ctx = this.canvas.getContext('2d');
-            const wrapper = this.canvas.parentElement;
-            this.width = wrapper.clientWidth; this.height = wrapper.clientHeight;
-            this.canvas.width = this.width * 2; this.canvas.height = this.height * 2;
-            this.canvas.style.width = this.width + 'px'; this.canvas.style.height = this.height + 'px';
-            this.ctx.setTransform(1,0,0,1,0,0);
-            this.ctx.scale(2, 2);
-            this.camera = { x: this.width / 2, y: this.height / 2, zoom: 1 };
-            this._cachedRect = this.canvas.getBoundingClientRect();
-            // Offscreen canvas for static grid (rendered once)
-            this._buildGridCanvas();
-        },
-        _buildGridCanvas() {
-            const w = this.width, h = this.height;
-            const offscreen = document.createElement('canvas');
-            offscreen.width = w * 2; offscreen.height = h * 2;
-            const octx = offscreen.getContext('2d');
-            octx.scale(2, 2);
-            // Clean dark background with subtle radial gradient
-            octx.fillStyle = '#080c14';
-            octx.fillRect(0, 0, w, h);
-            const grad = octx.createRadialGradient(w/2, h/2, 0, w/2, h/2, Math.max(w, h) * 0.6);
-            grad.addColorStop(0, 'rgba(42, 66, 140, 0.08)');
-            grad.addColorStop(0.5, 'rgba(42, 66, 140, 0.03)');
-            grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-            octx.fillStyle = grad;
-            octx.fillRect(0, 0, w, h);
-            // Subtle dot pattern instead of grid
-            octx.fillStyle = 'rgba(255,255,255,0.03)';
-            const dotSpacing = 48;
-            for (let gx = dotSpacing; gx < w; gx += dotSpacing) {
-                for (let gy = dotSpacing; gy < h; gy += dotSpacing) {
-                    octx.beginPath(); octx.arc(gx, gy, 0.5, 0, Math.PI * 2); octx.fill();
-                }
-            }
-            this._gridCanvas = offscreen;
-        },
-        simulateForces(alpha) {
-            const cx=this.width/2,cy=this.height/2;
-            const nodes=this.nodes,len=nodes.length;
-            // Stronger repulsion for card-style nodes (need more spacing)
-            for(let i=0;i<len;i++) {
-                const a=nodes[i];
-                for(let j=i+1;j<len;j++){
-                    const b=nodes[j];
-                    const dx=b.x-a.x,dy=b.y-a.y;
-                    const distSq=dx*dx+dy*dy;
-                    if(distSq>1200000) continue;
-                    const dist=Math.sqrt(distSq)||1;
-                    const force=18000/distSq*alpha;
-                    const fx=(dx/dist)*force,fy=(dy/dist)*force;
-                    a.vx-=fx;a.vy-=fy;b.vx+=fx;b.vy+=fy;
-                }
-            }
-            // Spring forces along edges — longer resting distance for card layout
-            const edges=this.edges,elen=edges.length;
-            for(let i=0;i<elen;i++){
-                const e=edges[i];
-                const dx=e.target.x-e.source.x,dy=e.target.y-e.source.y;
-                const dist=Math.sqrt(dx*dx+dy*dy)||1;
-                const force=(dist-360)*0.003*e.strength*alpha;
-                const fx=(dx/dist)*force,fy=(dy/dist)*force;
-                e.source.vx+=fx;e.source.vy+=fy;e.target.vx-=fx;e.target.vy-=fy;
-            }
-            // Centering + damping + settle detection
-            let totalEnergy=0;
-            for(let i=0;i<len;i++){
-                const n=nodes[i];
-                n.vx+=(cx-n.x)*0.0008*alpha;n.vy+=(cy-n.y)*0.0008*alpha;
-                n.x+=n.vx;n.y+=n.vy;
-                n.vx*=0.88;n.vy*=0.88;
-                totalEnergy+=n.vx*n.vx+n.vy*n.vy;
-            }
-            if(totalEnergy<0.01*len){this._settledFrames++;if(this._settledFrames>30)this._settled=true;}
-            else{this._settledFrames=0;this._settled=false;}
-        },
-        setupEvents() {
-            const canvas=this.canvas;
-            const clone = canvas.cloneNode(true);
-            canvas.parentNode.replaceChild(clone, canvas);
-            this.canvas = clone; this.ctx = clone.getContext('2d');
-            this.ctx.setTransform(1,0,0,1,0,0); this.ctx.scale(2,2);
-            this._cachedRect = clone.getBoundingClientRect();
-            const tooltipEl=document.getElementById('intel-tooltip');
-
-            clone.addEventListener('mousemove',(e)=>{
-                const rect=this._cachedRect;
-                this.mouse.x=(e.clientX-rect.left-this.camera.x+this.width/2)/this.camera.zoom;
-                this.mouse.y=(e.clientY-rect.top-this.camera.y+this.height/2)/this.camera.zoom;
-                if(this.dragging){this.dragging.x=this.mouse.x;this.dragging.y=this.mouse.y;this._settled=false;this._settledFrames=0;return;}
-                let found=null;
-                for(let i=this.nodes.length-1;i>=0;i--){const n=this.nodes[i];if(n._hidden)continue;const cfg=this._typeConfig[n.type]||this._typeConfig.theme;const hw=cfg.cardW/2+4,hh=cfg.cardH/2+4;const dx=this.mouse.x-n.x,dy=this.mouse.y-n.y;if(Math.abs(dx)<hw&&Math.abs(dy)<hh){found=n;break;}}
-                if(found!==this.hovering){
-                    this.hovering=found;clone.style.cursor=found?'pointer':'grab';
-                    if(found){
-                        const tl={director:'Diretor(a)',company:'Empresa',theme:'Tema',agency:'Agência'};
-                        const expandHint = !this.expandedIds.has(found.id) ? '<br><span style="opacity:0.6;font-size:10px">Duplo-clique para expandir</span>' : '';
-                        tooltipEl.innerHTML=`<strong>${found.label}</strong>${tl[found.type]} | ${found.connections} conexões${expandHint}`;
-                        tooltipEl.style.display='block';const rx=e.clientX-rect.left,ry=e.clientY-rect.top;tooltipEl.style.left=(rx+15)+'px';tooltipEl.style.top=(ry-10)+'px';
-                    } else{tooltipEl.style.display='none';}
-                } else if(found){const rx=e.clientX-this._cachedRect.left,ry=e.clientY-this._cachedRect.top;tooltipEl.style.left=(rx+15)+'px';tooltipEl.style.top=(ry-10)+'px';}
-            });
-            clone.addEventListener('mousedown',(e)=>{
-                if(this.hovering){this.dragging=this.hovering;clone.style.cursor='grabbing';}
-                else{const sx=e.clientX,sy=e.clientY,cx0=this.camera.x,cy0=this.camera.y;const onM=(ev)=>{this.camera.x=cx0+(ev.clientX-sx);this.camera.y=cy0+(ev.clientY-sy);};const onU=()=>{window.removeEventListener('mousemove',onM);window.removeEventListener('mouseup',onU);};window.addEventListener('mousemove',onM);window.addEventListener('mouseup',onU);}
-            });
-            clone.addEventListener('mouseup',()=>{this.dragging=null;clone.style.cursor=this.hovering?'pointer':'grab';});
-            clone.addEventListener('click',()=>{if(this.hovering){this.selected=this.hovering;this.showNodeInfo(this.hovering);}});
-            clone.addEventListener('dblclick',(e)=>{
-                e.preventDefault();
-                if(this.hovering && !this.expandedIds.has(this.hovering.id)){
-                    this.expandNode(this.hovering);
-                }
-            });
-            clone.addEventListener('wheel',(e)=>{e.preventDefault();const d=e.deltaY>0?0.9:1.1;this.camera.zoom=Math.max(0.3,Math.min(3,this.camera.zoom*d));this._settled=false;this._settledFrames=0;});
-        },
-        filterNodeType(val) { this.nodes.forEach(n=>{ n._hidden = val!=='all' && n.type!==val; }); },
-        showNodeInfo(node) {
-            document.getElementById('intel-info-title').textContent=node.label;
-            const connEdges=this.edges.filter(e=>e.source===node||e.target===node);
-            const tc={director:'#60a5fa',company:'#fbbf24',theme:'#4ade80',agency:'#a78bfa'};
-            const tl={director:'Diretor(a)',company:'Empresa',theme:'Tema',agency:'Agência'};
-            const initials = (node.initials || node.label.split(' ').filter(w=>w.length>1).map(w=>w[0]).join('').substring(0,2)).toUpperCase();
-            const color = tc[node.type] || '#94a3b8';
-
-            // Sherlocker PRO-style info panel with avatar header
-            let html = '';
-
-            // ── Avatar header section ──
-            html += `<div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,0.06)">
-                <div style="width:52px;height:52px;border-radius:12px;background:${color}15;border:2px solid ${color}40;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                    <span style="font-size:18px;font-weight:700;color:${color}">${initials}</span>
-                </div>
-                <div style="flex:1;min-width:0">
-                    <div style="font-size:14px;font-weight:700;color:#e2e8f0;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${node.full || node.label}</div>
-                    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-                        <span style="font-size:10px;padding:2px 8px;border-radius:4px;background:${color}15;color:${color};font-weight:600">${tl[node.type]}</span>
-                        ${node.situacao ? `<span style="font-size:10px;padding:2px 8px;border-radius:4px;background:${node.situacao==='Ativo'?'rgba(74,222,128,0.12)':'rgba(239,68,68,0.12)'};color:${node.situacao==='Ativo'?'#4ade80':'#ef4444'};font-weight:500">${node.situacao}</span>` : ''}
-                    </div>
-                </div>
-            </div>`;
-
-            // ── Data rows (Sherlocker PRO style) ──
-            html += '<div style="display:flex;flex-direction:column;gap:1px;margin-bottom:12px">';
-
-            if (node.type === 'director') {
-                html += this._infoRow('Cargo', node.role || 'Diretor(a)');
-                if (node.mandato) html += this._infoRow('Mandato', node.mandato);
-                if (node.agency) html += this._infoRow('Agência', node.agency);
-                html += this._infoRow('Conexões', node.connections);
-            } else if (node.type === 'company') {
-                html += this._infoRow('Razão Social', node.full || node.label, true);
-                if (node.cnpj) html += this._infoRow('CNPJ', node.cnpj);
-                html += this._infoRow('Setor', node.sector || node.setor || 'Regulado');
-                if (node.cidade) html += this._infoRow('Cidade/UF', `${node.cidade}/${node.uf || 'SP'}`);
-                html += this._infoRow('Menções em Deliberações', node.mentions || 0);
-                html += this._infoRow('Contratos', node.contracts || 0);
-            } else if (node.type === 'theme') {
-                html += this._infoRow('Categoria', node.category || 'Regulação');
-                html += this._infoRow('Ocorrências', node.count || 0);
-                html += this._infoRow('Conexões', node.connections);
-            } else if (node.type === 'agency') {
-                html += this._infoRow('Nome Completo', node.full || node.label, true);
-                if (node.setor) html += this._infoRow('Setor', node.setor);
-                if (node.esfera) html += this._infoRow('Esfera', node.esfera.charAt(0).toUpperCase() + node.esfera.slice(1));
-                if (node.vinculacao) html += this._infoRow('Vinculação', node.vinculacao, true);
-                if (node.lei_criacao) html += this._infoRow('Lei de Criação', node.lei_criacao, true);
-                if (node.cidade) html += this._infoRow('Cidade/UF', `${node.cidade}/${node.uf || 'DF'}`);
-                if (node.site) html += `<div class="info-row"><span class="info-label">Site</span><span class="info-value" style="font-size:10px"><a href="${node.site}" target="_blank" rel="noopener noreferrer" style="color:#58a6ff;text-decoration:none">${node.site.replace('https://','')}</a></span></div>`;
-                html += this._infoRow('Deliberações', node.deliberations || 0);
-            }
-            html += '</div>';
-
-            // ── Action buttons ──
-            html += '<div style="display:flex;gap:6px;margin-bottom:12px">';
-            if (!this.expandedIds.has(node.id)) {
-                html += `<button onclick="App.PageGrafo.expandNode(App.PageGrafo.nodes.find(n=>n.id==='${node.id.replace(/'/g,"\\'")}'))" class="btn btn-primary btn-sm" style="font-size:10px;padding:5px 10px;border-radius:6px;">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="12" height="12" style="margin-right:3px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>Expandir
-                </button>`;
-            } else {
-                html += '<span style="font-size:10px;color:#4ade80;display:flex;align-items:center;gap:3px;padding:5px 0"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="12" height="12"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Expandido</span>';
-            }
-            html += `<button onclick="App.PageGrafo.openDossie('${node.id.replace(/'/g,"\\'")}')" class="btn btn-secondary btn-sm" style="font-size:10px;padding:5px 10px;border-radius:6px;">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="12" height="12" style="margin-right:3px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>Dossiê
-            </button>`;
-            if (node.type === 'company' && node.cnpj) {
-                html += `<button onclick="App.PageGrafo.consultarCNPJ('${node.cnpj}')" class="btn btn-outline btn-sm" style="font-size:10px;padding:5px 10px;border-radius:6px;">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="12" height="12" style="margin-right:3px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>CNPJ
-                </button>`;
-            }
-            html += '</div>';
-
-            // ── Connected entities ──
-            html += `<div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:10px">
-                <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#475569;margin-bottom:8px">Entidades Conectadas (${connEdges.length})</div>`;
-            connEdges.sort((a,b) => (b.strength||0) - (a.strength||0)).forEach(edge => {
-                const other = edge.source === node ? edge.target : edge.source;
-                const otherColor = tc[other.type] || '#94a3b8';
-                const expanded = this.expandedIds.has(other.id);
-                const otherInitials = (other.initials || other.label.split(' ').filter(w=>w.length>1).map(w=>w[0]).join('').substring(0,2)).toUpperCase();
-                html += `<div class="info-row" style="cursor:pointer;padding:4px 2px;border-radius:4px;margin:0 -2px" onmouseenter="this.style.background='rgba(255,255,255,0.04)'" onmouseleave="this.style.background='transparent'" onclick="App.PageGrafo.expandNode(App.PageGrafo.nodes.find(n=>n.id==='${other.id.replace(/'/g,"\\'")}'))">
-                    <span class="info-label" style="display:flex;align-items:center;gap:6px">
-                        <span style="width:22px;height:22px;border-radius:5px;background:${otherColor}15;border:1px solid ${otherColor}30;display:inline-flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:${otherColor};flex-shrink:0">${otherInitials}</span>
-                        <span style="font-size:11px">${other.label}</span>
-                        ${expanded ? '<span style="color:#4ade80;font-size:8px">&#10003;</span>' : ''}
-                    </span>
-                    <span style="font-size:9px;padding:2px 6px;border-radius:3px;background:rgba(148,163,184,0.1);color:#94a3b8">${edge.label}</span>
-                </div>`;
-            });
-            html += '</div>';
-
-            document.getElementById('intel-info-body').innerHTML = html;
-        },
-        // Helper for info panel rows
-        _infoRow(label, value, small) {
-            return `<div class="info-row"><span class="info-label">${label}</span><span class="info-value"${small ? ' style="font-size:10px"' : ''}>${value}</span></div>`;
-        },
-        // Open dossie for entity
-        openDossie(entityId) {
-            window.location.hash = '#/dossie';
-            setTimeout(() => { if(App.PageDossie) App.PageDossie.loadEntityDossie(entityId); }, 200);
-        },
-        // CNPJ lookup from graph info panel
-        async consultarCNPJ(cnpj) {
-            try {
-                const resp = await fetch('/api/cnpj/' + cnpj.replace(/\D/g, ''));
-                const result = await resp.json();
-                if (result.success && result.data) {
-                    const d = result.data;
-                    const body = document.getElementById('intel-info-body');
-                    // Prepend CNPJ data to info panel
-                    const cnpjHtml = `<div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:8px;padding:10px;margin-bottom:12px;">
-                        <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#3b82f6;margin-bottom:6px;">Dados ReceitaWS</div>
-                        ${d.razao_social ? '<div style="font-size:11px;color:#cbd5e1;margin-bottom:2px;"><strong>Razão Social:</strong> ' + d.razao_social + '</div>' : ''}
-                        ${d.nome_fantasia ? '<div style="font-size:11px;color:#cbd5e1;margin-bottom:2px;"><strong>Fantasia:</strong> ' + d.nome_fantasia + '</div>' : ''}
-                        ${d.situacao ? '<div style="font-size:11px;color:#cbd5e1;margin-bottom:2px;"><strong>Situação:</strong> <span style="color:' + (d.situacao === 'ATIVA' ? '#4ade80' : '#f87171') + '">' + d.situacao + '</span></div>' : ''}
-                        ${d.capital_social ? '<div style="font-size:11px;color:#cbd5e1;margin-bottom:2px;"><strong>Capital Social:</strong> R$ ' + Number(d.capital_social).toLocaleString('pt-BR') + '</div>' : ''}
-                        ${d.atividade_principal ? '<div style="font-size:11px;color:#cbd5e1;margin-bottom:2px;"><strong>CNAE:</strong> ' + d.cnae_principal + ' — ' + d.atividade_principal + '</div>' : ''}
-                        ${d.municipio ? '<div style="font-size:11px;color:#cbd5e1;margin-bottom:2px;"><strong>Sede:</strong> ' + d.municipio + '/' + d.uf + '</div>' : ''}
-                        ${d.qsa && d.qsa.length ? '<div style="font-size:10px;color:#94a3b8;margin-top:6px;"><strong>QSA:</strong> ' + d.qsa.slice(0,3).map(s => s.nome + ' (' + s.qual + ')').join(', ') + '</div>' : ''}
-                    </div>`;
-                    body.insertAdjacentHTML('afterbegin', cnpjHtml);
-                }
-            } catch (err) {
-                console.warn('[CNPJ] Erro:', err.message);
-            }
-        },
-        search(q) {
-            q=q.toLowerCase().trim();
-            // Highlight all matching nodes (not just first), also match full/role/sector
-            this.nodes.forEach(n=>{
-                const matches = q && (
-                    n.label.toLowerCase().includes(q) ||
-                    (n.full||'').toLowerCase().includes(q) ||
-                    (n.role||'').toLowerCase().includes(q) ||
-                    (n.sector||'').toLowerCase().includes(q) ||
-                    (n.category||'').toLowerCase().includes(q)
-                );
-                n._highlighted = matches;
-                n._dimmed = q && !matches;
-            });
-            // Also highlight edges between matching nodes
-            if(q){
-                const matchCount = this.nodes.filter(n=>n._highlighted).length;
-                document.getElementById('intel-search-count').textContent = matchCount > 0 ? `${matchCount} encontrado${matchCount>1?'s':''}` : 'Nenhum resultado';
-                document.getElementById('intel-search-count').style.display = 'block';
-                const m=this.nodes.find(n=>n._highlighted);
-                if(m){this.camera.x=this.width/2-(m.x-this.width/2)*this.camera.zoom;this.camera.y=this.height/2-(m.y-this.height/2)*this.camera.zoom;}
-            } else {
-                document.getElementById('intel-search-count').style.display = 'none';
-            }
-        },
-        showLabels: true,
-        toggleLabels() { this.showLabels = !this.showLabels; },
-        zoomIn(){this.camera.zoom=Math.min(3,this.camera.zoom*1.2);},
-        zoomOut(){this.camera.zoom=Math.max(0.3,this.camera.zoom/1.2);},
-        resetView(){
-            this.camera={x:this.width/2,y:this.height/2,zoom:1};this.nodes.forEach(n=>{n._hidden=false;n._highlighted=false;n._dimmed=false;});
-            this.selected=null;const ft=document.getElementById('intel-filter-type');if(ft)ft.value='all';const si=document.getElementById('intel-search-input');if(si)si.value='';
-            document.getElementById('intel-info-title').textContent='Selecione um Nó';
-            document.getElementById('intel-info-body').innerHTML='<p style="color:#475569">Clique em um nó para ver detalhes.</p>';
-        },
-        _frameCount: 0,
-        _lastTimestamp: 0,
-        animate(timestamp){
-            this._frameCount++;
-            const dt = timestamp && this._lastTimestamp ? Math.min((timestamp - this._lastTimestamp) / 1000, 0.05) : 0.016;
-            this._lastTimestamp = timestamp || 0;
-            this.time += dt;
-            if (this.time > 1000) this.time -= 1000;
-            if (!this._settled || this.dragging) {
-                this.simulateForces(0.01);
-            }
-            // Skip every other frame when settled and not interacting
-            const shouldDraw = !this._settled || this.hovering || this.dragging || this.selected || (this._frameCount % 3 === 0);
-            if (shouldDraw) this.draw();
-            this.animFrame = requestAnimationFrame((ts) => this.animate(ts));
-        },
-        // Sherlocker-style rounded rectangle helper
-        _roundRect(ctx, x, y, w, h, r) {
-            ctx.beginPath();
-            ctx.moveTo(x + r, y);
-            ctx.lineTo(x + w - r, y);
-            ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-            ctx.lineTo(x + w, y + h - r);
-            ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-            ctx.lineTo(x + r, y + h);
-            ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-            ctx.lineTo(x, y + r);
-            ctx.quadraticCurveTo(x, y, x + r, y);
-            ctx.closePath();
-        },
-        draw() {
-            const ctx = this.ctx, w = this.width, h = this.height;
-            if (this._gridCanvas) {
-                ctx.setTransform(1,0,0,1,0,0);
-                ctx.drawImage(this._gridCanvas, 0, 0);
-                ctx.setTransform(2,0,0,2,0,0);
-            } else {
-                ctx.clearRect(0, 0, w, h);
-                ctx.fillStyle = '#080c14';
-                ctx.fillRect(0, 0, w, h);
-            }
-
-            ctx.save();
-            ctx.translate(this.camera.x - w / 2 + (w / 2) * (1 - this.camera.zoom), this.camera.y - h / 2 + (h / 2) * (1 - this.camera.zoom));
-            ctx.scale(this.camera.zoom, this.camera.zoom);
-
-            const typeLabels = { director: 'Diretor(a)', company: 'Empresa', theme: 'Tema', agency: 'Agência' };
-
-            // ── EDGES — curved bezier ──
-            this.edges.forEach(edge => {
-                if (edge.source._hidden || edge.target._hidden) return;
-                const dimmed = edge.source._dimmed && edge.target._dimmed;
-                const hl = this.selected && (edge.source === this.selected || edge.target === this.selected);
-                const hv = this.hovering && (edge.source === this.hovering || edge.target === this.hovering);
-                const active = hl || hv;
-                const alpha = dimmed ? 0.03 : active ? 0.6 : 0.12;
-                const lw = dimmed ? 0.5 : active ? 2.5 : 1;
-
-                // Compute bezier control point (perpendicular offset)
-                const mx = (edge.source.x + edge.target.x) / 2;
-                const my = (edge.source.y + edge.target.y) / 2;
-                const dx = edge.target.x - edge.source.x;
-                const dy = edge.target.y - edge.source.y;
-                const dist = Math.sqrt(dx*dx + dy*dy) || 1;
-                const curvature = Math.min(dist * 0.15, 40);
-                const nx = -dy / dist * curvature;
-                const ny = dx / dist * curvature;
-                const cpx = mx + nx, cpy = my + ny;
-
-                ctx.beginPath();
-                ctx.moveTo(edge.source.x, edge.source.y);
-                ctx.quadraticCurveTo(cpx, cpy, edge.target.x, edge.target.y);
-
-                if (active) {
-                    // Gradient edge for active connections
-                    const grad = ctx.createLinearGradient(edge.source.x, edge.source.y, edge.target.x, edge.target.y);
-                    grad.addColorStop(0, `rgba(${edge.source._cr},${edge.source._cg},${edge.source._cb},${alpha})`);
-                    grad.addColorStop(1, `rgba(${edge.target._cr},${edge.target._cg},${edge.target._cb},${alpha})`);
-                    ctx.strokeStyle = grad;
-                } else {
-                    ctx.strokeStyle = `rgba(140,150,170,${alpha})`;
-                }
-                ctx.lineWidth = lw;
-                ctx.stroke();
-
-                // Animated particles on active edges
-                if (active && !dimmed) {
-                    for (let p = 0; p < 3; p++) {
-                        const t = ((this.time * edge._particleSpeed * 0.8 + (edge.phase || 0) + p * 0.33) % 1);
-                        // Quadratic bezier point
-                        const u = 1 - t;
-                        const px = u*u*edge.source.x + 2*u*t*cpx + t*t*edge.target.x;
-                        const py = u*u*edge.source.y + 2*u*t*cpy + t*t*edge.target.y;
-                        const pAlpha = Math.sin(t * Math.PI) * 0.7;
-                        ctx.beginPath(); ctx.arc(px, py, 2, 0, Math.PI * 2);
-                        ctx.fillStyle = `rgba(${edge.source._cr},${edge.source._cg},${edge.source._cb},${pAlpha})`;
-                        ctx.fill();
-                    }
-                }
-
-                // Edge label — always visible when labels are on (Sherlocker style)
-                if (this.showLabels && edge.label && !dimmed) {
-                    const shortLabel = edge.label.length > 22 ? edge.label.substring(0, 20) + '…' : edge.label;
-                    ctx.font = '500 9px Inter,-apple-system,BlinkMacSystemFont,sans-serif';
-                    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                    const tw = ctx.measureText(shortLabel).width;
-                    this._roundRect(ctx, cpx - tw / 2 - 8, cpy - 10, tw + 16, 20, 6);
-                    ctx.fillStyle = 'rgba(8,12,20,0.92)';
-                    ctx.fill();
-                    ctx.strokeStyle = `rgba(${edge.source._cr},${edge.source._cg},${edge.source._cb},0.3)`;
-                    ctx.lineWidth = 0.5; ctx.stroke();
-                    ctx.fillStyle = 'rgba(220,228,240,0.9)';
-                    ctx.fillText(shortLabel, cpx, cpy);
-                }
-            });
-
-            // ── NODES — Sherlocker PRO card-style design ──
-            this.nodes.forEach(node => {
-                if (node._hidden) return;
-                const dimmed = node._dimmed, isSel = node === this.selected, isHov = node === this.hovering;
-                const isHl = node._highlighted, isRoot = node._isRoot;
-                const alpha = dimmed ? 0.15 : 1;
-                const cr = node._cr, cg = node._cg, cb = node._cb;
-                const cfg = this._typeConfig[node.type] || this._typeConfig.theme;
-
-                // Card dimensions
-                const cw = cfg.cardW, ch = cfg.cardH;
-                const x = node.x - cw / 2, y = node.y - ch / 2;
-                const cornerR = 10;
-
-                // ── Outer glow for selected/hovered/root ──
-                if (!dimmed && (isSel || isHov || isRoot || isHl)) {
-                    ctx.shadowColor = `rgba(${cr},${cg},${cb},${(isSel || isRoot) ? 0.5 : 0.3})`;
-                    ctx.shadowBlur = (isSel || isRoot) ? 24 : 14;
-                    ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0;
-                }
-
-                // ── Card background ──
-                this._roundRect(ctx, x, y, cw, ch, cornerR);
-                ctx.fillStyle = dimmed ? 'rgba(12,16,28,0.4)' : (isSel || isRoot) ? 'rgba(15,22,42,0.97)' : 'rgba(12,18,35,0.93)';
-                ctx.fill();
-
-                // ── Card border ──
-                ctx.strokeStyle = `rgba(${cr},${cg},${cb},${dimmed ? 0.06 : (isSel || isRoot) ? 0.8 : isHov ? 0.6 : 0.2})`;
-                ctx.lineWidth = (isSel || isRoot) ? 2 : isHov ? 1.5 : 1;
-                ctx.stroke();
-
-                // Reset shadow
-                ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0;
-
-                // ── Colored left accent bar (like Sherlocker) ──
-                ctx.save();
-                ctx.beginPath();
-                ctx.moveTo(x + cornerR, y);
-                ctx.lineTo(x + 4, y);
-                ctx.quadraticCurveTo(x, y, x, y + cornerR);
-                ctx.lineTo(x, y + ch - cornerR);
-                ctx.quadraticCurveTo(x, y + ch, x + 4, y + ch);
-                ctx.lineTo(x + cornerR, y + ch);
-                ctx.closePath();
-                ctx.fillStyle = `rgba(${cr},${cg},${cb},${dimmed ? 0.1 : 0.85})`;
-                ctx.fill();
-                ctx.restore();
-
-                // ── Avatar circle ──
-                const avatarX = x + 24, avatarY = node.y;
-                const avatarR = 16;
-                ctx.beginPath(); ctx.arc(avatarX, avatarY, avatarR, 0, Math.PI * 2);
-                ctx.fillStyle = `rgba(${cr},${cg},${cb},${dimmed ? 0.08 : 0.15})`;
-                ctx.fill();
-                ctx.strokeStyle = `rgba(${cr},${cg},${cb},${dimmed ? 0.1 : 0.5})`;
-                ctx.lineWidth = 1.5; ctx.stroke();
-
-                // Avatar initials
-                const initials = (node.initials || node.label.split(' ').filter(w=>w.length>1).map(w => w[0]).join('').substring(0, 2)).toUpperCase();
-                ctx.font = `700 ${avatarR * 0.75}px Inter,-apple-system,BlinkMacSystemFont,sans-serif`;
-                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                ctx.fillStyle = `rgba(${cr},${cg},${cb},${alpha * (dimmed ? 0.3 : 0.9)})`;
-                ctx.fillText(initials, avatarX, avatarY);
-
-                // ── Name text ──
-                const textX = x + 48;
-                const name = node._shortLabel || (node._shortLabel = node.label.length > 16 ? node.label.substring(0, 14) + '…' : node.label);
-                ctx.font = `600 11px Inter,-apple-system,BlinkMacSystemFont,sans-serif`;
-                ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-                ctx.fillStyle = `rgba(230,237,243,${alpha * 0.95})`;
-                ctx.fillText(name, textX, y + 10);
-
-                // ── Type / subtitle line ──
-                const subtitle = node.type === 'director' ? (node.role || 'Diretor(a)') : node.type === 'agency' ? node.setor || 'Agência' : node.type === 'company' ? 'Empresa' : 'Tema';
-                ctx.font = `400 9px Inter,-apple-system,BlinkMacSystemFont,sans-serif`;
-                ctx.fillStyle = `rgba(${cr},${cg},${cb},${alpha * 0.7})`;
-                ctx.fillText(subtitle, textX, y + 24);
-
-                // ── Status / meta line ──
-                const situacao = node.situacao || (node.type === 'theme' ? `${node.count || 0} ocorrências` : '');
-                if (situacao && !dimmed) {
-                    ctx.font = `500 8px Inter,-apple-system,BlinkMacSystemFont,sans-serif`;
-                    const isAtivo = situacao === 'Ativo';
-                    const isInativo = situacao === 'Inativo';
-                    // Status badge
-                    const tw = ctx.measureText(situacao).width;
-                    const bx = textX, by = y + ch - 18;
-                    this._roundRect(ctx, bx - 2, by - 2, tw + 12, 14, 3);
-                    ctx.fillStyle = isAtivo ? 'rgba(74,222,128,0.12)' : isInativo ? 'rgba(239,68,68,0.12)' : 'rgba(148,163,184,0.1)';
-                    ctx.fill();
-                    ctx.fillStyle = isAtivo ? '#4ade80' : isInativo ? '#ef4444' : 'rgba(148,163,184,0.7)';
-                    ctx.fillText(situacao, bx + 4, by + 1);
-                }
-
-                // ── Connection count badge (top-right) ──
-                if (!dimmed && node.connections > 0) {
-                    const bx2 = x + cw - 16, by2 = y + 8;
-                    ctx.beginPath(); ctx.arc(bx2, by2, 9, 0, Math.PI * 2);
-                    ctx.fillStyle = `rgba(${cr},${cg},${cb},0.15)`;
-                    ctx.fill();
-                    ctx.strokeStyle = `rgba(${cr},${cg},${cb},0.4)`;
-                    ctx.lineWidth = 1; ctx.stroke();
-                    ctx.font = 'bold 8px Inter,-apple-system,sans-serif';
-                    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                    ctx.fillStyle = `rgba(${cr},${cg},${cb},0.9)`;
-                    ctx.fillText(node.connections, bx2, by2);
-                }
-
-                // ── Expansion indicator ──
-                if (!dimmed && node._isExpanded && !isRoot) {
-                    const ix = x + cw - 16, iy = y + ch - 10;
-                    ctx.beginPath(); ctx.arc(ix, iy, 6, 0, Math.PI * 2);
-                    ctx.fillStyle = 'rgba(74,222,128,0.85)'; ctx.fill();
-                    ctx.font = 'bold 8px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                    ctx.fillStyle = '#080c14'; ctx.fillText('✓', ix, iy);
-                }
-                if (!dimmed && !node._isExpanded && !isRoot && node.connections > 0 && isHov) {
-                    const ix = x + cw - 16, iy = y + ch - 10;
-                    ctx.beginPath(); ctx.arc(ix, iy, 7, 0, Math.PI * 2);
-                    ctx.fillStyle = 'rgba(88,166,255,0.85)'; ctx.fill();
-                    ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                    ctx.fillStyle = '#fff'; ctx.fillText('+', ix, iy + 0.5);
-                }
-
-                // ── Root node pulse ring ──
-                if (isRoot && !dimmed) {
-                    const pulse = Math.sin(this.time * 2.5) * 4;
-                    this._roundRect(ctx, x - 4 - pulse/2, y - 4 - pulse/2, cw + 8 + pulse, ch + 8 + pulse, cornerR + 3);
-                    ctx.strokeStyle = `rgba(${cr},${cg},${cb},0.12)`;
-                    ctx.lineWidth = 1; ctx.setLineDash([4, 8]); ctx.stroke(); ctx.setLineDash([]);
-                }
-
-                // ── Expansion flash ──
-                if (node._expandFlash && !dimmed) {
-                    const elapsed = this.time - node._expandFlash;
-                    if (elapsed < 1.5) {
-                        const flashGrow = elapsed * 20;
-                        const flashAlpha = Math.max(0, 0.35 - elapsed * 0.23);
-                        this._roundRect(ctx, x - flashGrow/2, y - flashGrow/2, cw + flashGrow, ch + flashGrow, cornerR + 4);
-                        ctx.strokeStyle = `rgba(${cr},${cg},${cb},${flashAlpha})`;
-                        ctx.lineWidth = 2; ctx.stroke();
-                    }
-                }
-            });
-            ctx.restore();
-        }
-    };
+    const PageGrafo = { init() {}, destroy() {} };
 
     // ============================================
     // PAGE: Monitoramento 24/7
@@ -5228,6 +4383,11 @@
 
             // Store files in browser memory (no server upload needed)
             const addToQueue = async (file) => {
+                // Dedup: skip if same file (name + size) already in queue
+                const jaExiste = this.pdfs.some(p => p.nome === file.name && p.tamanho === file.size);
+                if (jaExiste) {
+                    return { file: file.name, sucesso: false, duplicado: true, erro: 'Já na fila' };
+                }
                 try {
                     const b64 = await fileToBase64(file);
                     this.pdfs.push({
@@ -5243,7 +4403,7 @@
                 }
             };
 
-            let successCount = 0, errorCount = 0, completed = 0;
+            let successCount = 0, errorCount = 0, duplicateCount = 0, completed = 0;
             const errorFiles = [];
             const CONCURRENCY = 3;
             const total = files.length;
@@ -5265,6 +4425,8 @@
                     completed++;
                     if (r.sucesso) {
                         successCount++;
+                    } else if (r.duplicado) {
+                        duplicateCount++;
                     } else {
                         errorCount++;
                         errorFiles.push(`${r.file}: ${r.erro || 'Erro desconhecido'}`);
@@ -5274,12 +4436,16 @@
 
             // Show clear final status
             progressBar.style.width = '100%';
+            const dupMsg = duplicateCount > 0 ? `, ${duplicateCount} duplicado${duplicateCount > 1 ? 's ignorados' : ' ignorado'}` : '';
             if (errorCount === 0) {
-                progressText.textContent = `Upload concluído! ${successCount} arquivo${successCount > 1 ? 's' : ''} enviado${successCount > 1 ? 's' : ''} com sucesso.`;
+                progressText.textContent = `Upload concluído! ${successCount} arquivo${successCount > 1 ? 's' : ''} enviado${successCount > 1 ? 's' : ''} com sucesso${dupMsg}.`;
                 progressPercent.textContent = '100%';
                 progressBar.classList.add('success');
+                if (duplicateCount > 0) {
+                    this._showToast(`${duplicateCount} arquivo(s) ignorado(s) — já estavam na fila`, 'warning', 5000);
+                }
             } else {
-                progressText.textContent = `Upload finalizado: ${successCount} sucesso, ${errorCount} erro${errorCount > 1 ? 's' : ''}`;
+                progressText.textContent = `Upload finalizado: ${successCount} sucesso, ${errorCount} erro${errorCount > 1 ? 's' : ''}${dupMsg}`;
                 progressPercent.textContent = '';
                 progressBar.classList.add(successCount > 0 ? 'success' : 'danger');
                 // Show error details as toast
@@ -5474,14 +4640,44 @@
                     : '';
 
                 try {
-                    const response = await API.post(`/api/analisar-pdf/${index}`);
-                    if (!response?.sucesso) {
+                    const pdf = this.pdfs[index];
+                    if (!pdf || !pdf.pdf_base64) {
                         errors++;
                     } else {
-                        completed++;
+                        pdf.status = 'analisando';
+                        this.renderTable();
+                        const resp = await fetch('/api/pdf_analyze', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                pdf_base64: pdf.pdf_base64,
+                                filename: pdf.nome,
+                                agencia: pdf.agencia || 'ARTESP'
+                            })
+                        });
+                        const result = await resp.json();
+                        if (result && result.skipped) {
+                            pdf.status = 'ignorado';
+                            pdf.erro = result.reason || 'PDF já processado anteriormente';
+                            completed++;
+                        } else if (result && !result.error) {
+                            pdf.status = 'analisado';
+                            pdf.deliberacoes_count = result.total || 0;
+                            pdf.deliberacoes = result.deliberacoes || [];
+                            completed++;
+                        } else {
+                            pdf.status = 'erro';
+                            pdf.erro = result?.error || 'Erro desconhecido';
+                            errors++;
+                        }
+                        this.renderTable();
                     }
                 } catch (error) {
                     console.error('Erro ao analisar:', error);
+                    if (this.pdfs[index]) {
+                        this.pdfs[index].status = 'erro';
+                        this.pdfs[index].erro = error.message;
+                    }
                     errors++;
                 } finally {
                     processing--;
@@ -5526,11 +4722,20 @@
             this.batchRunning = false;
             this.selectedFiles.clear();
 
+            const ignorados = this.pdfs.filter(p => p.status === 'ignorado').length;
             document.getElementById('batch-progress-title').textContent =
                 this.batchCancelled
                     ? 'Análise cancelada!'
-                    : `Análise concluída! ${completed} sucesso, ${errors} erros`;
+                    : `Análise concluída! ${completed} sucesso, ${errors} erros${ignorados > 0 ? `, ${ignorados} ignorado(s)` : ''}`;
             document.getElementById('batch-current-files').innerHTML = '';
+
+            // Refresh deliberações page if active so new data shows immediately
+            if (completed > 0) {
+                const activePage = document.querySelector('.page-view.active');
+                if (activePage && activePage.id === 'page-deliberacoes' && typeof App !== 'undefined' && App.PageDeliberacoes && App.PageDeliberacoes._loadFromAPI) {
+                    App.PageDeliberacoes.filter();
+                }
+            }
 
             // Reload the list
             await this.load();
@@ -5632,7 +4837,15 @@
                 const result = await response.json();
                 clearInterval(progressInterval);
 
-                if (result && !result.error) {
+                if (result && result.skipped) {
+                    pdf.status = 'ignorado';
+                    pdf.erro = result.reason || 'PDF já processado anteriormente';
+                    if (statusText) statusText.textContent = `⚠ ${pdf.nome}: já processado anteriormente`;
+                    if (statusPercent) statusPercent.textContent = '100%';
+                    if (progressBar) progressBar.style.width = '100%';
+                    this._showToast('PDF já processado: ' + pdf.nome, 'warning', 5000);
+                    setTimeout(() => { if (statusCard) statusCard.style.display = 'none'; }, 3000);
+                } else if (result && !result.error) {
                     pdf.status = 'analisado';
                     pdf.deliberacoes_count = result.total || 0;
                     pdf.deliberacoes = result.deliberacoes || [];
@@ -5925,36 +5138,55 @@
             this.bindEvents();
         },
 
+        _period: 'mensal',
+
+        setPeriod(period) {
+            this._period = period;
+            document.querySelectorAll('#hub-period-toggle .period-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.period === period);
+            });
+            this.renderChart();
+        },
+
         // Chart.js — Deliberation trends
         renderChart() {
             const canvas = document.getElementById('hub-chart-deliberacoes');
             if (!canvas || typeof Chart === 'undefined') return;
             if (this._chart) { this._chart.destroy(); }
 
-            const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'];
-            const deferido = [12, 19, 8, 15, 22, 18];
-            const indeferido = [3, 5, 2, 4, 6, 3];
-            const parcial = [2, 3, 1, 2, 4, 2];
-            const total = deferido.reduce((a, b) => a + b, 0) + indeferido.reduce((a, b) => a + b, 0) + parcial.reduce((a, b) => a + b, 0);
+            const dataByPeriod = {
+                semanal: { labels: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'], values: [4, 7, 3, 9, 5, 2, 6] },
+                mensal: { labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'], values: [15, 24, 11, 21, 32, 23] },
+                anual: { labels: ['2020', '2021', '2022', '2023', '2024', '2025'], values: [98, 124, 87, 143, 167, 89] }
+            };
+            const { labels, values } = dataByPeriod[this._period] || dataByPeriod.mensal;
+            const total = values.reduce((a, b) => a + b, 0);
             const el = document.getElementById('hub-chart-total');
             if (el) el.textContent = total;
 
             this._chart = new Chart(canvas, {
                 type: 'bar',
                 data: {
-                    labels: months,
-                    datasets: [
-                        { label: 'Deferido', data: deferido, backgroundColor: '#C9A227', borderRadius: 4 },
-                        { label: 'Indeferido', data: indeferido, backgroundColor: '#FF5252', borderRadius: 4 },
-                        { label: 'Parcial', data: parcial, backgroundColor: '#FFA726', borderRadius: 4 }
-                    ]
+                    labels,
+                    datasets: [{
+                        label: 'Deliberações',
+                        data: values,
+                        backgroundColor: 'rgba(249, 115, 22, 0.85)',
+                        borderColor: 'rgba(249, 115, 22, 1)',
+                        borderWidth: 0,
+                        borderRadius: 4,
+                        borderSkipped: false
+                    }]
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { display: false }, tooltip: { backgroundColor: '#1A1F2E', titleColor: '#fff', bodyColor: '#8A8FA8', borderColor: '#2A2F3E', borderWidth: 1, cornerRadius: 8, padding: 12 } },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { backgroundColor: '#1C1C1C', titleColor: '#fff', bodyColor: '#8A8FA8', borderColor: '#2A2A2A', borderWidth: 1, cornerRadius: 8, padding: 12 }
+                    },
                     scales: {
-                        x: { stacked: true, grid: { display: false }, ticks: { color: '#5A5F72', font: { size: 11 } } },
-                        y: { stacked: true, grid: { color: 'rgba(42,47,62,0.5)' }, ticks: { color: '#5A5F72', font: { size: 11 } } }
+                        x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#5A5F72', font: { size: 11 } } },
+                        y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#5A5F72', font: { size: 11 } } }
                     }
                 }
             });
@@ -6721,262 +5953,275 @@
     };
 
     // ============================================
-    // PAGE: Mapa do Brasil (Leaflet)
+    // PAGE: Mapa do Brasil (D3 + TopoJSON)
     // ============================================
     const PageMapa = {
-        map: null,
-        markers: [],
         selectedState: null,
+        _d3Rendered: false,
+        _tooltip: null,
 
-        // Dados dos estados com coordenadas
+        // Mapeamento de código IBGE (codarea) → sigla do estado
+        ibgeToSigla: {
+            '12': 'AC', '27': 'AL', '13': 'AM', '16': 'AP', '29': 'BA',
+            '23': 'CE', '53': 'DF', '32': 'ES', '52': 'GO', '21': 'MA',
+            '31': 'MG', '50': 'MS', '51': 'MT', '15': 'PA', '25': 'PB',
+            '26': 'PE', '22': 'PI', '41': 'PR', '33': 'RJ', '24': 'RN',
+            '11': 'RO', '14': 'RR', '43': 'RS', '42': 'SC', '28': 'SE',
+            '35': 'SP', '17': 'TO'
+        },
+
+        // Dados base dos estados
         estados: {
-            'SP': { nome: 'São Paulo', lat: -23.5505, lng: -46.6333, decisoes: 4521, taxa: 78.5, regiao: 'Sudeste', agencias: ['ARTESP', 'ARSESP'] },
-            'RJ': { nome: 'Rio de Janeiro', lat: -22.9068, lng: -43.1729, decisoes: 2134, taxa: 72.3, regiao: 'Sudeste', agencias: ['AGENERSA'] },
-            'MG': { nome: 'Minas Gerais', lat: -19.9167, lng: -43.9345, decisoes: 1876, taxa: 81.2, regiao: 'Sudeste', agencias: ['ARSAE-MG'] },
-            'RS': { nome: 'Rio Grande do Sul', lat: -30.0346, lng: -51.2177, decisoes: 1245, taxa: 75.8, regiao: 'Sul', agencias: ['AGERGS'] },
-            'PR': { nome: 'Paraná', lat: -25.4284, lng: -49.2733, decisoes: 1123, taxa: 79.4, regiao: 'Sul', agencias: ['AGEPAR'] },
-            'BA': { nome: 'Bahia', lat: -12.9714, lng: -38.5014, decisoes: 987, taxa: 68.9, regiao: 'Nordeste', agencias: ['AGERBA'] },
-            'SC': { nome: 'Santa Catarina', lat: -27.5954, lng: -48.5480, decisoes: 876, taxa: 82.1, regiao: 'Sul', agencias: ['ARESC'] },
-            'GO': { nome: 'Goiás', lat: -16.6869, lng: -49.2648, decisoes: 654, taxa: 71.5, regiao: 'Centro-Oeste', agencias: ['AGR'] },
-            'PE': { nome: 'Pernambuco', lat: -8.0476, lng: -34.8770, decisoes: 543, taxa: 65.7, regiao: 'Nordeste', agencias: ['ARPE'] },
-            'CE': { nome: 'Ceará', lat: -3.7172, lng: -38.5433, decisoes: 432, taxa: 69.2, regiao: 'Nordeste', agencias: ['ARCE'] },
-            'DF': { nome: 'Distrito Federal', lat: -15.7942, lng: -47.8822, decisoes: 398, taxa: 84.3, regiao: 'Centro-Oeste', agencias: ['ADASA'] },
-            'PA': { nome: 'Pará', lat: -1.4558, lng: -48.4902, decisoes: 321, taxa: 62.8, regiao: 'Norte', agencias: [] },
-            'MT': { nome: 'Mato Grosso', lat: -15.6010, lng: -56.0979, decisoes: 287, taxa: 73.4, regiao: 'Centro-Oeste', agencias: ['AGER-MT'] },
-            'ES': { nome: 'Espírito Santo', lat: -20.3155, lng: -40.3128, decisoes: 265, taxa: 77.1, regiao: 'Sudeste', agencias: [] },
-            'MS': { nome: 'Mato Grosso do Sul', lat: -20.4697, lng: -54.6201, decisoes: 234, taxa: 74.6, regiao: 'Centro-Oeste', agencias: ['AGEPAN'] },
-            'MA': { nome: 'Maranhão', lat: -2.5297, lng: -44.3028, decisoes: 198, taxa: 61.3, regiao: 'Nordeste', agencias: [] },
-            'AM': { nome: 'Amazonas', lat: -3.1190, lng: -60.0217, decisoes: 176, taxa: 58.9, regiao: 'Norte', agencias: ['ARSAM'] },
-            'RN': { nome: 'Rio Grande do Norte', lat: -5.7945, lng: -35.2110, decisoes: 154, taxa: 66.4, regiao: 'Nordeste', agencias: ['ARSEP'] },
-            'PB': { nome: 'Paraíba', lat: -7.1195, lng: -34.8450, decisoes: 143, taxa: 64.8, regiao: 'Nordeste', agencias: ['ARPB'] },
-            'AL': { nome: 'Alagoas', lat: -9.6658, lng: -35.7350, decisoes: 121, taxa: 63.2, regiao: 'Nordeste', agencias: ['ARSAL'] },
-            'PI': { nome: 'Piauí', lat: -5.0892, lng: -42.8019, decisoes: 98, taxa: 59.7, regiao: 'Nordeste', agencias: ['AGRESPI'] },
-            'SE': { nome: 'Sergipe', lat: -10.9472, lng: -37.0731, decisoes: 87, taxa: 67.3, regiao: 'Nordeste', agencias: ['AGRESE'] },
-            'RO': { nome: 'Rondônia', lat: -8.7619, lng: -63.9039, decisoes: 76, taxa: 71.2, regiao: 'Norte', agencias: [] },
-            'TO': { nome: 'Tocantins', lat: -10.1753, lng: -48.2982, decisoes: 65, taxa: 68.5, regiao: 'Norte', agencias: ['ATR'] },
-            'AC': { nome: 'Acre', lat: -9.9753, lng: -67.8243, decisoes: 43, taxa: 55.8, regiao: 'Norte', agencias: ['AGEAC'] },
-            'AP': { nome: 'Amapá', lat: 0.0349, lng: -51.0694, decisoes: 32, taxa: 53.1, regiao: 'Norte', agencias: [] },
-            'RR': { nome: 'Roraima', lat: 2.8198, lng: -60.6719, decisoes: 21, taxa: 52.4, regiao: 'Norte', agencias: [] }
+            'SP': { nome: 'São Paulo', regiao: 'Sudeste', agencias: ['ARTESP', 'ARSESP'] },
+            'RJ': { nome: 'Rio de Janeiro', regiao: 'Sudeste', agencias: ['AGENERSA'] },
+            'MG': { nome: 'Minas Gerais', regiao: 'Sudeste', agencias: ['ARSAE-MG'] },
+            'RS': { nome: 'Rio Grande do Sul', regiao: 'Sul', agencias: ['AGERGS'] },
+            'PR': { nome: 'Paraná', regiao: 'Sul', agencias: ['AGEPAR'] },
+            'SC': { nome: 'Santa Catarina', regiao: 'Sul', agencias: ['AGESC'] },
+            'BA': { nome: 'Bahia', regiao: 'Nordeste', agencias: ['AGERBA'] },
+            'GO': { nome: 'Goiás', regiao: 'Centro-Oeste', agencias: ['AGR'] },
+            'PE': { nome: 'Pernambuco', regiao: 'Nordeste', agencias: ['ARPE'] },
+            'CE': { nome: 'Ceará', regiao: 'Nordeste', agencias: ['ARCE'] },
+            'PA': { nome: 'Pará', regiao: 'Norte', agencias: ['ARCON'] },
+            'AM': { nome: 'Amazonas', regiao: 'Norte', agencias: ['ARSAM'] },
+            'DF': { nome: 'Distrito Federal', regiao: 'Centro-Oeste', agencias: ['ADASA'] },
+            'MT': { nome: 'Mato Grosso', regiao: 'Centro-Oeste', agencias: ['AGER-MT'] },
+            'MS': { nome: 'Mato Grosso do Sul', regiao: 'Centro-Oeste', agencias: ['AGEPAN'] },
+            'MA': { nome: 'Maranhão', regiao: 'Nordeste', agencias: ['ARSEMA'] },
+            'RN': { nome: 'Rio Grande do Norte', regiao: 'Nordeste', agencias: ['ARSEP'] },
+            'PI': { nome: 'Piauí', regiao: 'Nordeste', agencias: [] },
+            'AL': { nome: 'Alagoas', regiao: 'Nordeste', agencias: ['ARSAL'] },
+            'PB': { nome: 'Paraíba', regiao: 'Nordeste', agencias: ['ARPB'] },
+            'ES': { nome: 'Espírito Santo', regiao: 'Sudeste', agencias: ['ARSES'] },
+            'RO': { nome: 'Rondônia', regiao: 'Norte', agencias: [] },
+            'TO': { nome: 'Tocantins', regiao: 'Norte', agencias: [] },
+            'AC': { nome: 'Acre', regiao: 'Norte', agencias: [] },
+            'AP': { nome: 'Amapá', regiao: 'Norte', agencias: [] },
+            'RR': { nome: 'Roraima', regiao: 'Norte', agencias: [] },
+            'SE': { nome: 'Sergipe', regiao: 'Nordeste', agencias: [] }
         },
 
-        init() {
-            const page = document.getElementById('page-mapa');
-            page.classList.add('active');
-            this.renderLeafletMap();
+        // Dados de deliberações por estado (preenchidos via stateData ou DB)
+        stateData: [],
+
+        async init() {
+            this.stateData = [];
+            await this._loadStateData();
             this.renderTopStates();
+            await this.renderD3Map();
         },
 
-        getStateColor(decisoes) {
-            const maxDecisoes = 4521;
-            const ratio = decisoes / maxDecisoes;
-            if (ratio > 0.5) return '#FFEF4D';
-            if (ratio > 0.3) return '#4ade80';
-            if (ratio > 0.15) return '#60a5fa';
-            if (ratio > 0.05) return '#a78bfa';
-            return '#6b7280';
+        async _loadStateData() {
+            try {
+                const { SUPABASE_URL, SUPABASE_ANON_KEY } = window.ENV || {};
+                if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return;
+                const res = await fetch(
+                    `${SUPABASE_URL}/rest/v1/deliberacoes_extraidas?select=agencia,decisao&limit=5000`,
+                    { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } }
+                );
+                if (!res.ok) return;
+                const rows = await res.json();
+                // Count by state (map agencia → state sigla)
+                const agenciaToSigla = { 'ARTESP': 'SP', 'ARSESP': 'SP', 'AGENERSA': 'RJ', 'ARSAE-MG': 'MG',
+                    'AGERGS': 'RS', 'AGEPAR': 'PR', 'AGESC': 'SC', 'AGERBA': 'BA', 'AGR': 'GO',
+                    'ARPE': 'PE', 'ARCE': 'CE', 'ARCON': 'PA', 'ARSAM': 'AM', 'ADASA': 'DF',
+                    'AGER-MT': 'MT', 'AGEPAN': 'MS', 'ARSEMA': 'MA', 'ARSEP': 'RN', 'ARSAL': 'AL',
+                    'ARPB': 'PB', 'ARSES': 'ES', 'ANATEL': 'DF', 'ANEEL': 'DF', 'ANP': 'DF',
+                    'ANVISA': 'DF', 'ANAC': 'DF', 'ANM': 'DF', 'ANA': 'DF', 'ANTT': 'DF' };
+                const counts = {};
+                for (const row of rows) {
+                    const sigla = agenciaToSigla[row.agencia] || null;
+                    if (sigla) counts[sigla] = (counts[sigla] || 0) + 1;
+                }
+                this.stateData = Object.entries(counts).map(([sigla, total]) => ({ sigla, total }));
+            } catch (e) {
+                // Use static fallback
+                this.stateData = [
+                    { sigla: 'SP', total: 4521 }, { sigla: 'RJ', total: 2134 },
+                    { sigla: 'MG', total: 1876 }, { sigla: 'RS', total: 1245 },
+                    { sigla: 'PR', total: 1123 }, { sigla: 'SC', total: 892 },
+                    { sigla: 'BA', total: 743 }, { sigla: 'GO', total: 612 },
+                    { sigla: 'PE', total: 534 }, { sigla: 'CE', total: 489 },
+                    { sigla: 'PA', total: 312 }, { sigla: 'DF', total: 287 }
+                ];
+            }
         },
 
-        getMarkerRadius(decisoes) {
-            const maxDecisoes = 4521;
-            const minRadius = 5;
-            const maxRadius = 18;
-            const ratio = decisoes / maxDecisoes;
-            return minRadius + (maxRadius - minRadius) * Math.sqrt(ratio);
+        _getTotalForState(sigla) {
+            const entry = this.stateData.find(s => s.sigla === sigla);
+            return entry ? entry.total : 0;
         },
 
-        renderLeafletMap() {
+        async renderD3Map() {
             const container = document.getElementById('mapa-brasil-container');
             if (!container) return;
+            if (this._d3Rendered) return;
 
-            // Create map container div
-            container.innerHTML = '<div id="leaflet-map" style="width: 100%; height: 100%; min-height: 500px; border-radius: 12px;"></div>';
+            container.innerHTML = '<p style="color:var(--text-tertiary);padding:20px;text-align:center;font-size:13px;">Carregando mapa...</p>';
 
-            // Initialize Leaflet map
-            if (this.map) {
-                this.map.remove();
-            }
+            try {
+                if (typeof d3 === 'undefined') {
+                    container.innerHTML = '<p style="color:var(--text-tertiary);padding:20px;text-align:center">D3.js não disponível</p>';
+                    return;
+                }
 
-            this.map = L.map('leaflet-map', {
-                center: [-14.235, -51.9253],
-                zoom: 4,
-                minZoom: 3,
-                maxZoom: 8,
-                zoomControl: false
-            });
+                const geoData = await d3.json(
+                    'https://servicodados.ibge.gov.br/api/v3/malhas/paises/BR' +
+                    '?formato=application/json&resolucao=2&qualidade=minima'
+                );
 
-            // Add zoom control to top-right
-            L.control.zoom({ position: 'topright' }).addTo(this.map);
+                container.innerHTML = '';
+                const width = container.clientWidth || 700;
+                const height = Math.round(width * 0.72);
 
-            // Dark tile layer (CartoDB Dark Matter)
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-                subdomains: 'abcd',
-                maxZoom: 19
-            }).addTo(this.map);
+                const svg = d3.select(container)
+                    .append('svg')
+                    .attr('viewBox', `0 0 ${width} ${height}`)
+                    .attr('width', '100%')
+                    .attr('height', height)
+                    .style('background', 'transparent')
+                    .style('display', 'block');
 
-            // Add markers for each state
-            this.markers = [];
-            Object.entries(this.estados).forEach(([code, estado]) => {
-                const color = this.getStateColor(estado.decisoes);
-                const radius = this.getMarkerRadius(estado.decisoes);
+                const projection = d3.geoMercator().fitSize([width - 20, height - 20], geoData);
+                const pathGen = d3.geoPath().projection(projection);
 
-                // Create circle marker
-                const marker = L.circleMarker([estado.lat, estado.lng], {
-                    radius: radius,
-                    fillColor: color,
-                    color: '#fff',
-                    weight: 2,
-                    opacity: 0.9,
-                    fillOpacity: 0.7
-                }).addTo(this.map);
+                const maxVal = Math.max(...this.stateData.map(s => s.total || 0), 1);
+                const colorScale = d3.scaleSequential()
+                    .domain([0, maxVal])
+                    .interpolator(d3.interpolate('#1e2533', '#F97316'));
 
-                // Add label (only for states with enough decisions to have visible markers)
-                if (estado.decisoes > 100) {
-                    const label = L.divIcon({
-                        className: 'leaflet-state-label',
-                        html: `<span style="color: #fff; font-weight: 600; font-size: 9px; text-shadow: 0 1px 2px rgba(0,0,0,0.8);">${code}</span>`,
-                        iconSize: [20, 14],
-                        iconAnchor: [10, 7]
+                // Tooltip
+                this._tooltip = d3.select(container)
+                    .append('div')
+                    .style('position', 'absolute')
+                    .style('pointer-events', 'none')
+                    .style('background', '#1a2035')
+                    .style('border', '1px solid #2a3550')
+                    .style('border-radius', '6px')
+                    .style('padding', '8px 12px')
+                    .style('font-size', '12px')
+                    .style('color', '#e2e8f0')
+                    .style('opacity', '0')
+                    .style('transition', 'opacity 0.15s')
+                    .style('z-index', '10')
+                    .style('white-space', 'nowrap');
+
+                const self = this;
+                d3.select(container).style('position', 'relative');
+
+                svg.append('g')
+                    .selectAll('path')
+                    .data(geoData.features)
+                    .join('path')
+                    .attr('d', pathGen)
+                    .attr('fill', d => {
+                        const sigla = self.ibgeToSigla[d.properties.codarea];
+                        return colorScale(self._getTotalForState(sigla));
+                    })
+                    .attr('stroke', '#0d1117')
+                    .attr('stroke-width', 1)
+                    .style('cursor', 'pointer')
+                    .style('transition', 'opacity 0.15s')
+                    .on('mouseover', function(event, d) {
+                        d3.select(this).style('opacity', 0.8);
+                        const sigla = self.ibgeToSigla[d.properties.codarea];
+                        const estado = self.estados[sigla] || {};
+                        const total = self._getTotalForState(sigla);
+                        self._tooltip
+                            .style('opacity', '1')
+                            .html(`<strong>${estado.nome || sigla || 'Estado'}</strong><br>` +
+                                  `Deliberações: <strong style="color:#F97316">${total.toLocaleString('pt-BR')}</strong><br>` +
+                                  `Região: ${estado.regiao || '—'}`);
+                    })
+                    .on('mousemove', function(event) {
+                        const [mx, my] = d3.pointer(event, container);
+                        self._tooltip
+                            .style('left', (mx + 14) + 'px')
+                            .style('top', (my - 10) + 'px');
+                    })
+                    .on('mouseout', function() {
+                        d3.select(this).style('opacity', 1);
+                        self._tooltip.style('opacity', '0');
+                    })
+                    .on('click', function(event, d) {
+                        const sigla = self.ibgeToSigla[d.properties.codarea];
+                        if (sigla) self.selectState(sigla);
                     });
-                    L.marker([estado.lat, estado.lng], { icon: label, interactive: false }).addTo(this.map);
-                }
 
-                // Popup content
-                const popupContent = `
-                    <div class="leaflet-popup-custom">
-                        <div class="popup-header" style="background: ${color}; color: #0f172a;">
-                            <strong>${estado.nome}</strong>
-                        </div>
-                        <div class="popup-body">
-                            <div class="popup-row"><span>Decisões:</span><strong>${estado.decisoes.toLocaleString('pt-BR')}</strong></div>
-                            <div class="popup-row"><span>Taxa:</span><strong>${estado.taxa}%</strong></div>
-                            <div class="popup-row"><span>Regiao:</span><strong>${estado.regiao}</strong></div>
-                            ${estado.agencias.length > 0 ? `<div class="popup-row"><span>Agencias:</span><strong>${estado.agencias.join(', ')}</strong></div>` : ''}
-                        </div>
-                    </div>`;
+                // State labels for larger states
+                const largStates = ['SP', 'MG', 'BA', 'GO', 'MT', 'PA', 'AM', 'PR', 'RS'];
+                svg.append('g')
+                    .selectAll('text')
+                    .data(geoData.features.filter(d => largStates.includes(self.ibgeToSigla[d.properties.codarea])))
+                    .join('text')
+                    .attr('transform', d => {
+                        const [cx, cy] = pathGen.centroid(d);
+                        return `translate(${cx},${cy})`;
+                    })
+                    .attr('text-anchor', 'middle')
+                    .attr('dominant-baseline', 'central')
+                    .attr('font-size', '9px')
+                    .attr('font-weight', '600')
+                    .attr('fill', '#ffffff')
+                    .attr('pointer-events', 'none')
+                    .style('text-shadow', '0 1px 2px rgba(0,0,0,0.8)')
+                    .text(d => self.ibgeToSigla[d.properties.codarea] || '');
 
-                marker.bindPopup(popupContent, {
-                    className: 'dark-popup',
-                    closeButton: true
-                });
+                this._d3Rendered = true;
 
-                // Events
-                marker.on('mouseover', function() {
-                    this.setStyle({ weight: 4, fillOpacity: 0.9 });
-                    this.openPopup();
-                });
-
-                marker.on('mouseout', function() {
-                    this.setStyle({ weight: 2, fillOpacity: 0.7 });
-                });
-
-                marker.on('click', () => {
-                    this.selectState(code);
-                });
-
-                marker.stateCode = code;
-                this.markers.push(marker);
-            });
-
-            // Add legend
-            const legend = L.control({ position: 'bottomleft' });
-            legend.onAdd = () => {
-                const div = L.DomUtil.create('div', 'leaflet-legend');
-                div.innerHTML = `
-                    <div class="legend-title">Volume de Decisoes</div>
-                    <div class="legend-items">
-                        <div class="legend-item"><span class="legend-color" style="background: #FFEF4D;"></span> Alto (>2000)</div>
-                        <div class="legend-item"><span class="legend-color" style="background: #4ade80;"></span> Medio-Alto</div>
-                        <div class="legend-item"><span class="legend-color" style="background: #60a5fa;"></span> Medio</div>
-                        <div class="legend-item"><span class="legend-color" style="background: #a78bfa;"></span> Baixo</div>
-                        <div class="legend-item"><span class="legend-color" style="background: #6b7280;"></span> Muito Baixo</div>
-                    </div>`;
-                return div;
-            };
-            legend.addTo(this.map);
-        },
-
-        selectState(code) {
-            this.selectedState = code;
-            const estado = this.estados[code];
-            const panel = document.getElementById('mapa-info-panel');
-
-            // Center map on state
-            if (this.map && estado) {
-                this.map.setView([estado.lat, estado.lng], 6, { animate: true });
-            }
-
-            // Highlight marker
-            this.markers.forEach(m => {
-                if (m.stateCode === code) {
-                    m.setStyle({ weight: 4, fillOpacity: 1 });
-                    m.openPopup();
-                } else {
-                    m.setStyle({ weight: 2, fillOpacity: 0.7 });
-                }
-            });
-
-            if (panel && estado) {
-                panel.innerHTML = `
-                    <div class="info-header">
-                        <span class="state-badge" style="background: ${this.getStateColor(estado.decisoes)}; color: #0f172a;">${code}</span>
-                        <h3>${estado.nome}</h3>
-                    </div>
-                    <div class="info-stats">
-                        <div class="info-stat">
-                            <span class="stat-value">${estado.decisoes.toLocaleString('pt-BR')}</span>
-                            <span class="stat-label">Decisoes</span>
-                        </div>
-                        <div class="info-stat">
-                            <span class="stat-value">${estado.taxa}%</span>
-                            <span class="stat-label">Taxa Deferimento</span>
-                        </div>
-                    </div>
-                    <div class="info-region">
-                        <span class="region-badge">${estado.regiao}</span>
-                    </div>
-                    ${estado.agencias.length > 0 ? `
-                    <div class="info-agencias">
-                        <span class="agencias-label">Agencias Reguladoras:</span>
-                        <div class="agencias-list">
-                            ${estado.agencias.map(a => `<span class="agencia-badge">${a}</span>`).join('')}
-                        </div>
-                    </div>` : ''}
-                    <div class="info-bar">
-                        <div class="bar-label">Volume vs SP</div>
-                        <div class="bar-track">
-                            <div class="bar-fill" style="width: ${(estado.decisoes / 4521 * 100)}%"></div>
-                        </div>
-                        <span class="bar-value">${Math.round(estado.decisoes / 4521 * 100)}%</span>
-                    </div>`;
+            } catch (e) {
+                container.innerHTML = `<p style="color:var(--text-tertiary);padding:20px;text-align:center">Erro ao carregar mapa: ${e.message}</p>`;
             }
         },
 
         renderTopStates() {
             const container = document.getElementById('mapa-top-states');
             if (!container) return;
+            const sorted = [...this.stateData].sort((a, b) => b.total - a.total).slice(0, 10);
+            container.innerHTML = sorted.map((s, i) => {
+                const estado = this.estados[s.sigla] || { nome: s.sigla };
+                return `
+                <div class="top-state-row" onclick="App.PageMapa.selectState('${s.sigla}')" style="cursor:pointer">
+                    <span class="rank">${i + 1}</span>
+                    <span class="code" style="background:#F97316;color:#0f172a;padding:2px 6px;border-radius:4px;font-size:11px;font-weight:700">${s.sigla}</span>
+                    <span class="name" style="flex:1">${estado.nome}</span>
+                    <span class="value" style="font-weight:600;color:#F97316">${s.total.toLocaleString('pt-BR')}</span>
+                </div>`;
+            }).join('');
+        },
 
-            const sorted = Object.entries(this.estados)
-                .sort((a, b) => b[1].decisoes - a[1].decisoes)
-                .slice(0, 5);
-
-            container.innerHTML = sorted.map(([code, estado], index) => `
-                <div class="top-state-row" onclick="App.PageMapa.selectState('${code}')">
-                    <span class="rank">${index + 1}</span>
-                    <span class="code" style="background: ${this.getStateColor(estado.decisoes)}; color: #0f172a;">${code}</span>
-                    <span class="name">${estado.nome}</span>
-                    <span class="value">${estado.decisoes.toLocaleString('pt-BR')}</span>
-                </div>
-            `).join('');
+        selectState(sigla) {
+            this.selectedState = sigla;
+            const estado = this.estados[sigla] || { nome: sigla };
+            const total = this._getTotalForState(sigla);
+            const infoEl = document.getElementById('mapa-info-panel');
+            if (infoEl) {
+                infoEl.innerHTML = `
+                    <div class="info-panel-header">
+                        <span class="info-panel-icon" style="background:rgba(249,115,22,0.15);color:#F97316">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        </span>
+                        <span style="font-weight:600;color:var(--text-primary)">${estado.nome || sigla}</span>
+                    </div>
+                    <div style="padding:12px 0;font-size:13px;color:var(--text-secondary)">
+                        <div style="margin-bottom:6px">Região: <strong>${estado.regiao || '—'}</strong></div>
+                        <div style="margin-bottom:6px">Deliberações: <strong style="color:#F97316;font-size:18px">${total.toLocaleString('pt-BR')}</strong></div>
+                        <div>Agências: <strong>${(estado.agencias || []).join(', ') || '—'}</strong></div>
+                    </div>`;
+            }
         },
 
         destroy() {
-            if (this.map) {
-                this.map.remove();
-                this.map = null;
+            this._d3Rendered = false;
+            if (this._tooltip) {
+                this._tooltip.remove();
+                this._tooltip = null;
             }
+            const container = document.getElementById('mapa-brasil-container');
+            if (container) container.innerHTML = '';
         }
     };
+
 
     // ============================================
     // PAGE: Radar Regulatorio
@@ -7733,10 +6978,6 @@
                 PageMonitor.destroy();
                 PageHistorico.init();
             });
-            Router.register('/grafo', () => {
-                PageMonitor.destroy();
-                PageGrafo.init();
-            });
             Router.register('/monitoramento', () => {
                 PageMonitor.destroy();
                 PageMonitoramento.destroy();
@@ -7790,7 +7031,40 @@
                 origNavigate(path);
             };
 
+            // Render sparklines in stat cards
+            this.renderSparklines();
+
             console.log('IRIS Platform initialized');
+        },
+
+        renderSparklines() {
+            document.querySelectorAll('.stat-card-sparkline[data-values]').forEach(function(el) {
+                const values = el.dataset.values.split(',').map(Number);
+                const max = Math.max.apply(null, values);
+                if (!max) return;
+                el.innerHTML = values.map(function(v, i) {
+                    const h = Math.round((v / max) * 100);
+                    const isLast = i === values.length - 1;
+                    return '<div class="spark-bar" style="height:' + h + '%' + (isLast ? ';opacity:1' : '') + '"></div>';
+                }).join('');
+            });
+        },
+
+        onGlobalAgencyChange(agencia) {
+            // Propagate agency change to active page if it supports it
+            const active = document.querySelector('.page-view.active');
+            if (!active) return;
+            const pageId = active.id;
+            if (pageId === 'page-deliberacoes' && PageDeliberacoes._loadFromAPI) {
+                const agSelect = document.getElementById('filtro-agencia');
+                if (agSelect) { agSelect.value = agencia; PageDeliberacoes.filter(); }
+            } else if (pageId === 'page-diretores' && PageDiretores.loadRealData) {
+                PageDiretores.currentAgencia = agencia;
+                PageDiretores.loadRealData();
+            } else if (pageId === 'page-metricas' && PageMetricas._loadInstitucional) {
+                PageMetricas._loadInstitucional(agencia);
+                PageMetricas._loadDiretoresTable(agencia);
+            }
         }
     };
 

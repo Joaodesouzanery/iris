@@ -98,6 +98,7 @@ def call_gemini(text: str) -> dict:
             "temperature": 0.1,
             "response_mime_type": "application/json",
         },
+        request_options={"timeout": 50},
     )
 
     raw = response.text.strip()
@@ -137,7 +138,11 @@ def save_to_supabase(deliberacoes: list, filename: str) -> int:
         # Remove None values to let DB defaults apply
         row = {k: v for k, v in row.items() if v is not None}
 
-        result = client.table("deliberacoes_extraidas").insert(row).execute()
+        result = (
+            client.table("deliberacoes_extraidas")
+            .upsert(row, on_conflict="processo,numero_reuniao", ignore_duplicates=True)
+            .execute()
+        )
         if result.data:
             saved += 1
 
@@ -158,6 +163,28 @@ def handle_request(body: dict) -> dict:
         pdf_bytes = base64.b64decode(pdf_b64)
     except Exception as e:
         return {"error": f"Invalid base64: {str(e)}", "deliberacoes": []}
+
+    # Check if this PDF was already processed (dedup by filename)
+    if create_client and SUPABASE_URL and SUPABASE_SERVICE_KEY:
+        try:
+            _client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+            existing = (
+                _client.table("deliberacoes_extraidas")
+                .select("id")
+                .eq("link_pdf", filename)
+                .limit(1)
+                .execute()
+            )
+            if existing.data:
+                return {
+                    "deliberacoes": [],
+                    "total": 0,
+                    "saved": 0,
+                    "skipped": True,
+                    "reason": f"PDF '{filename}' já foi processado anteriormente",
+                }
+        except Exception:
+            pass  # If check fails, proceed with analysis
 
     # Extract text
     try:
