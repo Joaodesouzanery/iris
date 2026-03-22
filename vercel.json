@@ -11,6 +11,9 @@
     },
     "api/metricas.py": {
       "maxDuration": 30
+    },
+    "api/admin.py": {
+      "maxDuration": 30
     }
   },
   "rewrites": [

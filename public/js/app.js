@@ -4359,12 +4359,29 @@
                 banner.style.background = 'rgba(76,175,80,.10)';
                 banner.style.border = '1px solid rgba(76,175,80,.25)';
                 banner.innerHTML = '<span style="color:var(--accent-green);">✓ Modo real ativo — apenas dados reais do Supabase são exibidos nas outras abas.</span>'
-                    + '<button onclick="DEMO_MODE.enable()" class="btn btn-sm" style="background:rgba(255,255,255,.06);color:var(--text-secondary);border:1px solid var(--border-subtle);white-space:nowrap;">Restaurar Demo</button>';
+                    + '<div style="display:flex;gap:8px;flex-shrink:0;">'
+                    + '<button onclick="App.PageUpload.clearSupabaseData()" class="btn btn-sm" style="background:rgba(239,83,80,.15);color:#ef5350;border:1px solid rgba(239,83,80,.3);white-space:nowrap;">Apagar Todos os Dados</button>'
+                    + '<button onclick="DEMO_MODE.enable()" class="btn btn-sm" style="background:rgba(255,255,255,.06);color:var(--text-secondary);border:1px solid var(--border-subtle);white-space:nowrap;">Restaurar Demo</button>'
+                    + '</div>';
             }
 
             const page = document.getElementById('page-upload');
             const firstChild = page?.firstElementChild;
             if (firstChild) page.insertBefore(banner, firstChild);
+        },
+
+        async clearSupabaseData() {
+            if (!confirm('Apagar TODOS os dados do Supabase (deliberacoes_extraidas)?\n\nEsta ação não pode ser desfeita.')) return;
+            try {
+                const r = await fetch('/api/admin', { method: 'DELETE' });
+                const d = await r.json();
+                if (d.error) throw new Error(d.error);
+                alert(`${d.deleted ?? 0} registros apagados com sucesso.`);
+                DataBus.emit('data:updated', { source: 'clear' });
+                await this.load();
+            } catch (e) {
+                alert('Erro ao apagar dados: ' + e.message);
+            }
         },
 
         setupDropzone() {
@@ -6110,6 +6127,10 @@
         stateData: [],
 
         async init() {
+            this._d3Rendered = false;
+            if (this._tooltip) { try { this._tooltip.remove(); } catch(e) {} this._tooltip = null; }
+            const container = document.getElementById('mapa-brasil-container');
+            if (container) container.innerHTML = '';
             this.stateData = [];
             await this._loadStateData();
             this.renderTopStates();
@@ -6171,8 +6192,8 @@
                 }
 
                 const geoData = await d3.json(
-                    'https://servicodados.ibge.gov.br/api/v3/malhas/paises/BR' +
-                    '?formato=application/json&resolucao=2&qualidade=minima'
+                    'https://servicodados.ibge.gov.br/api/v3/malhas/estados' +
+                    '?formato=application/json&qualidade=intermediaria'
                 );
 
                 container.innerHTML = '';
@@ -6214,13 +6235,16 @@
                 const self = this;
                 d3.select(container).style('position', 'relative');
 
+                const features = geoData.features || [];
+                const getSigla = d => self.ibgeToSigla[String(d.properties.codarea)] || null;
+
                 svg.append('g')
                     .selectAll('path')
-                    .data(geoData.features)
+                    .data(features)
                     .join('path')
                     .attr('d', pathGen)
                     .attr('fill', d => {
-                        const sigla = self.ibgeToSigla[d.properties.codarea];
+                        const sigla = getSigla(d);
                         return colorScale(self._getTotalForState(sigla));
                     })
                     .attr('stroke', '#0d1117')
@@ -6229,7 +6253,7 @@
                     .style('transition', 'opacity 0.15s')
                     .on('mouseover', function(event, d) {
                         d3.select(this).style('opacity', 0.8);
-                        const sigla = self.ibgeToSigla[d.properties.codarea];
+                        const sigla = getSigla(d);
                         const estado = self.estados[sigla] || {};
                         const total = self._getTotalForState(sigla);
                         self._tooltip
@@ -6249,7 +6273,7 @@
                         self._tooltip.style('opacity', '0');
                     })
                     .on('click', function(event, d) {
-                        const sigla = self.ibgeToSigla[d.properties.codarea];
+                        const sigla = getSigla(d);
                         if (sigla) self.selectState(sigla);
                     });
 
@@ -6257,7 +6281,7 @@
                 const largStates = ['SP', 'MG', 'BA', 'GO', 'MT', 'PA', 'AM', 'PR', 'RS'];
                 svg.append('g')
                     .selectAll('text')
-                    .data(geoData.features.filter(d => largStates.includes(self.ibgeToSigla[d.properties.codarea])))
+                    .data(features.filter(d => largStates.includes(getSigla(d))))
                     .join('text')
                     .attr('transform', d => {
                         const [cx, cy] = pathGen.centroid(d);
@@ -6270,7 +6294,7 @@
                     .attr('fill', '#ffffff')
                     .attr('pointer-events', 'none')
                     .style('text-shadow', '0 1px 2px rgba(0,0,0,0.8)')
-                    .text(d => self.ibgeToSigla[d.properties.codarea] || '');
+                    .text(d => getSigla(d) || '');
 
                 this._d3Rendered = true;
 
