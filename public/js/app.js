@@ -4661,7 +4661,7 @@
                         errors++;
                     } else {
                         pdf.status = 'analisando';
-                        this.renderTable();
+                        this.render();
                         const resp = await fetch('/api/pdf_analyze', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
@@ -4677,7 +4677,14 @@
                             pdf.erro = result.reason || 'PDF já processado anteriormente';
                             completed++;
                         } else if (result && !result.error) {
-                            pdf.status = 'analisado';
+                            if (result.total > 0) {
+                                pdf.status = 'analisado';
+                            } else {
+                                pdf.status = 'erro';
+                                pdf.erro = result.gemini_error
+                                    ? `IA indisponível; regex não extraiu dados. (${result.gemini_error})`
+                                    : 'Nenhuma deliberação encontrada no PDF';
+                            }
                             pdf.deliberacoes_count = result.total || 0;
                             pdf.deliberacoes = result.deliberacoes || [];
                             completed++;
@@ -4686,7 +4693,7 @@
                             pdf.erro = result?.error || 'Erro desconhecido';
                             errors++;
                         }
-                        this.renderTable();
+                        this.render();
                     }
                 } catch (error) {
                     console.error('Erro ao analisar:', error);
@@ -4831,7 +4838,7 @@
             if (progressBar) progressBar.style.width = '0%';
 
             pdf.status = 'analisando';
-            this.renderTable();
+            this.render();
 
             try {
                 let progress = 0;
@@ -4865,9 +4872,16 @@
                     this._showToast('PDF já processado: ' + pdf.nome, 'warning', 5000);
                     setTimeout(() => { if (statusCard) statusCard.style.display = 'none'; }, 3000);
                 } else if (result && !result.error) {
-                    pdf.status = 'analisado';
                     pdf.deliberacoes_count = result.total || 0;
                     pdf.deliberacoes = result.deliberacoes || [];
+                    if (result.total > 0) {
+                        pdf.status = 'analisado';
+                    } else {
+                        pdf.status = 'erro';
+                        pdf.erro = result.gemini_error
+                            ? `IA indisponível; regex não extraiu dados. (${result.gemini_error})`
+                            : 'Nenhuma deliberação encontrada no PDF';
+                    }
 
                     if (statusText) statusText.textContent = `✓ ${pdf.nome}: ${result.total || 0} deliberação(ões) extraída(s)`;
                     if (statusPercent) statusPercent.textContent = '100%';
@@ -4891,7 +4905,7 @@
                 this._showToast('Erro ao analisar: ' + error.message, 'error', 6000);
             }
             this.updateStats();
-            this.renderTable();
+            this.render();
         },
 
         async analisarTodosPendentes() {
