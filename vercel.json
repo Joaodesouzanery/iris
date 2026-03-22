@@ -2,6 +2,9 @@
   "functions": {
     "api/pdf_analyze.py": {
       "maxDuration": 60
+    },
+    "api/deliberacoes.py": {
+      "maxDuration": 30
     }
   },
   "rewrites": [

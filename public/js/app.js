@@ -306,7 +306,7 @@
             let usingReal = false;
             try {
                 const response = await API.get('/api/deliberacoes?' + params);
-                this.data = response?.deliberacoes || [];
+                this.data = (response?.deliberacoes || []).map(d => this._normalizeRow(d));
                 this._total = response?.total ?? this.data.length;
                 if (this.data.length > 0) usingReal = true;
                 else this.data = this._page === 1 ? this.sampleData : [];
@@ -339,11 +339,25 @@
             if (agencia) parts.push('agencia=' + encodeURIComponent(agencia));
             if (ano) parts.push('ano=' + encodeURIComponent(ano));
             if (microtema) parts.push('microtema=' + encodeURIComponent(microtema));
-            if (decisao) parts.push('resultado=' + encodeURIComponent(decisao));
+            if (decisao) parts.push('decisao=' + encodeURIComponent(decisao));
             if (dataInicio) parts.push('data_inicio=' + dataInicio);
             if (dataFim) parts.push('data_fim=' + dataFim);
             if (pautaExterna) parts.push('pauta_externa=true');
             return parts.join('&');
+        },
+
+        _normalizeRow(d) {
+            // Parse votos stored as JSON strings in the DB
+            const parseVotos = v => {
+                if (!v) return [];
+                if (Array.isArray(v)) return v;
+                try { const p = JSON.parse(v); return Array.isArray(p) ? p : []; } catch { return []; }
+            };
+            return {
+                ...d,
+                votos_favor: parseVotos(d.votos_favor),
+                votos_contra: parseVotos(d.votos_contra),
+            };
         },
 
         _populateMicrotemas() {
@@ -380,8 +394,8 @@
 
         updateStats() {
             const total = this._total;
-            const deferidas = this.data.filter(d => d.decisao === 'DEFERIDO' || d.decisao === 'Deferido').length;
-            const indeferidas = this.data.filter(d => d.decisao === 'INDEFERIDO' || d.decisao === 'Indeferido').length;
+            const deferidas = this.data.filter(d => /^deferido$/i.test(d.decisao)).length;
+            const indeferidas = this.data.filter(d => /indeferido/i.test(d.decisao)).length;
             const taxa = deferidas + indeferidas > 0 ? ((deferidas / (deferidas + indeferidas)) * 100).toFixed(1) : 0;
 
             const statEl = id => document.getElementById(id);
@@ -406,8 +420,10 @@
             if (label) label.textContent = `${this._total} resultado${this._total !== 1 ? 's' : ''} · página ${this._page}`;
 
             tbody.innerHTML = this.data.map((d, index) => {
-                const decisaoCls = (d.decisao || '').includes('DEFERIDO') || (d.decisao || '').includes('Deferido') ? 'badge-success' :
-                                   (d.decisao || '').includes('INDEFERIDO') || (d.decisao || '').includes('Indeferido') ? 'badge-danger' : 'badge-info';
+                const dec = (d.decisao || '').toLowerCase();
+                const decisaoCls = dec.includes('indeferido') ? 'badge-danger' :
+                                   dec.includes('deferido') ? 'badge-success' :
+                                   dec.includes('arquivado') ? 'badge-warning' : 'badge-info';
                 return `<tr style="cursor:pointer;" onclick="App.PageDeliberacoes.openModal(${index})" title="Clique para ver detalhes">
                     <td><strong>${d.reuniao_ordinaria || d.numero_reuniao || '-'}</strong></td>
                     <td style="white-space:nowrap;">${this.formatDate(d.data_reuniao)}</td>
@@ -518,14 +534,14 @@
                             <div class="modal-number-value">${d.numero_reuniao || '-'}</div>
                         </div>
                         <div class="modal-title-info">
-                            <div class="modal-agency-name">ARTESP</div>
+                            <div class="modal-agency-name">${d.agencia || 'ARTESP'}</div>
                             <div class="modal-date">${dataFormatada}</div>
                         </div>
                     </div>
                     <div class="modal-info-grid">
                         <div class="modal-info-item">
                             <div class="modal-info-label">Agência</div>
-                            <div class="modal-info-value">ARTESP</div>
+                            <div class="modal-info-value">${d.agencia || 'ARTESP'}</div>
                         </div>
                         <div class="modal-info-item">
                             <div class="modal-info-label">Numero da Reuniao</div>
