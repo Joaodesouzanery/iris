@@ -4797,7 +4797,10 @@
                     <td>${index + 1}</td>
                     <td><span class="file-name">${pdf.nome || pdf.filename || 'Arquivo ' + (index + 1)}</span></td>
                     <td>${tamanho}</td>
-                    <td><span class="badge ${statusClass}">${statusLabel}</span></td>
+                    <td>
+                        <span class="badge ${statusClass}">${statusLabel}</span>
+                        ${pdf.status === 'erro' && pdf.erro ? `<div class="upload-error-msg" title="${pdf.erro.replace(/"/g, '&quot;')}">${pdf.erro.length > 80 ? pdf.erro.substring(0, 80) + '…' : pdf.erro}</div>` : ''}
+                    </td>
                     <td>${pdf.deliberacoes_count || 0}</td>
                     <td>
                         <div class="action-buttons">
@@ -5151,6 +5154,7 @@
             this.updateStats();
             this.renderChart();
             this.updatePdfsCount();
+            this.updateDeliberacoesCount();
             this.bindEvents();
         },
 
@@ -5214,6 +5218,16 @@
                 const el = document.getElementById('hub-pdfs-count');
                 if (el && data) el.textContent = data.total || 0;
             } catch (e) { /* silent */ }
+        },
+
+        async updateDeliberacoesCount() {
+            try {
+                const data = await API.get('/api/deliberacoes?limit=1');
+                const el = document.querySelector('.hub-stat-viabilidade');
+                if (el && data && typeof data.total === 'number') {
+                    el.textContent = data.total;
+                }
+            } catch (e) { /* silent — keeps static value from updateStats() */ }
         },
 
         async fetchNoticiasReais(forceRefresh = false) {

@@ -11,36 +11,36 @@
    CSS VARIABLES - IRIS Brand Colors
    ============================================ */
 :root {
-    /* Cores principais IRIS - Sandy Yellow */
-    --primary: #FFEF4D;
-    --primary-dark: #e6d645;
-    --primary-light: #fff59d;
-    --primary-bg: rgba(255, 239, 77, 0.12);
-    --primary-glow: rgba(255, 239, 77, 0.4);
+    /* Cores principais IRIS - Orange accent (alinhado com design-system.css) */
+    --primary: #F97316;
+    --primary-dark: #EA6C0A;
+    --primary-light: #FB923C;
+    --primary-bg: rgba(249, 115, 22, 0.12);
+    --primary-glow: rgba(249, 115, 22, 0.3);
 
-    /* Backgrounds - Modern Deep Blue */
-    --background: #0f172a;
-    --background-secondary: #1e293b;
-    --surface: #1e293b;
-    --surface-hover: #334155;
-    --surface-light: #475569;
-    --surface-elevated: #293548;
+    /* Backgrounds - Pure Dark (alinhado com design-system.css) */
+    --background: #111111;
+    --background-secondary: #1C1C1C;
+    --surface: #1C1C1C;
+    --surface-hover: #222222;
+    --surface-light: #2A2A2A;
+    --surface-elevated: #1C1C1C;
 
     /* Textos */
-    --text-primary: #f8fafc;
-    --text-secondary: #cbd5e1;
-    --text-muted: #94a3b8;
-    --text-disabled: #64748b;
+    --text-primary: #FAFAFA;
+    --text-secondary: #A3A3A3;
+    --text-muted: #6B7080;
+    --text-disabled: #5A5F72;
 
     /* Bordas */
-    --border: rgba(148, 163, 184, 0.15);
-    --border-light: rgba(148, 163, 184, 0.25);
-    --border-focus: rgba(255, 239, 77, 0.5);
+    --border: rgba(42, 42, 42, 0.8);
+    --border-light: rgba(60, 60, 60, 0.8);
+    --border-focus: rgba(249, 115, 22, 0.5);
 
     /* Cards */
-    --bg-card: #1e293b;
-    --bg-card-hover: #293548;
-    --accent: #FFEF4D;
+    --bg-card: #1C1C1C;
+    --bg-card-hover: #222222;
+    --accent: #F97316;
 
     /* Estados */
     --success: #22c55e;
@@ -62,7 +62,7 @@
     --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
     --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
     --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-    --shadow-glow: 0 0 20px rgba(255, 239, 77, 0.15);
+    --shadow-glow: 0 0 20px rgba(249, 115, 22, 0.15);
 
     /* Bordas arredondadas */
     --radius-sm: 6px;
@@ -123,7 +123,7 @@ svg:not([width]):not([height]) {
    ============================================ */
 .sidebar {
     width: var(--sidebar-width);
-    background: linear-gradient(180deg, #0c1222 0%, #111827 50%, #0f172a 100%);
+    background: var(--bg-sidebar, #0D0D0D);
     height: 100vh;
     position: fixed;
     left: 0;
@@ -978,12 +978,12 @@ svg:not([width]):not([height]) {
 .stat-card-value.danger { color: var(--danger); }
 .stat-card-value.warning { color: var(--warning); }
 .stat-card-value.primary { color: var(--primary); }
-.stat-card-value.gold { color: #FFEF4D; }
+.stat-card-value.gold { color: var(--primary); }
 
-/* Stat card com destaque dourado */
+/* Stat card com destaque */
 .stat-card.highlight {
-    border-color: rgba(255, 239, 77, 0.3);
-    background: linear-gradient(135deg, var(--surface) 0%, rgba(255, 239, 77, 0.08) 100%);
+    border-color: rgba(249, 115, 22, 0.3);
+    background: linear-gradient(135deg, var(--surface) 0%, rgba(249, 115, 22, 0.06) 100%);
 }
 
 .stat-card.highlight::before {
@@ -7769,7 +7769,7 @@ tr:hover {
     min-height: 700px;
     border-radius: var(--radius);
     overflow: hidden;
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    background: var(--bg-card, #1C1C1C);
 }
 
 .brazil-map-container {
@@ -10398,11 +10398,11 @@ tr:hover {
 .stat-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-    border-color: rgba(255, 239, 77, 0.2);
+    border-color: rgba(249, 115, 22, 0.25);
 }
 
 .stat-card-value {
-    background: linear-gradient(135deg, var(--primary) 0%, #fff59d 100%);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -10455,13 +10455,24 @@ tr:hover {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, var(--primary) 0%, #e6d645 100%);
-    box-shadow: 0 4px 14px rgba(255, 239, 77, 0.25);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    box-shadow: 0 4px 14px rgba(249, 115, 22, 0.25);
 }
 
 .btn-primary:hover {
     transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(255, 239, 77, 0.35);
+    box-shadow: 0 6px 20px rgba(249, 115, 22, 0.35);
+}
+
+/* Upload error detail text */
+.upload-error-msg {
+    font-size: 11px;
+    color: #f87171;
+    margin-top: 3px;
+    max-width: 260px;
+    word-break: break-word;
+    line-height: 1.4;
+    opacity: 0.9;
 }
 
 /* Improved badges */
@@ -10616,7 +10627,7 @@ tr:hover {
 }
 
 #leaflet-map {
-    background: #0f172a;
+    background: var(--bg-primary, #111111);
 }
 
 .leaflet-state-label {
@@ -11131,7 +11142,7 @@ tr:hover {
 .hub-news-item:hover {
     transform: translateY(-1px);
     box-shadow: var(--shadow-md);
-    border-color: rgba(255, 239, 77, 0.2);
+    border-color: rgba(249, 115, 22, 0.25);
 }
 
 .agency-card:hover {

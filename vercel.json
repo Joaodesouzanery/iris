@@ -5,6 +5,12 @@
     },
     "api/deliberacoes.py": {
       "maxDuration": 30
+    },
+    "api/diretores.py": {
+      "maxDuration": 10
+    },
+    "api/metricas.py": {
+      "maxDuration": 30
     }
   },
   "rewrites": [
