@@ -146,11 +146,53 @@ def call_gemini(text: str) -> dict:
     return json.loads(raw)
 
 
+# Pattern for multi-word Brazilian names (2+ capitalized words, with optional
+# lowercase particles like de, da, do, dos, das between them).
+_NAME_PATTERN = re.compile(
+    r'[A-ZÁÉÍÓÚÂÊÎÔÛÃÕÇÀÈÌÒÙÜ][a-záéíóúâêîôûãõçàèìòùü]+'
+    r'(?:\s+(?:d[aeo]s?|van|von)\s+)?'
+    r'(?:\s+[A-ZÁÉÍÓÚÂÊÎÔÛÃÕÇÀÈÌÒÙÜ][a-záéíóúâêîôûãõçàèìòùü]+)+'
+)
+
+# Portuguese month name → zero-padded number
+_MONTHS = {
+    "janeiro": "01", "fevereiro": "02", "março": "03", "abril": "04",
+    "maio": "05", "junho": "06", "julho": "07", "agosto": "08",
+    "setembro": "09", "outubro": "10", "novembro": "11", "dezembro": "12",
+}
+
+
+def _extract_names_from_block(block: str) -> list:
+    """
+    Extract full multi-word Brazilian names from a comma/semicolon-separated block.
+    Uses _NAME_PATTERN to find sequences of capitalised words (avoids splitting
+    compound surnames on 'e').
+    """
+    # First try comma/semicolon split — yields clean names in ARTESP format
+    parts = re.split(r"[,;]\s*", block.strip())
+    if len(parts) >= 2:
+        names = []
+        for part in parts:
+            part = part.strip()
+            # Take first full name match from each segment
+            m = _NAME_PATTERN.search(part)
+            if m and len(m.group(0)) > 5:
+                names.append(m.group(0).strip())
+            elif len(part) > 5 and re.match(r'[A-ZÁÉÍÓÚÂÊÎÔÛÃÕÇÀÜ]', part):
+                names.append(part[:120])
+        if names:
+            return names[:15]
+
+    # Fallback: extract all name-like spans from the whole block
+    names = _NAME_PATTERN.findall(block)
+    return [n.strip() for n in names if len(n.strip()) > 5][:15]
+
+
 def extract_with_regex(text: str, agencia: str = "ARTESP") -> dict:
     """
-    Regex-based fallback extraction for Brazilian regulatory deliberation PDFs.
-    Covers the most common ARTESP / agency document formats.
-    Returns a single deliberation dict (one per document assumed).
+    Regex-based extraction for Brazilian regulatory deliberation PDFs.
+    Works without Gemini. Covers ARTESP and similar agency document formats.
+    Returns a single deliberation dict.
     """
     t = text
 
@@ -165,23 +207,30 @@ def extract_with_regex(text: str, agencia: str = "ARTESP") -> dict:
     if m:
         numero_reuniao = m.group(1).strip().lstrip("0") or m.group(1).strip()
 
+    # --- numero_deliberacao (deliberation-level number within the meeting) ---
+    # e.g. "DELIBERAÇÃO Nº 001" or "Deliberação 1176" or just the reunião number
+    numero_deliberacao = None
+    m_del = re.search(
+        r"delibera[çc][aã]o\s+(?:ordin[aá]ria\s+)?(?:n[°º\.o]?)?\s*(\d+)",
+        t, re.IGNORECASE
+    )
+    if m_del:
+        numero_deliberacao = m_del.group(1).strip().lstrip("0") or m_del.group(1).strip()
+    if not numero_deliberacao:
+        numero_deliberacao = numero_reuniao  # fallback
+
     # --- data_reuniao ---
     data_reuniao = None
     m = re.search(r"\b(\d{2})\s*/\s*(\d{2})\s*/\s*(\d{4})\b", t)
     if not m:
         # Written form: "15 de março de 2025"
-        months = {
-            "janeiro": "01", "fevereiro": "02", "março": "03", "abril": "04",
-            "maio": "05", "junho": "06", "julho": "07", "agosto": "08",
-            "setembro": "09", "outubro": "10", "novembro": "11", "dezembro": "12",
-        }
         m2 = re.search(
-            r"\b(\d{1,2})\s+de\s+(" + "|".join(months.keys()) + r")\s+de\s+(\d{4})\b",
+            r"\b(\d{1,2})\s+de\s+(" + "|".join(_MONTHS.keys()) + r")\s+de\s+(\d{4})\b",
             t, re.IGNORECASE
         )
         if m2:
             day, month_name, year = m2.group(1), m2.group(2).lower(), m2.group(3)
-            data_reuniao = f"{year}-{months[month_name]}-{day.zfill(2)}"
+            data_reuniao = f"{year}-{_MONTHS[month_name]}-{day.zfill(2)}"
     else:
         data_reuniao = f"{m.group(3)}-{m.group(2)}-{m.group(1)}"
 
@@ -220,28 +269,26 @@ def extract_with_regex(text: str, agencia: str = "ARTESP") -> dict:
             decisao = label
             break
 
-    # --- votos_favor ---
+    # --- votos_favor: extract full multi-word names ---
     votos_favor = []
     m = re.search(
-        r"(?:votaram?\s+a\s+favor|voto\s+favor[aá]vel|votos?\s+favor[aá]ve[il]s?)\s*[:\-–]\s*(.+?)(?:\n\n|\n(?=[A-Z])|$)",
+        r"(?:votaram?\s+a\s+favor|voto\s+favor[aá]vel|votos?\s+favor[aá]ve[il]s?)"
+        r"\s*[:\-–]\s*(.+?)(?:\n\n|\Z)",
         t, re.IGNORECASE | re.DOTALL
     )
     if m:
-        names_raw = m.group(1).strip()
-        # Split by comma or semicolon or "e" between names
-        names = re.split(r"[,;]\s*|\s+e\s+", names_raw)
-        votos_favor = [n.strip() for n in names if len(n.strip()) > 3][:10]
+        # Limit block to first 500 chars to avoid runaway matches
+        votos_favor = _extract_names_from_block(m.group(1)[:500])
 
-    # --- votos_contra ---
+    # --- votos_contra: extract full multi-word names ---
     votos_contra = []
     m = re.search(
-        r"(?:votaram?\s+contra|voto\s+contr[aá]rio|votos?\s+contr[aá]rios?)\s*[:\-–]\s*(.+?)(?:\n\n|\n(?=[A-Z])|$)",
+        r"(?:votaram?\s+contra|voto\s+contr[aá]rio|votos?\s+contr[aá]rios?)"
+        r"\s*[:\-–]\s*(.+?)(?:\n\n|\Z)",
         t, re.IGNORECASE | re.DOTALL
     )
     if m:
-        names_raw = m.group(1).strip()
-        names = re.split(r"[,;]\s*|\s+e\s+", names_raw)
-        votos_contra = [n.strip() for n in names if len(n.strip()) > 3][:10]
+        votos_contra = _extract_names_from_block(m.group(1)[:500])
 
     # --- pauta_interna ---
     pauta_interna = bool(re.search(r"pauta\s+interna|ato\s+(interno|administrativo\s+interno)", t, re.IGNORECASE))
@@ -256,26 +303,35 @@ def extract_with_regex(text: str, agencia: str = "ARTESP") -> dict:
             microtema = tema
             break
 
-    # --- resumo_pleito: first substantial paragraph ---
+    # --- resumo_pleito: first substantial paragraph after headers ---
     resumo_pleito = None
     paragraphs = [p.strip() for p in re.split(r"\n{2,}", t) if len(p.strip()) > 80]
-    # Skip header paragraphs (short lines, lots of caps, page numbers)
-    for para in paragraphs[2:8]:
+    for para in paragraphs[2:10]:
         if not re.match(r"^[\d\s\-\.]+$", para) and len(para) > 100:
-            resumo_pleito = re.sub(r"\s+", " ", para)[:500]
+            resumo_pleito = re.sub(r"\s+", " ", para)[:600]
             break
 
-    # --- fundamento_decisao: sentence with legal citations ---
+    # --- fundamento_decisao: RECOMENDA/DECIDE/DELIBERA block (most complete) ---
     fundamento_decisao = None
+    # Try to capture the recommendation/decision block first (highest quality)
     m = re.search(
-        r"((?:Art\.|Artigo|Lei|Decreto|Resolução|Portaria)[^\n]{20,200})",
-        t, re.IGNORECASE
+        r"((?:RECOMENDA|DECIDE|DELIBERA|DETERMINA)\s+[ÀAOo]\s+.+?)(?:\n\n|\n[A-Z]{4,}|\Z)",
+        t, re.IGNORECASE | re.DOTALL
     )
     if m:
-        fundamento_decisao = re.sub(r"\s+", " ", m.group(1)).strip()[:400]
+        fundamento_decisao = re.sub(r"\s+", " ", m.group(1)).strip()[:800]
+    else:
+        # Fallback: sentence with legal citation (Art. / Lei / Decreto)
+        m = re.search(
+            r"((?:Art\.|Artigo|Lei|Decreto|Resolu[çc][aã]o|Portaria)[^\n]{20,300})",
+            t, re.IGNORECASE
+        )
+        if m:
+            fundamento_decisao = re.sub(r"\s+", " ", m.group(1)).strip()[:600]
 
     return {
         "numero_reuniao": numero_reuniao,
+        "numero_deliberacao": numero_deliberacao,
         "data_reuniao": data_reuniao,
         "processo": processo,
         "interessado": interessado,
@@ -303,6 +359,7 @@ def save_to_supabase(deliberacoes: list, filename: str) -> int:
             "agencia": delib.get("agencia") or "ARTESP",
             "processo": delib.get("processo"),
             "numero_reuniao": delib.get("numero_reuniao"),
+            "numero_deliberacao": delib.get("numero_deliberacao"),
             "data_reuniao": delib.get("data_reuniao"),
             "interessado": delib.get("interessado"),
             "pauta_interna": bool(delib.get("pauta_interna")),
@@ -310,7 +367,6 @@ def save_to_supabase(deliberacoes: list, filename: str) -> int:
             "decisao": delib.get("decisao"),
             "resumo_pleito": delib.get("resumo_pleito"),
             "fundamento_decisao": delib.get("fundamento_decisao"),
-            # FIX: correct column names matching the DB schema
             "votos_favor": json.dumps(delib.get("votos_favor") or []),
             "votos_contra": json.dumps(delib.get("votos_contra") or []),
             "link_pdf": filename,

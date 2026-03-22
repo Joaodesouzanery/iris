@@ -17,40 +17,32 @@ DIRETORES_DATA = {
         "setor": "Transporte",
         "diretores": [
             {
-                "nome": "André Luiz Cavalcanti Isper",
+                "nome": "André Isper Rodrigues Barnabé",
                 "cargo": "Diretor-Presidente",
-                "inicio_mandato": "2024-10",
-                "fim_mandato": "2029-06",
+                "inicio_mandato": "2024-09-10",
+                "fim_mandato": "2029-09-09",
                 "status": "ativo",
-                "votos_favor": 0,
-                "votos_contra": 0,
             },
             {
-                "nome": "Diego Zanatto",
+                "nome": "Diego Albert Zanatto",
                 "cargo": "Diretor",
-                "inicio_mandato": "2024-10",
-                "fim_mandato": "2030-06",
+                "inicio_mandato": "2024-08-14",
+                "fim_mandato": "2029-08-13",
                 "status": "ativo",
-                "votos_favor": 0,
-                "votos_contra": 0,
             },
             {
-                "nome": "Raquel França",
+                "nome": "Raquel França Carneiro",
                 "cargo": "Diretora",
-                "inicio_mandato": "2025-05",
-                "fim_mandato": "2029-05",
+                "inicio_mandato": "2025-05-14",
+                "fim_mandato": "2030-05-13",
                 "status": "ativo",
-                "votos_favor": 0,
-                "votos_contra": 0,
             },
             {
-                "nome": "Fernanda Esbízaro",
+                "nome": "Fernanda Esbízaro Rodrigues Rudnik",
                 "cargo": "Diretora",
-                "inicio_mandato": "2025-08",
-                "fim_mandato": "2029-08",
+                "inicio_mandato": "2025-08-28",
+                "fim_mandato": "2030-08-27",
                 "status": "ativo",
-                "votos_favor": 0,
-                "votos_contra": 0,
             },
         ],
     },
@@ -190,8 +182,8 @@ def _enrich_with_supabase(agencia_data: list, agencia: str) -> list:
         for d in agencia_data:
             nome = d["nome"]
             d = dict(d)
-            d["votos_favor"] = vote_counts.get((nome, "votos_favor"), 0)
-            d["votos_contra"] = vote_counts.get((nome, "votos_contra"), 0)
+            d["votos_favor_count"] = vote_counts.get((nome, "votos_favor"), 0)
+            d["votos_contra_count"] = vote_counts.get((nome, "votos_contra"), 0)
             enriched.append(d)
         return enriched
 
@@ -202,7 +194,8 @@ def _enrich_with_supabase(agencia_data: list, agencia: str) -> list:
 def _mandate_status(fim_mandato: str) -> str:
     """Return 'ativo', 'expirando' (within 6 months), or 'expirado'."""
     try:
-        year, month = map(int, fim_mandato.split("-"))
+        parts = fim_mandato.split("-")
+        year, month = int(parts[0]), int(parts[1])
         end = date(year, month, 1)
         today = date.today()
         diff_months = (end.year - today.year) * 12 + (end.month - today.month)
@@ -215,6 +208,22 @@ def _mandate_status(fim_mandato: str) -> str:
         return "ativo"
 
 
+def _mandate_percent(inicio: str, fim: str) -> int:
+    """Return % of mandate elapsed (0-100)."""
+    try:
+        fmt = "%Y-%m-%d" if len(inicio) == 10 else "%Y-%m"
+        start = date.fromisoformat(inicio[:10] if len(inicio) >= 10 else inicio + "-01")
+        end = date.fromisoformat(fim[:10] if len(fim) >= 10 else fim + "-01")
+        today = date.today()
+        total = (end - start).days
+        elapsed = (today - start).days
+        if total <= 0:
+            return 0
+        return min(100, max(0, round(elapsed / total * 100)))
+    except Exception:
+        return 0
+
+
 class handler(BaseHTTPRequestHandler):
     def do_GET(self):
         parsed = urlparse(self.path)
@@ -224,14 +233,44 @@ class handler(BaseHTTPRequestHandler):
 
         if agencia_param and agencia_param in DIRETORES_DATA:
             agencia_info = DIRETORES_DATA[agencia_param]
-            diretores = agencia_info["diretores"]
+            raw_diretores = [dict(d) for d in agencia_info["diretores"]]
 
-            # Enrich with live vote counts (best-effort)
-            diretores = _enrich_with_supabase(diretores, agencia_param)
+            # Enrich with live vote counts from Supabase (best-effort)
+            raw_diretores = _enrich_with_supabase(raw_diretores, agencia_param)
 
-            # Add computed mandate status
-            for d in diretores:
-                d["mandate_status"] = _mandate_status(d.get("fim_mandato", ""))
+            # Transform to the format PageDiretores.loadRealData() expects
+            diretores = []
+            for d in raw_diretores:
+                inicio = d.get("inicio_mandato", "")
+                fim = d.get("fim_mandato", "")
+                fav = d.get("votos_favor_count", 0)
+                con = d.get("votos_contra_count", 0)
+                participacoes = fav + con
+                nome = d.get("nome", "")
+                # Compute iniciais: first letter of each word with len > 2
+                iniciais = "".join(
+                    w[0] for w in nome.split() if len(w) > 2
+                )[:2].upper() or "DR"
+
+                diretores.append({
+                    "nome": nome,
+                    "cargo": d.get("cargo", "Diretor(a)"),
+                    "iniciais": iniciais,
+                    "mandato_inicio": inicio,
+                    "mandato_fim": fim,
+                    "ativo": _mandate_status(fim) != "expirado",
+                    "participacoes": participacoes,
+                    "colegiado": participacoes,
+                    "divergente": 0,
+                    "mandato_percent": _mandate_percent(inicio, fim),
+                    "votos": {
+                        "FAVORABLE": fav,
+                        "AGAINST": con,
+                        "ABSTENTION": 0,
+                    },
+                    "relatorias": 0,
+                    "votos_por_tema": [],
+                })
 
             result = {
                 "agencia": agencia_param,

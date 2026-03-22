@@ -526,12 +526,13 @@
                 fundamento_decisao: d.fundamento_decisao
             };
 
+            const numDelib = d.numero_deliberacao || d.numero_reuniao || '-';
             body.innerHTML = `
                 <div class="modal-header-section">
                     <div class="modal-title-row">
                         <div class="modal-number-badge">
-                            <div class="modal-number-label">Deliberacao</div>
-                            <div class="modal-number-value">${d.numero_reuniao || '-'}</div>
+                            <div class="modal-number-label">Deliberação</div>
+                            <div class="modal-number-value">${numDelib}</div>
                         </div>
                         <div class="modal-title-info">
                             <div class="modal-agency-name">${d.agencia || 'ARTESP'}</div>
@@ -544,7 +545,7 @@
                             <div class="modal-info-value">${d.agencia || 'ARTESP'}</div>
                         </div>
                         <div class="modal-info-item">
-                            <div class="modal-info-label">Numero da Reuniao</div>
+                            <div class="modal-info-label">Reunião Nº</div>
                             <div class="modal-info-value">${d.numero_reuniao || '-'}</div>
                         </div>
                         <div class="modal-info-item">
@@ -552,7 +553,7 @@
                             <div class="modal-info-value">${dataFormatada}</div>
                         </div>
                         <div class="modal-info-item">
-                            <div class="modal-info-label">Decisao</div>
+                            <div class="modal-info-label">Decisão</div>
                             <div class="modal-info-value ${d.decisao === 'Deferido' ? 'success' : ''}">${d.decisao || '-'}</div>
                         </div>
                     </div>
@@ -572,7 +573,7 @@
                     </div>
 
                     <div class="modal-section">
-                        <div class="modal-section-title">Detalhes da Deliberacao</div>
+                        <div class="modal-section-title">Detalhes da Deliberação</div>
                         <div class="modal-info-grid" style="grid-template-columns: repeat(3, 1fr);">
                             <div class="modal-info-item">
                                 <div class="modal-info-label">Interessado</div>
@@ -586,23 +587,31 @@
                                 <div class="modal-info-label">Microtema</div>
                                 <div class="modal-info-value">${d.microtema || '-'}</div>
                             </div>
+                            ${d.processo ? `<div class="modal-info-item">
+                                <div class="modal-info-label">Processo</div>
+                                <div class="modal-info-value">${d.processo}</div>
+                            </div>` : ''}
+                            ${d.numero_deliberacao && d.numero_deliberacao !== d.numero_reuniao ? `<div class="modal-info-item">
+                                <div class="modal-info-label">Nº Deliberação</div>
+                                <div class="modal-info-value">${d.numero_deliberacao}</div>
+                            </div>` : ''}
                         </div>
                     </div>
 
                     <div class="modal-section">
                         <div class="modal-section-title">Resumo do Pleito</div>
-                        <div class="modal-section-content">${d.resumo_pleito || 'Resumo nao disponivel'}</div>
+                        <div class="modal-section-content">${d.resumo_pleito || 'Resumo não disponível'}</div>
                     </div>
 
                     ${d.fundamento_decisao ? `
                     <div class="modal-section">
-                        <div class="modal-section-title">Fundamento da Decisao</div>
+                        <div class="modal-section-title">Fundamento da Decisão</div>
                         <div class="modal-section-content">${d.fundamento_decisao}</div>
                     </div>
                     ` : ''}
 
                     <div class="modal-section">
-                        <div class="modal-section-title">Dados Extraidos (JSON)</div>
+                        <div class="modal-section-title">Dados Extraídos (JSON)</div>
                         <div class="modal-json-section">
                             <pre>${this.formatJSON(jsonData)}</pre>
                         </div>
@@ -808,7 +817,7 @@
                 cor: '#F97316',
                 diretores: [
                     {
-                        nome: 'Andre Isper Rodrigues Barnabe',
+                        nome: 'André Isper Rodrigues Barnabé',
                         cargo: 'Diretor-Presidente',
                         iniciais: 'AI',
                         inicio: '2024-09-10',
@@ -821,7 +830,7 @@
                         vista: 0
                     },
                     {
-                        nome: 'Fernanda Esbizaro Rodrigues Rudnik',
+                        nome: 'Fernanda Esbízaro Rodrigues Rudnik',
                         cargo: 'Diretora',
                         iniciais: 'FE',
                         inicio: '2025-08-28',
@@ -834,7 +843,7 @@
                         vista: 0
                     },
                     {
-                        nome: 'Raquel Franca Carneiro',
+                        nome: 'Raquel França Carneiro',
                         cargo: 'Diretora',
                         iniciais: 'RF',
                         inicio: '2025-05-14',
@@ -1560,7 +1569,10 @@
 
         async loadData() {
             try {
-                const data = await API.get('/api/metricas/por-tema');
+                const raw = await API.get('/api/metricas');
+                const data = raw && raw.por_microtema
+                    ? { ...raw, temas: Object.entries(raw.por_microtema).map(([tema, total]) => ({ tema, total })).sort((a, b) => b.total - a.total), totalTemas: Object.keys(raw.por_microtema).length }
+                    : null;
                 if (data && data.temas && data.temas.length > 0) {
                     this.renderStats(data);
                     setDataMode('page-setores', true);
@@ -1873,7 +1885,10 @@
 
         async loadData() {
             try {
-                const data = await API.get('/api/metricas/por-tema');
+                const raw = await API.get('/api/metricas');
+                const data = raw && raw.por_microtema
+                    ? { ...raw, temas: Object.entries(raw.por_microtema).map(([tema, total]) => ({ tema, total })).sort((a, b) => b.total - a.total), totalTemas: Object.keys(raw.por_microtema).length }
+                    : null;
                 if (data && data.temas && data.temas.length > 0) {
                     this.renderStats(data);
                     this.renderMicrotemas(data.temas);
@@ -2432,7 +2447,7 @@
         async carregarMetricas() {
             try {
                 // Busca metricas por diretor da API
-                const response = await API.get('/api/metricas/por-diretor');
+                const response = await API.get('/api/metricas?tipo=por-diretor');
                 this.metricasAPI = response?.diretores || [];
 
                 // Mescla dados estaticos com dados da API
@@ -2955,7 +2970,8 @@
 
         async loadData() {
             try {
-                const data = await API.get('/api/metricas/resumo');
+                const raw = await API.get('/api/metricas');
+                const data = raw ? { ...raw, totalDeliberacoes: raw.total } : null;
                 if (data && data.totalDeliberacoes > 0) {
                     this.renderFromAPI(data);
                     setDataMode('page-governanca', true);
@@ -3000,8 +3016,8 @@
             // Try fetching live data, fall back to DOM-based stats
             let usingReal = false;
             try {
-                const data = await API.get('/api/metricas/exportar');
-                if (data && data.totalDeliberacoes > 0) {
+                const data = await API.get('/api/metricas');
+                if (data && (data.total > 0 || data.totalDeliberacoes > 0)) {
                     this._data = data;
                     this._applyData(data);
                     usingReal = true;
@@ -3038,13 +3054,13 @@
                     const controller = new AbortController();
                     const timeout = setTimeout(() => controller.abort(), 10000);
 
-                    const resp = await fetch('/api/supabase/status', { signal: controller.signal });
+                    const resp = await fetch('/api/metricas?tipo=ping', { signal: controller.signal });
                     clearTimeout(timeout);
 
                     if (!resp.ok) throw new Error('HTTP ' + resp.status);
 
                     const data = await resp.json();
-                    if (data.connected) {
+                    if (data.supabase || data.connected) {
                         bar.classList.add('connected');
                         bar.classList.remove('disconnected');
                         text.textContent = 'Supabase conectado — dados sincronizados';
@@ -3053,11 +3069,7 @@
                     } else {
                         bar.classList.add('disconnected');
                         bar.classList.remove('connected');
-                        const msg = data.message || 'Supabase nao configurado';
-                        const envInfo = data.env
-                            ? ' (URL: ' + (data.env.url_set ? 'OK' : 'falta') + ', Key: ' + (data.env.anon_key_set ? 'OK' : 'falta') + ')'
-                            : '';
-                        text.textContent = msg + envInfo;
+                        text.textContent = 'Supabase não configurado — variáveis de ambiente ausentes';
                         return;
                     }
                 } catch (e) {
@@ -3090,7 +3102,7 @@
         /** Apply fetched data to the stat cards */
         _applyData(data) {
             const map = {
-                'metricas-total-delib': data.totalDelib ?? data.total_deliberacoes,
+                'metricas-total-delib': data.totalDelib ?? data.total_deliberacoes ?? data.total,
                 'metricas-pleito-externo': data.pleitoExterno ?? data.pleito_externo,
                 'metricas-taxa-aprovacao': data.taxaAprovacao ?? data.taxa_aprovacao,
                 'metricas-total-reunioes': data.totalReunioes ?? data.total_reunioes
@@ -3181,17 +3193,16 @@
             });
         },
 
-        async exportar() {
-            const data = await API.get('/api/metricas/exportar');
-            if (data) {
-                Utils.exportJSON(data, 'iris_metricas_' + new Date().toISOString().split('T')[0] + '.json');
-            }
+        exportar() {
+            const agencia = document.getElementById('dashboard-filtro-agencia')?.value || '';
+            const url = '/api/metricas?formato=csv' + (agencia ? '&agencia=' + encodeURIComponent(agencia) : '');
+            window.open(url, '_blank');
         },
 
         async _loadDiretoresTable() {
             const agencia = document.getElementById('dashboard-filtro-agencia')?.value || 'ARTESP';
             try {
-                const data = await API.get('/api/metricas/por-diretor?agencia=' + agencia);
+                const data = await API.get('/api/metricas?tipo=por-diretor&agencia=' + agencia);
                 const tbody = document.getElementById('metricas-diretores-tbody');
                 if (!tbody) return;
                 const rows = data?.por_diretor || data?.diretores || [];
@@ -3235,12 +3246,11 @@
 
             try {
                 const agencia = document.getElementById('dashboard-filtro-agencia')?.value || 'ARTESP';
-                const data = await API.get('/api/metricas/diretor-detalhe?nome=' + encodeURIComponent(nome) + '&agencia=' + agencia);
+                const data = await API.get('/api/metricas?tipo=diretor-detalhe&nome=' + encodeURIComponent(nome) + '&agencia=' + agencia);
                 if (!data || data.error) {
                     container.innerHTML = '<div style="text-align:center;color:var(--text-secondary);padding:32px;">Dados não encontrados para este diretor</div>';
                     return;
                 }
-                const m = data.metricas || {};
                 const temas = (data.top_temas || []).map(t =>
                     `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
                         <span style="font-size:12px;color:var(--text-secondary);min-width:160px;">${t.tema}</span>
@@ -3253,22 +3263,21 @@
 
                 container.innerHTML = `
                     <div class="stats-grid" style="margin-bottom:20px;">
-                        <div class="stat-card"><div class="stat-card-header"><span class="stat-card-title">Total Votos</span></div><div class="stat-card-value">${m.total_votos||0}</div></div>
-                        <div class="stat-card"><div class="stat-card-header"><span class="stat-card-title">Pleitos Externos</span></div><div class="stat-card-value primary">${m.pct_externos||0}%</div><div class="stat-card-subtitle">${m.votos_externos||0} votos</div></div>
-                        <div class="stat-card"><div class="stat-card-header"><span class="stat-card-title">Taxa Deferimento</span></div><div class="stat-card-value success">${m.taxa_deferimento||0}%</div></div>
-                        <div class="stat-card"><div class="stat-card-header"><span class="stat-card-title">Votos Divergentes</span></div><div class="stat-card-value danger">${m.total_divergentes||0}</div></div>
+                        <div class="stat-card"><div class="stat-card-header"><span class="stat-card-title">Total Votos</span></div><div class="stat-card-value">${data.total_votos||0}</div></div>
+                        <div class="stat-card"><div class="stat-card-header"><span class="stat-card-title">Pleitos Externos</span></div><div class="stat-card-value primary">${data.externos_pct||0}%</div></div>
+                        <div class="stat-card"><div class="stat-card-header"><span class="stat-card-title">Taxa Deferimento</span></div><div class="stat-card-value success">${data.taxa_deferimento||0}%</div></div>
+                        <div class="stat-card"><div class="stat-card-header"><span class="stat-card-title">Votos Divergentes</span></div><div class="stat-card-value danger">${data.votos_divergentes||0}</div></div>
                     </div>
                     <div class="grid-2">
                         <div><h4 style="font-size:13px;font-weight:600;margin-bottom:12px;">Top 5 Temas</h4>${temas || '<div style="color:var(--text-secondary);font-size:12px;">Sem dados de temas</div>'}</div>
-                        <div><h4 style="font-size:13px;font-weight:600;margin-bottom:12px;">Tendência Mensal</h4>
+                        <div><h4 style="font-size:13px;font-weight:600;margin-bottom:12px;">Atividade Mensal</h4>
                         <div id="inst-tendencia-chart" style="font-size:12px;color:var(--text-secondary);">
-                        ${(data.tendencia_mensal||[]).slice(-6).map(t =>
+                        ${(data.por_mes||[]).slice(-6).map(t =>
                             `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.05);">
                                 <span>${t.mes}</span>
-                                <span style="color:var(--success);">+${t.favoravel||0}</span>
-                                <span style="color:var(--danger);">-${t.contra||0}</span>
+                                <span style="color:var(--success);">${t.total||0} votos</span>
                             </div>`
-                        ).join('') || 'Sem dados de tendência'}
+                        ).join('') || 'Sem dados de atividade'}
                         </div></div>
                     </div>`;
             } catch(e) {
@@ -3279,16 +3288,20 @@
         async _loadInstitucional() {
             try {
                 const agencia = document.getElementById('dashboard-filtro-agencia')?.value || 'ARTESP';
-                const data = await API.get('/api/metricas/institucional?agencia=' + agencia);
+                const data = await API.get('/api/metricas?tipo=institucional&agencia=' + agencia);
                 if (!data) return;
-                const r = data.resumo || {};
 
                 const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-                const reunioesPorAno = data.reunioes_por_ano || [];
-                set('inst-total-reunioes', reunioesPorAno.reduce((s, a) => s + a.total_reunioes, 0));
-                set('inst-intervalo', r.intervalo_medio_dias || '–');
-                set('inst-pct-interna', (r.pct_interna || 0) + '%');
-                set('inst-atos', r.atos_normativos || 0);
+                // API returns top-level fields (not nested under 'resumo')
+                set('inst-total-reunioes', data.total_reunioes || 0);
+                set('inst-intervalo', data.intervalo_medio_dias || '–');
+                set('inst-pct-interna', (data.pct_interna || 0) + '%');
+                set('inst-atos', 0);
+
+                // API returns reunioes_por_ano as {year: count} dict — convert to sorted array
+                const reunioesPorAno = Object.entries(data.reunioes_por_ano || {})
+                    .map(([ano, total_reunioes]) => ({ ano, total_reunioes }))
+                    .sort((a, b) => a.ano.localeCompare(b.ano));
 
                 // Render bar chart for reunioes por ano
                 const chartEl = document.getElementById('inst-reunioes-chart');
@@ -3304,21 +3317,19 @@
                         </div>`).join('');
                 }
 
-                // Render stacked bar for pauta por ano
+                // Render pauta chart using overall pct_interna applied to per-year counts
                 const pautaEl = document.getElementById('inst-pauta-chart');
+                const pctInt = data.pct_interna || 0;
                 if (pautaEl && reunioesPorAno.length > 0) {
-                    pautaEl.innerHTML = reunioesPorAno.map(a => {
-                        const total = (a.pauta_interna || 0) + (a.pauta_externa || 0);
-                        const pctInt = total > 0 ? Math.round((a.pauta_interna / total) * 100) : 0;
-                        return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                    pautaEl.innerHTML = reunioesPorAno.map(a => `
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
                             <span style="min-width:40px;font-size:12px;color:var(--text-secondary);">${a.ano}</span>
                             <div style="flex:1;height:18px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden;display:flex;">
                                 <div style="height:100%;background:#8b5cf6;width:${pctInt}%;"></div>
                                 <div style="height:100%;background:#06b6d4;width:${100 - pctInt}%;"></div>
                             </div>
                             <span style="font-size:11px;color:var(--text-secondary);">${pctInt}% int.</span>
-                        </div>`;
-                    }).join('');
+                        </div>`).join('');
                 }
             } catch(e) { /* silently fail */ }
         },
