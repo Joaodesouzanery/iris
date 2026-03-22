@@ -8,6 +8,14 @@ export async function GET(request: NextRequest) {
     const resultado = searchParams.get("resultado");
     const reuniao = searchParams.get("reuniao");
     const diretor = searchParams.get("diretor");
+    const agencia = searchParams.get("agencia");
+    const ano = searchParams.get("ano");
+    const dataInicio = searchParams.get("data_inicio");
+    const dataFim = searchParams.get("data_fim");
+    const pautaExterna = searchParams.get("pauta_externa");
+    const busca = searchParams.get("busca");
+    const page = parseInt(searchParams.get("page") || "1", 10);
+    const perPage = Math.min(parseInt(searchParams.get("per_page") || "50", 10), 200);
 
     const client = getServiceClient() || supabase;
     if (!client) {
@@ -16,15 +24,21 @@ export async function GET(request: NextRequest) {
 
     let query = client
       .from("deliberacoes_extraidas")
-      .select("*")
+      .select("*", { count: "exact" })
       .order("data_reuniao", { ascending: false })
-      .limit(500);
+      .range((page - 1) * perPage, page * perPage - 1);
 
     if (microtema) query = query.eq("microtema", microtema);
     if (resultado) query = query.eq("decisao", resultado);
     if (reuniao) query = query.eq("numero_reuniao", reuniao);
+    if (agencia) query = query.eq("agencia", agencia);
+    if (ano) query = query.gte("data_reuniao", `${ano}-01-01`).lte("data_reuniao", `${ano}-12-31`);
+    if (dataInicio) query = query.gte("data_reuniao", dataInicio);
+    if (dataFim) query = query.lte("data_reuniao", dataFim);
+    if (pautaExterna === "true") query = query.eq("pauta_interna", false);
+    if (busca) query = query.or(`interessado.ilike.%${busca}%,processo.ilike.%${busca}%,resumo_pleito.ilike.%${busca}%`);
 
-    const { data, error } = await query;
+    const { data, error, count } = await query;
     if (error) throw error;
 
     const deliberacoes = (data || []).map((d) => ({
@@ -56,7 +70,12 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ total: filtered.length, deliberacoes: filtered });
+    return NextResponse.json({
+      total: count ?? filtered.length,
+      page,
+      per_page: perPage,
+      deliberacoes: filtered,
+    });
   } catch (err) {
     console.error("[deliberacoes]", err);
     return NextResponse.json({ total: 0, deliberacoes: [] });

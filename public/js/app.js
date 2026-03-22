@@ -282,137 +282,170 @@
             }
         ],
 
+        _page: 1,
+        _total: 0,
+        _perPage: 50,
+        _loading: false,
+        _debounceTimer: null,
+
         async init() {
             const page = document.getElementById('page-deliberacoes');
-            page.classList.add('active');
+            if (page) page.classList.add('active');
 
-            const container = document.getElementById('deliberacoes-list');
-            if (container) {
-                container.innerHTML = '<div class="loading"><div class="spinner"></div><span>Carregando deliberações...</span></div>';
-            }
-
-            let usingReal = false;
-            try {
-                const response = await API.get('/api/deliberacoes');
-                this.data = response?.deliberacoes || [];
-                if (this.data.length === 0) {
-                    this.data = this.sampleData;
-                } else {
-                    usingReal = true;
-                }
-            } catch (e) {
-                this.data = this.sampleData;
-            }
-            this.filtered = [...this.data];
-            setDataMode('page-deliberações', usingReal);
-
-            this.populateFilters();
-            this.updateStats();
-            this.render();
+            this._page = 1;
+            await this._loadFromAPI();
         },
 
-        populateFilters() {
-            const microtemas = [...new Set(this.data.map(d => d.microtema).filter(Boolean))];
+        async _loadFromAPI() {
+            if (this._loading) return;
+            this._loading = true;
+
+            const tbody = document.getElementById('deliberacoes-tbody');
+            if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-secondary);"><div class="spinner" style="margin:0 auto 12px;display:block;"></div>Carregando...</td></tr>';
+
+            const params = this._buildParams();
+            let usingReal = false;
+            try {
+                const response = await API.get('/api/deliberacoes?' + params);
+                this.data = response?.deliberacoes || [];
+                this._total = response?.total ?? this.data.length;
+                if (this.data.length > 0) usingReal = true;
+                else this.data = this._page === 1 ? this.sampleData : [];
+            } catch (e) {
+                this.data = this._page === 1 ? this.sampleData : [];
+                this._total = this.sampleData.length;
+            }
+            this.filtered = this.data;
+            setDataMode('page-deliberacoes', usingReal);
+
+            this._populateMicrotemas();
+            this.updateStats();
+            this.render();
+            this._renderPagination();
+            this._loading = false;
+        },
+
+        _buildParams() {
+            const parts = [`page=${this._page}`, `per_page=${this._perPage}`];
+            const busca = document.getElementById('filtro-busca')?.value?.trim();
+            const agencia = document.getElementById('filtro-agencia')?.value;
+            const ano = document.getElementById('filtro-ano')?.value;
+            const microtema = document.getElementById('filtro-microtema')?.value;
+            const decisao = document.getElementById('filtro-decisao')?.value;
+            const dataInicio = document.getElementById('filtro-data-inicio')?.value;
+            const dataFim = document.getElementById('filtro-data-fim')?.value;
+            const pautaExterna = document.getElementById('filtro-pauta-externa')?.checked;
+
+            if (busca) parts.push('busca=' + encodeURIComponent(busca));
+            if (agencia) parts.push('agencia=' + encodeURIComponent(agencia));
+            if (ano) parts.push('ano=' + encodeURIComponent(ano));
+            if (microtema) parts.push('microtema=' + encodeURIComponent(microtema));
+            if (decisao) parts.push('resultado=' + encodeURIComponent(decisao));
+            if (dataInicio) parts.push('data_inicio=' + dataInicio);
+            if (dataFim) parts.push('data_fim=' + dataFim);
+            if (pautaExterna) parts.push('pauta_externa=true');
+            return parts.join('&');
+        },
+
+        _populateMicrotemas() {
             const select = document.getElementById('filtro-microtema');
-            if (select) {
-                select.innerHTML = '<option value="">Todos</option>' +
+            if (!select || select.options.length > 1) return;
+            const microtemas = [...new Set(this.data.map(d => d.microtema).filter(Boolean))];
+            if (microtemas.length > 0) {
+                select.innerHTML = '<option value="">Todos Microtemas</option>' +
                     microtemas.map(m => `<option value="${m}">${m}</option>`).join('');
             }
         },
 
         filter() {
-            const decisao = document.getElementById('filtro-decisao')?.value || '';
-            const tipo = document.getElementById('filtro-tipo')?.value || '';
-            const microtema = document.getElementById('filtro-microtema')?.value || '';
-            const busca = document.getElementById('filtro-busca')?.value?.toLowerCase() || '';
+            this._page = 1;
+            this._loadFromAPI();
+        },
 
-            this.filtered = this.data.filter(d => {
-                if (decisao && d.decisao !== decisao) return false;
-                if (tipo === 'externo' && d.pauta_interna) return false;
-                if (tipo === 'interno' && !d.pauta_interna) return false;
-                if (microtema && d.microtema !== microtema) return false;
-                if (busca) {
-                    const texto = `${d.processo} ${d.interessado} ${d.resumo_pleito}`.toLowerCase();
-                    if (!texto.includes(busca)) return false;
-                }
-                return true;
+        filterDebounced() {
+            clearTimeout(this._debounceTimer);
+            this._debounceTimer = setTimeout(() => this.filter(), 300);
+        },
+
+        clearFilters() {
+            ['filtro-busca', 'filtro-agencia', 'filtro-ano', 'filtro-decisao', 'filtro-data-inicio', 'filtro-data-fim'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
             });
-
-            this.updateStats();
-            this.render();
+            const cb = document.getElementById('filtro-pauta-externa');
+            if (cb) cb.checked = false;
+            const microtemaEl = document.getElementById('filtro-microtema');
+            if (microtemaEl) microtemaEl.value = '';
+            this.filter();
         },
 
         updateStats() {
-            const total = this.filtered.length;
-            const deferidas = this.filtered.filter(d => d.decisao === 'Deferido').length;
-            const indeferidas = this.filtered.filter(d => d.decisao === 'Indeferido').length;
-            const taxa = total > 0 ? ((deferidas / total) * 100).toFixed(1) : 0;
+            const total = this._total;
+            const deferidas = this.data.filter(d => d.decisao === 'DEFERIDO' || d.decisao === 'Deferido').length;
+            const indeferidas = this.data.filter(d => d.decisao === 'INDEFERIDO' || d.decisao === 'Indeferido').length;
+            const taxa = deferidas + indeferidas > 0 ? ((deferidas / (deferidas + indeferidas)) * 100).toFixed(1) : 0;
 
-            document.getElementById('stat-total-delibs').textContent = total;
-            document.getElementById('stat-deferidas').textContent = deferidas;
-            document.getElementById('stat-indeferidas').textContent = indeferidas;
-            document.getElementById('stat-taxa').textContent = taxa + '%';
+            const statEl = id => document.getElementById(id);
+            if (statEl('stat-total-delibs')) statEl('stat-total-delibs').textContent = total;
+            if (statEl('stat-deferidas')) statEl('stat-deferidas').textContent = deferidas;
+            if (statEl('stat-indeferidas')) statEl('stat-indeferidas').textContent = indeferidas;
+            if (statEl('stat-taxa')) statEl('stat-taxa').textContent = taxa + '%';
         },
 
         render() {
-            const container = document.getElementById('deliberacoes-list');
-            if (!container) return;
+            const tbody = document.getElementById('deliberacoes-tbody');
+            if (!tbody) return;
 
-            if (this.filtered.length === 0) {
-                container.innerHTML = '<div class="empty-state">Nenhuma deliberacao encontrada</div>';
+            if (this.data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-secondary);">Nenhuma deliberação encontrada</td></tr>';
+                const label = document.getElementById('delib-count-label');
+                if (label) label.textContent = '0 resultados';
                 return;
             }
 
-            container.innerHTML = this.filtered.map((d, index) => {
-                const votos = d.votos_favor || [];
-                const tipoLabel = d.pauta_interna ? 'Pauta Interna' : 'Pauta Externa';
-                const dataFormatada = this.formatDate(d.data_reuniao);
+            const label = document.getElementById('delib-count-label');
+            if (label) label.textContent = `${this._total} resultado${this._total !== 1 ? 's' : ''} · página ${this._page}`;
 
-                return `
-                <div class="deliberacao-card" onclick="App.PageDeliberacoes.openModal(${index})">
-                    <div class="deliberacao-card-header">
-                        <div class="deliberacao-number">
-                            <div class="deliberacao-badge">${d.numero_reuniao || '-'}</div>
-                            <span class="deliberacao-agency">ARTESP</span>
-                        </div>
-                        <div class="deliberacao-main-info">
-                            <div class="deliberacao-title">
-                                ${d.interessado || 'Interessado nao identificado'}
-                            </div>
-                            <div class="deliberacao-processo">${d.processo || 'Processo nao identificado'}</div>
-                            <div class="deliberacao-meta">
-                                <span class="deliberacao-meta-item">
-                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                    ${dataFormatada}
-                                </span>
-                                <span class="deliberacao-meta-item">
-                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
-                                    ${d.microtema || 'Nao classificado'}
-                                </span>
-                                <span class="deliberacao-meta-item">
-                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                    ${tipoLabel}
-                                </span>
-                            </div>
-                        </div>
-                        <div class="deliberacao-decision">
-                            <span class="decision-badge ${d.decisao?.toLowerCase() || ''}">${d.decisao || '-'}</span>
-                        </div>
-                    </div>
-                    <div class="deliberacao-card-body">
-                        <div class="deliberacao-resumo">${this.truncate(d.resumo_pleito, 200)}</div>
-                        <div class="deliberacao-votos">
-                            ${votos.slice(0, 4).map(v => `
-                                <span class="voto-chip">
-                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                    ${this.getFirstLastName(v)}
-                                </span>
-                            `).join('')}
-                        </div>
-                    </div>
-                </div>
-                `;
+            tbody.innerHTML = this.data.map((d, index) => {
+                const decisaoCls = (d.decisao || '').includes('DEFERIDO') || (d.decisao || '').includes('Deferido') ? 'badge-success' :
+                                   (d.decisao || '').includes('INDEFERIDO') || (d.decisao || '').includes('Indeferido') ? 'badge-danger' : 'badge-info';
+                return `<tr style="cursor:pointer;" onclick="App.PageDeliberacoes.openModal(${index})" title="Clique para ver detalhes">
+                    <td><strong>${d.reuniao_ordinaria || d.numero_reuniao || '-'}</strong></td>
+                    <td style="white-space:nowrap;">${this.formatDate(d.data_reuniao)}</td>
+                    <td style="font-size:12px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${d.processo || ''}">${d.processo || '-'}</td>
+                    <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${d.interessado || ''}">${d.interessado || '-'}</td>
+                    <td><span style="font-size:12px;background:rgba(139,92,246,.12);color:#a78bfa;padding:2px 8px;border-radius:4px;">${d.microtema || '-'}</span></td>
+                    <td style="max-width:260px;font-size:12px;color:var(--text-secondary);">${this.truncate(d.resumo_pleito || '', 100)}</td>
+                    <td><span class="badge ${decisaoCls}" style="font-size:11px;white-space:nowrap;">${d.resultado || d.decisao || '-'}</span></td>
+                </tr>`;
             }).join('');
+        },
+
+        _renderPagination() {
+            const container = document.getElementById('delib-pagination');
+            if (!container) return;
+            const totalPages = Math.ceil(this._total / this._perPage);
+            if (totalPages <= 1) { container.innerHTML = ''; return; }
+
+            const btns = [];
+            if (this._page > 1) btns.push(`<button class="btn btn-secondary btn-sm" onclick="App.PageDeliberacoes.goPage(${this._page - 1})">‹ Anterior</button>`);
+            const start = Math.max(1, this._page - 2);
+            const end = Math.min(totalPages, this._page + 2);
+            for (let p = start; p <= end; p++) {
+                const active = p === this._page ? 'style="background:var(--primary);color:#fff;"' : '';
+                btns.push(`<button class="btn btn-secondary btn-sm" ${active} onclick="App.PageDeliberacoes.goPage(${p})">${p}</button>`);
+            }
+            if (this._page < totalPages) btns.push(`<button class="btn btn-secondary btn-sm" onclick="App.PageDeliberacoes.goPage(${this._page + 1})">Próxima ›</button>`);
+            container.innerHTML = btns.join('');
+        },
+
+        goPage(p) {
+            this._page = p;
+            this._loadFromAPI();
+        },
+
+        populateFilters() {
+            // Kept for compatibility — filters now populate dynamically
         },
 
         formatDate(dateStr) {
@@ -1089,38 +1122,71 @@
 
         async loadRealData() {
             try {
-                const response = await fetch('/api/metricas/por-diretor');
+                const agencia = (this.selectedAgency || 'artesp').toUpperCase();
+                const response = await fetch('/api/diretores?agencia=' + agencia);
                 const data = await response.json();
+                const apiDiretores = data?.diretores || [];
 
-                if (data.success && data.diretores && data.diretores.length > 0) {
-                    // Merge real data into ARTESP section
-                    const artesp = this.agenciasData.artesp;
-                    artesp.diretores = data.diretores.map(d => ({
-                        nome: d.nome,
-                        cargo: d.cargo || 'Diretor(a)',
-                        iniciais: d.nome.split(' ').filter(w => w.length > 2).map(w => w[0]).join('').substring(0, 2).toUpperCase(),
-                        inicio: d.inicio || '',
-                        termino: d.termino || '',
-                        ativo: true,
-                        participacoes: d.totalVotos || 0,
-                        relatorias: d.relatorias || 0,
-                        favoravel: d.favoraveis || 0,
-                        desfavoravel: d.contrarios || 0,
-                        vista: d.vistas || 0
-                    }));
-                    artesp.stats.diretoresAtivos = artesp.diretores.length;
-                    artesp.stats.participacoesColegiadas = artesp.diretores.reduce((s, d) => s + d.participacoes, 0);
-                    artesp.stats.deliberacoes = data.totalDeliberacoes || artesp.stats.deliberacoes;
+                if (apiDiretores.length > 0) {
+                    const bucket = this.agenciasData[this.selectedAgency || 'artesp'];
+                    if (bucket) {
+                        bucket.diretores = apiDiretores.map(d => ({
+                            nome: d.nome,
+                            cargo: d.cargo || 'Diretor(a)',
+                            iniciais: (d.nome || '').split(' ').filter(w => w.length > 2).map(w => w[0]).join('').substring(0, 2).toUpperCase() || 'DR',
+                            inicio: d.mandato_inicio || '',
+                            termino: d.mandato_fim || '',
+                            ativo: d.ativo !== false,
+                            participacoes: d.participacoes || 0,
+                            relatorias: 0,
+                            favoravel: (d.votos || {}).FAVORABLE || 0,
+                            desfavoravel: (d.votos || {}).AGAINST || 0,
+                            vista: (d.votos || {}).ABSTENTION || 0,
+                            colegiado: d.colegiado || 0,
+                            divergente: d.divergente || 0,
+                            mandato_percent: d.mandato_percent || 0,
+                            votos_por_tema: d.votos_por_tema || []
+                        }));
+                        bucket.stats.diretoresAtivos = bucket.diretores.filter(d => d.ativo).length;
+                        bucket.stats.participacoesColegiadas = bucket.diretores.reduce((s, d) => s + d.participacoes, 0);
 
-                    // Hide demo banner
-                    const demoBanner = document.querySelector('#page-diretores .demo-banner');
-                    if (demoBanner) demoBanner.style.display = 'none';
+                        const demoBanner = document.querySelector('#page-diretores .demo-banner');
+                        if (demoBanner) demoBanner.style.display = 'none';
+                    }
 
-                    console.log(`[Diretores] ${artesp.diretores.length} diretores carregados dos PDFs reais`);
+                    // Populate voting matrix with real data
+                    this._renderRealVotingMatrix(apiDiretores);
                 }
             } catch (error) {
                 console.warn('[Diretores] API indisponível, exibindo dados base:', error.message);
             }
+        },
+
+        _renderRealVotingMatrix(diretores) {
+            const tbody = document.getElementById('diretores-voting-matrix-body');
+            if (!tbody || diretores.length === 0) return;
+            tbody.innerHTML = diretores.map(d => {
+                const v = d.votos || {};
+                const total = d.participacoes || 0;
+                const cor = this.agenciasData[this.selectedAgency]?.cor || '#8b5cf6';
+                return `<tr>
+                    <td>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <div class="mandato-avatar small" style="background:${cor};width:32px;height:32px;font-size:11px;">${d.iniciais||'DR'}</div>
+                            <div><div style="font-weight:600;">${d.nome}</div><div style="font-size:11px;color:var(--text-muted);">${d.cargo||''}</div></div>
+                        </div>
+                    </td>
+                    <td><span class="vote-badge green">${v.FAVORABLE||0}</span></td>
+                    <td><span class="vote-badge red">${v.AGAINST||0}</span></td>
+                    <td><span class="vote-badge orange">${v.ABSTENTION||0}</span></td>
+                    <td><span class="vote-badge purple">0</span></td>
+                    <td><span class="vote-badge blue">${d.colegiado||0}</span></td>
+                    <td><span class="vote-badge pink">${d.divergente||0}</span></td>
+                    <td><span class="vote-badge">0</span></td>
+                    <td><span class="vote-badge">${total}</span></td>
+                    <td><strong>${total}</strong></td>
+                </tr>`;
+            }).join('');
         },
 
         setupAgencyTabs() {
@@ -2911,9 +2977,7 @@
 
         async init() {
             const page = document.getElementById('page-metricas');
-            if (page) {
-                page.classList.add('active');
-            }
+            if (page) page.classList.add('active');
 
             // Check Supabase connection status
             this.checkSupabaseStatus();
@@ -2937,6 +3001,9 @@
 
             this.animateCounters();
             this.renderBarChart();
+            this._loadDiretoresTable();
+            this._loadInstitucional();
+            this._loadCompetitivo();
         },
 
         async checkSupabaseStatus() {
@@ -3103,6 +3170,176 @@
             const data = await API.get('/api/metricas/exportar');
             if (data) {
                 Utils.exportJSON(data, 'iris_metricas_' + new Date().toISOString().split('T')[0] + '.json');
+            }
+        },
+
+        async _loadDiretoresTable() {
+            const agencia = document.getElementById('dashboard-filtro-agencia')?.value || 'ARTESP';
+            try {
+                const data = await API.get('/api/metricas/por-diretor?agencia=' + agencia);
+                const tbody = document.getElementById('metricas-diretores-tbody');
+                if (!tbody) return;
+                const rows = data?.por_diretor || data?.diretores || [];
+                if (rows.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-secondary);padding:24px;">Sem dados de diretores</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = rows.slice(0, 10).map(d => {
+                    const total = (d.total_votos || d.participacoes || 0);
+                    const fav = d.favoraveis || d.FAVORABLE || 0;
+                    const contra = d.contrarios || d.AGAINST || 0;
+                    const taxa = fav + contra > 0 ? ((fav / (fav + contra)) * 100).toFixed(1) : '–';
+                    return `<tr>
+                        <td><strong>${d.nome || d.diretor || '–'}</strong></td>
+                        <td style="color:var(--text-secondary);font-size:12px;">${d.cargo || '–'}</td>
+                        <td><strong>${total}</strong></td>
+                        <td><span class="badge badge-success">${fav}</span></td>
+                        <td><span class="badge badge-danger">${contra}</span></td>
+                        <td><strong style="color:var(--success);">${taxa !== '–' ? taxa + '%' : '–'}</strong></td>
+                    </tr>`;
+                }).join('');
+
+                // Populate director selector for detail view
+                const sel = document.getElementById('metricas-diretor-select');
+                if (sel && sel.options.length === 1) {
+                    rows.forEach(d => {
+                        const opt = document.createElement('option');
+                        opt.value = d.nome || d.diretor || '';
+                        opt.textContent = d.nome || d.diretor || '';
+                        sel.appendChild(opt);
+                    });
+                }
+            } catch(e) { /* silently fail */ }
+        },
+
+        async carregarDiretor(nome) {
+            if (!nome) return;
+            const container = document.getElementById('metricas-diretor-detalhe');
+            if (!container) return;
+            container.innerHTML = '<div style="text-align:center;padding:32px;"><div class="spinner" style="margin:0 auto;display:block;"></div></div>';
+
+            try {
+                const agencia = document.getElementById('dashboard-filtro-agencia')?.value || 'ARTESP';
+                const data = await API.get('/api/metricas/diretor-detalhe?nome=' + encodeURIComponent(nome) + '&agencia=' + agencia);
+                if (!data || data.error) {
+                    container.innerHTML = '<div style="text-align:center;color:var(--text-secondary);padding:32px;">Dados não encontrados para este diretor</div>';
+                    return;
+                }
+                const m = data.metricas || {};
+                const temas = (data.top_temas || []).map(t =>
+                    `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                        <span style="font-size:12px;color:var(--text-secondary);min-width:160px;">${t.tema}</span>
+                        <div style="flex:1;height:6px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden;">
+                            <div style="height:100%;background:var(--primary);border-radius:3px;width:${Math.round((t.total/((data.top_temas[0]?.total)||1))*100)}%;"></div>
+                        </div>
+                        <span style="font-size:12px;font-weight:600;">${t.total}</span>
+                    </div>`
+                ).join('');
+
+                container.innerHTML = `
+                    <div class="stats-grid" style="margin-bottom:20px;">
+                        <div class="stat-card"><div class="stat-card-header"><span class="stat-card-title">Total Votos</span></div><div class="stat-card-value">${m.total_votos||0}</div></div>
+                        <div class="stat-card"><div class="stat-card-header"><span class="stat-card-title">Pleitos Externos</span></div><div class="stat-card-value primary">${m.pct_externos||0}%</div><div class="stat-card-subtitle">${m.votos_externos||0} votos</div></div>
+                        <div class="stat-card"><div class="stat-card-header"><span class="stat-card-title">Taxa Deferimento</span></div><div class="stat-card-value success">${m.taxa_deferimento||0}%</div></div>
+                        <div class="stat-card"><div class="stat-card-header"><span class="stat-card-title">Votos Divergentes</span></div><div class="stat-card-value danger">${m.total_divergentes||0}</div></div>
+                    </div>
+                    <div class="grid-2">
+                        <div><h4 style="font-size:13px;font-weight:600;margin-bottom:12px;">Top 5 Temas</h4>${temas || '<div style="color:var(--text-secondary);font-size:12px;">Sem dados de temas</div>'}</div>
+                        <div><h4 style="font-size:13px;font-weight:600;margin-bottom:12px;">Tendência Mensal</h4>
+                        <div id="inst-tendencia-chart" style="font-size:12px;color:var(--text-secondary);">
+                        ${(data.tendencia_mensal||[]).slice(-6).map(t =>
+                            `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.05);">
+                                <span>${t.mes}</span>
+                                <span style="color:var(--success);">+${t.favoravel||0}</span>
+                                <span style="color:var(--danger);">-${t.contra||0}</span>
+                            </div>`
+                        ).join('') || 'Sem dados de tendência'}
+                        </div></div>
+                    </div>`;
+            } catch(e) {
+                container.innerHTML = '<div style="color:var(--danger);padding:16px;">Erro ao carregar dados do diretor</div>';
+            }
+        },
+
+        async _loadInstitucional() {
+            try {
+                const agencia = document.getElementById('dashboard-filtro-agencia')?.value || 'ARTESP';
+                const data = await API.get('/api/metricas/institucional?agencia=' + agencia);
+                if (!data) return;
+                const r = data.resumo || {};
+
+                const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+                const reunioesPorAno = data.reunioes_por_ano || [];
+                set('inst-total-reunioes', reunioesPorAno.reduce((s, a) => s + a.total_reunioes, 0));
+                set('inst-intervalo', r.intervalo_medio_dias || '–');
+                set('inst-pct-interna', (r.pct_interna || 0) + '%');
+                set('inst-atos', r.atos_normativos || 0);
+
+                // Render bar chart for reunioes por ano
+                const chartEl = document.getElementById('inst-reunioes-chart');
+                if (chartEl && reunioesPorAno.length > 0) {
+                    const max = Math.max(...reunioesPorAno.map(a => a.total_reunioes));
+                    chartEl.innerHTML = reunioesPorAno.map(a => `
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                            <span style="min-width:40px;font-size:12px;color:var(--text-secondary);">${a.ano}</span>
+                            <div style="flex:1;height:18px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden;">
+                                <div style="height:100%;background:var(--primary);border-radius:3px;width:${Math.round((a.total_reunioes/max)*100)}%;transition:width .6s;"></div>
+                            </div>
+                            <span style="font-size:12px;font-weight:600;min-width:20px;">${a.total_reunioes}</span>
+                        </div>`).join('');
+                }
+
+                // Render stacked bar for pauta por ano
+                const pautaEl = document.getElementById('inst-pauta-chart');
+                if (pautaEl && reunioesPorAno.length > 0) {
+                    pautaEl.innerHTML = reunioesPorAno.map(a => {
+                        const total = (a.pauta_interna || 0) + (a.pauta_externa || 0);
+                        const pctInt = total > 0 ? Math.round((a.pauta_interna / total) * 100) : 0;
+                        return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                            <span style="min-width:40px;font-size:12px;color:var(--text-secondary);">${a.ano}</span>
+                            <div style="flex:1;height:18px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden;display:flex;">
+                                <div style="height:100%;background:#8b5cf6;width:${pctInt}%;"></div>
+                                <div style="height:100%;background:#06b6d4;width:${100 - pctInt}%;"></div>
+                            </div>
+                            <span style="font-size:11px;color:var(--text-secondary);">${pctInt}% int.</span>
+                        </div>`;
+                    }).join('');
+                }
+            } catch(e) { /* silently fail */ }
+        },
+
+        async _loadCompetitivo() {
+            try {
+                const agencia = document.getElementById('dashboard-filtro-agencia')?.value || 'ARTESP';
+                const data = await API.get('/api/diretores?agencia=' + agencia);
+                const tbody = document.getElementById('competitivo-tbody');
+                if (!tbody) return;
+                const diretores = data?.diretores || [];
+                if (diretores.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--text-secondary);padding:32px;">Nenhum diretor encontrado</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = diretores.map(d => {
+                    const v = d.votos || {};
+                    const total = d.participacoes || 0;
+                    const fav = v.FAVORABLE || 0;
+                    const taxa = fav + (v.AGAINST || 0) > 0 ? Math.round((fav / (fav + (v.AGAINST || 0))) * 100) : '–';
+                    return `<tr>
+                        <td><strong>${d.nome || '–'}</strong><br><span style="font-size:11px;color:var(--text-secondary);">${d.cargo || ''}</span></td>
+                        <td style="font-size:12px;">${d.agencia || agencia}</td>
+                        <td style="color:var(--success);font-weight:600;">${fav}</td>
+                        <td style="color:var(--danger);">${v.AGAINST || 0}</td>
+                        <td>${v.ABSTENTION || 0}</td>
+                        <td>${v.ABSENT || 0}</td>
+                        <td>${d.colegiado || 0}</td>
+                        <td style="color:var(--warning);">${d.divergente || 0}</td>
+                        <td><strong>${total}</strong></td>
+                        <td>${taxa !== '–' ? `<strong>${taxa}%</strong>` : '–'}</td>
+                    </tr>`;
+                }).join('');
+            } catch(e) {
+                const tbody = document.getElementById('competitivo-tbody');
+                if (tbody) tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--text-secondary);padding:24px;">Erro ao carregar análise competitiva</td></tr>';
             }
         }
     };
@@ -4941,10 +5178,14 @@
         },
 
         async load() {
-            const response = await API.get('/api/pdfs');
-            this.pdfs = response?.pdfs || [];
+            // Preserve in-memory pdfs; only fetch from API if empty (no server storage on Vercel)
+            if (this.pdfs.length === 0) {
+                const response = await API.get('/api/pdfs');
+                const serverPdfs = response?.pdfs || [];
+                if (serverPdfs.length > 0) this.pdfs = serverPdfs;
+            }
             this.updateStats();
-            this.render();
+            this.renderTable();
         },
 
         updateStats() {
@@ -4970,27 +5211,33 @@
 
             progressDiv.style.display = 'block';
 
-            // Helper function to convert file to base64
+            // Helper: read file as pure base64 (no data: prefix)
             const fileToBase64 = (file) => {
                 return new Promise((resolve, reject) => {
                     const reader = new FileReader();
-                    reader.onload = () => resolve(reader.result);
+                    reader.onload = () => {
+                        const result = reader.result;
+                        // strip "data:...;base64," prefix
+                        const b64 = result.includes(',') ? result.split(',')[1] : result;
+                        resolve(b64);
+                    };
                     reader.onerror = reject;
                     reader.readAsDataURL(file);
                 });
             };
 
-            // Upload a single file
-            const uploadOne = async (file) => {
+            // Store files in browser memory (no server upload needed)
+            const addToQueue = async (file) => {
                 try {
-                    const base64 = await fileToBase64(file);
-                    const response = await fetch('/api/upload-pdf', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ arquivo: base64, nomeArquivo: file.name })
+                    const b64 = await fileToBase64(file);
+                    this.pdfs.push({
+                        nome: file.name,
+                        tamanho: file.size,
+                        status: 'pendente',
+                        pdf_base64: b64,
+                        deliberacoes_count: 0
                     });
-                    const result = await response.json();
-                    return { file: file.name, sucesso: !!result.sucesso, erro: result.erro };
+                    return { file: file.name, sucesso: true };
                 } catch (error) {
                     return { file: file.name, sucesso: false, erro: error.message };
                 }
@@ -5012,7 +5259,7 @@
                 progressBar.style.width = pct + '%';
                 progressBar.classList.remove('success', 'danger');
 
-                const results = await Promise.all(batch.map(uploadOne));
+                const results = await Promise.all(batch.map(addToQueue));
 
                 for (const r of results) {
                     completed++;
@@ -5346,50 +5593,73 @@
 
         // ── Analysis functionality (merged from PageAnalise) ──
         async analisarPdf(index) {
+            const pdf = this.pdfs[index];
+            if (!pdf) return;
+
             const statusCard = document.getElementById('analise-status-card');
             const statusText = document.getElementById('analise-status-text');
             const statusPercent = document.getElementById('analise-status-percent');
             const progressBar = document.getElementById('analise-progress-bar');
 
             if (statusCard) statusCard.style.display = 'block';
-            if (statusText) statusText.textContent = 'Analisando PDF ' + (index + 1) + '...';
+            if (statusText) statusText.textContent = 'Analisando: ' + pdf.nome;
             if (statusPercent) statusPercent.textContent = '0%';
             if (progressBar) progressBar.style.width = '0%';
+
+            pdf.status = 'analisando';
+            this.renderTable();
 
             try {
                 let progress = 0;
                 const progressInterval = setInterval(() => {
-                    if (progress < 90) {
-                        progress += Math.random() * 10;
-                        if (statusPercent) statusPercent.textContent = Math.min(90, Math.round(progress)) + '%';
-                        if (progressBar) progressBar.style.width = Math.min(90, Math.round(progress)) + '%';
+                    if (progress < 85) {
+                        progress += Math.random() * 8;
+                        const pct = Math.min(85, Math.round(progress));
+                        if (statusPercent) statusPercent.textContent = pct + '%';
+                        if (progressBar) progressBar.style.width = pct + '%';
                     }
-                }, 500);
+                }, 600);
 
-                const response = await API.post(`/api/analisar-pdf/${index}`);
-
+                const response = await fetch('/api/pdf_analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        pdf_base64: pdf.pdf_base64,
+                        filename: pdf.nome,
+                        agencia: 'ARTESP'
+                    })
+                });
+                const result = await response.json();
                 clearInterval(progressInterval);
 
-                if (response?.sucesso) {
-                    if (statusText) statusText.textContent = 'Análise concluída!';
+                if (result && !result.error) {
+                    pdf.status = 'analisado';
+                    pdf.deliberacoes_count = result.total || 0;
+                    pdf.deliberacoes = result.deliberacoes || [];
+
+                    if (statusText) statusText.textContent = `✓ ${pdf.nome}: ${result.total || 0} deliberação(ões) extraída(s)`;
                     if (statusPercent) statusPercent.textContent = '100%';
                     if (progressBar) progressBar.style.width = '100%';
 
-                    if (response.deliberacoes) {
-                        this.mostrarResultado(response);
+                    if (result.deliberacoes && result.deliberacoes.length > 0) {
+                        this.mostrarResultado(result);
                     }
-
-                    setTimeout(() => { if (statusCard) statusCard.style.display = 'none'; }, 2000);
-                    await this.load();
+                    setTimeout(() => { if (statusCard) statusCard.style.display = 'none'; }, 3000);
                 } else {
-                    if (statusText) statusText.textContent = 'Erro: ' + (response?.erro || 'Erro desconhecido');
+                    pdf.status = 'erro';
+                    pdf.erro = result?.error || 'Erro desconhecido';
+                    if (statusText) statusText.textContent = 'Erro: ' + pdf.erro;
                     if (progressBar) progressBar.style.width = '0%';
-                    this._showToast('Erro na análise: ' + (response?.erro || 'Erro desconhecido'), 'error', 6000);
+                    this._showToast('Erro na análise: ' + pdf.erro, 'error', 6000);
                 }
             } catch (error) {
+                pdf.status = 'erro';
+                pdf.erro = error.message;
                 if (statusText) statusText.textContent = 'Erro: ' + error.message;
                 this._showToast('Erro ao analisar: ' + error.message, 'error', 6000);
             }
+            this.updateStats();
+            this.renderTable();
         },
 
         async analisarTodosPendentes() {
