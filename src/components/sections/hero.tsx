@@ -118,9 +118,9 @@ export function HeroSection() {
               </a>
             </Button>
             <Button variant="outline" size="lg" asChild>
-              <a href="#modulos">
+              <a href="/hub">
                 <Play className="w-5 h-5" />
-                Ver Módulos
+                Acessar Plataforma
               </a>
             </Button>
           </motion.div>

@@ -1,3 +1,29 @@
 {
-  "framework": "nextjs"
+  "framework": "nextjs",
+  "rewrites": [
+    { "source": "/hub", "destination": "/app.html" },
+    { "source": "/metricas", "destination": "/app.html" },
+    { "source": "/deliberacoes", "destination": "/app.html" },
+    { "source": "/monitor", "destination": "/app.html" },
+    { "source": "/diretores", "destination": "/app.html" },
+    { "source": "/jurimetria", "destination": "/app.html" },
+    { "source": "/governanca", "destination": "/app.html" },
+    { "source": "/boletim", "destination": "/app.html" },
+    { "source": "/auditoria", "destination": "/app.html" },
+    { "source": "/analise", "destination": "/app.html" },
+    { "source": "/agencias", "destination": "/app.html" },
+    { "source": "/mapa", "destination": "/app.html" },
+    { "source": "/radar", "destination": "/app.html" },
+    { "source": "/painel-regulatorio", "destination": "/app.html" },
+    { "source": "/setores", "destination": "/app.html" },
+    { "source": "/microtemas", "destination": "/app.html" },
+    { "source": "/empresas", "destination": "/app.html" },
+    { "source": "/historico", "destination": "/app.html" },
+    { "source": "/grafo", "destination": "/app.html" },
+    { "source": "/monitoramento", "destination": "/app.html" },
+    { "source": "/dossie", "destination": "/app.html" },
+    { "source": "/cruzamento", "destination": "/app.html" },
+    { "source": "/analytics", "destination": "/app.html" },
+    { "source": "/plataforma", "destination": "/app.html" }
+  ]
 }

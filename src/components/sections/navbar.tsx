@@ -93,7 +93,13 @@ export function Navbar() {
             </div>
 
             {/* Desktop CTA */}
-            <div className="hidden md:block">
+            <div className="hidden md:flex items-center gap-2">
+              <a
+                href="/hub"
+                className="text-sm font-medium text-white/80 hover:text-white border border-white/20 hover:border-white/50 px-4 py-1.5 rounded-full transition-all"
+              >
+                Acessar Plataforma
+              </a>
               <Button size="sm" asChild>
                 <a href="#demo">Solicitar Demo</a>
               </Button>
