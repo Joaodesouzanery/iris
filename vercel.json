@@ -1,8 +1,6 @@
 {
-  "framework": "nextjs",
   "functions": {
     "api/pdf_analyze.py": {
-      "runtime": "vercel-python@3.9",
       "maxDuration": 60
     }
   },
